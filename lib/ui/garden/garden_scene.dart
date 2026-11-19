@@ -395,10 +395,10 @@ class _GardenSceneState extends State<GardenScene>
     final d = area.decor[i];
     final sz = unit * 0.21;
     // 장식 그림의 바닥 (월드 정렬 기준과 같은 높이)
-    return (
-      c: Offset(d.x * s.width, d.y * s.height + sz * 0.36),
-      w: sz * 0.95 * widget.markerScale,
-    );
+    final w = sz * 0.95 * widget.markerScale;
+    // 캔버스 아래 끝에 걸린 자리는 표가 잘리지 않게 안쪽으로 올린다
+    final y = min(d.y * s.height + sz * 0.36, s.height - w * 0.2);
+    return (c: Offset(d.x * s.width, y), w: w);
   }
 
   List<Widget> _markerLayer(AreaDef area, Size s) {
