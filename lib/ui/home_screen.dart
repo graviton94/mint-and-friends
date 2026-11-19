@@ -461,7 +461,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       horizontal: 10,
                       vertical: 2,
                     ),
-                    scale: 0.25,
+                    corner: 14,
                     child: Row(
                       children: [
                         ArtImage(Art.coin, size: 24),
@@ -947,7 +947,7 @@ class _MenuButton extends StatelessWidget {
                   ),
                 ],
               ),
-              scale: 0.35,
+              corner: 14,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1029,7 +1029,7 @@ class _ToastView extends StatelessWidget {
             color: const Color(0xEE2F3B2F),
             borderRadius: BorderRadius.circular(14),
           ),
-          scale: 0.35,
+          corner: 16,
         ),
         child: IconText(
           text,

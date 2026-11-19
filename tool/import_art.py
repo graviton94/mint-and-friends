@@ -54,10 +54,13 @@ def import_sheet(sid, src, spec):
 
 
 def import_frames(clear, spec):
-    """프레임: 칸마다 내용물 경계로 딱 맞게 자른 뒤 384x384 로 늘린다 (9-slice 용, 여백 없음)."""
+    """프레임: 칸마다 내용물 경계로 딱 맞게 자르고 비율을 유지한 채 긴 변 384px 로 맞춘다.
+    크기는 assets/art/frames/frames.json 에 기록 → 앱이 프레임마다 9-slice 경계를 계산한다."""
     from slice_sheet import drop_edge_fragments
     cols, rows = spec["cols"], spec["rows"]
     cw, ch = clear.width / cols, clear.height / rows
+    manifest_path = out("assets/art/frames/frames.json")
+    manifest = json.load(open(manifest_path)) if os.path.exists(manifest_path) else {}
     done = []
     for i, f in enumerate(spec["files"]):
         r, c = divmod(i, cols)
@@ -65,8 +68,12 @@ def import_frames(clear, spec):
         box = cell.getbbox()
         if box:
             cell = cell.crop(box)
-        cell.resize((384, 384), Image.LANCZOS).save(out(f), optimize=True)
+        k = 384 / max(cell.size)
+        cell = cell.resize((max(1, round(cell.width * k)), max(1, round(cell.height * k))), Image.LANCZOS)
+        cell.save(out(f), optimize=True)
+        manifest[os.path.splitext(os.path.basename(f))[0]] = [cell.width, cell.height]
         done.append(f)
+    json.dump(manifest, open(manifest_path, "w"), indent=1, sort_keys=True)
     return done
 
 

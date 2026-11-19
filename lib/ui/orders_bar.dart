@@ -73,7 +73,7 @@ class _OrderCard extends StatelessWidget {
               width: ready ? 3 : 1.5,
             ),
           ),
-          scale: 0.3,
+          corner: 14,
         ),
         child: Row(
           children: [

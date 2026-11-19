@@ -549,7 +549,7 @@ class _Bubble extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [BoxShadow(color: Color(0x22000000), blurRadius: 6)],
       ),
-      scale: 0.3,
+      corner: 14,
     ),
     child: Text(
       text,

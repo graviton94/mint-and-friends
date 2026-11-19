@@ -460,6 +460,7 @@ class SheetFrame extends StatelessWidget {
     return FrameBox(
       frame: 'panel',
       fallback: const BoxDecoration(),
+      corner: 26,
       child: SafeArea(
         child: ConstrainedBox(
           constraints: BoxConstraints(

@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
@@ -16,6 +19,21 @@ class Art {
   static Future<void> init() async {
     try {
       final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+      try {
+        final raw = await rootBundle.loadString(
+          'assets/art/frames/frames.json',
+        );
+        final m = jsonDecode(raw) as Map<String, dynamic>;
+        _frameSizes = {
+          for (final e in m.entries)
+            e.key: Size(
+              ((e.value as List)[0] as num).toDouble(),
+              ((e.value as List)[1] as num).toDouble(),
+            ),
+        };
+      } catch (_) {
+        _frameSizes = {};
+      }
       _available = manifest
           .listAssets()
           .where((p) => p.startsWith('assets/art/'))
@@ -108,8 +126,23 @@ class Art {
 
   /// 9-slice 프레임 (버튼, 모달, 카드, 토스트, 말풍선…). 384x384 정사각, 가장자리 30% 는 늘어나지 않는다.
   static ArtRef frame(String id) => ArtRef('assets/art/frames/$id.png', '');
-  static const double frameSize = 384;
-  static const Rect frameCenter = Rect.fromLTRB(116, 116, 268, 268);
+
+  /// 프레임 원본 크기 (assets/art/frames/frames.json, tool/import_art.py 가 만든다).
+  static Map<String, Size> _frameSizes = {};
+
+  /// 9-slice 가운데 영역: 짧은 변의 40% 를 모서리로 남긴다 (알약 버튼의 둥근 끝이 찌그러지지 않게).
+  static Rect? frameCenter(String id) {
+    final sz = _frameSizes[id];
+    if (sz == null) return null;
+    final inset = min(sz.width, sz.height) * 0.4;
+    return Rect.fromLTRB(inset, inset, sz.width - inset, sz.height - inset);
+  }
+
+  /// 모서리(가장자리) 크기 px — 화면에서 원하는 모서리 크기로 배율을 정할 때 쓴다.
+  static double frameInset(String id) {
+    final sz = _frameSizes[id];
+    return sz == null ? 0 : min(sz.width, sz.height) * 0.4;
+  }
 
   static const coin = ArtRef('assets/art/ui/coin.png', '🪙');
   static const star = ArtRef('assets/art/ui/star.png', '⭐');
