@@ -59,73 +59,84 @@ class _OrderCard extends StatelessWidget {
     final ready = game.canDeliver(index);
     return GestureDetector(
       onTap: ready ? () => game.deliver(index) : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: 62,
-        padding: const EdgeInsets.symmetric(horizontal: 5),
-        decoration: FrameBox.decorationFor(
-          ready ? 'card_ready' : 'card',
-          BoxDecoration(
-            color: ready ? const Color(0xFFFFF3C4) : Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: ready ? Palette.accent : const Color(0xFFE5DCC8),
-              width: ready ? 3 : 1.5,
-            ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          _card(context, o, friend, ready),
+          // 전달할 수 있으면 빨간 점
+          if (ready) const Positioned(right: -4, top: -4, child: RedDot()),
+        ],
+      ),
+    );
+  }
+
+  Widget _card(BuildContext context, Order o, FriendDef friend, bool ready) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      height: 62,
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      decoration: FrameBox.decorationFor(
+        ready ? 'card_ready' : 'card',
+        BoxDecoration(
+          color: ready ? const Color(0xFFFFF3C4) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: ready ? Palette.accent : const Color(0xFFE5DCC8),
+            width: ready ? 3 : 1.5,
           ),
-          corner: 14,
         ),
-        child: Row(
-          children: [
-            ArtImage(Art.friend(friend), size: 28),
-            const SizedBox(width: 2),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  FittedBox(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ArtImage(Art.item(o.chain, o.level), size: 26),
-                        Text(
-                          ' Lv${o.level}',
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                  FittedBox(
-                    child: IconText(
-                      ready ? tr('order.deliver') : '[[star]]${o.stars}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: ready ? const Color(0xFFB0640A) : Palette.text,
+        corner: 14,
+      ),
+      child: Row(
+        children: [
+          ArtImage(Art.friend(friend), size: 28),
+          const SizedBox(width: 2),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                FittedBox(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ArtImage(Art.item(o.chain, o.level), size: 26),
+                      Text(
+                        ' Lv${o.level}',
+                        style: const TextStyle(fontSize: 13),
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            if (!ready)
-              Tooltip(
-                message: tr('order.refresh'),
-                child: GestureDetector(
-                  onTap: onRefresh,
-                  child: Padding(
-                    padding: const EdgeInsets.all(2),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ArtImage(Art.icon('refresh'), size: 16),
-                        if (!adFree) ArtImage(Art.icon('ad'), size: 14),
-                      ],
+                ),
+                FittedBox(
+                  child: IconText(
+                    ready ? tr('order.deliver') : '[[star]]${o.stars}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: ready ? const Color(0xFFB0640A) : Palette.text,
                     ),
                   ),
                 ),
+              ],
+            ),
+          ),
+          if (!ready)
+            Tooltip(
+              message: tr('order.refresh'),
+              child: GestureDetector(
+                onTap: onRefresh,
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ArtImage(Art.icon('refresh'), size: 16),
+                      if (!adFree) ArtImage(Art.icon('ad'), size: 14),
+                    ],
+                  ),
+                ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }

@@ -12,7 +12,8 @@ import 'theme.dart';
 import 'widgets/frame_box.dart';
 import 'widgets/icon_text.dart';
 
-Future<void> _sheet(
+/// 게임 공통 아래 시트 (패널 프레임, 언어 · 상태가 바뀌면 다시 그림).
+Future<void> showGameSheet(
   BuildContext context,
   Listenable listen,
   Widget Function() build,
@@ -34,16 +35,19 @@ Future<void> _sheet(
 
 // ---------------------------------------------------------------- 강화
 
-Future<void> showUpgradesSheet(BuildContext context, GameState game) => _sheet(
-  context,
-  game,
-  () => SheetFrame(
-    title: tr('upgrade.title'),
-    child: Column(
-      children: [for (final u in Upgrades.all) _UpgradeRow(game: game, def: u)],
-    ),
-  ),
-);
+Future<void> showUpgradesSheet(BuildContext context, GameState game) =>
+    showGameSheet(
+      context,
+      game,
+      () => SheetFrame(
+        title: tr('upgrade.title'),
+        child: Column(
+          children: [
+            for (final u in Upgrades.all) _UpgradeRow(game: game, def: u),
+          ],
+        ),
+      ),
+    );
 
 class _UpgradeRow extends StatelessWidget {
   const _UpgradeRow({required this.game, required this.def});
@@ -117,50 +121,50 @@ class _UpgradeRow extends StatelessWidget {
 
 // ---------------------------------------------------------------- 꾸미기
 
-Future<void> showDecorSheet(BuildContext context, GameState game) => _sheet(
-  context,
-  game,
-  () {
-    final area = Garden.areaAt(game.currentArea);
-    final done = game.placed.length;
-    return SheetFrame(
-      title: tr('decor.title', {'name': areaName(area)}),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (game.areaLocked)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: IconText(
-                tr('decor.areaLocked', {'n': game.areaRequiredLevel}),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16, color: Color(0xFFB0640A)),
+Future<void> showDecorSheet(BuildContext context, GameState game) =>
+    showGameSheet(context, game, () {
+      final area = Garden.areaAt(game.currentArea);
+      final done = game.placed.length;
+      return SheetFrame(
+        title: tr('decor.title', {'name': areaName(area)}),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (game.areaLocked)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: IconText(
+                  tr('decor.areaLocked', {'n': game.areaRequiredLevel}),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Color(0xFFB0640A),
+                  ),
+                ),
               ),
+            LinearProgressIndicator(
+              value: done / Garden.slotsPerArea,
+              minHeight: 10,
+              borderRadius: BorderRadius.circular(5),
             ),
-          LinearProgressIndicator(
-            value: done / Garden.slotsPerArea,
-            minHeight: 10,
-            borderRadius: BorderRadius.circular(5),
-          ),
-          const SizedBox(height: 6),
-          IconText(
-            tr('decor.progress', {
-              'done': done,
-              'total': Garden.slotsPerArea,
-              'stars': game.stars,
-              'mult': game.gardenMultiplier.toStringAsFixed(1),
-            }),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 15),
-          ),
-          const SizedBox(height: 8),
-          for (var i = 0; i < area.decor.length; i++)
-            _DecorRow(game: game, area: area, slot: i),
-        ],
-      ),
-    );
-  },
-);
+            const SizedBox(height: 6),
+            IconText(
+              tr('decor.progress', {
+                'done': done,
+                'total': Garden.slotsPerArea,
+                'stars': game.stars,
+                'mult': game.gardenMultiplier.toStringAsFixed(1),
+              }),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15),
+            ),
+            const SizedBox(height: 8),
+            for (var i = 0; i < area.decor.length; i++)
+              _DecorRow(game: game, area: area, slot: i),
+          ],
+        ),
+      );
+    });
 
 class _DecorRow extends StatelessWidget {
   const _DecorRow({required this.game, required this.area, required this.slot});
@@ -210,7 +214,7 @@ class _DecorRow extends StatelessWidget {
 Future<void> showCollectionSheet(
   BuildContext context,
   GameState game,
-) => _sheet(
+) => showGameSheet(
   context,
   game,
   () => SheetFrame(
@@ -371,7 +375,7 @@ Future<void> showStorageSheet(
   BuildContext context,
   GameState game, {
   required void Function(String message) onMessage,
-}) => _sheet(
+}) => showGameSheet(
   context,
   game,
   () => SheetFrame(
@@ -501,7 +505,7 @@ class _StorageBuySlot extends StatelessWidget {
 // ---------------------------------------------------------------- 상점
 
 Future<void> showShopSheet(BuildContext context, BillingService billing) =>
-    _sheet(
+    showGameSheet(
       context,
       billing,
       () => SheetFrame(
@@ -548,7 +552,7 @@ Future<void> showSettingsSheet(
   required Listenable listen,
   required Widget Function() accountSection,
   String version = '',
-}) => _sheet(
+}) => showGameSheet(
   context,
   listen,
   () => SheetFrame(

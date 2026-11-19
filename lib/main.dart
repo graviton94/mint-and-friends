@@ -15,9 +15,11 @@ import 'services/audio_service.dart';
 import 'services/auth_service.dart';
 import 'services/billing_service.dart';
 import 'services/save_service.dart';
+import 'services/social_service.dart';
 import 'ui/account_ui.dart';
 import 'ui/home_screen.dart';
 import 'ui/sheets.dart';
+import 'ui/social_ui.dart';
 import 'ui/theme.dart';
 import 'ui/widgets/icon_text.dart';
 import 'ui/widgets/frame_box.dart';
@@ -38,6 +40,13 @@ Future<void> main() async {
   save.loadLocal(game);
 
   final billing = BillingService();
+  // 친구 · 선물 · 공지 (Firebase 가 없으면 꺼진다: 메뉴에서 친구가 숨는다)
+  final social = SocialService(
+    backend: FirestoreSocialBackend(),
+    prefs: prefs,
+    uid: () => auth.uid,
+    accountName: () => auth.isGuest ? null : auth.user?.displayName,
+  );
   final ads = AdsService(isAdFree: () => billing.adFree);
 
   String version = '';
@@ -53,6 +62,7 @@ Future<void> main() async {
       billing: billing,
       auth: auth,
       save: save,
+      social: social,
       version: version,
     ),
   );
@@ -69,6 +79,7 @@ class GameApp extends StatefulWidget {
     required this.billing,
     required this.auth,
     required this.save,
+    this.social,
     this.version = '',
   });
   final GameState game;
@@ -76,6 +87,7 @@ class GameApp extends StatefulWidget {
   final BillingService billing;
   final AuthService auth;
   final SaveService save;
+  final SocialService? social;
   final String version;
 
   @override
@@ -94,6 +106,8 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
 
   AuthService get auth => widget.auth;
   SaveService get save => widget.save;
+  SocialService? get social => widget.social;
+  late final Listenable _homeListen = Listenable.merge([save, ?widget.social]);
 
   @override
   void initState() {
@@ -120,8 +134,16 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
           e is AreaCompletedEvent) {
         save.saveLocal(game);
         save.upload(game);
+        social?.syncProfile(game);
       }
     });
+  }
+
+  /// 친구 선물함 · 공지 확인, 공개 프로필 갱신 (실패해도 조용히, 모두 시간 제한).
+  void _refreshSocial({bool force = false}) {
+    final s = social;
+    if (s == null || !auth.signedIn) return;
+    unawaited(s.refresh(game, force: force));
   }
 
   // ---------------------------------------------------------------- 로그인 ↔ 저장
@@ -143,6 +165,7 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
         },
       );
       _attachedUid = uid;
+      _refreshSocial(force: true);
     } finally {
       _attaching = false;
     }
@@ -179,6 +202,7 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     if (auth.signedIn) {
       save.saveLocal(game);
       save.upload(game);
+      social?.syncProfile(game);
     }
   }
 
@@ -192,6 +216,7 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
       _start();
       AudioService.instance.resumeMusic();
       _offerOffline();
+      _refreshSocial();
     }
   }
 
@@ -356,7 +381,11 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
                 ads: widget.ads,
                 billing: widget.billing,
                 openSettings: _openSettings,
-                extraListenable: save,
+                extraListenable: _homeListen,
+                openFriends: social != null && social!.enabled
+                    ? (ctx) => showFriendsSheet(ctx, social!, game)
+                    : null,
+                socialBadge: () => social?.badge ?? false,
               ),
       ),
     );

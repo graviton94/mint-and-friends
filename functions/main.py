@@ -2,10 +2,14 @@
 
 - login(provider, token): 카카오 액세스 토큰을 카카오 서버에서 확인하고 Firebase 커스텀 토큰을 돌려준다.
     uid = "kakao:<카카오 회원번호>". KAKAO_APP_ID 가 설정돼 있으면 다른 카카오 앱이 받은 토큰은 거부한다.
-- deleteAccount(): 로그인한 사용자의 게임 저장(users/{uid})과 Firebase 계정을 지운다 (Play 정책: 앱 안 계정 삭제).
+- deleteAccount(): 로그인한 사용자의 게임 저장(users/{uid}) · 친구 데이터와 Firebase 계정을 지운다 (Play 정책: 앱 안 계정 삭제).
+- sendGift(to, day): 친구에게 하루 한 번 선물 (에너지 5). 친구 관계 · 하루 한 번(쌍마다) · 하루 최대 50개를
+    트랜잭션으로 확인하고 받는 사람의 inbox/{to}/items 에 넣는다. day = 보내는 기기의 날짜 'YYYY-MM-DD'.
 """
+import datetime
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 
@@ -90,6 +94,98 @@ def deleteAccount(req: https_fn.CallableRequest) -> dict:  # noqa: N802 (앱에�
     if req.auth is None:
         raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, 'login required')
     uid = req.auth.uid
-    firestore.client().collection('users').document(uid).delete()
+    db = firestore.client()
+    try:
+        _delete_social(db, uid)
+    except Exception as e:  # 친구 데이터 정리가 실패해도 계정 삭제는 진행한다
+        print(f'deleteAccount: social cleanup failed: {type(e).__name__}')
+    db.collection('users').document(uid).delete()
     auth.delete_user(uid)
     return {'ok': True}
+
+
+def _delete_social(db, uid: str) -> None:
+    """공개 프로필 · 친구 코드 · 친구 목록 · 받은 선물함을 지운다."""
+    profile = db.collection('profiles').document(uid)
+    snap = profile.get()
+    code = (snap.to_dict() or {}).get('code') if snap.exists else None
+    if isinstance(code, str) and code:
+        code_ref = db.collection('codes').document(code)
+        code_snap = code_ref.get()
+        if code_snap.exists and (code_snap.to_dict() or {}).get('uid') == uid:
+            code_ref.delete()
+    profile.delete()
+    for col in (db.collection('users').document(uid).collection('friends'),
+                db.collection('inbox').document(uid).collection('items')):
+        for doc in col.list_documents(page_size=200):
+            doc.delete()
+
+
+# ---------------------------------------------------------------- 친구 선물
+
+GIFT_REWARD = {'e': 5}
+GIFT_DAILY_MAX = 50  # 한 사람이 하루에 보낼 수 있는 선물 수 (친구 최대 50명)
+_DAY = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+
+
+def _check_day(day) -> str:
+    """기기 날짜를 쓰되 서버 UTC 날짜와 하루 넘게 차이 나면 거부 (시간대 ±14시간 허용)."""
+    if not isinstance(day, str) or not _DAY.match(day):
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.INVALID_ARGUMENT, 'day must be YYYY-MM-DD')
+    try:
+        d = datetime.date.fromisoformat(day)
+    except ValueError as e:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.INVALID_ARGUMENT, 'bad day') from e
+    today = datetime.datetime.now(datetime.timezone.utc).date()
+    if abs((d - today).days) > 1:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.INVALID_ARGUMENT, 'day out of range')
+    return day
+
+
+@firestore.transactional
+def _gift_txn(txn, db, sender: str, to: str, day: str, from_name: str) -> None:
+    gift_ref = db.collection('gifts').document(f'{sender}_{to}_{day}')
+    count_ref = db.collection('giftCounts').document(f'{sender}_{day}')
+    friend_ref = db.collection('users').document(sender).collection('friends').document(to)
+    # 트랜잭션에서는 읽기를 모두 먼저
+    gift = gift_ref.get(transaction=txn)
+    count = count_ref.get(transaction=txn)
+    friend = friend_ref.get(transaction=txn)
+    if not friend.exists:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.FAILED_PRECONDITION, 'not a friend')
+    if gift.exists:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.ALREADY_EXISTS, 'already sent today')
+    n = int((count.to_dict() or {}).get('n', 0)) if count.exists else 0
+    if n >= GIFT_DAILY_MAX:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.RESOURCE_EXHAUSTED, 'daily gift limit')
+    # 기록은 며칠 뒤 필요 없다: Firestore TTL 정책(expireAt)을 켜 두면 자동으로 지워진다
+    expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=3)
+    txn.set(gift_ref, {'from': sender, 'to': to, 'day': day, 'at': firestore.SERVER_TIMESTAMP, 'expireAt': expire})
+    txn.set(count_ref, {'n': n + 1, 'expireAt': expire})
+    txn.set(db.collection('inbox').document(to).collection('items').document(), {
+        'kind': 'gift',
+        'fromUid': sender,
+        'fromName': from_name,
+        'reward': GIFT_REWARD,
+        'at': firestore.SERVER_TIMESTAMP,
+    })
+    txn.set(friend_ref, {'lastGiftSentDay': day}, merge=True)
+
+
+@https_fn.on_call(region=REGION, max_instances=10)
+def sendGift(req: https_fn.CallableRequest) -> dict:  # noqa: N802 (앱에서 부르는 이름)
+    if req.auth is None:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.UNAUTHENTICATED, 'login required')
+    sender = req.auth.uid
+    data = req.data if isinstance(req.data, dict) else {}
+    to = data.get('to')
+    if not isinstance(to, str) or not to or len(to) > 128 or '/' in to or to == sender:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.INVALID_ARGUMENT, 'bad recipient')
+    day = _check_day(data.get('day'))
+    db = firestore.client()
+    if not db.collection('profiles').document(to).get().exists:
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.NOT_FOUND, 'no such player')
+    me = db.collection('profiles').document(sender).get()
+    from_name = str((me.to_dict() or {}).get('name') or '')[:24] if me.exists else ''
+    _gift_txn(db.transaction(), db, sender, to, day, from_name)
+    return {'ok': True, 'day': day, 'reward': GIFT_REWARD}

@@ -5,6 +5,9 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 
 import 'config.dart';
+import 'meta.dart';
+
+export 'meta.dart';
 
 class Item {
   final int id;
@@ -153,6 +156,7 @@ class GameState extends ChangeNotifier {
     lastSeen = _clock();
     nextVisitorAt = _clock().add(GameConfig.visitorMinGap);
     _fillOrders();
+    _sendWelcome();
   }
 
   final Random _rng;
@@ -201,6 +205,19 @@ class GameState extends ChangeNotifier {
 
   final Map<String, DateTime> _friendTapReady = {};
   _Sale? _lastSale;
+
+  // ---- 업적 · 쪽지
+  final Map<Stat, int> stats = {};
+
+  /// 업적별 받은 단계 수.
+  final Map<String, int> achClaimed = {};
+  List<Mail> mail = [];
+  DateTime? nextFriendGiftAt;
+  String _playDay = '';
+  bool _welcomeSent = false;
+
+  /// 도감에서 이미 본 최고 단계 (새 발견 빨간 점용).
+  final Map<Chain, int> seenHighest = {for (final c in Chain.values) c: 1};
 
   /// 최근 전달한 부탁 (종류-단계), 최대 3개. 새 부탁이 같은 것을 바로 다시 원하지 않게.
   final List<String> _recentOrders = [];
@@ -371,6 +388,8 @@ class GameState extends ChangeNotifier {
 
   void tick(double dt) {
     if (dt <= 0) return;
+    _rollPlayDay();
+    _maybeFriendGift();
     _earn(incomePerSec * dt);
     _regenEnergy(dt);
 
@@ -410,6 +429,7 @@ class GameState extends ChangeNotifier {
   void _earn(double v) {
     coins += v;
     lifetimeCoins += v;
+    _bump(Stat.coinsEarned, v.round());
   }
 
   // ---------------------------------------------------------------- 에너지
@@ -437,6 +457,8 @@ class GameState extends ChangeNotifier {
     if (boardFull) return TapResult.boardFull;
     if (energy < GameConfig.energyPerTap) return TapResult.noEnergy;
     energy -= GameConfig.energyPerTap;
+    _bump(Stat.spawns);
+    _bump(Stat.energySpent, GameConfig.energyPerTap);
     _spawnOne();
     notifyListeners();
     return TapResult.spawned;
@@ -469,6 +491,7 @@ class GameState extends ChangeNotifier {
   void recordAd(AdKind kind) {
     _rollAdDay();
     adsToday[kind] = (adsToday[kind] ?? 0) + 1;
+    _bump(Stat.adsWatched);
     notifyListeners();
   }
 
@@ -528,11 +551,13 @@ class GameState extends ChangeNotifier {
   MoveResult _merge(int from, int to) {
     final b = board[to]!;
     totalMerges++;
+    _bump(Stat.merges);
     board[from] = null;
     if (b.level >= GameConfig.maxLevel) {
       final payout = GameConfig.maxMergePayoutOf(b.level) * _coinMult;
       board[to] = null;
       _earn(payout);
+      _bump(Stat.maxMerges);
       _events.add(MaxMergeEvent(payout));
       _gainXp(Leveling.xpForMerge(b.level));
       return MoveResult.maxMerged;
@@ -562,6 +587,7 @@ class GameState extends ChangeNotifier {
     final it = board[cell];
     if (it == null || !it.isBubble) return false;
     it.bubbleUntil = null;
+    _bump(Stat.bubblesPopped);
     notifyListeners();
     return true;
   }
@@ -616,6 +642,7 @@ class GameState extends ChangeNotifier {
     if (!canBuyCell(cell)) return false;
     coins -= nextCellCost;
     unlockedCells.add(cell);
+    _bump(Stat.cellsBought);
     notifyListeners();
     return true;
   }
@@ -630,6 +657,7 @@ class GameState extends ChangeNotifier {
     board[cell] = null;
     _earn(price);
     _lastSale = _Sale(cell, it, price, now);
+    _bump(Stat.sells);
     _events.add(SoldEvent(it, price));
     notifyListeners();
     return price;
@@ -676,6 +704,7 @@ class GameState extends ChangeNotifier {
     final slot = storage.indexOf(null);
     storage[slot] = board[cell];
     board[cell] = null;
+    _bump(Stat.stored);
     notifyListeners();
     return true;
   }
@@ -766,6 +795,8 @@ class GameState extends ChangeNotifier {
     var gained = o.stars;
     if (_rng.nextDouble() < buff(FriendBuff.starBonus)) gained += 1;
     stars += gained;
+    _bump(Stat.orders);
+    _bump(Stat.orderStars, gained);
     final c = orderCoins(o);
     _earn(c);
     final before = affection(o.friendId);
@@ -807,6 +838,7 @@ class GameState extends ChangeNotifier {
     final cost = decorCost(slot);
     stars -= cost;
     placed.add(slot);
+    _bump(Stat.decor);
     final area = currentArea;
     final def = Garden.areaAt(area).decor[slot];
     _events.add(DecorPlacedEvent(area, slot));
@@ -818,6 +850,7 @@ class GameState extends ChangeNotifier {
     if (placed.length >= Garden.slotsPerArea) {
       currentArea++;
       placed = {};
+      _bump(Stat.areas);
       _events.add(AreaCompletedEvent(area));
     }
     _gainXp(Leveling.xpForDecor(cost));
@@ -838,6 +871,7 @@ class GameState extends ChangeNotifier {
     _friendTapReady[id] = now.add(GameConfig.friendTapCooldown);
     final v = GameConfig.friendTapCoins;
     _earn(v);
+    _bump(Stat.friendTaps);
     notifyListeners();
     return v;
   }
@@ -855,8 +889,172 @@ class GameState extends ChangeNotifier {
     _earn(c);
     stars += s;
     visitorUntil = null;
+    _bump(Stat.visitors);
     notifyListeners();
     return (coins: c, stars: s);
+  }
+
+  // ---------------------------------------------------------------- 누적 기록 · 업적
+
+  int stat(Stat s) => stats[s] ?? 0;
+  void _bump(Stat s, [int n = 1]) => stats[s] = stat(s) + n;
+
+  /// 소셜 친구에게 선물을 보냈다 (업적 '선물 보내기'용).
+  void recordGiftSent() {
+    _bump(Stat.giftsSent);
+    notifyListeners();
+  }
+
+  /// 업적이 세는 현재 값.
+  int achievementValue(AchievementDef d) => switch (d.kind) {
+    AchKind.stat => stat(d.stat!),
+    AchKind.level => level,
+    AchKind.flowerLevel => highest[Chain.flower] ?? 1,
+    AchKind.snackLevel => highest[Chain.snack] ?? 1,
+    AchKind.friends => friends.length,
+    AchKind.maxAffection => [
+      for (final f in friends)
+        if (affection(f) >= Friends.maxAffection) f,
+    ].length,
+  };
+
+  /// 도달한 단계 수 (0 ~ tiers.length).
+  int achievementReached(AchievementDef d) {
+    final v = achievementValue(d);
+    return d.tiers.where((t) => v >= t).length;
+  }
+
+  int achievementClaimedTiers(AchievementDef d) => achClaimed[d.id] ?? 0;
+  bool achievementClaimable(AchievementDef d) =>
+      achievementClaimedTiers(d) < achievementReached(d);
+  int get claimableAchievements =>
+      Achievements.all.where(achievementClaimable).length;
+
+  /// 다음 단계 보상을 받는다.
+  Reward? claimAchievement(AchievementDef d) {
+    if (!achievementClaimable(d)) return null;
+    final tier = achievementClaimedTiers(d);
+    final r = d.rewardFor(tier);
+    achClaimed[d.id] = tier + 1;
+    _applyReward(r);
+    notifyListeners();
+    return r;
+  }
+
+  void _applyReward(Reward r) {
+    if (r.coins > 0) _earn(r.coins.toDouble());
+    energy += r.energy; // 상한을 넘어도 된다
+    stars += r.stars;
+  }
+
+  // ---------------------------------------------------------------- 쪽지
+
+  int get unreadMail => mail.where((m) => !m.claimed).length;
+
+  void addMail(Mail m) {
+    if (mail.any((x) => x.id == m.id)) return;
+    mail.insert(0, m);
+    // 오래된 받은 쪽지부터 정리
+    while (mail.length > MailConfig.keep) {
+      final i = mail.lastIndexWhere((x) => x.claimed);
+      if (i < 0) break;
+      mail.removeAt(i);
+    }
+    notifyListeners();
+  }
+
+  /// 쪽지 열기 · 보상 받기. 받은 보상을 돌려준다.
+  Reward? claimMail(String id) {
+    final m = mail.where((x) => x.id == id).firstOrNull;
+    if (m == null || m.claimed) return null;
+    m.claimed = true;
+    _applyReward(m.reward);
+    _bump(Stat.mailClaimed);
+    notifyListeners();
+    return m.reward;
+  }
+
+  Reward claimAllMail() {
+    var c = 0, e = 0, s = 0;
+    for (final m in mail.where((x) => !x.claimed).toList()) {
+      final r = claimMail(m.id)!;
+      c += r.coins;
+      e += r.energy;
+      s += r.stars;
+    }
+    return Reward(coins: c, energy: e, stars: s);
+  }
+
+  void _sendWelcome() {
+    if (_welcomeSent) return;
+    _welcomeSent = true;
+    mail.insert(
+      0,
+      Mail(
+        id: 'welcome',
+        kind: MailKind.notice,
+        from: 'team',
+        titleKey: 'mail.welcome',
+        reward: const Reward(energy: 20, coins: 50),
+        at: now,
+      ),
+    );
+  }
+
+  /// 동물 친구가 가끔 보내는 깜짝 선물 (3~6시간마다, 안 받은 선물은 최대 3통).
+  void _maybeFriendGift() {
+    final t = now;
+    nextFriendGiftAt ??= t.add(MailConfig.friendGiftMinGap);
+    if (t.isBefore(nextFriendGiftAt!) || friends.length < 2) return;
+    final unread = mail
+        .where((m) => m.kind == MailKind.friendGift && !m.claimed)
+        .length;
+    final gap =
+        MailConfig.friendGiftMinGap.inMinutes +
+        _rng.nextInt(
+          MailConfig.friendGiftMaxGap.inMinutes -
+              MailConfig.friendGiftMinGap.inMinutes +
+              1,
+        );
+    nextFriendGiftAt = t.add(Duration(minutes: gap));
+    if (unread >= MailConfig.friendGiftMaxUnread) return;
+    final pool = friends.toList()..sort();
+    final from = pool[_rng.nextInt(pool.length)];
+    // 에너지 · 코인 · 드물게 별
+    final roll = _rng.nextDouble();
+    final reward = roll < 0.5
+        ? Reward(energy: 5 + _rng.nextInt(3) * 5)
+        : roll < 0.9
+        ? Reward(coins: (20 + level * 5) * (1 + _rng.nextInt(2)))
+        : const Reward(stars: 1);
+    addMail(
+      Mail(
+        id: 'fg-${t.millisecondsSinceEpoch}',
+        kind: MailKind.friendGift,
+        from: from,
+        titleKey: 'mail.friendGift.${_rng.nextInt(4)}',
+        reward: reward,
+        at: t,
+      ),
+    );
+  }
+
+  void _rollPlayDay() {
+    final d = now;
+    final k = '${d.year}-${d.month}-${d.day}';
+    if (k == _playDay) return;
+    _playDay = k;
+    _bump(Stat.daysPlayed);
+  }
+
+  /// 도감에 새로 발견한 게 있는지 (빨간 점).
+  bool get hasNewDiscovery =>
+      Chain.values.any((c) => (highest[c] ?? 1) > (seenHighest[c] ?? 1));
+  void markBookSeen() {
+    for (final c in Chain.values) {
+      seenHighest[c] = highest[c] ?? 1;
+    }
+    notifyListeners();
   }
 
   // ---------------------------------------------------------------- 강화
@@ -882,6 +1080,7 @@ class GameState extends ChangeNotifier {
     if (!canBuyUpgrade(t)) return false;
     coins -= upgradeCost(t);
     upgrades[t] = lv(t) + 1;
+    _bump(Stat.upgradesBought);
     notifyListeners();
     return true;
   }
@@ -973,6 +1172,13 @@ class GameState extends ChangeNotifier {
       'seen': lastSeen.millisecondsSinceEpoch,
       'visitorNext': nextVisitorAt.millisecondsSinceEpoch,
       'merges': totalMerges,
+      'stats': {for (final e in stats.entries) e.key.name: e.value},
+      'ach': achClaimed,
+      'mail': [for (final m in mail) m.toJson()],
+      'fgNext': nextFriendGiftAt?.millisecondsSinceEpoch,
+      'playDay': _playDay,
+      'welcome': _welcomeSent,
+      'seenHi': {for (final e in seenHighest.entries) e.key.name: e.value},
       'savedAt': savedAt!.millisecondsSinceEpoch,
     };
   }
@@ -1058,6 +1264,32 @@ class GameState extends ChangeNotifier {
     lastSeen = ts('seen') ?? now;
     nextVisitorAt = ts('visitorNext') ?? now.add(GameConfig.visitorMinGap);
     totalMerges = (j['merges'] as num?)?.toInt() ?? 0;
+    stats.clear();
+    final savedStats = (j['stats'] as Map?)?.cast<String, dynamic>() ?? {};
+    for (final k in Stat.values) {
+      final v = (savedStats[k.name] as num?)?.toInt();
+      if (v != null) stats[k] = v;
+    }
+    if (savedStats.isEmpty) stats[Stat.merges] = totalMerges; // 예전 저장
+    achClaimed
+      ..clear()
+      ..addAll(
+        ((j['ach'] as Map?) ?? {}).map(
+          (k, v) => MapEntry(k as String, (v as num).toInt()),
+        ),
+      );
+    mail = [
+      for (final m in (j['mail'] as List? ?? []))
+        Mail.fromJson((m as Map).cast<String, dynamic>()),
+    ];
+    nextFriendGiftAt = ts('fgNext');
+    _playDay = j['playDay'] as String? ?? '';
+    _welcomeSent = j['welcome'] as bool? ?? mail.isNotEmpty;
+    _sendWelcome();
+    final sh = (j['seenHi'] as Map?)?.cast<String, dynamic>() ?? {};
+    for (final c in Chain.values) {
+      seenHighest[c] = (sh[c.name] as num?)?.toInt() ?? (highest[c] ?? 1);
+    }
     savedAt = ts('savedAt');
     notifyListeners();
     return true;

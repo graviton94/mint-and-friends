@@ -16,6 +16,7 @@ import '../services/billing_service.dart';
 import 'board/board_view.dart';
 import 'garden/garden_scene.dart';
 import 'garden/garden_screen.dart';
+import 'meta_ui.dart';
 import 'orders_bar.dart';
 import 'sheets.dart';
 import 'theme.dart';
@@ -33,7 +34,17 @@ class HomeScreen extends StatefulWidget {
     required this.billing,
     required this.openSettings,
     this.extraListenable,
+    this.openFriends,
+    this.socialBadge = _noBadge,
   });
+
+  static bool _noBadge() => false;
+
+  /// 친구(소셜) 화면 열기. 소셜 기능이 없으면 null (메뉴에서 숨김).
+  final void Function(BuildContext context)? openFriends;
+
+  /// 친구 쪽에 확인할 것이 있는지 (받을 선물 등) → 메뉴 빨간 점.
+  final bool Function() socialBadge;
   final GameState game;
   final AdsService ads;
   final BillingService billing;
@@ -895,22 +906,23 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(width: 6),
-          if (!adFree) ...[
-            _IconButton(
-              icon: 'no_ads',
-              onTap: () {
-                sfx(Sfx.open);
-                showShopSheet(context, widget.billing);
-              },
-            ),
-            const SizedBox(width: 6),
-          ],
+          // 쪽지 (안 읽은 수) · 메뉴 (업적 · 친구 · 광고 제거 · 설정)
           _IconButton(
-            icon: 'settings',
+            icon: 'letter',
+            badge: game.unreadMail,
             onTap: () {
               sfx(Sfx.open);
-              widget.openSettings(context);
+              showMailSheet(context, game);
             },
+          ),
+          const SizedBox(width: 6),
+          _IconButton(
+            icon: 'menu',
+            fallback: Icons.menu_rounded,
+            badge: game.claimableAchievements > 0 || widget.socialBadge()
+                ? -1
+                : 0,
+            onTap: _openMenu,
           ),
         ],
       ),
@@ -1075,8 +1087,10 @@ class _HomeScreenState extends State<HomeScreen> {
           _MenuButton(
             icon: 'book',
             label: tr('menu.book'),
+            badge: game.hasNewDiscovery,
             onTap: () {
               sfx(Sfx.open);
+              game.markBookSeen();
               showCollectionSheet(context, game);
             },
           ),
@@ -1235,6 +1249,47 @@ class _HomeScreenState extends State<HomeScreen> {
           onVisitorTap: _onVisitorTap,
         ),
       ),
+    );
+  }
+
+  void _openMenu() {
+    sfx(Sfx.open);
+    showMenuSheet(
+      context,
+      Listenable.merge([game, widget.billing, ?widget.extraListenable]),
+      () => [
+        MenuEntry(
+          'trophy',
+          tr('menu.achievements'),
+          () => showAchievementsSheet(context, game),
+          badge: game.claimableAchievements,
+        ),
+        if (widget.openFriends != null)
+          MenuEntry(
+            'friends',
+            tr('menu.friends'),
+            () => widget.openFriends!(context),
+            badge: widget.socialBadge() ? -1 : 0,
+            fallback: Icons.people_alt_rounded,
+          ),
+        MenuEntry(
+          'letter',
+          tr('menu.mail'),
+          () => showMailSheet(context, game),
+          badge: game.unreadMail,
+        ),
+        if (!adFree)
+          MenuEntry(
+            'no_ads',
+            tr('menu.removeAds'),
+            () => showShopSheet(context, widget.billing),
+          ),
+        MenuEntry(
+          'settings',
+          tr('menu.settings'),
+          () => widget.openSettings(context),
+        ),
+      ],
     );
   }
 
@@ -1680,12 +1735,7 @@ class _MenuButton extends StatelessWidget {
               ],
             ),
           ),
-          if (badge)
-            const Positioned(
-              right: -3,
-              top: -3,
-              child: CircleAvatar(radius: 7, backgroundColor: Colors.redAccent),
-            ),
+          if (badge) const Positioned(right: -5, top: -5, child: RedDot()),
         ],
       ),
     );
@@ -1810,27 +1860,49 @@ class _Pill extends StatelessWidget {
 
 /// HUD 오른쪽 둥근 아이콘 버튼.
 class _IconButton extends StatelessWidget {
-  const _IconButton({required this.icon, required this.onTap});
+  const _IconButton({
+    required this.icon,
+    required this.onTap,
+    this.badge = 0,
+    this.fallback,
+  });
   final String icon;
+  final IconData? fallback;
   final VoidCallback onTap;
+
+  /// 0 = 없음, -1 = 점만, 양수 = 숫자.
+  final int badge;
 
   @override
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
-    child: Container(
-      width: 42,
-      height: 42,
-      alignment: Alignment.center,
-      decoration: FrameBox.decorationFor(
-        'tile',
-        BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFF7A5230), width: 2),
+    child: Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          alignment: Alignment.center,
+          decoration: FrameBox.decorationFor(
+            'tile',
+            BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFF7A5230), width: 2),
+            ),
+            corner: 14,
+          ),
+          child: Art.icon(icon).available || fallback == null
+              ? ArtImage(Art.icon(icon), size: 26)
+              : Icon(fallback, size: 26, color: const Color(0xFF7A5230)),
         ),
-        corner: 14,
-      ),
-      child: ArtImage(Art.icon(icon), size: 26),
+        if (badge != 0)
+          Positioned(
+            right: -5,
+            top: -5,
+            child: RedDot(count: badge > 0 ? badge : null),
+          ),
+      ],
     ),
   );
 }

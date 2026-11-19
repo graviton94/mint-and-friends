@@ -165,3 +165,42 @@ class SlotMarker extends StatelessWidget {
     );
   }
 }
+
+/// 메뉴 · 버튼 오른쪽 위의 빨간 알림 점 (숫자가 있으면 숫자).
+class RedDot extends StatelessWidget {
+  const RedDot({super.key, this.count});
+  final int? count;
+
+  @override
+  Widget build(BuildContext context) {
+    final n = count;
+    final text = n == null || n <= 0 ? null : (n > 99 ? '99+' : '$n');
+    return Container(
+      constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+      padding: EdgeInsets.symmetric(horizontal: text == null ? 0 : 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE84A3C),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x44000000),
+            blurRadius: 2,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: text == null
+          ? null
+          : Text(
+              text,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                height: 1.1,
+              ),
+            ),
+    );
+  }
+}

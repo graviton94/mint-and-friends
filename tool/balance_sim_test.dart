@@ -31,7 +31,11 @@ void sim() {
   final milestones = <int, String>{};
   final areas = <int, String>{};
   var lastArea = 0, sold = 0, ads = 0;
-  var orderCoins = 0.0;
+  var orderCoins = 0.0, achCoins = 0, mailCoins = 0;
+  // 인플레이션 기록: 하루 단위 수입 · 지출 · 잔고 · 다음 지출처 가격
+  final daily = <String>[];
+  var dayStartEarned = 0.0, dayStartCoins = 0.0;
+  const report = {1, 2, 3, 5, 7, 10, 14, 21, 30, 45};
 
   String stamp() {
     final d = now.difference(start).inDays + 1;
@@ -47,6 +51,8 @@ void sim() {
 
   for (var day = 0; day < days; day++) {
     var boosts = 0, bags = 0;
+    dayStartEarned = g.lifetimeCoins;
+    dayStartCoins = g.coins;
     for (final s in sessions) {
       final begin = DateTime(
         start.year,
@@ -85,6 +91,13 @@ void sim() {
           g.grantCoinBag();
           bags++;
         }
+        // 업적 · 쪽지 보상은 생기는 대로 받는다
+        for (final d in Achievements.all) {
+          while (g.achievementClaimable(d)) {
+            achCoins += g.claimAchievement(d)!.coins;
+          }
+        }
+        if (g.unreadMail > 0) mailCoins += g.claimAllMail().coins;
         for (var i = 0; i < g.orders.length; i++) {
           final o = g.orders[i];
           final c = g.orderCoins(o);
@@ -142,7 +155,27 @@ void sim() {
         }
       }
     }
+    if (report.contains(day + 1)) {
+      final earned = g.lifetimeCoins - dayStartEarned;
+      final spent = earned - (g.coins - dayStartCoins);
+      final ups = UpgradeType.values
+          .where((u) => !g.upgradeMaxed(u) && !g.upgradeFeatureLocked(u))
+          .map(g.upgradeCost)
+          .fold<double>(double.infinity, (a, b) => min(a, b.toDouble()));
+      daily.add(
+        '${(day + 1).toString().padLeft(2)}일  Lv${g.level.toString().padLeft(2)}  '
+        '수입 ${earned.round().toString().padLeft(7)}  지출 ${spent.round().toString().padLeft(7)}  '
+        '잔고 ${g.coins.round().toString().padLeft(7)} (= ${(g.coins / max(1, earned)).toStringAsFixed(2)}일치)  '
+        '다음 강화 ${ups.isFinite ? ups.round() : '-'} (${ups.isFinite ? (ups / max(1, earned)).toStringAsFixed(2) : '-'}일치)  '
+        '다음 칸 ${g.nextCellCost.round()}  시간당 방치 ${g.incomePerHour.round()}',
+      );
+    }
   }
+  print('=== 인플레이션: 하루 수입 · 지출 · 잔고 (잔고는 하루 수입의 1~2일치가 목표) ===');
+  daily.forEach(print);
+  print(
+    '업적 코인 $achCoins  쪽지 코인 $mailCoins  (업적 ${Achievements.all.fold(0, (a, d) => a + g.achievementClaimedTiers(d))}/${Achievements.totalGoals} 단계)',
+  );
   print('=== 코인 출처 (45일 합계) ===');
   print(
     '부탁 ${orderCoins.round()}  방치(접속 중+오프라인) ${(g.lifetimeCoins - orderCoins).round()} (기타 보상 포함)',

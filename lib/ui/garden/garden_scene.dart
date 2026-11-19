@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/scheduler.dart';
@@ -64,6 +65,18 @@ class _Walker {
   bool facingRight = false;
   double happyLeft = 0;
   double speechLeft = 0;
+  String say = '';
+
+  /// 잠깐 다른 자세 ('sleep' · 'wave'), 남은 시간.
+  String? pose;
+  double poseLeft = 0;
+
+  /// 장식을 구경하러 가는 중이면 그 장식 이름 (도착하면 한마디).
+  String? visitingDecor;
+
+  /// 대화 상대에게 답할 차례 (남은 시간, 상대 id).
+  double replyIn = 0;
+  String? replyTo;
   _Walker(this.pos, this.target, this.pauseLeft);
 }
 
@@ -80,6 +93,7 @@ class _GardenSceneState extends State<GardenScene>
   final _rng = Random();
   final Map<String, _Walker> _walkers = {};
   final List<_Float> _floats = [];
+  StreamSubscription<GameEvent>? _sub;
   Duration _last = Duration.zero;
   double _t = 0;
   double _visitorX = 1.1;
@@ -93,10 +107,12 @@ class _GardenSceneState extends State<GardenScene>
   void initState() {
     super.initState();
     _ticker = createTicker(_onTick)..start();
+    _sub = game.events.listen(_onGameEvent);
   }
 
   @override
   void dispose() {
+    _sub?.cancel();
     _ticker.dispose();
     super.dispose();
   }
@@ -134,9 +150,27 @@ class _GardenSceneState extends State<GardenScene>
     }
     _walkers.removeWhere((id, _) => !game.friends.contains(id));
 
+    _lifeTimer -= dt;
+    if (_lifeTimer <= 0) {
+      _lifeTimer = 6 + _rng.nextDouble() * 8;
+      _randomLife();
+    }
+    for (final e in _walkers.entries) {
+      final w = e.value;
+      if (w.replyTo != null) {
+        w.replyIn -= dt;
+        if (w.replyIn <= 0) {
+          _speak(e.key, pick('line.chatB', 3), hop: true);
+          w.replyTo = null;
+        }
+      }
+    }
+
     for (final w in _walkers.values) {
       w.happyLeft = max(0, w.happyLeft - dt);
       w.speechLeft = max(0, w.speechLeft - dt);
+      w.poseLeft = max(0, w.poseLeft - dt);
+      if (w.poseLeft <= 0) w.pose = null;
       if (w.pauseLeft > 0 || w.happyLeft > 0) {
         w.pauseLeft = max(0, w.pauseLeft - dt);
         continue;
@@ -146,6 +180,14 @@ class _GardenSceneState extends State<GardenScene>
       if (dist < 0.01) {
         w.pauseLeft = 1 + _rng.nextDouble() * 3.5;
         w.target = _randomSpot();
+        final decor = w.visitingDecor;
+        if (decor != null) {
+          w.visitingDecor = null;
+          w.pauseLeft = 3;
+          w.say = tr('line.decor.${_rng.nextInt(2)}', {'decor': decor});
+          w.speechLeft = 3;
+          w.happyLeft = 0.6;
+        }
       } else {
         w.pos += d / dist * min(dist, _speed * dt);
         w.facingRight = d.dx > 0;
@@ -161,12 +203,127 @@ class _GardenSceneState extends State<GardenScene>
     setState(() {});
   }
 
+  // ---------------------------------------------------------------- 대사 · 행동
+
+  double _lifeTimer = 4;
+
+  String pick(String prefix, int n) => tr('$prefix.${_rng.nextInt(n)}');
+
+  /// 친구 대사 하나: 성격 대사 위주, 가끔 시간대 · 물 · 계절 대사.
+  String _lineFor(String id) {
+    final w = _walkers[id];
+    final area = Garden.areaAt(widget.area);
+    final inWater =
+        w != null && area.water.any((z) => z.contains(w.pos.dx, w.pos.dy));
+    final r = _rng.nextDouble();
+    if (inWater && r < 0.5) return pick('line.water', 2);
+    if (r < 0.25) {
+      final h = DateTime.now().hour;
+      final part = h < 11
+          ? 'morning'
+          : h < 17
+          ? 'day'
+          : h < 21
+          ? 'evening'
+          : 'night';
+      return pick('line.$part', 2);
+    }
+    final key = 'friend.$id.line.${_rng.nextInt(6)}';
+    final t = tr(key);
+    return t == key ? friendLine(id) : t;
+  }
+
+  void _speak(String id, String text, {bool hop = false}) {
+    final w = _walkers[id];
+    if (w == null) return;
+    w.say = text;
+    w.speechLeft = 3.2;
+    if (hop) w.happyLeft = 0.6;
+  }
+
+  /// 몇 초마다 한 가지: 혼잣말 · 둘이 대화 · 장식 구경 · 깡충.
+  void _randomLife() {
+    if (_walkers.isEmpty) return;
+    // 자는 친구는 건드리지 않는다
+    final ids = [
+      for (final e in _walkers.entries)
+        if (e.value.pose != 'sleep') e.key,
+    ]..shuffle(_rng);
+    if (ids.isEmpty) return;
+    final a = ids.first;
+    final r = _rng.nextDouble();
+    final h = DateTime.now().hour;
+    final night = h >= 21 || h < 6;
+    if (night && r < 0.3) {
+      // 밤에는 꾸벅꾸벅 존다 (탭하면 깬다)
+      final w = _walkers[a]!;
+      w.pauseLeft = 10 + _rng.nextDouble() * 8;
+      w.pose = 'sleep';
+      w.poseLeft = w.pauseLeft;
+      w.say = 'Zzz…';
+      w.speechLeft = 2.5;
+      return;
+    }
+    if (r < 0.35) {
+      _speak(a, _lineFor(a));
+    } else if (r < 0.6 && ids.length >= 2) {
+      // 가장 가까운 친구에게 말 걸기 → 상대가 잠시 뒤 대답
+      final wa = _walkers[a]!;
+      final b =
+          (ids.skip(1).toList()..sort(
+                (x, y) => (_walkers[x]!.pos - wa.pos).distance.compareTo(
+                  (_walkers[y]!.pos - wa.pos).distance,
+                ),
+              ))
+              .first;
+      final wb = _walkers[b]!;
+      wa.facingRight = wb.pos.dx > wa.pos.dx;
+      wb.facingRight = wa.pos.dx > wb.pos.dx;
+      wa.pauseLeft = 3;
+      wb.pauseLeft = 3;
+      wa.pose = 'wave';
+      wa.poseLeft = 1.4;
+      _speak(a, tr('line.chatA.${_rng.nextInt(3)}', {'name': friendName(b)}));
+      wb.replyTo = a;
+      wb.replyIn = 1.3;
+    } else if (r < 0.8 && widget.area == game.currentArea) {
+      // 놓인 장식 하나를 구경하러 간다
+      final area = Garden.areaAt(widget.area);
+      final placed = [
+        for (var i = 0; i < area.decor.length; i++)
+          if (game.isPlaced(widget.area, i)) i,
+      ];
+      if (placed.isEmpty) return _speak(a, _lineFor(a));
+      final d = area.decor[placed[_rng.nextInt(placed.length)]];
+      final w = _walkers[a]!;
+      w.target = Offset(
+        (d.x + (_rng.nextBool() ? 0.07 : -0.07)).clamp(0.05, 0.95),
+        (d.y + 0.05).clamp(0.1, 0.95),
+      );
+      w.pauseLeft = 0;
+      w.visitingDecor = decorName(d);
+    } else {
+      _walkers[a]!.happyLeft = 0.6; // 기분 좋아서 깡충
+    }
+  }
+
+  /// 부탁을 들어준 친구는 깡충 뛰며 고맙다고 한다.
+  void _onGameEvent(GameEvent e) {
+    if (e is OrderDeliveredEvent && mounted) {
+      _speak(e.friendId, pick('line.thanks', 2), hop: true);
+    }
+  }
+
   void _tapFriend(String id, Offset at) {
     final w = _walkers[id];
     final coins = game.tapFriend(id);
     if (w != null) {
+      w.pose = null;
+      w.poseLeft = 0;
+      w.pauseLeft = 0;
       w.happyLeft = 0.6;
-      w.speechLeft = 2.5;
+      w.say = _lineFor(id);
+      w.speechLeft = 3;
     }
     _floats.add(
       _Float(at, coins == null ? '[[heart]]' : '[[heart]] +${fmt(coins)}'),
@@ -306,8 +463,11 @@ class _GardenSceneState extends State<GardenScene>
           : walking
           ? -(sin(_t * 10).abs()) * sz * 0.12
           : 0.0;
+      final posed = wk.pose == null || wk.happyLeft > 0
+          ? null
+          : Art.friendPose(f, wk.pose!);
       final image = ArtImage(
-        Art.friend(f, happy: wk.happyLeft > 0),
+        posed ?? Art.friend(f, happy: wk.happyLeft > 0),
         size: sz,
         flipX: wk.facingRight,
       );
@@ -510,7 +670,7 @@ class _GardenSceneState extends State<GardenScene>
             max(visible.top + 4, visible.bottom - 60),
           ),
           width: 180,
-          child: _Bubble(text: '${friendName(e.key)}: ${friendLine(e.key)}'),
+          child: _Bubble(text: '${friendName(e.key)}: ${wk.say}'),
         ),
       );
     }

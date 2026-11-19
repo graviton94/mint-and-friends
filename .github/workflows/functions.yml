@@ -93,7 +93,7 @@ jobs:
         if: steps.sa.outputs.ok == 'true'
         run: |
           npx -y firebase-tools deploy --project "$PROJECT" --non-interactive --force \
-            --only functions:login,functions:deleteAccount
+            --only functions:login,functions:deleteAccount,functions:sendGift
 
       - name: Firestore rules (users/{uid} 는 본인만)
         if: steps.sa.outputs.ok == 'true'

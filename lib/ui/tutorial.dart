@@ -124,13 +124,11 @@ class _CoachOverlayState extends State<CoachOverlay>
                         _pulse.value,
                         flip: flip,
                       ),
-                      child: Transform.flip(
-                        flipY: flip,
-                        child: _Glove(
-                          pressed: widget.dragTo == null
-                              ? _pulse.value > 0.5
-                              : _pulse.value > 0.15 && _pulse.value < 0.85,
-                        ),
+                      child: _Glove(
+                        down: flip,
+                        pressed: widget.dragTo == null
+                            ? _pulse.value > 0.5
+                            : _pulse.value > 0.15 && _pulse.value < 0.85,
                       ),
                     );
                   },
@@ -338,7 +336,7 @@ class _GloveLayout extends SingleChildLayoutDelegate {
   final double t;
   final bool flip;
 
-  static const double size = 64;
+  static const double size = 72;
 
   @override
   BoxConstraints getConstraintsForChild(BoxConstraints c) =>
@@ -356,10 +354,9 @@ class _GloveLayout extends SingleChildLayoutDelegate {
       final e = Curves.easeInOut.transform(m);
       tip = Offset.lerp(from, to!, e)!;
     }
-    // 손가락 끝 = 그림의 위쪽 가운데 조금 왼쪽 (뒤집으면 아래쪽)
-    return flip
-        ? Offset(tip.dx - size * 0.32, tip.dy - size * 0.96)
-        : Offset(tip.dx - size * 0.32, tip.dy - size * 0.04);
+    // 손가락 끝: 위를 가리키는 손(hand_point)은 그림 위쪽, 아래로 누르는 손(hand_press)은 아래쪽.
+    final f = _Glove.tip(flip);
+    return Offset(tip.dx - size * f.dx, tip.dy - size * f.dy);
   }
 
   @override
@@ -367,31 +364,52 @@ class _GloveLayout extends SingleChildLayoutDelegate {
       o.t != t || o.from != from || o.to != to || o.flip != flip;
 }
 
-/// 흰 손장갑. 그림(hand_point / hand_press)이 오기 전에는 같은 모양의 아이콘으로 대신 그린다.
+/// 흰 손장갑. 목표 아래에서는 위를 가리키는 손(hand_point), 화면 아래 끝이라 위에서
+/// 가리켜야 하면 아래로 누르는 손(hand_press)을 쓴다. 누르는 순간은 살짝 작아진다.
 class _Glove extends StatelessWidget {
-  const _Glove({required this.pressed});
+  const _Glove({required this.pressed, this.down = false});
   final bool pressed;
+  final bool down;
+
+  /// 그림 안 손가락 끝의 비율 위치 (그림 크기 대비).
+  static Offset tip(bool down) {
+    final art = Art.icon(down ? 'hand_press' : 'hand_point');
+    if (!art.available)
+      return down ? const Offset(0.32, 0.96) : const Offset(0.32, 0.04);
+    return down ? const Offset(0.34, 0.80) : const Offset(0.38, 0.20);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final art = Art.icon(pressed ? 'hand_press' : 'hand_point');
-    if (art.available) return ArtImage(art, size: _GloveLayout.size);
-    return Transform.scale(
-      scale: pressed ? 0.92 : 1,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Icon(
-            Icons.touch_app_rounded,
-            size: _GloveLayout.size,
-            color: const Color(0xFF5A3A1E),
-          ),
-          Icon(
-            Icons.touch_app_rounded,
-            size: _GloveLayout.size - 8,
-            color: Colors.white,
-          ),
-        ],
+    final art = Art.icon(down ? 'hand_press' : 'hand_point');
+    final scale = pressed ? 0.9 : 1.0;
+    final origin = Alignment(tip(down).dx * 2 - 1, tip(down).dy * 2 - 1);
+    if (art.available) {
+      return Transform.scale(
+        scale: scale,
+        alignment: origin,
+        child: ArtImage(art, size: _GloveLayout.size),
+      );
+    }
+    return Transform.flip(
+      flipY: down,
+      child: Transform.scale(
+        scale: scale,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Icon(
+              Icons.touch_app_rounded,
+              size: _GloveLayout.size,
+              color: const Color(0xFF5A3A1E),
+            ),
+            Icon(
+              Icons.touch_app_rounded,
+              size: _GloveLayout.size - 8,
+              color: Colors.white,
+            ),
+          ],
+        ),
       ),
     );
   }

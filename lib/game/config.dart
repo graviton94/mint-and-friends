@@ -367,16 +367,26 @@ class Upgrades {
       1.6,
       feature: Feature.offlineCap,
     ),
-    UpgradeDef(UpgradeType.flowerPower, 'item:flower:6', 25, 60, 1.28),
+    // 생산력 강화는 끝이 없다 (머지 · 방치 장르의 후반 코인 소모처): 비용은 단계마다 ×1.28 로
+    // 지수 증가, 효과는 +20% 로 선형 증가라 저절로 느려진다. 레벨 상한(4 + 3·레벨)으로만 막힌다.
+    UpgradeDef(
+      UpgradeType.flowerPower,
+      'item:flower:6',
+      Upgrades.endless,
+      60,
+      1.28,
+    ),
     UpgradeDef(
       UpgradeType.snackPower,
       'item:snack:6',
-      25,
+      Upgrades.endless,
       60,
       1.28,
       feature: Feature.snack,
     ),
   ];
+
+  static const int endless = 9999;
 
   static UpgradeDef of(UpgradeType t) => all.firstWhere((u) => u.type == t);
 

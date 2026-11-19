@@ -1,8 +1,16 @@
 rules_version = '2';
 
 // 게임 저장: users/{uid} 문서 하나. 본인만 읽고 쓸 수 있다.
+// 친구(소셜): profiles · codes · users/{uid}/friends · inbox · notices. 선물은 Cloud Function(sendGift)만 만든다.
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isMe(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
     match /users/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow create, update: if request.auth != null
@@ -14,7 +22,68 @@ service cloud.firestore {
         && request.resource.data.updatedAt == request.time;
       // 삭제는 Cloud Function(deleteAccount)이 관리자 권한으로만 한다
       allow delete: if false;
+
+      // 내가 추가한 친구 (팔로우 방식, 상대 동의 불필요). lastGiftSentDay 는 sendGift 가 쓴다.
+      match /friends/{friendUid} {
+        allow read, delete: if isMe(uid);
+        allow create: if isMe(uid)
+          && friendUid != uid
+          && request.resource.data.keys().hasOnly(['addedAt'])
+          && request.resource.data.addedAt == request.time;
+        allow update: if false;
+      }
     }
+
+    // 공개 프로필: 로그인한 누구나 읽고, 본인만 쓴다. 친구 코드는 본인이 예약한 것이어야 한다.
+    match /profiles/{uid} {
+      allow read: if signedIn();
+      allow create, update: if isMe(uid)
+        && request.resource.data.keys().hasOnly(['name', 'code', 'level', 'area', 'placed', 'friends', 'avatar', 'updatedAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 64
+        && request.resource.data.code is string
+        && request.resource.data.code.matches('^[A-HJKMNP-Z2-9]{8}$')
+        && get(/databases/$(database)/documents/codes/$(request.resource.data.code)).data.uid == uid
+        && request.resource.data.level is int
+        && request.resource.data.level >= 1 && request.resource.data.level < 100000
+        && request.resource.data.area is int
+        && request.resource.data.area >= 0 && request.resource.data.area < 100000
+        && request.resource.data.placed is list
+        && request.resource.data.placed.size() <= 8
+        && request.resource.data.friends is list
+        && request.resource.data.friends.size() <= 16
+        && request.resource.data.avatar is string
+        && request.resource.data.avatar.size() <= 24
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+
+    // 친구 코드 → uid. 만들기만 (이미 있는 코드는 덮어쓸 수 없다).
+    match /codes/{code} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && resource == null
+        && code.matches('^[A-HJKMNP-Z2-9]{8}$')
+        && request.resource.data.keys().hasOnly(['uid', 'at'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.at == request.time;
+      allow update, delete: if false;
+    }
+
+    // 받은 선물함: 본인만 읽고 지운다. 만드는 것은 sendGift 함수(관리자 권한)만.
+    match /inbox/{uid}/items/{itemId} {
+      allow read, delete: if isMe(uid);
+      allow create, update: if false;
+    }
+
+    // 운영 공지: 읽기만 (쓰기는 tool/post_notice.py, 관리자 권한).
+    match /notices/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    // gifts/*, giftCounts/* 등 나머지는 함수 전용 (아래 기본 거부).
     match /{document=**} {
       allow read, write: if false;
     }

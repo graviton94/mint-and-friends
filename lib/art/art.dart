@@ -59,6 +59,12 @@ class Art {
     return h.available || !idle.available ? h : idle;
   }
 
+  /// 추가 자세 (sleep · wave). 그림이 없으면 null → 기본 자세로 행동만 한다.
+  static ArtRef? friendPose(FriendDef f, String pose) {
+    final r = ArtRef('assets/art/friends/${f.id}_$pose.webp', f.emoji);
+    return r.available ? r : null;
+  }
+
   static ArtRef visitor() => const ArtRef(
     'assets/art/friends/visitor_idle.webp',
     Friends.visitorEmoji,
@@ -107,6 +113,10 @@ class Art {
     'energy_jar': '',
     'hand_point': '',
     'hand_press': '',
+    'menu': '',
+    'friends': '',
+    'visit': '',
+    'notice': '',
   };
 
   /// 이미 받은 UI 그림(assets/art/ui)으로 그리는 아이콘.

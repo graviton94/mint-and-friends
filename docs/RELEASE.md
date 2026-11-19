@@ -65,3 +65,16 @@ sideload 키가 아직 없으면 App 은 디버그 키로 서명하고 경고만
   - 게스트 = Firebase 익명 계정. Google 연결 시 같은 uid 로 이어집니다.
   - 카카오 = `kakao:<회원번호>` uid (`login` 함수가 토큰 확인 후 커스텀 토큰 발급). 게스트에서 넘어오면 기기 데이터를 옮기고, 양쪽에 진행도가 있으면 사용자에게 고르게 합니다.
 - 계정 삭제: 설정 → 계정 및 데이터 삭제 → `deleteAccount` 함수 (Play 정책 필수 항목).
+
+## 친구 · 공지
+
+- 데이터: `profiles/{uid}` 공개 프로필, `codes/{코드}` → uid (8자리, 만들기만), `users/{uid}/friends/{친구uid}`, `inbox/{uid}/items/*` 받은 선물 (`sendGift` 함수만 씀), `notices/{id}` 운영 공지 (읽기 전용). 규칙: `firestore.rules`.
+- 배포: **Functions** 워크플로가 `sendGift` 와 규칙을 함께 배포합니다. 따로 할 일 없음.
+- (선택) 선물 기록 자동 정리: Firestore → TTL 정책에서 컬렉션 그룹 `gifts`, `giftCounts` 의 `expireAt` 필드를 켭니다 (3일 뒤 삭제).
+- 공지 올리기 (Firebase 콘솔 → 프로젝트 설정 → 서비스 계정 → 새 비공개 키):
+  ```
+  pip install firebase-admin
+  python3 tool/post_notice.py --key sa.json --ko "점검 보상" --en "Maintenance gift" --ja "メンテナンスのお詫び" --coins 500 --energy 20 --days 7
+  python3 tool/post_notice.py --key sa.json --list        # 목록,  --delete <id> 로 삭제
+  ```
+  앱은 시작 · 복귀 때(30분 간격) 진행 중인 공지를 쪽지함에 넣고, 같은 공지는 한 번만 받습니다. 키 파일은 커밋하지 마세요.
