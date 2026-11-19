@@ -998,17 +998,17 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: GestureDetector(
               onTap: _openGarden,
-              child: FrameBox(
-                frame: 'capsule',
-                fallback: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
+              child: Container(
+                height: 46,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8E8),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFF7A5230),
+                    width: 2.5,
+                  ),
                 ),
-                corner: 14,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 child: Row(
                   children: [
                     ArtImage(Art.areaIcon(a), size: 26),
@@ -1306,46 +1306,71 @@ class _LevelBadge extends StatelessWidget {
   final int level;
   final double progress;
 
+  static const double size = 46;
+
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 52,
-      height: 52,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SizedBox(
-            width: 52,
-            height: 52,
-            child: CircularProgressIndicator(
-              value: progress.clamp(0, 1),
-              strokeWidth: 5,
-              backgroundColor: Colors.white70,
-              color: Palette.accent,
-            ),
-          ),
-          Container(
-            width: 42,
-            height: 42,
+    // 정사각형 고정 (HUD 높이에 눌려 타원이 되지 않게)
+    return SizedBox.square(
+      dimension: size,
+      child: CustomPaint(
+        painter: _XpRingPainter(progress.clamp(0.0, 1.0)),
+        child: Center(
+          child: Container(
+            width: size - 14,
+            height: size - 14,
             decoration: const BoxDecoration(
               color: Palette.primary,
               shape: BoxShape.circle,
             ),
             alignment: Alignment.center,
-            child: FittedBox(
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: IconText(
-                  tr('hud.level', {'n': level}),
-                  style: const TextStyle(color: Colors.white, fontSize: 15),
+            child: Padding(
+              padding: const EdgeInsets.all(3),
+              child: FittedBox(
+                child: Text(
+                  '$level',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    height: 1,
+                  ),
                 ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
+}
+
+/// 경험치 고리: 크림색 바탕 + 갈색 테두리 + 금색 진행 (둥근 끝).
+class _XpRingPainter extends CustomPainter {
+  _XpRingPainter(this.v);
+  final double v;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final r = size.shortestSide / 2;
+    canvas.drawCircle(c, r - 1, Paint()..color = const Color(0xFF5A3A1E));
+    canvas.drawCircle(c, r - 3, Paint()..color = const Color(0xFFFFF4DA));
+    final rect = Rect.fromCircle(center: c, radius: r - 6.5);
+    canvas.drawArc(
+      rect,
+      -pi / 2,
+      2 * pi * v,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6
+        ..strokeCap = StrokeCap.round
+        ..color = const Color(0xFFF2B33D),
+    );
+  }
+
+  @override
+  bool shouldRepaint(_XpRingPainter o) => o.v != v;
 }
 
 class _Spawner extends StatelessWidget {

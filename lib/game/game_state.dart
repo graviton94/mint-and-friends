@@ -906,13 +906,16 @@ class GameState extends ChangeNotifier {
     var away = t.difference(lastSeen);
     if (away < const Duration(minutes: 1)) return null;
     _regenEnergy(away.inMilliseconds / 1000); // 에너지는 오프라인 상한 없이 찬다 (최대치까지)
+    lastSeen = t;
+    // 잠깐 나갔다 온 것은 보상 없음 (최소 시간), 길수록 효율이 줄어든다 (감쇄)
+    if (away < GameConfig.offlineMinAway) return null;
     if (away > offlineCap) away = offlineCap;
     final c =
-        baseIncomePerSec *
-        away.inSeconds *
-        GameConfig.offlineEfficiency *
+        GameConfig.offlineEarnings(
+          baseIncomePerSec,
+          away.inSeconds.toDouble(),
+        ) *
         (1 + buff(FriendBuff.offline));
-    lastSeen = t;
     if (c <= 0) return null;
     return OfflineReward(away, c);
   }

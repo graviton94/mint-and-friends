@@ -45,8 +45,22 @@ class GameConfig {
   static const Duration bubbleLife = Duration(seconds: 60);
   static const int bubbleMinLevel = 4;
 
-  /// 오프라인 수익 효율.
-  static const double offlineEfficiency = 0.5;
+  /// 오프라인 보상: 최소 자리 비움 시간 (이보다 짧으면 보상 없음).
+  static const Duration offlineMinAway = Duration(minutes: 15);
+
+  /// 오프라인 수익 감쇄 (방치 장르 공통): 처음 1시간 50%, 1~3시간 25%, 그 뒤 10%.
+  /// [seconds] 동안 초당 [perSec] 를 벌 때 받는 양.
+  static double offlineEarnings(double perSec, double seconds) {
+    const tiers = [(3600.0, 0.5), (7200.0, 0.25), (double.infinity, 0.10)];
+    var left = seconds, sum = 0.0;
+    for (final (span, rate) in tiers) {
+      final t = min(left, span);
+      sum += perSec * t * rate;
+      left -= t;
+      if (left <= 0) break;
+    }
+    return sum;
+  }
 
   /// 보상형 광고: 코인 2배 (부탁 · 방치 수익 모두) 1회당 시간, 최대 누적.
   static const Duration boostPerAd = Duration(minutes: 15);

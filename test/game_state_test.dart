@@ -234,20 +234,24 @@ void main() {
     expect(g.boostRemaining, GameConfig.boostMax);
   });
 
-  test('오프라인 보상은 상한 시간과 효율이 적용된다', () {
+  test('오프라인 보상: 최소 시간, 상한 시간, 시간이 길수록 감쇄', () {
     final g = make();
     g.board[open[0]] = flower(1, 1);
     final rate = g.baseIncomePerSec;
+    // 10분만 비우면 보상 없음
+    now = now.add(const Duration(minutes: 10));
+    expect(g.computeOffline(), isNull);
+    // 10시간 비우면 상한까지만, 감쇄 적용 (1시간 50% + 2시간 25% + 나머지 10%)
     now = now.add(const Duration(hours: 10));
     final r = g.computeOffline()!;
     expect(r.away, g.offlineCap);
-    expect(
-      r.coins,
-      closeTo(
-        rate * g.offlineCap.inSeconds * GameConfig.offlineEfficiency,
-        1e-6,
-      ),
-    );
+    final cap = g.offlineCap.inSeconds.toDouble();
+    expect(r.coins, closeTo(GameConfig.offlineEarnings(rate, cap), 1e-9));
+    // 구간별 효율: 1시간 50%, 다음 2시간 25%, 그 뒤 10%
+    expect(GameConfig.offlineEarnings(1, 3600), closeTo(1800, 1e-9));
+    expect(GameConfig.offlineEarnings(1, 3 * 3600), closeTo(1800 + 1800, 1e-9));
+    expect(GameConfig.offlineEarnings(1, 4 * 3600), closeTo(3600 + 360, 1e-9));
+    expect(r.coins, lessThan(rate * cap * 0.5)); // 평균 효율 50% 미만
     expect(g.computeOffline(), isNull);
   });
 
