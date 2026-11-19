@@ -319,6 +319,8 @@ class _GardenSceneState extends State<GardenScene>
               alignment: Alignment.center,
               children: inWater
                   ? [
+                      // 물결 뒤쪽 반: 몸 뒤
+                      _splash(sz, wk, walking, front: false),
                       // 물에 잠긴 모습: 몸 아래 28%를 수면에서 자른다
                       SizedBox(
                         width: sz,
@@ -334,21 +336,15 @@ class _GardenSceneState extends State<GardenScene>
                           ),
                         ),
                       ),
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        top: sz * 0.1 + sz * 0.72 - sz * 0.3,
-                        height: sz * 0.6,
-                        child: CustomPaint(
-                          painter: _SplashPainter(
-                            t: _t + wk.pos.dx * 7,
-                            moving: walking,
-                          ),
-                        ),
-                      ),
+                      // 물결 앞쪽 반 + 물방울: 몸 앞
+                      _splash(sz, wk, walking, front: true),
                     ]
                   : [
-                      Positioned(bottom: 0, child: _Shadow(width: sz * 0.7)),
+                      Positioned(
+                        // 그림자는 발 밑에 (그림 아래 여백 · 칸 여백만큼 올림)
+                        bottom: sz * 0.12,
+                        child: _Shadow(width: sz * 0.62),
+                      ),
                       image,
                     ],
             ),
@@ -385,6 +381,22 @@ class _GardenSceneState extends State<GardenScene>
     layers.sort((a, b) => a.y.compareTo(b.y));
     return [for (final l in layers) l.child];
   }
+
+  /// 수면 물결: 뒤쪽 반은 캐릭터 뒤, 앞쪽 반은 캐릭터 앞에 그려 물속에 선 것처럼 보이게 한다.
+  Widget _splash(double sz, _Walker wk, bool walking, {required bool front}) =>
+      Positioned(
+        left: 0,
+        right: 0,
+        top: sz * 0.1 + sz * 0.72 - sz * 0.3,
+        height: sz * 0.6,
+        child: CustomPaint(
+          painter: _SplashPainter(
+            t: _t + wk.pos.dx * 7,
+            moving: walking,
+            front: front,
+          ),
+        ),
+      );
 
   // ---------------------------------------------------------------- 빈 장식 자리
   // 장식이 놓일 바닥에 납작한 점선 타원 + 작은 비용 표 (땅 그림, 월드 아래).
@@ -568,22 +580,34 @@ class _BackgroundLayer extends StatelessWidget {
   }
 }
 
-/// 첨벙첨벙: 수면 하이라이트 + 퍼져 나가는 물결 2겹 + 걸을 때 튀는 물방울.
+/// 첨벙첨벙: 물결 2겹 + 걸을 때 튀는 물방울.
+/// [front] 가 false 면 타원의 위쪽(먼 쪽) 반만, true 면 아래쪽(가까운 쪽) 반과 물방울만 그린다.
 class _SplashPainter extends CustomPainter {
-  _SplashPainter({required this.t, required this.moving});
+  _SplashPainter({required this.t, required this.moving, required this.front});
   final double t;
   final bool moving;
+  final bool front;
 
   @override
   void paint(Canvas canvas, Size size) {
     final c = Offset(size.width / 2, size.height / 2);
     final w = size.width;
-    // 수면 (잘린 경계를 부드럽게 가림)
-    canvas.drawOval(
-      Rect.fromCenter(center: c, width: w * 0.62, height: w * 0.13),
-      Paint()..color = const Color(0x99E8F7FF),
+    canvas.save();
+    canvas.clipRect(
+      front
+          ? Rect.fromLTRB(-w, c.dy, w * 2, size.height * 2)
+          : Rect.fromLTRB(-w, -size.height, w * 2, c.dy),
     );
-    // 물결
+    // 수면 테두리 (몸이 잘린 선을 부드럽게): 앞쪽만, 얇게
+    if (front) {
+      canvas.drawOval(
+        Rect.fromCenter(center: c, width: w * 0.62, height: w * 0.13),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.5
+          ..color = const Color(0xCCE8F7FF),
+      );
+    }
     for (var k = 0; k < 2; k++) {
       final phase = (t * 0.7 + k * 0.5) % 1.0;
       final rw = w * (0.5 + 0.45 * phase);
@@ -595,8 +619,8 @@ class _SplashPainter extends CustomPainter {
           ..color = Colors.white.withValues(alpha: 0.8 * (1 - phase)),
       );
     }
-    // 물방울
-    if (moving) {
+    canvas.restore();
+    if (front && moving) {
       final drop = Paint()..color = const Color(0xCCBFE8FF);
       for (var i = 0; i < 3; i++) {
         final ph = (t * 2.2 + i / 3) % 1.0;
@@ -608,7 +632,8 @@ class _SplashPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_SplashPainter old) => old.t != t || old.moving != moving;
+  bool shouldRepaint(_SplashPainter old) =>
+      old.t != t || old.moving != moving || old.front != front;
 }
 
 class _Shadow extends StatelessWidget {

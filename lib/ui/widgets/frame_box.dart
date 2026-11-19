@@ -67,43 +67,61 @@ class GameDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    // 리본은 패널 위 테두리에 걸쳐 놓는다 (게임 팝업의 일반적인 모양). 패널 안은 리본 아래부터.
+    final hasRibbon = title != null && Art.frame('ribbon').available;
+    final panel = FrameBox(
+      frame: 'panel',
+      fallback: BoxDecoration(
+        color: scheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(28),
+      ),
+      corner: 30,
+      padding: EdgeInsets.fromLTRB(24, hasRibbon ? 58 : 22, 24, 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (title != null && !hasRibbon)
+            DefaultTextStyle.merge(
+              style: const TextStyle(fontSize: 22),
+              textAlign: TextAlign.center,
+              child: title!,
+            ),
+          if (content != null) ...[
+            const SizedBox(height: 12),
+            Flexible(child: SingleChildScrollView(child: content!)),
+          ],
+          if (actions != null && actions!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Wrap(
+              alignment: switch (actionsAlignment) {
+                MainAxisAlignment.center => WrapAlignment.center,
+                MainAxisAlignment.start => WrapAlignment.start,
+                _ => WrapAlignment.end,
+              },
+              spacing: 8,
+              runSpacing: 8,
+              children: actions!,
+            ),
+          ],
+        ],
+      ),
+    );
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-      child: FrameBox(
-        frame: 'panel',
-        fallback: BoxDecoration(
-          color: scheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(28),
-        ),
-        corner: 30,
-        padding: const EdgeInsets.fromLTRB(24, 22, 24, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (title != null) _Ribbon(child: title!),
-            if (content != null) ...[
-              const SizedBox(height: 12),
-              Flexible(child: SingleChildScrollView(child: content!)),
-            ],
-            if (actions != null && actions!.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Wrap(
-                alignment: switch (actionsAlignment) {
-                  MainAxisAlignment.center => WrapAlignment.center,
-                  MainAxisAlignment.start => WrapAlignment.start,
-                  _ => WrapAlignment.end,
-                },
-                spacing: 8,
-                runSpacing: 8,
-                children: actions!,
-              ),
-            ],
-          ],
-        ),
-      ),
+      insetPadding: const EdgeInsets.fromLTRB(28, 52, 28, 24),
+      clipBehavior: Clip.none,
+      child: !hasRibbon
+          ? panel
+          : Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.topCenter,
+              children: [
+                panel,
+                Positioned(top: -40, child: _Ribbon(child: title!)),
+              ],
+            ),
     );
   }
 }
@@ -252,47 +270,69 @@ class _NineSlicePainter extends BoxPainter {
   }
 }
 
-/// 대화상자 제목 리본: 리본 그림을 비율 그대로 그리고, 글자는 띠 부분(아래 꼬리 제외)에만 놓는다.
+/// 대화상자 제목 리본: 폭 240 고정(비율 그대로). 글자는 띠 부분(아래 꼬리 제외)에만 놓는다.
 class _Ribbon extends StatelessWidget {
   const _Ribbon({required this.child});
   final Widget child;
 
+  static const double width = 240;
+
   @override
   Widget build(BuildContext context) {
     final art = Art.frame('ribbon');
-    final text = DefaultTextStyle.merge(
-      style: const TextStyle(fontSize: 22, color: Color(0xFF2F3B1F)),
-      textAlign: TextAlign.center,
-      child: child,
-    );
-    if (!art.available) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
-        child: text,
-      );
-    }
-    return AspectRatio(
-      aspectRatio: 384 / 174,
-      child: LayoutBuilder(
-        builder: (context, c) => Stack(
-          children: [
-            Positioned.fill(
-              child: Image.asset(
-                art.path,
-                fit: BoxFit.fill,
-                filterQuality: FilterQuality.medium,
+    const h = width * 174 / 384;
+    return SizedBox(
+      width: width,
+      height: h,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(
+              art.path,
+              fit: BoxFit.fill,
+              filterQuality: FilterQuality.medium,
+            ),
+          ),
+          Positioned(
+            left: width * 0.2,
+            right: width * 0.2,
+            top: h * 0.31,
+            height: h * 0.32,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: DefaultTextStyle.merge(
+                style: const TextStyle(
+                  fontSize: 20,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      color: Color(0xFF3F6A12),
+                      offset: Offset(0, 1.5),
+                      blurRadius: 0,
+                    ),
+                    Shadow(
+                      color: Color(0xFF3F6A12),
+                      offset: Offset(1.2, 0),
+                      blurRadius: 0,
+                    ),
+                    Shadow(
+                      color: Color(0xFF3F6A12),
+                      offset: Offset(-1.2, 0),
+                      blurRadius: 0,
+                    ),
+                    Shadow(
+                      color: Color(0xFF3F6A12),
+                      offset: Offset(0, -1.2),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                textAlign: TextAlign.center,
+                child: child,
               ),
             ),
-            // 띠: 그림 높이의 30% ~ 66% (아래 꼬리 제외), 좌우 끝 18% 안쪽
-            Positioned(
-              left: c.maxWidth * 0.18,
-              right: c.maxWidth * 0.18,
-              top: c.maxHeight * 0.30,
-              height: c.maxHeight * 0.36,
-              child: FittedBox(fit: BoxFit.scaleDown, child: text),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
