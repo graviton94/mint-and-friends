@@ -112,7 +112,7 @@ jobs:
           sa="$num-compute@developer.gserviceaccount.com"
           echo "Functions run as: $sa" | tee -a "$GITHUB_STEP_SUMMARY"
           roles=$(gcloud iam service-accounts get-iam-policy "$sa" --project "$PROJECT" --format=json 2>/dev/null \
-            | python3 -c "import json,sys; print(' '.join(b['role'] for b in json.load(sys.stdin).get('bindings', []) if any('$sa' in m for m in b['members'])))" || true)
+            | python3 -c "import json,sys; t=sys.stdin.read().strip(); print(' '.join(b['role'] for b in (json.loads(t) if t else {}).get('bindings', []) if any('$sa' in m for m in b['members'])))" || true)
           proj=$(gcloud projects get-iam-policy "$PROJECT" --flatten='bindings[].members' --filter="bindings.members:serviceAccount:$sa" --format='value(bindings.role)' 2>/dev/null | tr '\n' ' ' || true)
           echo "on the account: ${roles:-none}"; echo "on the project: ${proj:-none}"
           if ! echo "$roles $proj" | grep -q 'roles/iam.serviceAccountTokenCreator'; then
