@@ -59,8 +59,10 @@ class Art {
     return h.available || !idle.available ? h : idle;
   }
 
-  static ArtRef visitor() =>
-      const ArtRef('assets/art/friends/visitor_idle.webp', Friends.visitorEmoji);
+  static ArtRef visitor() => const ArtRef(
+    'assets/art/friends/visitor_idle.webp',
+    Friends.visitorEmoji,
+  );
 
   static ArtRef decor(DecorDef d) =>
       ArtRef('assets/art/decor/${d.id}.webp', d.emoji);
@@ -102,6 +104,7 @@ class Art {
     'kakao': '💬',
     'google': 'G',
     'sprout': '🌱',
+    'storage': '📦',
   };
 
   /// 이미 받은 UI 그림(assets/art/ui)으로 그리는 아이콘.

@@ -24,7 +24,7 @@
   "order.deliver": "탭해서 전달!",
   "order.refresh": "새 부탁",
   "board.hint": "같은 아이템을 끌어서 합쳐 보세요",
-  "board.stuck": "칸이 가득! 아이템을 눌러 판매하거나 잠긴 칸을 열어 보세요",
+  "board.stuck": "칸이 가득! 아이템을 눌러 판매·보관하거나 잠긴 칸을 열어 보세요",
   "board.selected": "Lv.{lv} {name} · 초당 {v}",
   "board.sell": "판매 [[coin]]{price}",
   "board.undo": "↩ 되돌리기",
@@ -241,5 +241,12 @@
   "energy.left": "오늘 {n}회 남음",
   "energy.wait": "기다릴게요",
   "toast.adLimit": "오늘은 더 볼 수 없어요. 내일 다시 열려요",
-  "ctrl.left": "오늘 {n}회"
+  "ctrl.left": "오늘 {n}회",
+  "storage.title": "[[storage]] 보관함 {used}/{max}",
+  "storage.body": "맡겨 둔 아이템은 수익을 내지 않아요. 누르면 판으로 꺼내요.",
+  "storage.boardFull": "판에 빈 칸이 없어요",
+  "storage.full": "보관함이 가득 찼어요",
+  "board.store": "[[storage]] 보관",
+  "board.storeOpen": "[[storage]] {used}/{max}",
+  "feature.storage": "[[storage]] 보관함"
 }

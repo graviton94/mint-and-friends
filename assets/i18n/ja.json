@@ -23,7 +23,7 @@
   "order.deliver": "タップで渡す!",
   "order.refresh": "新しいお願い",
   "board.hint": "同じアイテムをドラッグして合成しよう",
-  "board.stuck": "マスがいっぱい! アイテムをタップして売るか、マスを解放しよう",
+  "board.stuck": "マスがいっぱい! アイテムをタップして売る・預けるか、マスを解放しよう",
   "board.selected": "Lv.{lv} {name} · 毎秒 {v}",
   "board.sell": "売る [[coin]]{price}",
   "board.undo": "↩ 元に戻す",
@@ -240,5 +240,12 @@
   "energy.left": "今日あと{n}回",
   "energy.wait": "待つ",
   "toast.adLimit": "今日の上限です。明日また開きます",
-  "ctrl.left": "あと{n}回"
+  "ctrl.left": "あと{n}回",
+  "storage.title": "[[storage]] 倉庫 {used}/{max}",
+  "storage.body": "預けたアイテムはコインを生みません。タップで盤面に戻します。",
+  "storage.boardFull": "盤面に空きがありません",
+  "storage.full": "倉庫がいっぱいです",
+  "board.store": "[[storage]] 預ける",
+  "board.storeOpen": "[[storage]] {used}/{max}",
+  "feature.storage": "[[storage]] 倉庫"
 }

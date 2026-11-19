@@ -237,5 +237,6 @@
       "assets/art/frames/speech.webp",
       "assets/art/frames/slot.webp"
     ]
-  }
+  },
+  "ui_icons4": {"cols": 1, "rows": 1, "size": 192, "files": ["assets/art/icons/storage.webp"]}
 }

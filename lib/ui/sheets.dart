@@ -362,6 +362,140 @@ class _ItemChip extends StatelessWidget {
   }
 }
 
+// ---------------------------------------------------------------- 보관함
+
+/// 보관함: 칸을 누르면 판의 빈 칸으로 꺼낸다. 마지막 칸 뒤에 다음 칸 구매 버튼.
+Future<void> showStorageSheet(
+  BuildContext context,
+  GameState game, {
+  required void Function(String message) onMessage,
+}) => _sheet(
+  context,
+  game,
+  () => SheetFrame(
+    title: tr('storage.title', {
+      'used': game.storageUsed,
+      'max': game.storage.length,
+    }),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: IconText(
+            tr('storage.body'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 14, color: Colors.black54),
+          ),
+        ),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (var i = 0; i < game.storage.length; i++)
+              _StorageSlot(
+                item: game.storage[i],
+                onTap: () {
+                  if (game.storage[i] == null) return;
+                  if (game.retrieve(i) == null)
+                    onMessage(tr('storage.boardFull'));
+                },
+              ),
+            if (!game.storageMaxed) _StorageBuySlot(game: game),
+          ],
+        ),
+      ],
+    ),
+  ),
+);
+
+class _StorageSlot extends StatelessWidget {
+  const _StorageSlot({required this.item, required this.onTap});
+  final Item? item;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final it = item;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 58,
+        height: 58,
+        alignment: Alignment.center,
+        decoration: FrameBox.decorationFor(
+          'slot',
+          BoxDecoration(
+            color: it == null ? const Color(0xFFEDE8DC) : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          corner: 12,
+        ),
+        child: it == null
+            ? null
+            : Stack(
+                alignment: Alignment.center,
+                children: [
+                  ArtImage(Art.item(it.chain, it.level), size: 40),
+                  Positioned(
+                    right: 2,
+                    bottom: 0,
+                    child: Text(
+                      '${it.level}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Palette.primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+class _StorageBuySlot extends StatelessWidget {
+  const _StorageBuySlot({required this.game});
+  final GameState game;
+
+  @override
+  Widget build(BuildContext context) {
+    final can = game.canBuyStorageSlot;
+    return GestureDetector(
+      onTap: can ? game.buyStorageSlot : null,
+      child: Opacity(
+        opacity: can ? 1 : 0.55,
+        child: Container(
+          width: 58,
+          height: 58,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE4DCC8),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ArtImage(Art.lock, size: 22),
+              FittedBox(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: IconText(
+                    '[[coin]]${fmt(game.nextStorageCost)}',
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ---------------------------------------------------------------- 상점
 
 Future<void> showShopSheet(BuildContext context, BillingService billing) =>

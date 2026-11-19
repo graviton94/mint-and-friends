@@ -670,6 +670,30 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
+          if (game.storageOpen) ...[
+            FilledButton(
+              style: plainButton(
+                FilledButton.styleFrom(
+                  backgroundColor: Palette.primary,
+                  minimumSize: const Size(40, 36),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                ),
+              ),
+              onPressed: () {
+                if (game.store(idx)) {
+                  setState(() => _selected = null);
+                } else {
+                  _toast(tr('storage.full'));
+                  _openStorage();
+                }
+              },
+              child: IconText(
+                tr('board.store'),
+                style: const TextStyle(fontSize: 14),
+              ),
+            ),
+            const SizedBox(width: 6),
+          ],
           FilledButton(
             style: plainButton(
               FilledButton.styleFrom(
@@ -689,30 +713,60 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       );
-    } else if (game.canUndoSell) {
-      child = Center(
-        child: TextButton(
-          onPressed: game.undoSell,
-          child: IconText(
-            tr('board.undo'),
-            style: const TextStyle(fontSize: 16),
-          ),
-        ),
-      );
     } else {
-      final stuck = game.boardStuck;
-      child = Center(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: IconText(
-            tr(stuck ? 'board.stuck' : 'board.hint'),
-            style: TextStyle(
-              fontSize: 14,
-              color: stuck ? const Color(0xFFB0640A) : Colors.black45,
+      final Widget message;
+      if (game.canUndoSell) {
+        message = Center(
+          child: TextButton(
+            onPressed: game.undoSell,
+            child: IconText(
+              tr('board.undo'),
+              style: const TextStyle(fontSize: 16),
             ),
           ),
-        ),
-      );
+        );
+      } else {
+        final stuck = game.boardStuck;
+        message = Center(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: IconText(
+              tr(stuck ? 'board.stuck' : 'board.hint'),
+              style: TextStyle(
+                fontSize: 14,
+                color: stuck ? const Color(0xFFB0640A) : Colors.black45,
+              ),
+            ),
+          ),
+        );
+      }
+      child = !game.storageOpen
+          ? message
+          : Row(
+              children: [
+                FilledButton(
+                  style: framedButton(
+                    FilledButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Palette.text,
+                      minimumSize: const Size(40, 36),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                    ),
+                    'button_white',
+                  ),
+                  onPressed: _openStorage,
+                  child: IconText(
+                    tr('board.storeOpen', {
+                      'used': game.storageUsed,
+                      'max': game.storage.length,
+                    }),
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(child: message),
+              ],
+            );
     }
     return SizedBox(
       height: 44,
@@ -722,6 +776,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  void _openStorage() => showStorageSheet(context, game, onMessage: _toast);
 
   Widget _controls() {
     final boostOpen = game.isUnlocked(Feature.boost);

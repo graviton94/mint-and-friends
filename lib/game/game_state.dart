@@ -173,6 +173,9 @@ class GameState extends ChangeNotifier {
   String _adsDay = '';
   List<Item?> board = List<Item?>.filled(GameConfig.cellCount, null);
   Set<int> unlockedCells = {...GameConfig.startCells};
+
+  /// 보관함 (길이 = 열린 칸 수, 빈 칸은 null).
+  List<Item?> storage = List<Item?>.filled(Storage.startSlots, null);
   int _nextId = 1;
   final Map<UpgradeType, int> upgrades = {
     for (final u in UpgradeType.values) u: 0,
@@ -640,6 +643,58 @@ class GameState extends ChangeNotifier {
     return true;
   }
 
+  // ---------------------------------------------------------------- 보관함
+
+  bool get storageOpen => isUnlocked(Feature.storage);
+  int get storageUsed => storage.where((it) => it != null).length;
+  bool get storageFull => storageUsed >= storage.length;
+  bool get storageMaxed => storage.length >= Storage.maxSlots;
+  double get nextStorageCost =>
+      Storage.slotCost(storage.length - Storage.startSlots);
+
+  bool canStore(int cell) {
+    if (!storageOpen || storageFull) return false;
+    if (cell < 0 || cell >= board.length) return false;
+    final it = board[cell];
+    return it != null && !it.isBubble;
+  }
+
+  /// 판의 아이템을 보관함 빈 칸으로 옮긴다.
+  bool store(int cell) {
+    if (!canStore(cell)) return false;
+    final slot = storage.indexOf(null);
+    storage[slot] = board[cell];
+    board[cell] = null;
+    notifyListeners();
+    return true;
+  }
+
+  /// 보관함 아이템을 판으로 꺼낸다 (cell 이 없으면 첫 빈 칸). 꺼낸 칸 번호, 실패면 null.
+  int? retrieve(int slot, {int? cell}) {
+    if (slot < 0 || slot >= storage.length || storage[slot] == null) {
+      return null;
+    }
+    final target = cell ?? _emptyCell;
+    if (target == null || !isCellOpen(target) || board[target] != null) {
+      return null;
+    }
+    board[target] = storage[slot];
+    storage[slot] = null;
+    notifyListeners();
+    return target;
+  }
+
+  bool get canBuyStorageSlot =>
+      storageOpen && !storageMaxed && coins >= nextStorageCost;
+
+  bool buyStorageSlot() {
+    if (!canBuyStorageSlot) return false;
+    coins -= nextStorageCost;
+    storage = [...storage, null];
+    notifyListeners();
+    return true;
+  }
+
   // ---------------------------------------------------------------- 부탁
 
   void _fillOrders() {
@@ -877,6 +932,7 @@ class GameState extends ChangeNotifier {
       'xp': xp,
       'board': [for (final it in board) it?.toJson()],
       'cells': unlockedCells.toList()..sort(),
+      'store': [for (final it in storage) it?.toJson()],
       'nextId': _nextId,
       'up': {for (final e in upgrades.entries) e.key.name: e.value},
       'sp': spawnProgress,
@@ -925,6 +981,16 @@ class GameState extends ChangeNotifier {
       ...GameConfig.startCells,
       for (final c in (j['cells'] as List? ?? [])) (c as num).toInt(),
     };
+    final st = j['store'] as List? ?? const [];
+    storage = List<Item?>.filled(
+      st.length.clamp(Storage.startSlots, Storage.maxSlots),
+      null,
+    );
+    for (var i = 0; i < st.length && i < storage.length; i++) {
+      if (st[i] != null) {
+        storage[i] = Item.fromJson((st[i] as Map).cast<String, dynamic>());
+      }
+    }
     _nextId = (j['nextId'] as num?)?.toInt() ?? 1;
     final up = (j['up'] as Map?)?.cast<String, dynamic>() ?? {};
     for (final t in UpgradeType.values) {

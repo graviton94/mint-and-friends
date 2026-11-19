@@ -110,6 +110,7 @@ enum Feature {
   visitor,
   spawnLevel,
   offlineCap,
+  storage,
 }
 
 class Leveling {
@@ -130,6 +131,7 @@ class Leveling {
     Feature.boost: 3,
     Feature.snack: 3,
     Feature.coinBag: 4,
+    Feature.storage: 5,
     Feature.autoMerge: 6,
     Feature.visitor: 7,
     Feature.offlineCap: 8,
@@ -192,6 +194,16 @@ class Leveling {
 
 /// 칸 구매 비용 (지금까지 산 칸 수 기준, 살수록 비싸짐).
 double cellCost(int purchased) => 300 * pow(1.8, purchased).toDouble();
+
+/// 보관함: 판 밖에 아이템을 맡겨 두는 칸 (수익·부탁 대상 아님).
+/// 장르 기준(Travel Town·Merge Mansion): 처음 2칸, 칸마다 비용이 가파르게 오른다.
+class Storage {
+  static const int startSlots = 2;
+  static const int maxSlots = 10;
+
+  /// n번째(0부터) 추가 칸 비용. 500 → 1K → 2K → … (×2)
+  static double slotCost(int purchased) => 500 * pow(2.0, purchased).toDouble();
+}
 
 // ------------------------------------------------------------------ 아이템
 

@@ -23,7 +23,7 @@
   "order.deliver": "Tap to give!",
   "order.refresh": "New request",
   "board.hint": "Drag matching items together to merge",
-  "board.stuck": "Board full! Tap an item to sell it, or unlock more tiles",
+  "board.stuck": "Board full! Tap an item to sell or store it, or unlock more tiles",
   "board.selected": "Lv.{lv} {name} · {v}/sec",
   "board.sell": "Sell [[coin]]{price}",
   "board.undo": "↩ Undo",
@@ -240,5 +240,12 @@
   "energy.left": "{n} left today",
   "energy.wait": "I'll wait",
   "toast.adLimit": "Daily limit reached. It opens again tomorrow",
-  "ctrl.left": "{n} left"
+  "ctrl.left": "{n} left",
+  "storage.title": "[[storage]] Storage {used}/{max}",
+  "storage.body": "Stored items don't earn coins. Tap one to put it back on the board.",
+  "storage.boardFull": "No empty space on the board",
+  "storage.full": "Storage is full",
+  "board.store": "[[storage]] Store",
+  "board.storeOpen": "[[storage]] {used}/{max}",
+  "feature.storage": "[[storage]] Storage"
 }
