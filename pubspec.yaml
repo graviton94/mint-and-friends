@@ -68,6 +68,8 @@ flutter:
     - assets/art/decor/
     - assets/art/areas/
     - assets/art/ui/
+    - assets/art/icons/
+    - assets/art/frames/
   fonts:
     - family: Jua
       fonts:

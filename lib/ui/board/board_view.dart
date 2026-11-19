@@ -13,8 +13,9 @@ import '../theme.dart';
 /// 레이어 (아래 → 위), 각각 RepaintBoundary 로 분리:
 ///  L0 칸     : 바닥 타일, 잠긴 칸(자물쇠), 합칠 수 있는 칸 강조.
 ///  L1 아이템 : 아이템, 비눗방울, 선택 테두리, 부탁 표시.
-///  L2 드래그 : 손가락을 따라오는 아이템.
-///  L3 이펙트 : 합치기 반짝임.
+///  L2 이펙트 : 합치기 반짝임.
+///  L3 드래그 : 손가락을 따라오는 아이템. 보드 밖(부탁 카드, 정보 줄, 버튼) 위로도 보여야 하므로
+///             화면 최상단 Overlay 에 그린다 (OverlayPortal).
 ///
 /// 입력: 드래그 = 이동/합치기/교환, 탭 = 선택(판매·정보), 잠긴 칸 탭 = 칸 열기, 비눗방울 탭 = 꺼내기.
 class BoardView extends StatefulWidget {
@@ -44,6 +45,8 @@ class _Burst {
 }
 
 class _BoardViewState extends State<BoardView> {
+  final _dragPortal = OverlayPortalController();
+  double _cellSize = 0;
   int? _dragFrom;
   Offset _dragPos = Offset.zero;
   Offset _grabOffset = Offset.zero;
@@ -73,14 +76,49 @@ class _BoardViewState extends State<BoardView> {
     super.dispose();
   }
 
+  /// 최상단 Overlay 에 그리는 드래그 중인 아이템.
+  Widget _dragOverlay(BuildContext overlayContext) {
+    final from = _dragFrom;
+    final it = from == null ? null : game.board[from];
+    final board = context.findRenderObject() as RenderBox?;
+    final overlayBox =
+        Overlay.of(context).context.findRenderObject() as RenderBox?;
+    if (it == null || board == null || overlayBox == null || !board.attached) {
+      return const SizedBox.shrink();
+    }
+    final global = board.localToGlobal(_dragPos - _grabOffset);
+    final local = overlayBox.globalToLocal(global);
+    return Positioned(
+      left: local.dx,
+      top: local.dy,
+      width: _cellSize,
+      height: _cellSize,
+      child: IgnorePointer(
+        child: Transform.scale(
+          scale: 1.15,
+          child: ItemTile(item: it, size: _cellSize, lifted: true),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    return OverlayPortal(
+      controller: _dragPortal,
+      overlayChildBuilder: _dragOverlay,
+      child: _board(context),
+    );
+  }
+
+  Widget _board(BuildContext context) {
     return AspectRatio(
       aspectRatio: GameConfig.cols / GameConfig.rows,
       child: LayoutBuilder(
         builder: (context, c) {
           const pad = 5.0;
           final cell = (c.maxWidth - pad * 2) / GameConfig.cols;
+          _cellSize = cell;
           Offset origin(int i) => Offset(
             pad + (i % GameConfig.cols) * cell,
             pad + (i ~/ GameConfig.cols) * cell,
@@ -121,6 +159,7 @@ class _BoardViewState extends State<BoardView> {
               widget.onSelect(i);
               setState(() {
                 _dragFrom = i;
+                _dragPortal.show();
                 _dragPos = d.localPosition;
                 _grabOffset = d.localPosition - origin(i);
               });
@@ -164,25 +203,7 @@ class _BoardViewState extends State<BoardView> {
                       ),
                     ),
                   ),
-                  // L2 드래그
-                  if (dragItem != null)
-                    Positioned(
-                      left: _dragPos.dx - _grabOffset.dx,
-                      top: _dragPos.dy - _grabOffset.dy,
-                      width: cell,
-                      height: cell,
-                      child: IgnorePointer(
-                        child: Transform.scale(
-                          scale: 1.15,
-                          child: ItemTile(
-                            item: dragItem,
-                            size: cell,
-                            lifted: true,
-                          ),
-                        ),
-                      ),
-                    ),
-                  // L3 이펙트
+                  // L2 이펙트
                   for (final b in _bursts)
                     at(
                       b.cell,
@@ -279,6 +300,7 @@ class _BoardViewState extends State<BoardView> {
 
   void _drop(int? target) {
     final from = _dragFrom;
+    _dragPortal.hide();
     setState(() => _dragFrom = null);
     if (from == null || target == null) return;
     final r = game.move(from, target);
@@ -345,23 +367,28 @@ class ItemTile extends StatelessWidget {
           child: ArtImage(Art.item(item.chain, item.level), size: size * 0.66),
         ),
         if (bubble)
-          Container(
-            margin: EdgeInsets.all(size * 0.06),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  Colors.white.withValues(alpha: 0.05),
-                  const Color(0x8899D8FF),
-                ],
-                stops: const [0.6, 1],
-              ),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.9),
-                width: 2,
-              ),
-            ),
-          ),
+          Art.bubble.available
+              ? Opacity(
+                  opacity: 0.85,
+                  child: ArtImage(Art.bubble, size: size * 0.92),
+                )
+              : Container(
+                  margin: EdgeInsets.all(size * 0.06),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.05),
+                        const Color(0x8899D8FF),
+                      ],
+                      stops: const [0.6, 1],
+                    ),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      width: 2,
+                    ),
+                  ),
+                ),
         Positioned(
           right: size * 0.07,
           bottom: size * 0.05,
@@ -391,7 +418,7 @@ class ItemTile extends StatelessWidget {
           Positioned(
             left: size * 0.06,
             top: size * 0.04,
-            child: Text('💌', style: TextStyle(fontSize: size * 0.22)),
+            child: ArtImage(Art.icon('letter'), size: size * 0.26),
           ),
       ],
     );
@@ -420,9 +447,7 @@ class _BurstFx extends StatelessWidget {
         opacity: 1 - v,
         child: Transform.scale(
           scale: 0.6 + v * 0.9,
-          child: Center(
-            child: Text('✨', style: TextStyle(fontSize: size * 0.6)),
-          ),
+          child: Center(child: ArtImage(Art.icon('sparkle'), size: size * 0.7)),
         ),
       ),
     );

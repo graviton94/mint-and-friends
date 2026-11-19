@@ -1,17 +1,241 @@
 {
   "_comment": "시트 이미지 → 게임 파일 매핑. tool/import_art.py 가 사용. size = 잘라낸 정사각 PNG 한 변(px).",
-  "items_flower": {"cols": 5, "rows": 3, "size": 384, "files": ["assets/art/items/flower_01.png","assets/art/items/flower_02.png","assets/art/items/flower_03.png","assets/art/items/flower_04.png","assets/art/items/flower_05.png","assets/art/items/flower_06.png","assets/art/items/flower_07.png","assets/art/items/flower_08.png","assets/art/items/flower_09.png","assets/art/items/flower_10.png","assets/art/items/flower_11.png","assets/art/items/flower_12.png","assets/art/items/flower_13.png","assets/art/items/flower_14.png","assets/art/items/flower_15.png"]},
-  "items_snack": {"cols": 5, "rows": 3, "size": 384, "files": ["assets/art/items/snack_01.png","assets/art/items/snack_02.png","assets/art/items/snack_03.png","assets/art/items/snack_04.png","assets/art/items/snack_05.png","assets/art/items/snack_06.png","assets/art/items/snack_07.png","assets/art/items/snack_08.png","assets/art/items/snack_09.png","assets/art/items/snack_10.png","assets/art/items/snack_11.png","assets/art/items/snack_12.png","assets/art/items/snack_13.png","assets/art/items/snack_14.png","assets/art/items/snack_15.png"]},
-  "friends_idle": {"cols": 3, "rows": 3, "size": 512, "files": ["assets/art/friends/bori_idle.png","assets/art/friends/dubu_idle.png","assets/art/friends/kwak_idle.png","assets/art/friends/nabi_idle.png","assets/art/friends/dotori_idle.png","assets/art/friends/mochi_idle.png","assets/art/friends/danpung_idle.png","assets/art/friends/kongtteok_idle.png","assets/art/friends/visitor_idle.png"]},
-  "friends_happy": {"cols": 3, "rows": 3, "size": 512, "files": ["assets/art/friends/bori_happy.png","assets/art/friends/dubu_happy.png","assets/art/friends/kwak_happy.png","assets/art/friends/nabi_happy.png","assets/art/friends/dotori_happy.png","assets/art/friends/mochi_happy.png","assets/art/friends/danpung_happy.png","assets/art/friends/kongtteok_happy.png","assets/art/friends/visitor_happy.png"]},
-  "decor_yard": {"cols": 4, "rows": 2, "size": 384, "files": ["assets/art/decor/big_tree.png","assets/art/decor/bench.png","assets/art/decor/mailbox.png","assets/art/decor/veggie_patch.png","assets/art/decor/lantern.png","assets/art/decor/bird_feeder.png","assets/art/decor/hut.png","assets/art/decor/fountain.png"]},
-  "decor_pond": {"cols": 4, "rows": 2, "size": 384, "files": ["assets/art/decor/stepping_stones.png","assets/art/decor/water_lily.png","assets/art/decor/fishing_spot.png","assets/art/decor/rowboat.png","assets/art/decor/reeds.png","assets/art/decor/log_chair.png","assets/art/decor/tent.png","assets/art/decor/wooden_bridge.png"]},
-  "decor_greenhouse": {"cols": 4, "rows": 2, "size": 384, "files": ["assets/art/decor/glasshouse.png","assets/art/decor/cactus.png","assets/art/decor/mushroom_bed.png","assets/art/decor/watering_can.png","assets/art/decor/sunflower_field.png","assets/art/decor/tea_table.png","assets/art/decor/bamboo.png","assets/art/decor/wind_chime.png"]},
-  "decor_starry": {"cols": 4, "rows": 2, "size": 384, "files": ["assets/art/decor/telescope.png","assets/art/decor/camp_tent.png","assets/art/decor/campfire.png","assets/art/decor/ferris_wheel.png","assets/art/decor/carousel.png","assets/art/decor/moon_statue.png","assets/art/decor/little_castle.png","assets/art/decor/fireworks.png"]},
-  "ui_icons": {"cols": 3, "rows": 2, "size": 256, "files": ["assets/art/ui/coin.png","assets/art/ui/star.png","assets/art/ui/basket.png","assets/art/ui/lock.png","assets/art/ui/bubble.png","assets/art/ui/gift.png"]},
-  "bg_yard": {"bg": true, "files": ["assets/art/areas/yard_bg.png"]},
-  "bg_pond": {"bg": true, "files": ["assets/art/areas/pond_bg.png"]},
-  "bg_greenhouse": {"bg": true, "files": ["assets/art/areas/greenhouse_bg.png"]},
-  "bg_starry_hill": {"bg": true, "files": ["assets/art/areas/starry_hill_bg.png"]},
-  "app_icon": {"icon": true, "files": ["assets/art/icon/app_icon.png"]}
+  "items_flower": {
+    "cols": 5,
+    "rows": 3,
+    "size": 384,
+    "files": [
+      "assets/art/items/flower_01.png",
+      "assets/art/items/flower_02.png",
+      "assets/art/items/flower_03.png",
+      "assets/art/items/flower_04.png",
+      "assets/art/items/flower_05.png",
+      "assets/art/items/flower_06.png",
+      "assets/art/items/flower_07.png",
+      "assets/art/items/flower_08.png",
+      "assets/art/items/flower_09.png",
+      "assets/art/items/flower_10.png",
+      "assets/art/items/flower_11.png",
+      "assets/art/items/flower_12.png",
+      "assets/art/items/flower_13.png",
+      "assets/art/items/flower_14.png",
+      "assets/art/items/flower_15.png"
+    ]
+  },
+  "items_snack": {
+    "cols": 5,
+    "rows": 3,
+    "size": 384,
+    "files": [
+      "assets/art/items/snack_01.png",
+      "assets/art/items/snack_02.png",
+      "assets/art/items/snack_03.png",
+      "assets/art/items/snack_04.png",
+      "assets/art/items/snack_05.png",
+      "assets/art/items/snack_06.png",
+      "assets/art/items/snack_07.png",
+      "assets/art/items/snack_08.png",
+      "assets/art/items/snack_09.png",
+      "assets/art/items/snack_10.png",
+      "assets/art/items/snack_11.png",
+      "assets/art/items/snack_12.png",
+      "assets/art/items/snack_13.png",
+      "assets/art/items/snack_14.png",
+      "assets/art/items/snack_15.png"
+    ]
+  },
+  "friends_idle": {
+    "cols": 3,
+    "rows": 3,
+    "size": 512,
+    "files": [
+      "assets/art/friends/bori_idle.png",
+      "assets/art/friends/dubu_idle.png",
+      "assets/art/friends/kwak_idle.png",
+      "assets/art/friends/nabi_idle.png",
+      "assets/art/friends/dotori_idle.png",
+      "assets/art/friends/mochi_idle.png",
+      "assets/art/friends/danpung_idle.png",
+      "assets/art/friends/kongtteok_idle.png",
+      "assets/art/friends/visitor_idle.png"
+    ]
+  },
+  "friends_happy": {
+    "cols": 3,
+    "rows": 3,
+    "size": 512,
+    "files": [
+      "assets/art/friends/bori_happy.png",
+      "assets/art/friends/dubu_happy.png",
+      "assets/art/friends/kwak_happy.png",
+      "assets/art/friends/nabi_happy.png",
+      "assets/art/friends/dotori_happy.png",
+      "assets/art/friends/mochi_happy.png",
+      "assets/art/friends/danpung_happy.png",
+      "assets/art/friends/kongtteok_happy.png",
+      "assets/art/friends/visitor_happy.png"
+    ]
+  },
+  "decor_yard": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/big_tree.png",
+      "assets/art/decor/bench.png",
+      "assets/art/decor/mailbox.png",
+      "assets/art/decor/veggie_patch.png",
+      "assets/art/decor/lantern.png",
+      "assets/art/decor/bird_feeder.png",
+      "assets/art/decor/hut.png",
+      "assets/art/decor/fountain.png"
+    ]
+  },
+  "decor_pond": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/stepping_stones.png",
+      "assets/art/decor/water_lily.png",
+      "assets/art/decor/fishing_spot.png",
+      "assets/art/decor/rowboat.png",
+      "assets/art/decor/reeds.png",
+      "assets/art/decor/log_chair.png",
+      "assets/art/decor/tent.png",
+      "assets/art/decor/wooden_bridge.png"
+    ]
+  },
+  "decor_greenhouse": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/glasshouse.png",
+      "assets/art/decor/cactus.png",
+      "assets/art/decor/mushroom_bed.png",
+      "assets/art/decor/watering_can.png",
+      "assets/art/decor/sunflower_field.png",
+      "assets/art/decor/tea_table.png",
+      "assets/art/decor/bamboo.png",
+      "assets/art/decor/wind_chime.png"
+    ]
+  },
+  "decor_starry": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/telescope.png",
+      "assets/art/decor/camp_tent.png",
+      "assets/art/decor/campfire.png",
+      "assets/art/decor/ferris_wheel.png",
+      "assets/art/decor/carousel.png",
+      "assets/art/decor/moon_statue.png",
+      "assets/art/decor/little_castle.png",
+      "assets/art/decor/fireworks.png"
+    ]
+  },
+  "ui_icons": {
+    "cols": 3,
+    "rows": 2,
+    "size": 256,
+    "files": [
+      "assets/art/ui/coin.png",
+      "assets/art/ui/star.png",
+      "assets/art/ui/basket.png",
+      "assets/art/ui/lock.png",
+      "assets/art/ui/bubble.png",
+      "assets/art/ui/gift.png"
+    ]
+  },
+  "bg_yard": {
+    "bg": true,
+    "files": [
+      "assets/art/areas/yard_bg.png"
+    ]
+  },
+  "bg_pond": {
+    "bg": true,
+    "files": [
+      "assets/art/areas/pond_bg.png"
+    ]
+  },
+  "bg_greenhouse": {
+    "bg": true,
+    "files": [
+      "assets/art/areas/greenhouse_bg.png"
+    ]
+  },
+  "bg_starry_hill": {
+    "bg": true,
+    "files": [
+      "assets/art/areas/starry_hill_bg.png"
+    ]
+  },
+  "app_icon": {
+    "icon": true,
+    "files": [
+      "assets/art/icon/app_icon.png"
+    ]
+  },
+  "ui_icons2": {
+    "cols": 5,
+    "rows": 4,
+    "size": 192,
+    "files": [
+      "assets/art/icons/energy.png",
+      "assets/art/icons/ad.png",
+      "assets/art/icons/settings.png",
+      "assets/art/icons/no_ads.png",
+      "assets/art/icons/book.png",
+      "assets/art/icons/upgrade.png",
+      "assets/art/icons/decorate.png",
+      "assets/art/icons/heart.png",
+      "assets/art/icons/refresh.png",
+      "assets/art/icons/sparkle.png",
+      "assets/art/icons/letter.png",
+      "assets/art/icons/unknown.png",
+      "assets/art/icons/arrow_left.png",
+      "assets/art/icons/arrow_right.png",
+      "assets/art/icons/check.png",
+      "assets/art/icons/trophy.png",
+      "assets/art/icons/party.png",
+      "assets/art/icons/moon.png",
+      "assets/art/icons/auto.png",
+      "assets/art/icons/timer.png"
+    ]
+  },
+  "ui_icons3": {
+    "cols": 3,
+    "rows": 2,
+    "size": 192,
+    "files": [
+      "assets/art/icons/coinbag.png",
+      "assets/art/icons/quality.png",
+      "assets/art/icons/area_yard.png",
+      "assets/art/icons/area_pond.png",
+      "assets/art/icons/area_greenhouse.png",
+      "assets/art/icons/area_starry_hill.png"
+    ]
+  },
+  "ui_frames": {
+    "cols": 4,
+    "rows": 3,
+    "frame": true,
+    "files": [
+      "assets/art/frames/panel.png",
+      "assets/art/frames/ribbon.png",
+      "assets/art/frames/button_green.png",
+      "assets/art/frames/button_purple.png",
+      "assets/art/frames/button_white.png",
+      "assets/art/frames/card.png",
+      "assets/art/frames/card_ready.png",
+      "assets/art/frames/capsule.png",
+      "assets/art/frames/tile.png",
+      "assets/art/frames/toast.png",
+      "assets/art/frames/speech.png",
+      "assets/art/frames/slot.png"
+    ]
+  }
 }

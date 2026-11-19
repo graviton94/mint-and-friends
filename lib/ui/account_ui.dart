@@ -6,6 +6,8 @@ import '../i18n/l10n.dart';
 import '../services/auth_service.dart';
 import '../services/save_service.dart';
 import 'theme.dart';
+import 'widgets/icon_text.dart';
+import 'widgets/frame_box.dart';
 
 /// 첫 실행 로그인 화면: 카카오 / Google / 게스트.
 class LoginScreen extends StatelessWidget {
@@ -52,7 +54,7 @@ class LoginScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  Text(
+                  IconText(
                     tr('app.title'),
                     textAlign: TextAlign.center,
                     style: const TextStyle(
@@ -61,7 +63,7 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
+                  IconText(
                     tr('login.subtitle'),
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 16, color: Colors.black54),
@@ -72,7 +74,7 @@ class LoginScreen extends StatelessWidget {
                       label: tr('login.kakao'),
                       color: const Color(0xFFFEE500),
                       textColor: const Color(0xFF191600),
-                      icon: '💬',
+                      icon: 'kakao',
                       onTap: auth.busy ? null : () => _go(auth.signInKakao),
                     ),
                   if (auth.googleEnabled)
@@ -80,18 +82,18 @@ class LoginScreen extends StatelessWidget {
                       label: tr('login.google'),
                       color: Colors.white,
                       textColor: const Color(0xFF1F1F1F),
-                      icon: 'G',
+                      icon: 'google',
                       onTap: auth.busy ? null : () => _go(auth.signInGoogle),
                     ),
                   _LoginButton(
                     label: tr('login.guest'),
                     color: Palette.primary,
                     textColor: Colors.white,
-                    icon: '🌱',
+                    icon: 'sprout',
                     onTap: auth.busy ? null : () => _go(auth.signInGuest),
                   ),
                   const SizedBox(height: 10),
-                  Text(
+                  IconText(
                     tr('login.guestNote'),
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 13, color: Colors.black45),
@@ -153,18 +155,20 @@ class _LoginButton extends StatelessWidget {
       child: SizedBox(
         height: 54,
         child: FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: color,
-            foregroundColor: textColor,
-            side: color == Colors.white
-                ? const BorderSide(color: Color(0xFFDADCE0))
-                : null,
+          style: plainButton(
+            FilledButton.styleFrom(
+              backgroundColor: color,
+              foregroundColor: textColor,
+              side: color == Colors.white
+                  ? const BorderSide(color: Color(0xFFDADCE0))
+                  : null,
+            ),
           ),
           onPressed: onTap,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(icon, style: TextStyle(fontSize: 20, color: textColor)),
+              ArtImage(Art.icon(icon), size: 24),
               const SizedBox(width: 10),
               Text(label, style: TextStyle(fontSize: 17, color: textColor)),
             ],
@@ -229,7 +233,7 @@ class AccountSection extends StatelessWidget {
                 if (p == LoginProvider.guest &&
                     (auth.googleEnabled || auth.kakaoEnabled)) ...[
                   const SizedBox(height: 8),
-                  Text(
+                  IconText(
                     tr('account.linkHint'),
                     style: const TextStyle(fontSize: 14),
                   ),
@@ -237,12 +241,12 @@ class AccountSection extends StatelessWidget {
                   if (auth.kakaoEnabled)
                     OutlinedButton(
                       onPressed: auth.busy ? null : onLinkKakao,
-                      child: Text('💬 ${tr('account.linkKakao')}'),
+                      child: IconText('[[kakao]] ${tr('account.linkKakao')}'),
                     ),
                   if (auth.googleEnabled)
                     OutlinedButton(
                       onPressed: auth.busy ? null : onLinkGoogle,
-                      child: Text('G  ${tr('account.linkGoogle')}'),
+                      child: IconText('[[google]] ${tr('account.linkGoogle')}'),
                     ),
                 ],
                 const SizedBox(height: 8),
@@ -251,13 +255,13 @@ class AccountSection extends StatelessWidget {
                     Expanded(
                       child: TextButton(
                         onPressed: auth.busy ? null : onSignOut,
-                        child: Text(tr('account.logout')),
+                        child: IconText(tr('account.logout')),
                       ),
                     ),
                     Expanded(
                       child: TextButton(
                         onPressed: auth.busy ? null : onDelete,
-                        child: Text(
+                        child: IconText(
                           tr('account.delete'),
                           style: const TextStyle(color: Colors.redAccent),
                         ),
@@ -287,19 +291,19 @@ Future<bool> askSaveConflict(
   final r = await showDialog<bool>(
     context: context,
     barrierDismissible: false,
-    builder: (ctx) => AlertDialog(
-      title: Text(tr('conflict.title'), textAlign: TextAlign.center),
-      content: Text(tr('conflict.body'), textAlign: TextAlign.center),
+    builder: (ctx) => GameDialog(
+      title: IconText(tr('conflict.title'), textAlign: TextAlign.center),
+      content: IconText(tr('conflict.body'), textAlign: TextAlign.center),
       actions: [
         OutlinedButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: Text(
+          child: IconText(
             tr('conflict.local', {'lv': local.level, 'area': local.area + 1}),
           ),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: Text(
+          child: IconText(
             tr('conflict.cloud', {'lv': cloud.level, 'area': cloud.area + 1}),
           ),
         ),

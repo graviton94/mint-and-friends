@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'widgets/frame_box.dart';
+
 /// 아트가 들어오기 전 임시 팔레트. 3~50대 대상: 큰 글씨, 높은 대비, 부드러운 색.
 class Palette {
   static const bgTop = Color(0xFFE8F5E1);
@@ -29,10 +31,21 @@ ThemeData buildTheme() {
       displayColor: Palette.text,
     ),
     filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        minimumSize: const Size(48, 48),
-        textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      style: framedButton(
+        FilledButton.styleFrom(
+          minimumSize: const Size(48, 48),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        'button_green',
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: framedButton(
+        OutlinedButton.styleFrom(minimumSize: const Size(48, 44)),
+        'button_white',
       ),
     ),
   );

@@ -40,6 +40,8 @@ def import_sheet(sid, src, spec):
             sq.resize((px, px), Image.LANCZOS).save(out(f"android/app/src/main/res/mipmap-{d}/ic_launcher.png"), optimize=True)
         return [spec["files"][0], "docs/store/icon_512.png", "mipmap-*/ic_launcher.png"]
     clear = remove_white_bg(img)
+    if spec.get("frame"):
+        return import_frames(clear, spec)
     cols, rows, size = spec["cols"], spec["rows"], spec["size"]
     cw, ch = clear.width / cols, clear.height / rows
     done = []
@@ -47,6 +49,23 @@ def import_sheet(sid, src, spec):
         r, c = divmod(i, cols)
         cell = clear.crop((round(c * cw), round(r * ch), round((c + 1) * cw), round((r + 1) * ch)))
         fit_square(cell, size).save(out(f), optimize=True)
+        done.append(f)
+    return done
+
+
+def import_frames(clear, spec):
+    """프레임: 칸마다 내용물 경계로 딱 맞게 자른 뒤 384x384 로 늘린다 (9-slice 용, 여백 없음)."""
+    from slice_sheet import drop_edge_fragments
+    cols, rows = spec["cols"], spec["rows"]
+    cw, ch = clear.width / cols, clear.height / rows
+    done = []
+    for i, f in enumerate(spec["files"]):
+        r, c = divmod(i, cols)
+        cell = drop_edge_fragments(clear.crop((round(c * cw), round(r * ch), round((c + 1) * cw), round((r + 1) * ch))))
+        box = cell.getbbox()
+        if box:
+            cell = cell.crop(box)
+        cell.resize((384, 384), Image.LANCZOS).save(out(f), optimize=True)
         done.append(f)
     return done
 

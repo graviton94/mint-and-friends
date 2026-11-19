@@ -53,6 +53,64 @@ class Art {
   static ArtRef ui(String name, String emoji) =>
       ArtRef('assets/art/ui/$name.png', emoji);
 
+  /// UI 아이콘. 발주서 "UI 아이콘 2·3" 시트로 받는다. 파일이 없으면 이모지로 대신 그린다.
+  static const Map<String, String> iconFallback = {
+    'energy': '⚡',
+    'ad': '📺',
+    'settings': '⚙️',
+    'no_ads': '🚫',
+    'book': '📖',
+    'upgrade': '⬆️',
+    'decorate': '🔨',
+    'heart': '💗',
+    'refresh': '🔄',
+    'sparkle': '✨',
+    'letter': '💌',
+    'unknown': '❔',
+    'arrow_left': '◀️',
+    'arrow_right': '▶️',
+    'check': '✅',
+    'trophy': '🏆',
+    'party': '🎉',
+    'moon': '🌙',
+    'auto': '🤖',
+    'timer': '⏱️',
+    'coinbag': '💰',
+    'quality': '🌟',
+    'area_yard': '🏡',
+    'area_pond': '🪷',
+    'area_greenhouse': '🪴',
+    'area_starry_hill': '🌙',
+    'kakao': '💬',
+    'google': 'G',
+    'sprout': '🌱',
+  };
+
+  /// 이미 받은 UI 그림(assets/art/ui)으로 그리는 아이콘.
+  static const Map<String, ArtRef> _uiIcons = {
+    'coin': coin,
+    'star': star,
+    'basket': basket,
+    'lock': lock,
+    'bubble': bubble,
+    'gift': gift,
+  };
+
+  static ArtRef icon(String id) {
+    final ui = _uiIcons[id];
+    if (ui != null) return ui;
+    if (id == 'visitor') return visitor();
+    if (id == 'sprout') return item(Chain.flower, 2);
+    return ArtRef('assets/art/icons/$id.png', iconFallback[id] ?? '•');
+  }
+
+  static ArtRef areaIcon(AreaDef a) => icon('area_${a.id}');
+
+  /// 9-slice 프레임 (버튼, 모달, 카드, 토스트, 말풍선…). 384x384 정사각, 가장자리 30% 는 늘어나지 않는다.
+  static ArtRef frame(String id) => ArtRef('assets/art/frames/$id.png', '');
+  static const double frameSize = 384;
+  static const Rect frameCenter = Rect.fromLTRB(116, 116, 268, 268);
+
   static const coin = ArtRef('assets/art/ui/coin.png', '🪙');
   static const star = ArtRef('assets/art/ui/star.png', '⭐');
   static const basket = ArtRef('assets/art/ui/basket.png', '🧺');

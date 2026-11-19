@@ -8,6 +8,8 @@ import '../i18n/l10n.dart';
 import '../i18n/names.dart';
 import '../services/billing_service.dart';
 import 'theme.dart';
+import 'widgets/frame_box.dart';
+import 'widgets/icon_text.dart';
 
 Future<void> _sheet(
   BuildContext context,
@@ -17,7 +19,10 @@ Future<void> _sheet(
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Palette.board,
+    // 패널 프레임이 있으면 시트 배경을 투명하게 하고 SheetFrame 이 프레임을 그린다
+    backgroundColor: Art.frame('panel').available
+        ? Colors.transparent
+        : Palette.board,
     builder: (_) => ListenableBuilder(
       listenable: Listenable.merge([listen, L10n.instance]),
       builder: (context, _) => build(),
@@ -59,7 +64,7 @@ class _UpgradeRow extends StatelessWidget {
     } else if (capped) {
       button = tr('upgrade.needLevel', {'n': game.level + 1});
     } else {
-      button = '🪙 ${fmt(game.upgradeCost(t))}';
+      button = '[[coin]] ${fmt(game.upgradeCost(t))}';
     }
     return Opacity(
       opacity: featureLocked ? 0.55 : 1,
@@ -70,7 +75,7 @@ class _UpgradeRow extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              Text(def.icon, style: const TextStyle(fontSize: 30)),
+              ArtImage(Art.icon(def.icon), size: 34),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -98,7 +103,7 @@ class _UpgradeRow extends StatelessWidget {
                 onPressed: game.canBuyUpgrade(t)
                     ? () => game.buyUpgrade(t)
                     : null,
-                child: Text(button),
+                child: IconText(button),
               ),
             ],
           ),
@@ -124,7 +129,7 @@ Future<void> showDecorSheet(BuildContext context, GameState game) => _sheet(
           if (game.areaLocked)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: Text(
+              child: IconText(
                 tr('decor.areaLocked', {'n': game.areaRequiredLevel}),
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 16, color: Color(0xFFB0640A)),
@@ -136,7 +141,7 @@ Future<void> showDecorSheet(BuildContext context, GameState game) => _sheet(
             borderRadius: BorderRadius.circular(5),
           ),
           const SizedBox(height: 6),
-          Text(
+          IconText(
             tr('decor.progress', {
               'done': done,
               'total': Garden.slotsPerArea,
@@ -174,23 +179,23 @@ class _DecorRow extends StatelessWidget {
         leading: ArtImage(Art.decor(d), size: 40),
         title: Text(decorName(d), style: const TextStyle(fontSize: 17)),
         subtitle: newFriend
-            ? Text(
+            ? IconText(
                 tr('decor.bringsFriend', {
-                  'emoji': Friends.byId(fid).emoji,
+                  'emoji': friendToken(fid),
                   'name': friendName(fid),
                 }),
               )
             : null,
         trailing: placed
-            ? Text(tr('decor.done'), style: const TextStyle(fontSize: 15))
+            ? IconText(tr('decor.done'), style: const TextStyle(fontSize: 15))
             : FilledButton(
                 onPressed: game.canPlace(slot)
                     ? () => game.placeDecor(slot)
                     : null,
-                child: Text(
+                child: IconText(
                   game.areaLocked
                       ? tr('common.lockedLevel', {'n': game.areaRequiredLevel})
-                      : '⭐ ${game.decorCost(slot)}',
+                      : '[[star]] ${game.decorCost(slot)}',
                 ),
               ),
       ),
@@ -211,7 +216,7 @@ Future<void> showCollectionSheet(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(tr('book.friends'), style: const TextStyle(fontSize: 18)),
+        IconText(tr('book.friends'), style: const TextStyle(fontSize: 18)),
         const SizedBox(height: 6),
         GridView.count(
           crossAxisCount: 2,
@@ -285,9 +290,16 @@ class _FriendCard extends StatelessWidget {
                   ),
                 ),
                 if (has) ...[
-                  Text(
-                    '💗' * (aff ~/ 2) + (aff.isOdd ? '🩷' : ''),
-                    style: const TextStyle(fontSize: 10),
+                  Row(
+                    children: [
+                      for (var h = 0; h < Friends.maxAffection ~/ 2; h++)
+                        Opacity(
+                          opacity: h * 2 + 2 <= aff
+                              ? 1
+                              : (h * 2 + 1 <= aff ? 0.6 : 0.15),
+                          child: ArtImage(Art.icon('heart'), size: 11),
+                        ),
+                    ],
                   ),
                   FittedBox(
                     child: Text(
@@ -299,7 +311,7 @@ class _FriendCard extends StatelessWidget {
                     ),
                   ),
                 ] else
-                  Text(
+                  IconText(
                     tr('book.invite'),
                     style: const TextStyle(
                       fontSize: 12,
@@ -341,9 +353,9 @@ class _ItemChip extends StatelessWidget {
         ),
         child: found
             ? ArtImage(Art.item(chain, level), size: 30)
-            : const Text(
-                '❔',
-                style: TextStyle(fontSize: 22, color: Colors.black26),
+            : Opacity(
+                opacity: 0.3,
+                child: ArtImage(Art.icon('unknown'), size: 24),
               ),
       ),
     );
@@ -361,13 +373,13 @@ Future<void> showShopSheet(BuildContext context, BillingService billing) =>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
+            IconText(
               tr('shop.body'),
               style: const TextStyle(fontSize: 16, height: 1.6),
             ),
             const SizedBox(height: 16),
             if (billing.adFree)
-              Text(
+              IconText(
                 tr('shop.active'),
                 textAlign: TextAlign.center,
                 style: const TextStyle(fontSize: 18),
@@ -377,7 +389,7 @@ Future<void> showShopSheet(BuildContext context, BillingService billing) =>
                 onPressed: billing.product == null || billing.purchasing
                     ? null
                     : billing.buyRemoveAds,
-                child: Text(
+                child: IconText(
                   billing.product == null
                       ? tr('shop.connecting')
                       : tr('shop.subscribe', {'price': billing.product!.price}),
@@ -385,7 +397,7 @@ Future<void> showShopSheet(BuildContext context, BillingService billing) =>
               ),
             TextButton(
               onPressed: billing.restore,
-              child: Text(tr('shop.restore')),
+              child: IconText(tr('shop.restore')),
             ),
           ],
         ),
@@ -408,7 +420,7 @@ Future<void> showSettingsSheet(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(tr('settings.language'), style: const TextStyle(fontSize: 18)),
+        IconText(tr('settings.language'), style: const TextStyle(fontSize: 18)),
         const SizedBox(height: 6),
         Wrap(
           spacing: 8,
@@ -422,12 +434,12 @@ Future<void> showSettingsSheet(
           ],
         ),
         const SizedBox(height: 18),
-        Text(tr('settings.account'), style: const TextStyle(fontSize: 18)),
+        IconText(tr('settings.account'), style: const TextStyle(fontSize: 18)),
         const SizedBox(height: 6),
         accountSection(),
         if (version.isNotEmpty) ...[
           const SizedBox(height: 18),
-          Text(
+          IconText(
             tr('settings.version', {'v': version}),
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.black45),
@@ -445,36 +457,40 @@ class SheetFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: Colors.black26,
-                    borderRadius: BorderRadius.circular(3),
+    return FrameBox(
+      frame: 'panel',
+      fallback: const BoxDecoration(),
+      child: SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.black26,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 22),
-              ),
-              const SizedBox(height: 12),
-              child,
-            ],
+                const SizedBox(height: 10),
+                IconText(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 22),
+                ),
+                const SizedBox(height: 12),
+                child,
+              ],
+            ),
           ),
         ),
       ),

@@ -279,11 +279,11 @@ class UpgradeDef {
 /// 비용은 단계마다 x1.13~1.15, 수익 강화는 x1.08 + 10/25/50/100 단계 달성 시 x2.
 class Upgrades {
   static const List<UpgradeDef> all = [
-    UpgradeDef(UpgradeType.spawnSpeed, '⏱️', 30, 40, 1.15),
-    UpgradeDef(UpgradeType.income, '💰', 100, 60, 1.13),
+    UpgradeDef(UpgradeType.spawnSpeed, 'timer', 30, 40, 1.15),
+    UpgradeDef(UpgradeType.income, 'coinbag', 100, 60, 1.13),
     UpgradeDef(
       UpgradeType.autoMerge,
-      '🤖',
+      'auto',
       30,
       500,
       1.15,
@@ -291,7 +291,7 @@ class Upgrades {
     ),
     UpgradeDef(
       UpgradeType.spawnLevel,
-      '⭐',
+      'quality',
       4,
       20000,
       12,
@@ -299,7 +299,7 @@ class Upgrades {
     ),
     UpgradeDef(
       UpgradeType.offlineCap,
-      '🌙',
+      'moon',
       8,
       2000,
       1.6,

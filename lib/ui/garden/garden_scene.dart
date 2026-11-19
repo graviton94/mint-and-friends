@@ -9,14 +9,17 @@ import '../../game/format.dart';
 import '../../game/game_state.dart';
 import '../../i18n/l10n.dart';
 import '../../i18n/names.dart';
+import '../widgets/icon_text.dart';
+import '../widgets/frame_box.dart';
 
 /// 위쪽 정원 씬.
 ///
 /// 레이어 (아래 → 위), 각 레이어는 RepaintBoundary 로 분리해 따로 다시 그린다.
 ///  L0 배경   : 하늘·땅 (구역 배경 이미지가 있으면 그 이미지). 구역이 바뀔 때만 다시 그림.
 ///  L1 월드   : 장식 + 친구 + 손님. 발 위치(y) 기준으로 앞뒤 정렬해 겹침이 자연스럽다.
-///  L2 이펙트 : 말풍선, 하트·코인 떠오름.
-///  L3 UI     : 구역 이름, 메뉴 버튼 등 (부모가 overlay 로 넘김).
+///  L2 표시   : 아직 꾸미지 않은 장식 자리 (탭 대상이라 캐릭터 위).
+///  L3 이펙트 : 말풍선, 하트·코인 떠오름. 터치를 받지 않는다.
+///  L4 UI     : 구역 이름, 메뉴 버튼, 알림 (부모가 overlay 로 넘김).
 ///
 /// 캐릭터 움직임은 모두 코드 애니메이션이라 그림은 정지 이미지 2장(기본/기쁨)이면 된다.
 class GardenScene extends StatefulWidget {
@@ -150,7 +153,9 @@ class _GardenSceneState extends State<GardenScene>
       w.happyLeft = 0.6;
       w.speechLeft = 2.5;
     }
-    _floats.add(_Float(at, coins == null ? '💗' : '💗 +${fmt(coins)}'));
+    _floats.add(
+      _Float(at, coins == null ? '[[heart]]' : '[[heart]] +${fmt(coins)}'),
+    );
   }
 
   @override
@@ -175,6 +180,11 @@ class _GardenSceneState extends State<GardenScene>
               ),
               Positioned.fill(
                 child: RepaintBoundary(
+                  child: Stack(children: _markerLayer(area, size)),
+                ),
+              ),
+              Positioned.fill(
+                child: RepaintBoundary(
                   child: IgnorePointer(child: Stack(children: _fxLayer(size))),
                 ),
               ),
@@ -195,7 +205,6 @@ class _GardenSceneState extends State<GardenScene>
   List<Widget> _worldLayer(AreaDef area, Size s) {
     final unit = min(s.width, s.height * 1.6);
     Offset px(double x, double y) => Offset(x * s.width, y * s.height);
-    final building = widget.area == game.currentArea;
     final layers = <({double y, Widget child})>[];
 
     for (var i = 0; i < area.decor.length; i++) {
@@ -216,41 +225,12 @@ class _GardenSceneState extends State<GardenScene>
           ),
           child: ArtImage(Art.decor(d), size: sz),
         );
-      } else if (building) {
-        final affordable = game.canPlace(i);
-        final pulse = affordable ? 1 + 0.08 * sin(_t * 5) : 1.0;
-        child = GestureDetector(
-          onTap: () => widget.onSlotTap(i),
-          child: Transform.scale(
-            scale: pulse,
-            child: Container(
-              width: sz,
-              height: sz,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: affordable ? 0.75 : 0.35),
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                game.areaLocked
-                    ? '🔒'
-                    : '${affordable ? '✨' : '+'}\n⭐${game.decorCost(i)}',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: sz * 0.22,
-                  height: 1.1,
-                  color: const Color(0xFF4A5A3A),
-                ),
-              ),
-            ),
-          ),
-        );
       } else {
         continue;
       }
       layers.add((
-        y: d.y,
+        // 정렬 기준 = 바닥에 닿는 높이 (그림 아래 여백 6% 반영)
+        y: p.dy + sz * 0.44,
         child: Positioned(
           left: p.dx - sz * 0.6,
           top: p.dy - sz * 0.6,
@@ -283,7 +263,7 @@ class _GardenSceneState extends State<GardenScene>
           ? -sin((0.6 - wk.happyLeft) / 0.6 * pi) * sz * 0.4
           : 0.0;
       layers.add((
-        y: wk.pos.dy,
+        y: p.dy + sz * 0.04, // 발 위치
         child: Positioned(
           left: p.dx - sz * 0.6,
           top: p.dy - sz + bob + jump,
@@ -340,7 +320,7 @@ class _GardenSceneState extends State<GardenScene>
       final sz = unit * 0.17;
       final bounce = sin(_t * 6).abs() * sz * 0.1;
       layers.add((
-        y: 0.62,
+        y: p.dy, // 발 위치
         child: Positioned(
           left: p.dx - sz,
           top: p.dy - sz * 1.6 - bounce,
@@ -364,7 +344,45 @@ class _GardenSceneState extends State<GardenScene>
     return [for (final l in layers) l.child];
   }
 
-  // ---------------------------------------------------------------- L2 이펙트
+  // ---------------------------------------------------------------- L2 빈 자리 표시 (월드 위, 이펙트 아래)
+  // 캐릭터가 지나가도 가려지지 않고 탭이 캐릭터에게 뺏기지 않도록 월드와 분리한다.
+  List<Widget> _markerLayer(AreaDef area, Size s) {
+    if (widget.area != game.currentArea) return const [];
+    final unit = min(s.width, s.height * 1.6);
+    final out = <Widget>[];
+    for (var i = 0; i < area.decor.length; i++) {
+      if (game.isPlaced(widget.area, i)) continue;
+      final d = area.decor[i];
+      final p = Offset(d.x * s.width, d.y * s.height);
+      final sz = unit * 0.21;
+      final markerSz = sz * 0.8;
+      final affordable = game.canPlace(i);
+      final pulse = affordable ? 1 + 0.08 * sin(_t * 5) : 1.0;
+      out.add(
+        Positioned(
+          left: p.dx - markerSz / 2,
+          top: p.dy - markerSz / 2,
+          width: markerSz,
+          height: markerSz,
+          child: GestureDetector(
+            onTap: () => widget.onSlotTap(i),
+            child: Transform.scale(
+              scale: pulse,
+              child: SlotMarker(
+                size: markerSz,
+                locked: game.areaLocked,
+                affordable: affordable,
+                cost: game.decorCost(i),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    return out;
+  }
+
+  // ---------------------------------------------------------------- L3 이펙트
 
   List<Widget> _fxLayer(Size s) {
     final out = <Widget>[];
@@ -390,7 +408,7 @@ class _GardenSceneState extends State<GardenScene>
           width: 120,
           child: Opacity(
             opacity: (1.2 - f.age).clamp(0.0, 1.0),
-            child: Text(
+            child: IconText(
               f.text,
               textAlign: TextAlign.center,
               style: const TextStyle(
@@ -524,10 +542,14 @@ class _Bubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: const [BoxShadow(color: Color(0x22000000), blurRadius: 6)],
+    decoration: FrameBox.decorationFor(
+      'speech',
+      BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [BoxShadow(color: Color(0x22000000), blurRadius: 6)],
+      ),
+      scale: 0.3,
     ),
     child: Text(
       text,
@@ -541,8 +563,9 @@ class _Bubble extends StatelessWidget {
 String areaLabel(GameState game, int areaIndex) {
   final a = Garden.areaAt(areaIndex);
   final name = areaName(a);
-  if (areaIndex < game.currentArea) return '${a.emoji} $name ✅';
+  final icon = '[[area_${a.id}]]';
+  if (areaIndex < game.currentArea) return '$icon $name [[check]]';
   if (game.areaLocked)
-    return '${a.emoji} $name  ${tr('common.lockedLevel', {'n': game.areaRequiredLevel})}';
-  return '${a.emoji} $name  ${game.placed.length}/${Garden.slotsPerArea}';
+    return '$icon $name  ${tr('common.lockedLevel', {'n': game.areaRequiredLevel})}';
+  return '$icon $name  ${game.placed.length}/${Garden.slotsPerArea}';
 }

@@ -94,3 +94,40 @@ python3 tool/slice_sheet.py yard.png 1 1 assets/art/areas/yard_bg.png --keep-bg
 
 ### 앱 아이콘
 1024×1024 한 장을 주시면 Android 적응형 아이콘(전경/배경)으로 변환해 넣습니다.
+
+## UI 아이콘·프레임 (2차 발주)
+
+### 아이콘: `assets/art/icons/<id>.png` (192px, 투명)
+문구와 화면에서 이모지를 쓰지 않는다. 문구(assets/i18n)에는 `[[id]]` 토큰을 쓰고 `IconText` 가 그림으로 바꾼다.
+그림 파일이 없으면 `Art.iconFallback` 의 이모지로 대신 그리고, 파일이 들어오면 코드 수정 없이 바뀐다.
+
+| 시트 | id |
+|---|---|
+| UI 아이콘 20종 (5×4) | energy ad settings no_ads book upgrade decorate heart refresh sparkle letter unknown arrow_left arrow_right check trophy party moon auto timer |
+| 강화·구역 6종 (3×2) | coinbag quality area_yard area_pond area_greenhouse area_starry_hill |
+| 공식 로고 (직접 다운로드) | kakao google — AI 생성 금지, 각 사 브랜드 가이드 파일 사용 |
+
+동적 토큰: `[[item:flower:3]]`, `[[friend:bori]]`, `[[decor:bench]]`.
+`test/i18n_test.dart` 가 문구 속 이모지와 모르는 토큰을 잡아낸다.
+
+### 프레임: `assets/art/frames/<id>.png` (384×384, 9-slice)
+가장자리 116px 는 고정, 가운데만 늘어난다 (`Art.frameCenter`). 가운데는 무늬 없는 단색이어야 한다.
+
+| id | 쓰는 곳 |
+|---|---|
+| panel | 대화상자(GameDialog), 아래에서 올라오는 시트 |
+| ribbon | 대화상자 제목 |
+| button_green / button_purple / button_white | 기본 버튼 / 광고 버튼 / 외곽선 버튼 (테마에서 자동 적용) |
+| card / card_ready | 부탁 카드 / 전달 가능한 부탁 카드 |
+| capsule | 상단 코인·별·에너지 바 |
+| tile | 메뉴 버튼 |
+| toast | 알림 |
+| speech | 친구 말풍선 |
+| slot | 정원의 빈 장식 자리 |
+
+브랜드 색 버튼(카카오, Google)과 경고 버튼(판매, 삭제)은 `plainButton` 으로 프레임을 쓰지 않는다.
+
+## 렌더 레이어 점검 결과 (2026-11)
+- 정원: L0 배경 → L1 월드(장식·친구·손님, **바닥 닿는 높이**로 앞뒤 정렬) → L2 빈 자리 표시(탭 대상) → L3 이펙트(말풍선·떠오르는 숫자, 터치 없음) → L4 UI(구역 이름·메뉴·알림)
+- 보드: L0 칸 → L1 아이템(선택 테두리 < 그림 < 비눗방울 < 레벨 배지 < 편지 표시) → L2 합치기 반짝임 → L3 드래그 중인 아이템은 **화면 최상단 Overlay** (부탁 카드·정보 줄·버튼보다 위)
+- 대화상자·시트는 Navigator Overlay 로 항상 게임 화면 위

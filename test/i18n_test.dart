@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:mint_and_friends/game/config.dart';
+import 'package:mint_and_friends/art/art.dart';
 import 'package:mint_and_friends/i18n/l10n.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -47,6 +48,25 @@ void main() {
     ];
     final missing = keys.where((k) => !base.containsKey(k)).toList();
     expect(missing, isEmpty);
+  });
+
+  test('UI 문구에 이모지 대신 아이콘 토큰만 쓴다', () {
+    final emoji = RegExp(r'[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}]', unicode: true);
+    final token = RegExp(r'\[\[([a-z_0-9:]+)\]\]');
+    final known = {...Art.iconFallback.keys, 'coin', 'star', 'basket', 'lock', 'bubble', 'gift', 'visitor'};
+    for (final lang in L10n.supported.keys) {
+      for (final e in _load(lang).entries) {
+        if (e.key.startsWith('item.') || e.key.startsWith('decor.') || e.key.startsWith('friend.') || e.key.startsWith('area.')) {
+          continue;
+        }
+        expect(emoji.hasMatch(e.value), isFalse, reason: '$lang ${e.key}: 이모지 대신 [[토큰]] 사용');
+        for (final m in token.allMatches(e.value)) {
+          final t = m.group(1)!;
+          final ok = known.contains(t) || t.startsWith('item:') || t.startsWith('friend:') || t.startsWith('decor:');
+          expect(ok, isTrue, reason: '$lang ${e.key}: 알 수 없는 토큰 $t');
+        }
+      }
+    }
   });
 
   test('tr: 자리표시자 치환과 없는 키 대체', () {

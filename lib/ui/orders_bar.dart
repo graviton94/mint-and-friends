@@ -5,6 +5,8 @@ import '../game/config.dart';
 import '../game/game_state.dart';
 import '../i18n/l10n.dart';
 import 'theme.dart';
+import 'widgets/icon_text.dart';
+import 'widgets/frame_box.dart';
 
 /// 친구들의 부탁 3개. 보드에 아이템이 있으면 탭 한 번으로 전달된다.
 class OrdersBar extends StatelessWidget {
@@ -61,13 +63,17 @@ class _OrderCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         height: 62,
         padding: const EdgeInsets.symmetric(horizontal: 5),
-        decoration: BoxDecoration(
-          color: ready ? const Color(0xFFFFF3C4) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: ready ? Palette.accent : const Color(0xFFE5DCC8),
-            width: ready ? 3 : 1.5,
+        decoration: FrameBox.decorationFor(
+          ready ? 'card_ready' : 'card',
+          BoxDecoration(
+            color: ready ? const Color(0xFFFFF3C4) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: ready ? Palette.accent : const Color(0xFFE5DCC8),
+              width: ready ? 3 : 1.5,
+            ),
           ),
+          scale: 0.3,
         ),
         child: Row(
           children: [
@@ -90,8 +96,8 @@ class _OrderCard extends StatelessWidget {
                     ),
                   ),
                   FittedBox(
-                    child: Text(
-                      ready ? tr('order.deliver') : '⭐${o.stars}',
+                    child: IconText(
+                      ready ? tr('order.deliver') : '[[star]]${o.stars}',
                       style: TextStyle(
                         fontSize: 13,
                         color: ready ? const Color(0xFFB0640A) : Palette.text,
@@ -108,10 +114,12 @@ class _OrderCard extends StatelessWidget {
                   onTap: onRefresh,
                   child: Padding(
                     padding: const EdgeInsets.all(2),
-                    child: Text(
-                      adFree ? '🔄' : '🔄\n📺',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 11),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ArtImage(Art.icon('refresh'), size: 16),
+                        if (!adFree) ArtImage(Art.icon('ad'), size: 14),
+                      ],
                     ),
                   ),
                 ),

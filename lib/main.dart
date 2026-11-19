@@ -18,6 +18,8 @@ import 'ui/account_ui.dart';
 import 'ui/home_screen.dart';
 import 'ui/sheets.dart';
 import 'ui/theme.dart';
+import 'ui/widgets/icon_text.dart';
+import 'ui/widgets/frame_box.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -197,9 +199,9 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     final doubled = await showDialog<bool>(
       context: ctx,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: Text(tr('offline.title'), textAlign: TextAlign.center),
-        content: Text(
+      builder: (ctx) => GameDialog(
+        title: IconText(tr('offline.title'), textAlign: TextAlign.center),
+        content: IconText(
           tr('offline.body', {
             'time': fmtDuration(reward.away),
             'coins': fmt(reward.coins),
@@ -211,13 +213,16 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(
+            child: IconText(
               tr('offline.take'),
               style: const TextStyle(fontSize: 16),
             ),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Palette.ad),
+            style: framedButton(
+              FilledButton.styleFrom(backgroundColor: Palette.ad),
+              'button_purple',
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
               adFree
@@ -241,7 +246,7 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     if (ctx == null) return;
     ScaffoldMessenger.of(ctx).showSnackBar(
       SnackBar(
-        content: Text(
+        content: IconText(
           tr(
             code == 'already_linked'
                 ? 'account.alreadyLinked'
@@ -273,17 +278,19 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
   Future<void> _deleteAccount(BuildContext sheetCtx) async {
     final ok = await showDialog<bool>(
       context: sheetCtx,
-      builder: (ctx) => AlertDialog(
-        content: Text(tr('account.deleteConfirm')),
+      builder: (ctx) => GameDialog(
+        content: IconText(tr('account.deleteConfirm')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(tr('common.cancel')),
+            child: IconText(tr('common.cancel')),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            style: plainButton(
+              FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(tr('account.deleteYes')),
+            child: IconText(tr('account.deleteYes')),
           ),
         ],
       ),

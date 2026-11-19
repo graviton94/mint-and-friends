@@ -17,6 +17,8 @@ import 'garden/garden_scene.dart';
 import 'orders_bar.dart';
 import 'sheets.dart';
 import 'theme.dart';
+import 'widgets/icon_text.dart';
+import 'widgets/frame_box.dart';
 
 /// 메인 화면. 배치(위→아래): 상단 HUD / 정원 씬 / 부탁 / 머지 보드 / 정보 줄 / 광고·바구니 / 배너
 class HomeScreen extends StatefulWidget {
@@ -71,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final d = Chains.item(chain, level);
         _toast(
           tr('toast.discovery', {
-            'emoji': d.emoji,
+            'emoji': itemToken(d.chain, d.level),
             'name': itemName(d),
             'coins': fmt(bonus),
           }),
@@ -84,21 +86,20 @@ class _HomeScreenState extends State<HomeScreen> {
         :final affectionUp,
       ):
         _toast(
-          tr('toast.thanks', {
-                'emoji': Friends.byId(friendId).emoji,
-                'stars': stars,
-              }) +
+          tr('toast.thanks', {'emoji': friendToken(friendId), 'stars': stars}) +
               (affectionUp ? tr('toast.affectionUp') : ''),
         );
       case DecorPlacedEvent(:final area, :final slot):
         final d = Garden.areaAt(area).decor[slot];
-        _toast(tr('toast.decorDone', {'emoji': d.emoji, 'name': decorName(d)}));
+        _toast(
+          tr('toast.decorDone', {'emoji': decorToken(d), 'name': decorName(d)}),
+        );
         setState(() => _viewArea = area);
         widget.ads.maybeShowInterstitial();
       case FriendJoinedEvent(:final friendId):
         _toast(
           tr('toast.friendJoined', {
-            'emoji': Friends.byId(friendId).emoji,
+            'emoji': friendToken(friendId),
             'name': friendName(friendId),
           }),
         );
@@ -136,27 +137,27 @@ class _HomeScreenState extends State<HomeScreen> {
     final e = _levelUps.removeAt(0);
     await showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(
+      builder: (ctx) => GameDialog(
+        title: IconText(
           tr('levelUp.title', {'n': e.level}),
           textAlign: TextAlign.center,
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
+            IconText(
               tr('levelUp.reward', {'coins': fmt(e.coins), 'energy': e.energy}),
               style: const TextStyle(fontSize: 20),
             ),
             if (e.unlocked.isNotEmpty) ...[
               const SizedBox(height: 14),
-              Text(
+              IconText(
                 tr('levelUp.unlocked'),
                 style: const TextStyle(fontSize: 15, color: Colors.black54),
               ),
               const SizedBox(height: 6),
               for (final f in e.unlocked)
-                Text(featureName(f), style: const TextStyle(fontSize: 19)),
+                IconText(featureName(f), style: const TextStyle(fontSize: 19)),
             ],
           ],
         ),
@@ -164,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           FilledButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(tr('levelUp.ok')),
+            child: IconText(tr('levelUp.ok')),
           ),
         ],
       ),
@@ -207,9 +208,9 @@ class _HomeScreenState extends State<HomeScreen> {
         game.isUnlocked(Feature.energyAd) && game.canWatchAd(AdKind.energy);
     final watch = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(tr('energy.title'), textAlign: TextAlign.center),
-        content: Text(
+      builder: (ctx) => GameDialog(
+        title: IconText(tr('energy.title'), textAlign: TextAlign.center),
+        content: IconText(
           tr('energy.body', {
                 'cap': GameConfig.energyCap,
                 'time': fmtDuration(game.energyNextIn),
@@ -224,13 +225,16 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(tr('energy.wait')),
+            child: IconText(tr('energy.wait')),
           ),
           if (canAd)
             FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: Palette.ad),
+              style: framedButton(
+                FilledButton.styleFrom(backgroundColor: Palette.ad),
+                'button_purple',
+              ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text(
+              child: IconText(
                 _adLabel(tr('energy.watch', {'n': GameConfig.energyAdAmount})),
               ),
             ),
@@ -268,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final d = Garden.areaAt(game.currentArea).decor[slot];
       _toast(
         tr('toast.needStars', {
-          'emoji': d.emoji,
+          'emoji': decorToken(d),
           'name': decorName(d),
           'cost': game.decorCost(slot),
         }),
@@ -285,9 +289,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final enough = game.coins >= cost;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(tr('cell.title'), textAlign: TextAlign.center),
-        content: Text(
+      builder: (ctx) => GameDialog(
+        title: IconText(tr('cell.title'), textAlign: TextAlign.center),
+        content: IconText(
           tr('cell.body', {'cost': fmt(cost)}),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 16),
@@ -296,11 +300,11 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(tr('common.cancel')),
+            child: IconText(tr('common.cancel')),
           ),
           FilledButton(
             onPressed: enough ? () => Navigator.pop(ctx, true) : null,
-            child: Text(
+            child: IconText(
               enough
                   ? tr('cell.open')
                   : tr('cell.needCoins', {'cost': fmt(cost)}),
@@ -319,9 +323,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _onVisitorTap() async {
     final withAd = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(tr('visitor.title'), textAlign: TextAlign.center),
-        content: Text(
+      builder: (ctx) => GameDialog(
+        title: IconText(tr('visitor.title'), textAlign: TextAlign.center),
+        content: IconText(
           tr('visitor.body'),
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 17),
@@ -330,16 +334,19 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(
+            child: IconText(
               tr('visitor.take', {
                 'coins': fmt(game.visitorCoins(withAd: false)),
               }),
             ),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Palette.ad),
+            style: framedButton(
+              FilledButton.styleFrom(backgroundColor: Palette.ad),
+              'button_purple',
+            ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(
+            child: IconText(
               _adLabel(
                 tr('visitor.takeBig', {
                   'coins': fmt(game.visitorCoins(withAd: true)),
@@ -447,33 +454,42 @@ class _HomeScreenState extends State<HomeScreen> {
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
-                  child: Row(
-                    children: [
-                      ArtImage(Art.coin, size: 24),
-                      Text(
-                        ' ${fmt(game.coins)}',
-                        style: const TextStyle(fontSize: 22),
-                      ),
-                      const SizedBox(width: 12),
-                      ArtImage(Art.star, size: 24),
-                      Text(
-                        ' ${game.stars}',
-                        style: const TextStyle(fontSize: 22),
-                      ),
-                      const SizedBox(width: 12),
-                      GestureDetector(
-                        onTap: _energyDialog,
-                        child: Text(
-                          '⚡${game.energy}/${GameConfig.energyCap}',
-                          style: TextStyle(
-                            fontSize: 22,
-                            color: game.energy == 0
-                                ? const Color(0xFFB0640A)
-                                : null,
+                  child: FrameBox(
+                    frame: 'capsule',
+                    fallback: const BoxDecoration(),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 2,
+                    ),
+                    scale: 0.25,
+                    child: Row(
+                      children: [
+                        ArtImage(Art.coin, size: 24),
+                        Text(
+                          ' ${fmt(game.coins)}',
+                          style: const TextStyle(fontSize: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        ArtImage(Art.star, size: 24),
+                        Text(
+                          ' ${game.stars}',
+                          style: const TextStyle(fontSize: 22),
+                        ),
+                        const SizedBox(width: 12),
+                        GestureDetector(
+                          onTap: _energyDialog,
+                          child: IconText(
+                            '[[energy]]${game.energy}/${GameConfig.energyCap}',
+                            style: TextStyle(
+                              fontSize: 22,
+                              color: game.energy == 0
+                                  ? const Color(0xFFB0640A)
+                                  : null,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 FittedBox(
@@ -481,7 +497,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   alignment: Alignment.centerLeft,
                   child: Row(
                     children: [
-                      Text(
+                      IconText(
                         tr('hud.perSec', {'v': fmt(game.incomePerSec)}),
                         style: const TextStyle(fontSize: 14),
                       ),
@@ -496,7 +512,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: Palette.ad,
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Text(
+                          child: IconText(
                             tr('hud.boost', {
                               'time': fmtDuration(game.boostRemaining),
                             }),
@@ -515,14 +531,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           if (!adFree) ...[
             _MenuButton(
-              icon: '🚫',
+              icon: 'no_ads',
               label: tr('menu.removeAds'),
               onTap: () => showShopSheet(context, widget.billing),
             ),
             const SizedBox(width: 5),
           ],
           _MenuButton(
-            icon: '⚙️',
+            icon: 'settings',
             label: tr('menu.settings'),
             onTap: () => widget.openSettings(context),
           ),
@@ -550,7 +566,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               if (_viewArea > 0)
                 _RoundButton(
-                  label: '◀',
+                  label: 'arrow_left',
                   onTap: () => setState(() => _viewArea--),
                 ),
               Container(
@@ -563,14 +579,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   color: Colors.white.withValues(alpha: 0.85),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
+                child: IconText(
                   areaLabel(game, _viewArea),
                   style: const TextStyle(fontSize: 13),
                 ),
               ),
               if (_viewArea < game.currentArea)
                 _RoundButton(
-                  label: '▶',
+                  label: 'arrow_right',
                   onTap: () => setState(() => _viewArea++),
                 ),
             ],
@@ -583,14 +599,14 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             children: [
               _MenuButton(
-                icon: '📖',
+                icon: 'book',
                 label: tr('menu.book'),
                 small: true,
                 onTap: () => showCollectionSheet(context, game),
               ),
               const SizedBox(width: 4),
               _MenuButton(
-                icon: game.isUnlocked(Feature.upgrades) ? '⬆️' : '🔒',
+                icon: game.isUnlocked(Feature.upgrades) ? 'upgrade' : 'lock',
                 label: tr('menu.upgrade'),
                 small: true,
                 badge: Upgrades.all.any((u) => game.canBuyUpgrade(u.type)),
@@ -600,7 +616,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(width: 4),
               _MenuButton(
-                icon: '🔨',
+                icon: 'decorate',
                 label: tr('menu.decorate'),
                 small: true,
                 badge: canDecorate,
@@ -644,7 +660,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
-              child: Text(
+              child: IconText(
                 tr('board.selected', {
                   'lv': sel.level,
                   'name': itemName(sel.def),
@@ -655,16 +671,18 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFE07A5F),
-              minimumSize: const Size(40, 36),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
+            style: plainButton(
+              FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFE07A5F),
+                minimumSize: const Size(40, 36),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
             ),
             onPressed: () {
               game.sell(idx);
               setState(() => _selected = null);
             },
-            child: Text(
+            child: IconText(
               tr('board.sell', {'price': fmt(game.sellPrice(sel))}),
               style: const TextStyle(fontSize: 14),
             ),
@@ -675,7 +693,10 @@ class _HomeScreenState extends State<HomeScreen> {
       child = Center(
         child: TextButton(
           onPressed: game.undoSell,
-          child: Text(tr('board.undo'), style: const TextStyle(fontSize: 16)),
+          child: IconText(
+            tr('board.undo'),
+            style: const TextStyle(fontSize: 16),
+          ),
         ),
       );
     } else {
@@ -683,7 +704,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child = Center(
         child: FittedBox(
           fit: BoxFit.scaleDown,
-          child: Text(
+          child: IconText(
             tr(stuck ? 'board.stuck' : 'board.hint'),
             style: TextStyle(
               fontSize: 14,
@@ -738,7 +759,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   : !game.canWatchAd(AdKind.coinBag)
                   ? tr('ctrl.left', {'n': 0})
                   : game.coinBagReady
-                  ? '🪙${fmt(game.coinBagAmount)}'
+                  ? '[[coin]]${fmt(game.coinBagAmount)}'
                   : fmtDuration(game.coinBagCooldownLeft),
               onTap: !bagOpen || (game.coinBagReady && widget.ads.rewardedReady)
                   ? _watchCoinBag
@@ -787,7 +808,7 @@ class _LevelBadge extends StatelessWidget {
             child: FittedBox(
               child: Padding(
                 padding: const EdgeInsets.all(4),
-                child: Text(
+                child: IconText(
                   tr('hud.level', {'n': level}),
                   style: const TextStyle(color: Colors.white, fontSize: 15),
                 ),
@@ -840,8 +861,8 @@ class _Spawner extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ArtImage(Art.basket, size: 26),
-                  Text(
-                    full ? tr('spawner.full') : '⚡${game.energy}',
+                  IconText(
+                    full ? tr('spawner.full') : '[[energy]]${game.energy}',
                     style: const TextStyle(fontSize: 11),
                   ),
                 ],
@@ -867,15 +888,20 @@ class _AdButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FilledButton(
-      style: FilledButton.styleFrom(
-        backgroundColor: Palette.ad,
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+      style: framedButton(
+        FilledButton.styleFrom(
+          backgroundColor: Palette.ad,
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+        ),
+        'button_purple',
       ),
       onPressed: onTap,
       child: Column(
         children: [
-          FittedBox(child: Text(label, style: const TextStyle(fontSize: 15))),
-          FittedBox(child: Text(sub, style: const TextStyle(fontSize: 13))),
+          FittedBox(
+            child: IconText(label, style: const TextStyle(fontSize: 15)),
+          ),
+          FittedBox(child: IconText(sub, style: const TextStyle(fontSize: 13))),
         ],
       ),
     );
@@ -908,21 +934,25 @@ class _MenuButton extends StatelessWidget {
           Container(
             width: w,
             height: h,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.92),
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x22000000),
-                  blurRadius: 6,
-                  offset: Offset(0, 2),
-                ),
-              ],
+            decoration: FrameBox.decorationFor(
+              'tile',
+              BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x22000000),
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              scale: 0.35,
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(icon, style: TextStyle(fontSize: small ? 17 : 19)),
+                ArtImage(Art.icon(icon), size: small ? 20 : 22),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 2),
                   child: FittedBox(
@@ -963,7 +993,7 @@ class _RoundButton extends StatelessWidget {
         color: Colors.white.withValues(alpha: 0.85),
         shape: BoxShape.circle,
       ),
-      child: Text(label, style: const TextStyle(fontSize: 13)),
+      child: ArtImage(Art.icon(label), size: 16),
     ),
   );
 }
@@ -993,11 +1023,15 @@ class _ToastView extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: const Color(0xEE2F3B2F),
-          borderRadius: BorderRadius.circular(14),
+        decoration: FrameBox.decorationFor(
+          'toast',
+          BoxDecoration(
+            color: const Color(0xEE2F3B2F),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          scale: 0.35,
         ),
-        child: Text(
+        child: IconText(
           text,
           textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white, fontSize: 15),
