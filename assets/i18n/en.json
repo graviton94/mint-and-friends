@@ -284,5 +284,9 @@
   "tip.autoMerge": "Turn it on in Upgrades to merge for you",
   "tip.visitor": "When a guest visits, tap them for a gift",
   "tip.offlineCap": "Upgrade to earn longer while away",
-  "tip.spawnLevel": "Upgrade so Lv.2 items drop more often"
+  "tip.spawnLevel": "Upgrade so Lv.2 items drop more often",
+  "upgrade.flowerPower": "Flower yield",
+  "upgrade.snackPower": "Snack yield",
+  "upgrade.flowerPower.desc": "[[coin]]/hour ×{v}",
+  "upgrade.snackPower.desc": "[[coin]]/hour ×{v}"
 }

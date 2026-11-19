@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../art/art.dart';
 import '../../game/config.dart';
+import '../../game/format.dart';
 import '../../game/game_state.dart';
 import '../theme.dart';
 
@@ -282,6 +283,7 @@ class _BoardViewState extends State<BoardView> {
                 !it.isBubble &&
                 wanted.contains('${it.chain.index}-${it.level}'),
             now: game.now,
+            perHour: game.itemIncomePerHour(it),
           ),
         ),
       );
@@ -325,7 +327,11 @@ class ItemTile extends StatelessWidget {
     this.wanted = false,
     this.selected = false,
     this.now,
+    this.perHour,
   });
+
+  /// 이 아이템의 시간당 방치 수익 (오른쪽 아래에 작게). null 이면 표시 안 함.
+  final double? perHour;
   final Item item;
   final double size;
   final String? popKey;
@@ -390,7 +396,7 @@ class ItemTile extends StatelessWidget {
                   ),
                 ),
         Positioned(
-          right: size * 0.07,
+          left: size * 0.07,
           bottom: size * 0.05,
           child: Container(
             padding: EdgeInsets.symmetric(
@@ -414,9 +420,42 @@ class ItemTile extends StatelessWidget {
             ),
           ),
         ),
+        // 생산력: 시간당 코인 (오른쪽 아래, 작게)
+        if (perHour != null && !bubble)
+          Positioned(
+            right: size * 0.05,
+            bottom: size * 0.05,
+            child: Container(
+              padding: EdgeInsets.fromLTRB(
+                size * 0.02,
+                size * 0.005,
+                size * 0.05,
+                size * 0.005,
+              ),
+              decoration: BoxDecoration(
+                color: const Color(0xEEFFF6DA),
+                borderRadius: BorderRadius.circular(size * 0.12),
+                border: Border.all(color: const Color(0x99B8892E), width: 1),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ArtImage(Art.coin, size: size * 0.15),
+                  Text(
+                    fmt(perHour!),
+                    style: TextStyle(
+                      color: const Color(0xFF7A5A12),
+                      fontSize: size * 0.13,
+                      height: 1.15,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         if (wanted)
           Positioned(
-            left: size * 0.06,
+            right: size * 0.06,
             top: size * 0.04,
             child: ArtImage(Art.icon('letter'), size: size * 0.26),
           ),

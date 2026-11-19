@@ -44,6 +44,11 @@ String upgradeDescribe(UpgradeType t, int lv) {
       return tr('upgrade.offlineCap.desc', {
         'v': fmtDuration(Upgrades.offlineCap(lv)),
       });
+    case UpgradeType.flowerPower:
+    case UpgradeType.snackPower:
+      return tr('upgrade.${t.name}.desc', {
+        'v': Upgrades.chainPower(lv).toStringAsFixed(1),
+      });
   }
 }
 

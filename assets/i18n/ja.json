@@ -284,5 +284,9 @@
   "tip.autoMerge": "強化でオンにすると自動で合体",
   "tip.visitor": "お客さんが来たらタップでプレゼント",
   "tip.offlineCap": "強化すると閉じている間も長く稼ぐ",
-  "tip.spawnLevel": "強化するとLv.2がよく出る"
+  "tip.spawnLevel": "強化するとLv.2がよく出る",
+  "upgrade.flowerPower": "花の生産力",
+  "upgrade.snackPower": "おやつの生産力",
+  "upgrade.flowerPower.desc": "1時間 [[coin]] ×{v}",
+  "upgrade.snackPower.desc": "1時間 [[coin]] ×{v}"
 }

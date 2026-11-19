@@ -19,8 +19,9 @@ class GameConfig {
   // ---- 코인 (머지 장르 기준: 코인은 주로 부탁으로 번다. 방치 수익은 부탁 수입의 약 10%)
   // 참고: Merge Mansion · Gossip Harbor 등 — 에너지 1 ≈ 코인 1, 코인은 칸 · 보관함 · 강화에 쓴다.
 
-  /// 판 위 아이템 1개의 초당 방치 수익 (시간당 0.15 × 단계 코인. 단계에 비례만 하고 지수로 늘지 않는다).
-  static double incomeOf(int level) => 0.15 * level / 3600;
+  /// 판 위 아이템 1개의 초당 방치 수익 (시간당 단계만큼 코인. 지수로 늘지 않는다).
+  /// 칸마다 시간당 값을 작게 표시하므로 정수로 떨어지게 둔다. 오프라인은 감쇄가 걸린다.
+  static double incomeOf(int level) => level / 3600;
 
   /// 부탁 보상 코인의 기준 (아이템을 만드는 데 든 에너지 수 = 2^(단계-1)).
   static double orderCoinsOf(int level) => pow(2, level - 1).toDouble();
@@ -306,7 +307,15 @@ class Chains {
 
 // ------------------------------------------------------------------ 강화
 
-enum UpgradeType { energyRegen, income, autoMerge, spawnLevel, offlineCap }
+enum UpgradeType {
+  energyRegen,
+  income,
+  autoMerge,
+  spawnLevel,
+  offlineCap,
+  flowerPower,
+  snackPower,
+}
 
 class UpgradeDef {
   final UpgradeType type;
@@ -358,9 +367,23 @@ class Upgrades {
       1.6,
       feature: Feature.offlineCap,
     ),
+    UpgradeDef(UpgradeType.flowerPower, 'item:flower:6', 25, 60, 1.28),
+    UpgradeDef(
+      UpgradeType.snackPower,
+      'item:snack:6',
+      25,
+      60,
+      1.28,
+      feature: Feature.snack,
+    ),
   ];
 
   static UpgradeDef of(UpgradeType t) => all.firstWhere((u) => u.type == t);
+
+  /// 종류별 생산력 강화 (꽃 · 간식): 그 종류 아이템의 방치 수익 +20% / 단계.
+  static double chainPower(int lv) => 1 + 0.2 * lv;
+  static UpgradeType powerOf(Chain c) =>
+      c == Chain.flower ? UpgradeType.flowerPower : UpgradeType.snackPower;
 
   /// 에너지 1 회복 간격(초). 아이템은 바구니 탭(에너지 1)으로만 나온다 (머지 장르 표준:
   /// Merge Mansion · Travel Town 모두 생산은 에너지, 방치 요소는 수익·자동 합치기).

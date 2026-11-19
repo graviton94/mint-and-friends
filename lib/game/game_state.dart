@@ -285,12 +285,23 @@ class GameState extends ChangeNotifier {
 
   bool get visitorVisible => visitorUntil != null && visitorUntil!.isAfter(now);
 
+  /// 아이템 1개의 초당 방치 수익 (단계 × 종류별 생산력 × 수익 강화 · 버프).
+  double itemIncomePerSec(Item it) => it.isBubble
+      ? 0
+      : GameConfig.incomeOf(it.level) *
+            Upgrades.chainPower(lv(Upgrades.powerOf(it.chain))) *
+            _incomeMult;
+
+  /// 칸에 표시하는 시간당 값 (2배 부스트 포함).
+  double itemIncomePerHour(Item it) =>
+      itemIncomePerSec(it) * 3600 * (boostActive ? 2 : 1);
+
   double get baseIncomePerSec {
     double sum = 0;
     for (final it in board) {
-      if (it != null && !it.isBubble) sum += GameConfig.incomeOf(it.level);
+      if (it != null) sum += itemIncomePerSec(it);
     }
-    return sum * _incomeMult;
+    return sum;
   }
 
   double get incomePerSec => baseIncomePerSec * (boostActive ? 2 : 1);

@@ -285,5 +285,9 @@
   "tip.autoMerge": "강화에서 켜면 알아서 합쳐 줘요",
   "tip.visitor": "정원에 손님이 오면 눌러서 선물 받기",
   "tip.offlineCap": "강화하면 꺼 둔 동안 더 오래 벌어요",
-  "tip.spawnLevel": "강화하면 2단계가 더 자주 나와요"
+  "tip.spawnLevel": "강화하면 2단계가 더 자주 나와요",
+  "upgrade.flowerPower": "꽃 생산력",
+  "upgrade.snackPower": "간식 생산력",
+  "upgrade.flowerPower.desc": "시간당 [[coin]] ×{v}",
+  "upgrade.snackPower.desc": "시간당 [[coin]] ×{v}"
 }

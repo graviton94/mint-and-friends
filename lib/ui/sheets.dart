@@ -77,7 +77,7 @@ class _UpgradeRow extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              ArtImage(Art.icon(def.icon), size: 34),
+              ArtImage(IconText.resolve(def.icon), size: 34),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
