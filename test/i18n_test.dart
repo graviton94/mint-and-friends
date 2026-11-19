@@ -69,7 +69,14 @@ void main() {
     for (final lang in L10n.supported.keys) {
       for (final e in _load(lang).entries) {
         if (e.key.startsWith('item.') ||
-            e.key.startsWith('decor.') ||
+            (e.key.startsWith('decor.') &&
+                !const {
+                  'decor.title',
+                  'decor.progress',
+                  'decor.done',
+                  'decor.areaLocked',
+                  'decor.bringsFriend',
+                }.contains(e.key)) ||
             e.key.startsWith('friend.') ||
             e.key.startsWith('area.')) {
           continue;

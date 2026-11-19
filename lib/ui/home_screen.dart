@@ -175,19 +175,19 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 6),
               for (final f in e.unlocked) ...[
-                IconText(featureName(f), style: const TextStyle(fontSize: 19)),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: IconText(
-                    tr('feature.${f.name}.desc'),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      color: Colors.black54,
-                      height: 1.35,
-                    ),
+                // 실제 화면의 그 버튼 모양 그대로 보여 준다
+                IgnorePointer(child: _featurePreview(f)),
+                const SizedBox(height: 6),
+                IconText(
+                  tr('feature.${f.name}.desc'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF5A4A36),
+                    height: 1.35,
                   ),
                 ),
+                const SizedBox(height: 12),
               ],
             ],
           ],
@@ -202,7 +202,144 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     _levelDialogOpen = false;
+    // 새로 열린 기능은 실제 위치를 손으로 가리켜 안내한다
+    _queueFeatureTips(e.unlocked);
     _showLevelUps();
+  }
+
+  /// 레벨업 팝업 안에 보여 줄 기능 미리보기: 실제 화면의 버튼 · 칩과 같은 위젯.
+  Widget _featurePreview(Feature f) {
+    Widget chip(String icon, String label) => Container(
+      padding: const EdgeInsets.fromLTRB(8, 6, 14, 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF7A5230), width: 2),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ArtImage(Art.icon(icon), size: 30),
+          const SizedBox(width: 6),
+          Text(label, style: const TextStyle(fontSize: 16)),
+        ],
+      ),
+    );
+    final w = switch (f) {
+      Feature.boost => SizedBox(
+        width: 180,
+        child: _AdButton(
+          icon: Art.icon('boost').available ? 'boost' : 'coinbag',
+          title: tr('ctrl.boost'),
+          value: tr('ctrl.boost.duration'),
+          left: GameConfig.adDailyCap[AdKind.boost],
+          adFree: adFree,
+          onTap: () {},
+        ),
+      ),
+      Feature.coinBag => SizedBox(
+        width: 180,
+        child: _AdButton(
+          icon: 'coinbag',
+          title: tr('ctrl.coinBag'),
+          value: '[[coin]]${fmt(game.coinBagAmount)}',
+          left: GameConfig.adDailyCap[AdKind.coinBag],
+          adFree: adFree,
+          onTap: () {},
+        ),
+      ),
+      Feature.energyAd => _Pill(
+        icon: Art.icon('energy'),
+        text: '${game.energy}/${GameConfig.energyCap}',
+        plus: true,
+      ),
+      Feature.upgrades => _MenuButton(
+        icon: 'upgrade',
+        label: tr('menu.upgrade'),
+        onTap: () {},
+      ),
+      Feature.storage => _MenuButton(
+        icon: 'storage',
+        label: tr('menu.storage'),
+        onTap: () {},
+      ),
+      Feature.snack => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ArtImage(Art.basket, size: 44),
+          const Icon(Icons.arrow_forward_rounded, color: Color(0xFF7A5230)),
+          ArtImage(Art.item(Chain.snack, 1), size: 44),
+        ],
+      ),
+      Feature.visitor => Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          ArtImage(Art.visitor(), size: 60),
+          ArtImage(Art.gift, size: 36),
+        ],
+      ),
+      Feature.autoMerge => chip('auto', upgradeTitle(UpgradeType.autoMerge)),
+      Feature.offlineCap => chip('moon', upgradeTitle(UpgradeType.offlineCap)),
+      Feature.spawnLevel => chip(
+        'quality',
+        upgradeTitle(UpgradeType.spawnLevel),
+      ),
+    };
+    return w;
+  }
+
+  // ---------------------------------------------------------------- 새 기능 안내 (처음 한 번)
+  static const _tipsPref = 'feature_tips_seen';
+  final List<Feature> _tips = [];
+
+  Future<void> _queueFeatureTips(List<Feature> fs) async {
+    final p = await SharedPreferences.getInstance();
+    final seen = p.getStringList(_tipsPref) ?? const [];
+    final add = [
+      for (final f in fs)
+        if (!seen.contains(f.name) && !_tips.contains(f)) f,
+    ];
+    if (add.isEmpty || !mounted) return;
+    setState(() => _tips.addAll(add));
+  }
+
+  Future<void> _doneTip() async {
+    if (_tips.isEmpty) return;
+    final f = _tips.removeAt(0);
+    setState(() {});
+    final p = await SharedPreferences.getInstance();
+    final seen = [...?p.getStringList(_tipsPref), f.name];
+    p.setStringList(_tipsPref, seen);
+  }
+
+  GlobalKey _tipTarget(Feature f) => switch (f) {
+    Feature.energyAd => _kEnergy,
+    Feature.boost => _kBoost,
+    Feature.coinBag => _kCoinBag,
+    Feature.snack => _kSpawner,
+    Feature.storage => _kStorage,
+    Feature.visitor => _kGarden,
+    Feature.upgrades ||
+    Feature.autoMerge ||
+    Feature.offlineCap ||
+    Feature.spawnLevel => _kUpgrade,
+  };
+
+  Widget? get _featureTip {
+    if (_tut != _tutDone || _tips.isEmpty || _levelDialogOpen) return null;
+    final f = _tips.first;
+    final r = _rectOf(_tipTarget(f));
+    return CoachOverlay(
+      text: '${featureName(f)}\n${tr('tip.${f.name}')}',
+      hole: r,
+      pointAt: r?.center,
+      buttonLabel: tr('tip.ok'),
+      onNext: () {
+        sfx(Sfx.tap);
+        _doneTip();
+      },
+    );
   }
 
   // ---------------------------------------------------------------- 행동
@@ -244,45 +381,63 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _energyDialog() async {
-    final canAd =
-        game.isUnlocked(Feature.energyAd) && game.canWatchAd(AdKind.energy);
+    final canAd = game.energyAdAvailable;
     final watch = await showDialog<bool>(
       context: context,
-      builder: (ctx) => GameDialog(
-        title: IconText(tr('energy.title'), textAlign: TextAlign.center),
-        content: IconText(
-          tr('energy.body', {
-                'cap': GameConfig.energyCap,
-                'time': fmtDuration(game.energyNextIn),
-              }) +
-              (game.isUnlocked(Feature.energyAd)
-                  ? '\n${tr('energy.left', {'n': game.adsLeft(AdKind.energy)})}'
-                  : ''),
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 16, height: 1.5),
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: IconText(tr('energy.wait')),
-          ),
-          if (canAd)
-            FilledButton(
-              style: framedButton(
-                FilledButton.styleFrom(backgroundColor: Palette.ad),
-                'button_purple',
+      builder: (ctx) => ListenableBuilder(
+        listenable: game,
+        builder: (ctx, _) {
+          final full = game.energy >= GameConfig.energyCap;
+          return GameDialog(
+            title: IconText(tr('energy.title'), textAlign: TextAlign.center),
+            content: PopupHero(
+              art: ArtImage(
+                Art.icon('energy_jar').available
+                    ? Art.icon('energy_jar')
+                    : Art.icon('energy'),
+                size: 84,
               ),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: IconText(
-                _adLabel(tr('energy.watch', {'n': GameConfig.energyAdAmount})),
-              ),
+              big: '${game.energy} / ${GameConfig.energyCap}',
+              note: full
+                  ? tr('energy.fullNow')
+                  : tr('energy.next', {'time': fmtDuration(game.energyNextIn)}),
+              extra: full
+                  ? null
+                  : ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: LinearProgressIndicator(
+                        value: (game.energyProgress / game.energyRegenSeconds)
+                            .clamp(0.0, 1.0),
+                        minHeight: 10,
+                        backgroundColor: const Color(0xFFEDE3CC),
+                        color: const Color(0xFFF2B33D),
+                      ),
+                    ),
             ),
-        ],
+            actionsAlignment: MainAxisAlignment.center,
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: IconText(
+                  tr('energy.wait'),
+                  style: const TextStyle(fontSize: 17),
+                ),
+              ),
+              if (canAd)
+                _DialogAdButton(
+                  label: tr('energy.watch', {'n': GameConfig.energyAdAmount}),
+                  sub: tr('energy.left', {'n': game.adsLeft(AdKind.energy)}),
+                  adFree: adFree,
+                  onTap: () => Navigator.pop(ctx, true),
+                ),
+            ],
+          );
+        },
       ),
     );
-    if (watch == true && await _rewardedCapped(AdKind.energy))
+    if (watch == true && await _rewardedCapped(AdKind.energy)) {
       game.grantEnergyAd();
+    }
   }
 
   Future<void> _watchBoost() async {
@@ -333,23 +488,29 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (ctx) => GameDialog(
         title: IconText(tr('cell.title'), textAlign: TextAlign.center),
-        content: IconText(
-          tr('cell.body', {'cost': fmt(cost)}),
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 16),
+        content: PopupHero(
+          art: ArtImage(Art.lock, size: 76),
+          big: '[[coin]]${fmt(cost)}',
+          note: tr('cell.note'),
         ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: IconText(tr('common.cancel')),
+            child: IconText(
+              tr('common.cancel'),
+              style: const TextStyle(fontSize: 17),
+            ),
           ),
           FilledButton(
+            style: framedButton(
+              FilledButton.styleFrom(minimumSize: const Size(120, 48)),
+              'button_green',
+            ),
             onPressed: enough ? () => Navigator.pop(ctx, true) : null,
             child: IconText(
-              enough
-                  ? tr('cell.open')
-                  : tr('cell.needCoins', {'cost': fmt(cost)}),
+              enough ? tr('cell.open') : tr('cell.needCoins'),
+              style: const TextStyle(fontSize: 18),
             ),
           ),
         ],
@@ -366,36 +527,36 @@ class _HomeScreenState extends State<HomeScreen> {
     final withAd = await showDialog<bool>(
       context: context,
       builder: (ctx) => GameDialog(
+        banner: 'gold',
         title: IconText(tr('visitor.title'), textAlign: TextAlign.center),
-        content: IconText(
-          tr('visitor.body'),
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 17),
+        content: PopupHero(
+          art: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              ArtImage(Art.visitor(), size: 86),
+              ArtImage(Art.gift, size: 52),
+            ],
+          ),
+          big: '[[coin]]${fmt(game.visitorCoins(withAd: false))}',
+          note: tr('visitor.body'),
         ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: IconText(
-              tr('visitor.take', {
-                'coins': fmt(game.visitorCoins(withAd: false)),
-              }),
+              tr('visitor.take'),
+              style: const TextStyle(fontSize: 17),
             ),
           ),
-          FilledButton(
-            style: framedButton(
-              FilledButton.styleFrom(backgroundColor: Palette.ad),
-              'button_purple',
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: IconText(
-              _adLabel(
-                tr('visitor.takeBig', {
-                  'coins': fmt(game.visitorCoins(withAd: true)),
-                  'stars': GameConfig.visitorAdStars,
-                }),
-              ),
-            ),
+          _DialogAdButton(
+            label: tr('visitor.takeBig', {
+              'coins': fmt(game.visitorCoins(withAd: true)),
+              'stars': GameConfig.visitorAdStars,
+            }),
+            adFree: adFree,
+            onTap: () => Navigator.pop(ctx, true),
           ),
         ],
       ),
@@ -411,9 +572,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  String _adLabel(String label) =>
-      adFree ? label : tr('ctrl.ad', {'label': label});
-
   // ---------------------------------------------------------------- 화면
 
   // 튜토리얼이 가리키는 위치
@@ -422,6 +580,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final _kOrders = GlobalKey();
   final _kDecor = GlobalKey();
   final _kGarden = GlobalKey();
+  final _kBoost = GlobalKey();
+  final _kEnergy = GlobalKey();
+  final _kUpgrade = GlobalKey();
+  final _kStorage = GlobalKey();
+  final _kCoinBag = GlobalKey();
   final _kStack = GlobalKey();
 
   // ---------------------------------------------------------------- 튜토리얼
@@ -451,6 +614,34 @@ class _HomeScreenState extends State<HomeScreen> {
   void _tutorialEvent(GameEvent e) {
     if (_tut == 2 && e is MergedEvent) _setTutorial(3);
     if (_tut == 3 && e is OrderDeliveredEvent) _setTutorial(4);
+  }
+
+  /// 합칠 수 있는 같은 아이템 두 칸의 화면 위치 (튜토리얼 손장갑이 끌어 보이는 곳).
+  (Offset, Offset)? _mergePair() {
+    final board = _rectOf(_kBoard);
+    if (board == null) return null;
+    const pad = 5.0;
+    final cell = (board.width - pad * 2) / GameConfig.cols;
+    Offset center(int i) =>
+        board.topLeft +
+        Offset(
+          pad + (i % GameConfig.cols + 0.5) * cell,
+          pad + (i ~/ GameConfig.cols + 0.5) * cell,
+        );
+    for (var a = 0; a < game.board.length; a++) {
+      final x = game.board[a];
+      if (x == null || x.isBubble) continue;
+      for (var b = a + 1; b < game.board.length; b++) {
+        final y = game.board[b];
+        if (y != null &&
+            !y.isBubble &&
+            y.chain == x.chain &&
+            y.level == x.level) {
+          return (center(a), center(b));
+        }
+      }
+    }
+    return null;
   }
 
   Rect? _rectOf(GlobalKey k) {
@@ -485,16 +676,28 @@ class _HomeScreenState extends State<HomeScreen> {
       1 => CoachOverlay(
         text: tr('tut.spawner', {'n': GameConfig.energyPerTap}),
         hole: _rectOf(_kSpawner),
+        pointAt: _rectOf(_kSpawner)?.center,
         action: true,
       ),
-      2 => CoachOverlay(
-        text: tr('tut.merge'),
-        hole: _rectOf(_kBoard),
-        action: true,
-      ),
+      2 => () {
+        final pair = _mergePair();
+        return CoachOverlay(
+          text: tr('tut.merge'),
+          hole: _rectOf(_kBoard),
+          pointAt: pair?.$1,
+          dragTo: pair?.$2,
+          action: true,
+        );
+      }(),
       3 => CoachOverlay(
         text: tr('tut.orders'),
         hole: _rectOf(_kOrders),
+        pointAt: _rectOf(_kOrders) == null
+            ? null
+            : Offset(
+                _rectOf(_kOrders)!.left + _rectOf(_kOrders)!.width / 6,
+                _rectOf(_kOrders)!.center.dy,
+              ),
         action: true,
         buttonLabel: tr('tut.next'),
         onNext: next,
@@ -502,6 +705,7 @@ class _HomeScreenState extends State<HomeScreen> {
       4 => CoachOverlay(
         text: tr('tut.decor'),
         hole: _rectOf(_kDecor),
+        pointAt: _rectOf(_kDecor)?.center,
         buttonLabel: tr('tut.next'),
         onNext: next,
       ),
@@ -619,6 +823,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       ?_tutorial,
+                      ?_featureTip,
                     ],
                   );
                 },
@@ -653,6 +858,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _Pill(icon: Art.star, text: '${game.stars}'),
                   const SizedBox(width: 6),
                   _Pill(
+                    key: _kEnergy,
                     icon: Art.icon('energy'),
                     text: '${game.energy}/${GameConfig.energyCap}',
                     warn: game.energy == 0,
@@ -854,6 +1060,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: 5),
           _MenuButton(
+            key: _kUpgrade,
             icon: game.isUnlocked(Feature.upgrades) ? 'upgrade' : 'lock',
             label: tr('menu.upgrade'),
             badge: Upgrades.all.any((u) => game.canBuyUpgrade(u.type)),
@@ -875,6 +1082,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: 5),
           _MenuButton(
+            key: _kStorage,
             icon: game.storageOpen ? 'storage' : 'lock',
             label: tr('menu.storage'),
             onTap: () {
@@ -1041,12 +1249,20 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Expanded(
             child: _AdButton(
-              label: boostOpen ? _adLabel(tr('ctrl.boost')) : tr('ctrl.boost'),
-              sub: !boostOpen
-                  ? tr('common.lockedLevel', {
-                      'n': Leveling.unlockLevel[Feature.boost],
-                    })
-                  : '${game.boostActive ? tr('ctrl.boost.extend') : tr('ctrl.boost.duration')} · ${tr('ctrl.left', {'n': game.adsLeft(AdKind.boost)})}',
+              key: _kBoost,
+              icon: Art.icon('boost').available ? 'boost' : 'coinbag',
+              title: tr('ctrl.boost'),
+              value: !boostOpen
+                  ? null
+                  : game.boostActive
+                  ? fmtDuration(game.boostRemaining)
+                  : tr('ctrl.boost.duration'),
+              active: game.boostActive,
+              lockedLevel: boostOpen
+                  ? null
+                  : Leveling.unlockLevel[Feature.boost],
+              left: boostOpen ? game.adsLeft(AdKind.boost) : null,
+              adFree: adFree,
               onTap:
                   !boostOpen || (game.canAddBoost && widget.ads.rewardedReady)
                   ? _watchBoost
@@ -1058,18 +1274,20 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: _AdButton(
-              label: bagOpen
-                  ? _adLabel(tr('ctrl.coinBag'))
-                  : tr('ctrl.coinBag'),
-              sub: !bagOpen
-                  ? tr('common.lockedLevel', {
-                      'n': Leveling.unlockLevel[Feature.coinBag],
-                    })
-                  : !game.canWatchAd(AdKind.coinBag)
-                  ? tr('ctrl.left', {'n': 0})
+              key: _kCoinBag,
+              icon: 'coinbag',
+              title: tr('ctrl.coinBag'),
+              value: !bagOpen
+                  ? null
                   : game.coinBagReady
                   ? '[[coin]]${fmt(game.coinBagAmount)}'
                   : fmtDuration(game.coinBagCooldownLeft),
+              waiting: bagOpen && !game.coinBagReady,
+              lockedLevel: bagOpen
+                  ? null
+                  : Leveling.unlockLevel[Feature.coinBag],
+              left: bagOpen ? game.adsLeft(AdKind.coinBag) : null,
+              adFree: adFree,
               onTap: !bagOpen || (game.coinBagReady && widget.ads.rewardedReady)
                   ? _watchCoinBag
                   : null,
@@ -1188,15 +1406,165 @@ class _Spawner extends StatelessWidget {
   }
 }
 
+/// 광고 보상 버튼 (수익 2배 · 코인 주머니): 큰 아이콘 + 이름 + 값, 오른쪽 위 광고 표시 · 남은 횟수.
+/// 잠김: 회색 + 자물쇠 + 해금 레벨. 대기 중(쿨다운): 값 자리에 남은 시간.
 class _AdButton extends StatelessWidget {
   const _AdButton({
-    required this.label,
-    required this.sub,
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.value,
     required this.onTap,
+    required this.adFree,
+    this.lockedLevel,
+    this.left,
+    this.active = false,
+    this.waiting = false,
+  });
+  final String icon;
+  final String title;
+  final String? value;
+  final int? lockedLevel;
+  final int? left;
+  final bool active;
+  final bool waiting;
+  final bool adFree;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final locked = lockedLevel != null;
+    final dim = locked || onTap == null || waiting;
+    return GestureDetector(
+      onTap: onTap == null
+          ? null
+          : () {
+              sfx(Sfx.tap);
+              onTap!();
+            },
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            height: 64,
+            padding: const EdgeInsets.fromLTRB(6, 4, 10, 4),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: locked
+                    ? const [Color(0xFFD9D2C3), Color(0xFFC4BBA8)]
+                    : active
+                    ? const [Color(0xFFFFE38A), Color(0xFFF2B33D)]
+                    : const [Color(0xFFC9A5F2), Color(0xFF9C6ADE)],
+              ),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFF5A3A1E), width: 2.5),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33000000),
+                  blurRadius: 4,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Opacity(
+                  opacity: locked ? 0.5 : 1,
+                  child: ArtImage(Art.icon(icon), size: 46),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 16,
+                            height: 1.1,
+                            color: locked || active
+                                ? const Color(0xFF4A3A22)
+                                : Colors.white,
+                          ),
+                        ),
+                      ),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: locked
+                            ? IconText(
+                                '[[lock]] Lv.$lockedLevel',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF6B5A44),
+                                ),
+                              )
+                            : IconText(
+                                value ?? '',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: active
+                                      ? const Color(0xFF6B3E00)
+                                      : dim
+                                      ? const Color(0xCCFFFFFF)
+                                      : Colors.white,
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // 광고 표시 + 오늘 남은 횟수
+          if (!locked && left != null)
+            Positioned(
+              right: -4,
+              top: -8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: const Color(0xFF5A3A1E),
+                    width: 1.5,
+                  ),
+                ),
+                child: IconText(
+                  adFree ? '$left' : '[[ad]]$left',
+                  iconScale: 1.0,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF4A3A22),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DialogAdButton extends StatelessWidget {
+  const _DialogAdButton({
+    required this.label,
+    required this.onTap,
+    required this.adFree,
+    this.sub,
   });
   final String label;
-  final String sub;
-  final VoidCallback? onTap;
+  final String? sub;
+  final bool adFree;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -1204,17 +1572,24 @@ class _AdButton extends StatelessWidget {
       style: framedButton(
         FilledButton.styleFrom(
           backgroundColor: Palette.ad,
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+          minimumSize: const Size(140, 52),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
         ),
         'button_purple',
       ),
       onPressed: onTap,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          FittedBox(
-            child: IconText(label, style: const TextStyle(fontSize: 15)),
+          IconText(
+            adFree ? label : '[[ad]] $label',
+            style: const TextStyle(fontSize: 19, color: Colors.white),
           ),
-          FittedBox(child: IconText(sub, style: const TextStyle(fontSize: 13))),
+          if (sub != null)
+            IconText(
+              sub!,
+              style: const TextStyle(fontSize: 11.5, color: Color(0xE6FFFFFF)),
+            ),
         ],
       ),
     );
@@ -1330,6 +1705,7 @@ class _RoundButton extends StatelessWidget {
 /// HUD 자원 캡슐: 아이콘 + 값 (+ 작은 보조 줄, + 버튼).
 class _Pill extends StatelessWidget {
   const _Pill({
+    super.key,
     required this.icon,
     required this.text,
     this.sub,

@@ -205,14 +205,12 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
       context: ctx,
       barrierDismissible: false,
       builder: (ctx) => GameDialog(
+        banner: 'gold',
         title: IconText(tr('offline.title'), textAlign: TextAlign.center),
-        content: IconText(
-          tr('offline.body', {
-            'time': fmtDuration(reward.away),
-            'coins': fmt(reward.coins),
-          }),
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 18, height: 1.5),
+        content: PopupHero(
+          art: ArtImage(Art.icon('moon'), size: 76),
+          big: '[[coin]]${fmt(reward.coins)}',
+          note: tr('offline.time', {'time': fmtDuration(reward.away)}),
         ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [

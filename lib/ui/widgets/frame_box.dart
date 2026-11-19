@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:material_ui/material_ui.dart';
 
 import '../../art/art.dart';
+import 'icon_text.dart';
 
 /// 프레임 그림(9-slice)이 있으면 그 그림을 배경으로, 없으면 [fallback] 장식으로 그린다.
 class FrameBox extends StatelessWidget {
@@ -473,6 +474,52 @@ class _OutlinedNumber extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 팝업 본문 공통 모양: 큰 그림 → 큰 숫자 한 줄 → 짧은 설명 한 줄 → (선택) 추가 위젯.
+/// 글은 최소로, 핵심 값은 크게 (모바일 게임 팝업 가독성).
+class PopupHero extends StatelessWidget {
+  const PopupHero({
+    super.key,
+    required this.art,
+    required this.big,
+    this.note,
+    this.extra,
+  });
+  final Widget art;
+  final String big;
+  final String? note;
+  final Widget? extra;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        art,
+        const SizedBox(height: 6),
+        IconText(
+          big,
+          textAlign: TextAlign.center,
+          iconScale: 1.1,
+          style: const TextStyle(
+            fontSize: 32,
+            height: 1.15,
+            color: Color(0xFF3A2E22),
+          ),
+        ),
+        if (note != null) ...[
+          const SizedBox(height: 4),
+          IconText(
+            note!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, color: Color(0xFF6B5A44)),
+          ),
+        ],
+        if (extra != null) ...[const SizedBox(height: 10), extra!],
+      ],
     );
   }
 }

@@ -24,7 +24,13 @@ class CoachOverlay extends StatefulWidget {
     this.onNext,
     this.onSkip,
     this.skipLabel,
+    this.pointAt,
+    this.dragTo,
   });
+
+  /// 손장갑이 가리킬 곳 (덮개 좌표). [dragTo] 가 있으면 그쪽으로 끌어 가는 모습을 되풀이한다.
+  final Offset? pointAt;
+  final Offset? dragTo;
 
   final String text;
   final Rect? hole;
@@ -94,6 +100,40 @@ class _CoachOverlayState extends State<CoachOverlay>
                   animation: _pulse,
                   builder: (_, _) =>
                       CustomPaint(painter: _RingPainter(_pulse.value)),
+                ),
+              ),
+            ),
+          );
+        }
+        // 손장갑: 누르기(톡톡) 또는 끌기(가리킨 곳 → dragTo)
+        if (widget.pointAt != null) {
+          children.add(
+            Positioned.fill(
+              child: IgnorePointer(
+                child: AnimatedBuilder(
+                  animation: _pulse,
+                  builder: (_, _) {
+                    // 화면 아래 끝 근처면 손을 뒤집어 위에서 가리킨다 (손이 화면 밖으로 잘리지 않게)
+                    final flip =
+                        widget.pointAt!.dy >
+                        size.height - _GloveLayout.size - 8;
+                    return CustomSingleChildLayout(
+                      delegate: _GloveLayout(
+                        widget.pointAt!,
+                        widget.dragTo,
+                        _pulse.value,
+                        flip: flip,
+                      ),
+                      child: Transform.flip(
+                        flipY: flip,
+                        child: _Glove(
+                          pressed: widget.dragTo == null
+                              ? _pulse.value > 0.5
+                              : _pulse.value > 0.15 && _pulse.value < 0.85,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -288,4 +328,71 @@ class _RingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_RingPainter old) => old.t != t;
+}
+
+/// 손장갑 위치: 손가락 끝이 목표에 오도록. 누르기는 위아래로 톡톡, 끌기는 목표 사이를 오간다.
+class _GloveLayout extends SingleChildLayoutDelegate {
+  _GloveLayout(this.from, this.to, this.t, {this.flip = false});
+  final Offset from;
+  final Offset? to;
+  final double t;
+  final bool flip;
+
+  static const double size = 64;
+
+  @override
+  BoxConstraints getConstraintsForChild(BoxConstraints c) =>
+      BoxConstraints.tight(const Size(size, size));
+
+  @override
+  Offset getPositionForChild(Size area, Size child) {
+    Offset tip;
+    if (to == null) {
+      final bob = 10 * (1 - (2 * t - 1).abs());
+      tip = from + Offset(0, flip ? -bob : bob);
+    } else {
+      // 0~0.15 집기, 0.15~0.75 끌기, 0.75~1 놓고 잠깐 쉼
+      final m = ((t - 0.15) / 0.6).clamp(0.0, 1.0);
+      final e = Curves.easeInOut.transform(m);
+      tip = Offset.lerp(from, to!, e)!;
+    }
+    // 손가락 끝 = 그림의 위쪽 가운데 조금 왼쪽 (뒤집으면 아래쪽)
+    return flip
+        ? Offset(tip.dx - size * 0.32, tip.dy - size * 0.96)
+        : Offset(tip.dx - size * 0.32, tip.dy - size * 0.04);
+  }
+
+  @override
+  bool shouldRelayout(_GloveLayout o) =>
+      o.t != t || o.from != from || o.to != to || o.flip != flip;
+}
+
+/// 흰 손장갑. 그림(hand_point / hand_press)이 오기 전에는 같은 모양의 아이콘으로 대신 그린다.
+class _Glove extends StatelessWidget {
+  const _Glove({required this.pressed});
+  final bool pressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final art = Art.icon(pressed ? 'hand_press' : 'hand_point');
+    if (art.available) return ArtImage(art, size: _GloveLayout.size);
+    return Transform.scale(
+      scale: pressed ? 0.92 : 1,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Icon(
+            Icons.touch_app_rounded,
+            size: _GloveLayout.size,
+            color: const Color(0xFF5A3A1E),
+          ),
+          Icon(
+            Icons.touch_app_rounded,
+            size: _GloveLayout.size - 8,
+            color: Colors.white,
+          ),
+        ],
+      ),
+    );
+  }
 }
