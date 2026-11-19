@@ -42,6 +42,7 @@ jobs:
       - name: Firebase settings and login keys
         env:
           GSJ: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          WEB: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
           KAKAO: ${{ secrets.KAKAO_NATIVE_APP_KEY }}
         run: |
           python3 tool/ci_defines.py > "$RUNNER_TEMP/app.defines"

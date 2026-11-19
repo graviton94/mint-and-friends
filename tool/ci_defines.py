@@ -17,7 +17,12 @@ if g:
         print(f"--dart-define=FB_PROJECT_ID={g['project_info']['project_id']}")
         print(f"--dart-define=FB_SENDER_ID={g['project_info']['project_number']}")
         oauth = [o for cl in g["client"] for o in cl.get("oauth_client", [])]
-        web = next((o["client_id"] for o in oauth if o.get("client_type") == 3), None)
+        # 웹 클라이언트는 oauth_client 또는 services.appinvite_service.other_platform_oauth_client 에 들어 있다.
+        others = [o for cl in g["client"]
+                  for o in cl.get("services", {}).get("appinvite_service", {}).get("other_platform_oauth_client", [])]
+        web = next((o["client_id"] for o in oauth + others if o.get("client_type") == 3), None)
+        # json 에 없으면 GOOGLE_WEB_CLIENT_ID 시크릿 (Google Cloud → 사용자 인증 정보 → 웹 클라이언트)
+        web = web or (os.environ.get("WEB") or "").strip() or None
         if web:
             print(f"--dart-define=GOOGLE_WEB_CLIENT_ID={web}")
         print(f"Google sign-in: web client {'found' if web else 'MISSING'}, Android clients {sum(o.get('client_type') == 1 for o in oauth)}", file=sys.stderr)
