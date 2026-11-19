@@ -1,5 +1,5 @@
 /**
- * 블룸 가든 Cloud Functions (Blaze 요금제 필요)
+ * 민트앤프렌즈 Cloud Functions (Blaze 요금제 필요)
  *
  * - kakaoLogin   : 앱이 보낸 카카오 액세스 토큰을 카카오 서버에서 검증하고 Firebase 커스텀 토큰을 발급한다.
  *                  uid = "kakao:<카카오 회원번호>"

@@ -267,7 +267,18 @@ class _GardenSceneState extends State<GardenScene>
       final p = px(wk.pos.dx, wk.pos.dy);
       final sz = unit * 0.17;
       final walking = wk.pauseLeft <= 0 && wk.happyLeft <= 0;
-      final bob = walking ? -(sin(_t * 10).abs()) * sz * 0.12 : 0.0;
+      final inWater = area.water.any((w) => w.contains(wk.pos.dx, wk.pos.dy));
+      // 물속에서는 통통 뛰지 않고 살랑살랑 떠 있는다
+      final bob = inWater
+          ? sin(_t * 3 + wk.pos.dx * 10) * sz * 0.025
+          : walking
+          ? -(sin(_t * 10).abs()) * sz * 0.12
+          : 0.0;
+      final image = ArtImage(
+        Art.friend(f, happy: wk.happyLeft > 0),
+        size: sz,
+        flipX: wk.facingRight,
+      );
       final jump = wk.happyLeft > 0
           ? -sin((0.6 - wk.happyLeft) / 0.6 * pi) * sz * 0.4
           : 0.0;
@@ -284,14 +295,40 @@ class _GardenSceneState extends State<GardenScene>
             child: Stack(
               clipBehavior: Clip.none,
               alignment: Alignment.center,
-              children: [
-                Positioned(bottom: 0, child: _Shadow(width: sz * 0.7)),
-                ArtImage(
-                  Art.friend(f, happy: wk.happyLeft > 0),
-                  size: sz,
-                  flipX: wk.facingRight,
-                ),
-              ],
+              children: inWater
+                  ? [
+                      // 물에 잠긴 모습: 몸 아래 28%를 수면에서 자른다
+                      SizedBox(
+                        width: sz,
+                        height: sz,
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: ClipRect(
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              heightFactor: 0.72,
+                              child: image,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        top: sz * 0.1 + sz * 0.72 - sz * 0.3,
+                        height: sz * 0.6,
+                        child: CustomPaint(
+                          painter: _SplashPainter(
+                            t: _t + wk.pos.dx * 7,
+                            moving: walking,
+                          ),
+                        ),
+                      ),
+                    ]
+                  : [
+                      Positioned(bottom: 0, child: _Shadow(width: sz * 0.7)),
+                      image,
+                    ],
             ),
           ),
         ),
@@ -420,6 +457,49 @@ class _BackgroundLayer extends StatelessWidget {
       },
     );
   }
+}
+
+/// 첨벙첨벙: 수면 하이라이트 + 퍼져 나가는 물결 2겹 + 걸을 때 튀는 물방울.
+class _SplashPainter extends CustomPainter {
+  _SplashPainter({required this.t, required this.moving});
+  final double t;
+  final bool moving;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = Offset(size.width / 2, size.height / 2);
+    final w = size.width;
+    // 수면 (잘린 경계를 부드럽게 가림)
+    canvas.drawOval(
+      Rect.fromCenter(center: c, width: w * 0.62, height: w * 0.13),
+      Paint()..color = const Color(0x99E8F7FF),
+    );
+    // 물결
+    for (var k = 0; k < 2; k++) {
+      final phase = (t * 0.7 + k * 0.5) % 1.0;
+      final rw = w * (0.5 + 0.45 * phase);
+      canvas.drawOval(
+        Rect.fromCenter(center: c, width: rw, height: rw * 0.26),
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..color = Colors.white.withValues(alpha: 0.8 * (1 - phase)),
+      );
+    }
+    // 물방울
+    if (moving) {
+      final drop = Paint()..color = const Color(0xCCBFE8FF);
+      for (var i = 0; i < 3; i++) {
+        final ph = (t * 2.2 + i / 3) % 1.0;
+        final dx = (i - 1) * w * 0.22 + (i - 1) * w * 0.08 * ph;
+        final dy = -sin(ph * pi) * size.height * 0.45;
+        canvas.drawCircle(c + Offset(dx, dy), w * 0.025 * (1 - ph * 0.5), drop);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SplashPainter old) => old.t != t || old.moving != moving;
 }
 
 class _Shadow extends StatelessWidget {

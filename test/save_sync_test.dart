@@ -1,4 +1,4 @@
-import 'package:bloom_merge/services/save_service.dart';
+import 'package:mint_and_friends/services/save_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 SaveSummary s(int level, {int area = 0, DateTime? at}) =>

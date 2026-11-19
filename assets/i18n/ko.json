@@ -1,6 +1,6 @@
 {
   "_comment": "기본 언어. 키는 영어 소문자+점. {이름} 은 코드가 채워 넣는 값. 다른 언어 파일은 이 파일과 같은 키를 가져야 한다 (test/i18n_test.dart 가 검사).",
-  "app.title": "블룸 가든",
+  "app.title": "민트앤프렌즈",
   "common.ok": "확인",
   "common.cancel": "취소",
   "common.close": "닫기",

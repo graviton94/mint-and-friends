@@ -43,7 +43,7 @@ Future<void> main() async {
   } catch (_) {}
 
   runApp(
-    BloomApp(
+    GameApp(
       game: game,
       ads: ads,
       billing: billing,
@@ -57,8 +57,8 @@ Future<void> main() async {
   unawaited(ads.init());
 }
 
-class BloomApp extends StatefulWidget {
-  const BloomApp({
+class GameApp extends StatefulWidget {
+  const GameApp({
     super.key,
     required this.game,
     required this.ads,
@@ -75,10 +75,10 @@ class BloomApp extends StatefulWidget {
   final String version;
 
   @override
-  State<BloomApp> createState() => _BloomAppState();
+  State<GameApp> createState() => _GameAppState();
 }
 
-class _BloomAppState extends State<BloomApp> with WidgetsBindingObserver {
+class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
   final _navKey = GlobalKey<NavigatorState>();
   late GameState game;
   Timer? _loop;

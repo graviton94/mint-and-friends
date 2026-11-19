@@ -52,3 +52,7 @@ config/app_config.json
 # 복호화된 키스토어는 절대 커밋하지 않음 (.gpg 만 커밋)
 *.jks
 *.keystore
+
+.idea/
+__pycache__/
+*.iml

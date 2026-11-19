@@ -9,8 +9,8 @@
 // 목표(장르 벤치마크): Lv5 첫 세션, Lv10 1~2일, Lv20 7~10일, Lv30 30~40일.
 import 'dart:math';
 
-import 'package:bloom_merge/game/config.dart';
-import 'package:bloom_merge/game/game_state.dart';
+import 'package:mint_and_friends/game/config.dart';
+import 'package:mint_and_friends/game/game_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() => test('sim', sim);

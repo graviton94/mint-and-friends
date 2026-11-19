@@ -1,8 +1,8 @@
 import 'dart:math';
 
-import 'package:bloom_merge/game/config.dart';
-import 'package:bloom_merge/game/format.dart';
-import 'package:bloom_merge/game/game_state.dart';
+import 'package:mint_and_friends/game/config.dart';
+import 'package:mint_and_friends/game/format.dart';
+import 'package:mint_and_friends/game/game_state.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

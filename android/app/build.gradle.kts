@@ -26,7 +26,7 @@ plugins {
 }
 
 android {
-    namespace = "com.graviton94.bloom_merge"
+    namespace = "com.graviton94.mintandfriends"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -36,7 +36,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.graviton94.bloomgarden"
+        applicationId = "com.graviton94.mintandfriends"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = maxOf(flutter.minSdkVersion, 23) // Firebase 최소 23

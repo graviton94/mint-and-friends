@@ -1,5 +1,5 @@
 {
-  "name": "bloom-garden-functions",
+  "name": "mint-and-friends-functions",
   "private": true,
   "main": "lib/index.js",
   "engines": { "node": "22" },

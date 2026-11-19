@@ -14,14 +14,14 @@ GitHub Secrets 두 개로 서명합니다.
 ANDROID_UPLOAD_PASSPHRASE='…' SIDELOAD_PASSPHRASE='…' tool/make_keystores.sh
 git add android/keystores/*.jks.gpg && git commit -m "서명 키 추가"
 ```
-- 원본 `.jks` 는 `~/bloom-garden-keys/` 에 남습니다. 안전한 곳에 백업하세요. 저장소에는 `.gpg` 만 올라갑니다.
+- 원본 `.jks` 는 `~/mint-and-friends-keys/` 에 남습니다. 안전한 곳에 백업하세요. 저장소에는 `.gpg` 만 올라갑니다.
 - 스크립트가 출력하는 **SHA-1 / SHA-256** 은 2, 3단계에서 씁니다.
-- 이미 쓰는 키스토어가 있으면 `~/bloom-garden-keys/upload.jks` 자리에 두고 실행하세요. 새로 만들지 않고 암호화만 합니다. 별칭은 `upload` / `sideload` 여야 합니다. 다르면 Secrets 에 `ANDROID_UPLOAD_ALIAS` / `SIDELOAD_ALIAS` 를 추가하고 workflow 의 env 에 넘겨주세요.
+- 이미 쓰는 키스토어가 있으면 `~/mint-and-friends-keys/upload.jks` 자리에 두고 실행하세요. 새로 만들지 않고 암호화만 합니다. 별칭은 `upload` / `sideload` 여야 합니다. 다르면 Secrets 에 `ANDROID_UPLOAD_ALIAS` / `SIDELOAD_ALIAS` 를 추가하고 workflow 의 env 에 넘겨주세요.
 
 ## 2. Firebase (Blaze)
 
 1. Firebase 콘솔에서 프로젝트를 만들고 Blaze 요금제로 전환합니다.
-2. Android 앱을 추가합니다. 패키지는 `com.graviton94.bloomgarden`, SHA-1/SHA-256 은 업로드 키와 사이드로드 키 모두 등록합니다. Play App Signing 을 쓰면 Play Console 의 **앱 서명 키** SHA 도 추가합니다.
+2. Android 앱을 추가합니다. 패키지는 `com.graviton94.mintandfriends`, SHA-1/SHA-256 은 업로드 키와 사이드로드 키 모두 등록합니다. Play App Signing 을 쓰면 Play Console 의 **앱 서명 키** SHA 도 추가합니다.
 3. Authentication → 로그인 방법에서 **익명**, **Google** 을 켭니다. 카카오는 커스텀 토큰이라 따로 켤 필요가 없습니다.
 4. Firestore 데이터베이스를 만듭니다 (위치: `asia-northeast3` 서울).
 5. 규칙과 함수 배포:
@@ -36,7 +36,7 @@ git add android/keystores/*.jks.gpg && git commit -m "서명 키 추가"
 ## 3. 카카오 디벨로퍼스
 
 1. 애플리케이션을 추가하고 **네이티브 앱 키**를 확인합니다.
-2. 플랫폼 → Android: 패키지명 `com.graviton94.bloomgarden`, 키 해시는 업로드·사이드로드·Play 앱 서명 키 3개를 등록합니다.
+2. 플랫폼 → Android: 패키지명 `com.graviton94.mintandfriends`, 키 해시는 업로드·사이드로드·Play 앱 서명 키 3개를 등록합니다.
    키 해시 = SHA-1 을 base64 로 바꾼 값입니다:
    `echo <SHA1 콜론포함> | tr -d ':' | xxd -r -p | base64`
 3. 카카오 로그인을 활성화하고, 동의항목에서 닉네임(필수) 정도만 받습니다.
@@ -63,7 +63,7 @@ git add android/keystores/*.jks.gpg && git commit -m "서명 키 추가"
 
 | 동작 | 결과 |
 |---|---|
-| 아무 브랜치 push | 분석·테스트 → `bloom-garden-<버전>-sideload.apk`, `-upload.aab` (Actions → Artifacts) |
+| 아무 브랜치 push | 분석·테스트 → `mint-and-friends-<버전>-sideload.apk`, `-upload.aab` (Actions → Artifacts) |
 | 태그 `v1.0.0` push | 위와 같음 + GitHub Release 에 APK·AAB 첨부 |
 
 키 Secrets 가 없으면 파일 이름이 `-debugsigned` 로 나옵니다 (설치 테스트용, Play 업로드 불가).

@@ -390,6 +390,16 @@ class WalkZone {
   const WalkZone(this.x0, this.y0, this.x1, this.y1);
 }
 
+/// 물 영역 (타원, 씬 대비 0~1). 친구가 들어가면 첨벙 효과와 함께 몸 아래가 잠겨 보인다.
+class WaterZone {
+  final double cx, cy, rx, ry;
+  const WaterZone(this.cx, this.cy, this.rx, this.ry);
+  bool contains(double x, double y) {
+    final dx = (x - cx) / rx, dy = (y - cy) / ry;
+    return dx * dx + dy * dy <= 1;
+  }
+}
+
 class AreaDef {
   final String id; // 문구 키: area.<id>
   final String emoji;
@@ -398,6 +408,7 @@ class AreaDef {
   final List<DecorDef> decor;
   final int round; // 순환 회차 (1부터)
   final List<WalkZone> walk;
+  final List<WaterZone> water;
   const AreaDef(
     this.id,
     this.emoji,
@@ -406,6 +417,7 @@ class AreaDef {
     this.decor, {
     this.round = 1,
     this.walk = const [WalkZone(0.08, 0.42, 0.92, 0.92)],
+    this.water = const [],
   });
 
   String get key => 'area.$id';
@@ -440,16 +452,17 @@ class Garden {
         DecorDef('tent', '🏕️', 0.84, 0.90),
         DecorDef('wooden_bridge', '🌉', 0.26, 0.44),
       ],
-      walk: [WalkZone(0.05, 0.80, 0.95, 0.95)],
+      walk: [WalkZone(0.06, 0.44, 0.94, 0.94)],
+      water: [WaterZone(0.52, 0.58, 0.46, 0.21)],
     ),
     AreaDef('greenhouse', '🪴', 0xFFF6E3F0, 0xFFB9DFA0, [
-      DecorDef('glasshouse', '🪟', 0.14, 0.46),
-      DecorDef('cactus', '🌵', 0.34, 0.50),
-      DecorDef('mushroom_bed', '🍄', 0.68, 0.50, bringsFriend: 'dotori'),
-      DecorDef('watering_can', '🚿', 0.86, 0.52),
-      DecorDef('sunflower_field', '🌻', 0.20, 0.72),
-      DecorDef('tea_table', '🫖', 0.50, 0.66),
-      DecorDef('bamboo', '🎋', 0.80, 0.72, bringsFriend: 'mochi'),
+      DecorDef('glasshouse', '🪟', 0.10, 0.40),
+      DecorDef('cactus', '🌵', 0.24, 0.48),
+      DecorDef('mushroom_bed', '🍄', 0.72, 0.48, bringsFriend: 'dotori'),
+      DecorDef('watering_can', '🚿', 0.50, 0.50),
+      DecorDef('sunflower_field', '🌻', 0.20, 0.70),
+      DecorDef('tea_table', '🫖', 0.50, 0.78),
+      DecorDef('bamboo', '🎋', 0.80, 0.70, bringsFriend: 'mochi'),
       DecorDef('wind_chime', '🎐', 0.92, 0.90),
     ]),
     AreaDef('starry_hill', '🌙', 0xFF2E3A6B, 0xFF6F9A6A, [
@@ -479,6 +492,7 @@ class Garden {
       decor,
       round: index ~/ areas.length + 1,
       walk: base.walk,
+      water: base.water,
     );
   }
 

@@ -11,7 +11,7 @@ cd "$(dirname "$0")/.."
 : "${SIDELOAD_PASSPHRASE:?SIDELOAD_PASSPHRASE 필요}"
 
 out=android/keystores
-backup="${KEYSTORE_BACKUP_DIR:-$HOME/bloom-garden-keys}"
+backup="${KEYSTORE_BACKUP_DIR:-$HOME/mint-and-friends-keys}"
 mkdir -p "$out" "$backup"
 
 make_one() {
@@ -22,7 +22,7 @@ make_one() {
   else
     keytool -genkeypair -v -keystore "$jks" -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 \
       -alias "$name" -storepass "$pass" -keypass "$pass" \
-      -dname "CN=Bloom Garden ($name), O=graviton94, C=KR"
+      -dname "CN=Mint and Friends ($name), O=graviton94, C=KR"
   fi
   gpg --batch --yes --pinentry-mode loopback --passphrase "$pass" --symmetric --cipher-algo AES256 \
     -o "$out/$name.jks.gpg" "$jks"

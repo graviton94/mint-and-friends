@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:bloom_merge/game/config.dart';
-import 'package:bloom_merge/i18n/l10n.dart';
+import 'package:mint_and_friends/game/config.dart';
+import 'package:mint_and_friends/i18n/l10n.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Map<String, String> _load(String lang) =>

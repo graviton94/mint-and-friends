@@ -93,7 +93,7 @@ jobs:
             --build-name=${{ steps.ver.outputs.name }} --build-number=${{ steps.ver.outputs.code }}
           mkdir -p dist
           signed=$([ -n "${SIDELOAD_KEYSTORE:-}" ] && echo sideload || echo debugsigned)
-          cp build/app/outputs/flutter-apk/app-release.apk "dist/bloom-garden-${{ steps.ver.outputs.name }}-${signed}.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk "dist/mint-and-friends-${{ steps.ver.outputs.name }}-${signed}.apk"
 
       - name: Build upload AAB
         env:
@@ -103,7 +103,7 @@ jobs:
           flutter build appbundle --release ${{ steps.defines.outputs.args }} \
             --build-name=${{ steps.ver.outputs.name }} --build-number=${{ steps.ver.outputs.code }}
           signed=$([ -n "${ANDROID_UPLOAD_KEYSTORE:-}" ] && echo upload || echo debugsigned)
-          cp build/app/outputs/bundle/release/app-release.aab "dist/bloom-garden-${{ steps.ver.outputs.name }}-${signed}.aab"
+          cp build/app/outputs/bundle/release/app-release.aab "dist/mint-and-friends-${{ steps.ver.outputs.name }}-${signed}.aab"
 
       - name: Clean keystores
         if: always()
@@ -111,7 +111,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: bloom-garden-${{ steps.ver.outputs.name }}-${{ steps.ver.outputs.code }}
+          name: mint-and-friends-${{ steps.ver.outputs.name }}-${{ steps.ver.outputs.code }}
           path: dist/*
 
       - name: GitHub Release

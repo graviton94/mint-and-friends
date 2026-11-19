@@ -1,4 +1,4 @@
-package com.graviton94.bloom_merge
+package com.graviton94.mintandfriends
 
 import io.flutter.embedding.android.FlutterActivity
 
