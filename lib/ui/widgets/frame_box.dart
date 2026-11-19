@@ -118,7 +118,7 @@ class GameDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      insetPadding: EdgeInsets.fromLTRB(28, emblem != null ? 110 : 52, 28, 24),
+      insetPadding: EdgeInsets.fromLTRB(28, emblem != null ? 150 : 52, 28, 24),
       clipBehavior: Clip.none,
       child: !hasRibbon
           ? panel
@@ -127,17 +127,36 @@ class GameDialog extends StatelessWidget {
               alignment: Alignment.topCenter,
               children: [
                 panel,
+                // 축하 꽃가루 + 레벨업 별: 팝업 위에만 (본문을 가리지 않게), 톡 튀어나온다
+                if (banner == 'gold' && Art.frame('confetti').available)
+                  Positioned(
+                    top: -150,
+                    child: IgnorePointer(
+                      child: _Pop(
+                        delay: 0.15,
+                        child: Image.asset(
+                          Art.frame('confetti').path,
+                          width: 230,
+                          filterQuality: FilterQuality.medium,
+                        ),
+                      ),
+                    ),
+                  ),
                 if (emblem != null && Art.frame(emblem!).available)
                   Positioned(
                     top: -112,
-                    child: Image.asset(
-                      Art.frame(emblem!).path,
-                      height: 100,
-                      filterQuality: FilterQuality.medium,
+                    child: IgnorePointer(
+                      child: _Pop(
+                        child: Image.asset(
+                          Art.frame(emblem!).path,
+                          height: 96,
+                          filterQuality: FilterQuality.medium,
+                        ),
+                      ),
                     ),
                   ),
                 Positioned(
-                  top: -26,
+                  top: -30,
                   child: _Ribbon(gold: banner == 'gold', child: title!),
                 ),
               ],
@@ -319,11 +338,12 @@ class _Ribbon extends StatelessWidget {
     if (art.available) {
       final sz =
           Art.frameSize(art.path.split('/').last.split('.').first) ??
-          const Size(384, 100);
-      final w = height * sz.width / sz.height;
+          const Size(384, 126);
+      const ah = 70.0; // 띠 그림 높이 (비율 3:1 → 폭 약 210)
+      final w = ah * sz.width / sz.height;
       return SizedBox(
         width: w,
-        height: height,
+        height: ah,
         child: Stack(
           children: [
             Positioned.fill(
@@ -333,11 +353,12 @@ class _Ribbon extends StatelessWidget {
                 filterQuality: FilterQuality.medium,
               ),
             ),
+            // 가운데 띠만 (양 끝 접힌 꼬리 · 아래 접힘 제외)
             Positioned(
-              left: w * 0.16,
-              right: w * 0.16,
-              top: height * 0.18,
-              bottom: height * 0.22,
+              left: w * 0.2,
+              right: w * 0.2,
+              top: ah * 0.14,
+              bottom: ah * 0.4,
               child: FittedBox(fit: BoxFit.scaleDown, child: text),
             ),
           ],
@@ -370,6 +391,30 @@ class _Ribbon extends StatelessWidget {
       ),
       alignment: Alignment.center,
       child: FittedBox(fit: BoxFit.scaleDown, child: text),
+    );
+  }
+}
+
+/// 팝업 장식이 톡 튀어나오는 등장 (크기 0.4 → 1, 살짝 튕김).
+class _Pop extends StatelessWidget {
+  const _Pop({required this.child, this.delay = 0});
+  final Widget child;
+  final double delay; // 0~1 (전체 600ms 중 늦게 시작할 비율)
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 650),
+      builder: (_, t, c) {
+        final v = ((t - delay) / (1 - delay)).clamp(0.0, 1.0);
+        final scale = 0.4 + 0.6 * Curves.elasticOut.transform(v);
+        return Opacity(
+          opacity: v.clamp(0.0, 1.0),
+          child: Transform.scale(scale: scale, child: c),
+        );
+      },
+      child: child,
     );
   }
 }

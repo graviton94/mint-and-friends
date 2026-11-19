@@ -1,4 +1,12 @@
 {
+ "banner_gold": [
+  384,
+  126
+ ],
+ "banner_green": [
+  384,
+  126
+ ],
  "button_green": [
   384,
   181
@@ -22,6 +30,14 @@
  "card_ready": [
   384,
   353
+ ],
+ "confetti": [
+  384,
+  237
+ ],
+ "levelup_burst": [
+  384,
+  290
  ],
  "panel": [
   384,
