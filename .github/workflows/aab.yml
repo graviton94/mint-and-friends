@@ -1,0 +1,104 @@
+name: Store AAB
+
+# Play 스토어용: 업로드 키(android/keystore/upload.jks.gpg, ANDROID_UPLOAD_PASSPHRASE 로 해제)로 서명한 AAB.
+# 직접 실행만 ("릴리즈하자" 이후). versionCode = 1000 + 이 워크플로 실행 번호 (업로드마다 커진다).
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "스토어에 보이는 버전 이름 (예: 1.0.0)"
+        required: true
+        default: "1.0.0"
+
+concurrency:
+  group: aab
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: "3.50.0"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - name: Analyze
+        run: flutter analyze
+      - name: Tests
+        run: flutter test test/
+
+      - name: Firebase settings and login keys
+        env:
+          GSJ: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          KAKAO: ${{ secrets.KAKAO_NATIVE_APP_KEY }}
+        run: |
+          python3 tool/ci_defines.py > "$RUNNER_TEMP/app.defines"
+          echo "dart-define: $(wc -l < "$RUNNER_TEMP/app.defines") values"
+          if [ -n "$KAKAO" ]; then echo "HF_KAKAO_NATIVE_APP_KEY=$KAKAO" >> "$GITHUB_ENV"; fi
+
+      # Play 업로드 키: build.gradle.kts 가 읽는 네 변수
+      - name: Upload signing key
+        env:
+          P: ${{ secrets.ANDROID_UPLOAD_PASSPHRASE }}
+        run: |
+          if [ -z "$P" ]; then echo "::error::ANDROID_UPLOAD_PASSPHRASE secret is missing"; exit 1; fi
+          if [ ! -f android/keystore/upload.jks.gpg ]; then echo "::error::업로드 키가 없습니다 (android-signing-key.yml 을 upload 로 실행)"; exit 1; fi
+          gpg --batch --yes --pinentry-mode loopback --passphrase-fd 3 -d -o "$RUNNER_TEMP/upload.jks" android/keystore/upload.jks.gpg 3<<<"$P"
+          {
+            echo "ANDROID_UPLOAD_KEYSTORE=$RUNNER_TEMP/upload.jks"
+            echo "ANDROID_UPLOAD_KEY_ALIAS=upload"
+          } >> "$GITHUB_ENV"
+
+      - name: Build AAB
+        env:
+          ANDROID_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_PASSPHRASE }}
+          ANDROID_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_PASSPHRASE }}
+        run: |
+          set -o pipefail
+          V="${{ inputs.version }}"
+          N=$((1000 + ${{ github.run_number }}))
+          echo "CODE=$N" >> "$GITHUB_ENV"
+          flutter build appbundle --release --build-number "$N" --build-name "$V" \
+            $(cat "$RUNNER_TEMP/app.defines") 2>&1 | tee build.log
+          mkdir -p out
+          cp build/app/outputs/bundle/release/app-release.aab "out/MintAndFriends-$V-$N.aab"
+          ls -la out
+
+      - name: AAB is signed with the upload key
+        run: |
+          keytool -printcert -jarfile out/*.aab | tee certs.txt | grep -E "Owner|SHA1"
+          grep -q "CN=Mint and Friends upload" certs.txt || (echo "::error::AAB is not signed with the upload key" && exit 1)
+
+      - name: Show build errors
+        if: failure()
+        run: grep -E "error|Error|FAILURE|What went wrong" -A3 build.log | head -150 || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MintAndFriends-aab
+          path: out/*.aab
+
+      - name: Draft release with the AAB
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          T="store-${{ inputs.version }}-${CODE}"
+          (cd docs && zip -qr "$GITHUB_WORKSPACE/out/store-assets.zip" store)
+          gh release create "$T" out/*.aab out/store-assets.zip docs/store/icon_512.png --draft --target "$GITHUB_SHA" \
+            --title "Mint & Friends ${{ inputs.version }} (${CODE}) for Play" \
+            --notes "Upload this AAB in Play Console (closed testing). Version code ${CODE}, from ${GITHUB_REF_NAME} @ ${GITHUB_SHA::7}."

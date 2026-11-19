@@ -1,24 +1,3 @@
-import groovy.json.JsonSlurper
-
-// ---------------------------------------------------------------- 앱 설정 (config/app_config.json)
-// Dart 쪽과 같은 파일을 읽어 카카오 네이티브 앱 키를 매니페스트에 넣는다.
-val appConfig: Map<*, *> = rootProject.file("../config/app_config.json").let { f ->
-    if (f.exists()) JsonSlurper().parse(f) as Map<*, *> else emptyMap<String, Any>()
-}
-val kakaoNativeAppKey: String = (appConfig["KAKAO_NATIVE_APP_KEY"] as? String) ?: ""
-
-// ---------------------------------------------------------------- 서명
-// 두 가지 키:
-//  - upload   : Play 스토어 업로드용 (AAB). Play App Signing 에 등록된 업로드 키.
-//  - sideload : 직접 배포용 APK (테스터 설치 등).
-// CI 는 GPG 로 암호화된 키스토어(android/keystores/*.jks.gpg)를 패스프레이즈 시크릿으로 풀고
-// 아래 환경변수를 채운다. 키스토어/키 비밀번호 = 패스프레이즈. (docs/RELEASE.md)
-//   SIGNING_PROFILE = upload | sideload   (없으면 디버그 키)
-//   ANDROID_UPLOAD_KEYSTORE, ANDROID_UPLOAD_PASSPHRASE, ANDROID_UPLOAD_ALIAS(기본 upload)
-//   SIDELOAD_KEYSTORE, SIDELOAD_PASSPHRASE, SIDELOAD_ALIAS(기본 sideload)
-fun env(name: String): String? = System.getenv(name)?.takeIf { it.isNotBlank() }
-val signingProfile: String? = env("SIGNING_PROFILE")
-
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -26,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.graviton94.mintandfriends"
+    namespace = "io.github.graviton94.mintandfriends"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -36,7 +15,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.graviton94.mintandfriends"
+        applicationId = "io.github.graviton94.mintandfriends"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = maxOf(flutter.minSdkVersion, 23) // Firebase 최소 23
@@ -47,32 +26,49 @@ android {
         // flag during build.
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders["kakaoNativeAppKey"] = kakaoNativeAppKey
+        // 카카오 로그인 키: CI 시크릿 KAKAO_NATIVE_APP_KEY → app.yml/aab.yml 이 HF_KAKAO_NATIVE_APP_KEY 로 넘긴다.
+        manifestPlaceholders["kakaoScheme"] = "kakao" + (System.getenv("HF_KAKAO_NATIVE_APP_KEY")?.takeIf { it.isNotBlank() } ?: "none")
+
+        // 시험용 APK 는 arm64 폰만 (app.yml --target-platform android-arm64). 스토어 AAB 는 모든 ABI.
+        if (project.findProperty("target-platform")?.toString() == "android-arm64") {
+            ndk { abiFilters += listOf("arm64-v8a") }
+        }
     }
 
     signingConfigs {
-        create("upload") {
-            env("ANDROID_UPLOAD_KEYSTORE")?.let { path ->
-                storeFile = file(path)
-                storePassword = env("ANDROID_UPLOAD_PASSPHRASE")
-                keyPassword = env("ANDROID_UPLOAD_PASSPHRASE")
-                keyAlias = env("ANDROID_UPLOAD_ALIAS") ?: "upload"
+        // 시험용 키: 폰에 직접 설치하는 APK. app.yml 이 keystore/sideload.jks.gpg 를
+        // SIDELOAD_PASSPHRASE 시크릿으로 풀어 경로를 넘긴다. 없으면(로컬 빌드) 디버그 키.
+        val sideloadStore = System.getenv("HF_SIDELOAD_STORE")?.takeIf { it.isNotBlank() && file(it).exists() }
+        val sideloadPass = System.getenv("HF_SIDELOAD_PASSWORD").orEmpty()
+        if (sideloadStore != null && sideloadPass.isNotBlank()) {
+            create("sideload") {
+                storeFile = file(sideloadStore)
+                storePassword = sideloadPass
+                keyAlias = "sideload"
+                keyPassword = sideloadPass
             }
         }
-        create("sideload") {
-            env("SIDELOAD_KEYSTORE")?.let { path ->
-                storeFile = file(path)
-                storePassword = env("SIDELOAD_PASSPHRASE")
-                keyPassword = env("SIDELOAD_PASSPHRASE")
-                keyAlias = env("SIDELOAD_ALIAS") ?: "sideload"
+        // Play 업로드 키: 네 변수가 모두 있을 때만 (aab.yml).
+        val uploadStore = System.getenv("ANDROID_UPLOAD_KEYSTORE")?.takeIf { it.isNotBlank() && file(it).exists() }
+        val uploadVars = listOf("ANDROID_UPLOAD_STORE_PASSWORD", "ANDROID_UPLOAD_KEY_ALIAS", "ANDROID_UPLOAD_KEY_PASSWORD")
+            .map { System.getenv(it).orEmpty() }
+        if (uploadStore != null && uploadVars.all { it.isNotBlank() }) {
+            create("upload") {
+                storeFile = file(uploadStore)
+                storePassword = uploadVars[0]
+                keyAlias = uploadVars[1]
+                keyPassword = uploadVars[2]
             }
         }
     }
 
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.findByName("sideload") ?: signingConfigs.getByName("debug")
+        }
         release {
-            val chosen = signingProfile?.let { signingConfigs.findByName(it) }
-            signingConfig = if (chosen?.storeFile != null) chosen else signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("upload") ?: signingConfigs.findByName("sideload")
+                ?: signingConfigs.getByName("debug")
         }
     }
 }

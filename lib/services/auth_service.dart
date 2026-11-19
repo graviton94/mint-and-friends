@@ -24,7 +24,7 @@ class AuthException implements Exception {
 ///
 /// - 게스트: Firebase 익명 로그인 (Firebase 설정이 없으면 기기 전용 게스트).
 /// - Google: Google ID 토큰 → Firebase. 게스트 상태면 같은 계정(uid)에 연결해 진행도가 그대로 이어진다.
-/// - 카카오: 카카오 액세스 토큰 → Cloud Function(kakaoLogin)이 검증 후 커스텀 토큰 발급 → Firebase.
+/// - 카카오: 카카오 액세스 토큰 → Cloud Function(login)이 검증 후 커스텀 토큰 발급 → Firebase.
 ///   익명 계정에 커스텀 토큰을 직접 연결할 수 없어서, 로그인 후 CloudSave 가 기기 데이터를 옮긴다.
 class AuthService extends ChangeNotifier {
   static const _localGuestKey = 'local_guest';
@@ -131,6 +131,8 @@ class AuthService extends ChangeNotifier {
       } on FirebaseAuthException catch (e) {
         // 이미 다른 진행도가 있는 Google 계정 → 그 계정으로 전환 (CloudSave 가 어느 쪽을 쓸지 묻는다)
         if (e.code != 'credential-already-in-use') rethrow;
+        await FirebaseAuth.instance.signInWithCredential(e.credential ?? cred);
+        return;
       }
     }
     await FirebaseAuth.instance.signInWithCredential(cred);
@@ -139,24 +141,48 @@ class AuthService extends ChangeNotifier {
   /// 카카오 로그인 → Cloud Function 으로 Firebase 커스텀 토큰을 받아 로그인.
   Future<void> signInKakao() => _run(() async {
     if (!kakaoEnabled) throw AuthException('failed');
-    kakao.OAuthToken token;
-    try {
-      token = await kakao.isKakaoTalkInstalled()
-          ? await kakao.UserApi.instance.loginWithKakaoTalk()
-          : await kakao.UserApi.instance.loginWithKakaoAccount();
-    } on PlatformException catch (e) {
-      if (e.code == 'CANCELED') throw AuthException('cancelled');
-      // 카카오톡이 있지만 로그인 안 된 경우 등 → 카카오계정 로그인으로 재시도
-      token = await kakao.UserApi.instance.loginWithKakaoAccount();
-    }
+    final accessToken = await _kakaoToken();
     final fn = FirebaseFunctions.instanceFor(region: AppConfig.functionsRegion)
-        .httpsCallable('kakaoLogin');
+        .httpsCallable('login');
     final res = await fn.call<Map<String, dynamic>>({
-      'accessToken': token.accessToken,
+      'provider': 'kakao',
+      'token': accessToken,
     });
     final customToken = res.data['token'] as String;
     await FirebaseAuth.instance.signInWithCustomToken(customToken);
   });
+
+  /// 카카오톡 앱 로그인 → 안 되면 카카오계정(웹) 로그인. 사용자가 물러나면 'cancelled'.
+  Future<String> _kakaoToken() async {
+    try {
+      final api = kakao.UserApi.instance;
+      if (await kakao.isKakaoTalkInstalled()) {
+        try {
+          return (await api.loginWithKakaoTalk()).accessToken;
+        } catch (e) {
+          // 카카오톡 안에서 취소: 멈춘다. 그 밖(카카오톡에 계정 미연결 등): 웹 로그인으로.
+          if (e is PlatformException && e.code == 'CANCELED') {
+            throw AuthException('cancelled');
+          }
+          if (e is kakao.KakaoClientException &&
+              e.reason == kakao.ClientErrorCause.cancelled) {
+            throw AuthException('cancelled');
+          }
+        }
+      }
+      return (await api.loginWithKakaoAccount()).accessToken;
+    } on kakao.KakaoClientException catch (e) {
+      if (e.reason == kakao.ClientErrorCause.cancelled) {
+        throw AuthException('cancelled');
+      }
+      rethrow;
+    } on kakao.KakaoAuthException catch (e) {
+      if (e.error == kakao.AuthErrorCause.accessDenied) {
+        throw AuthException('cancelled');
+      }
+      rethrow;
+    }
+  }
 
   Future<void> signOut() => _run(() async {
     if (firebaseEnabled && Firebase.apps.isNotEmpty) {

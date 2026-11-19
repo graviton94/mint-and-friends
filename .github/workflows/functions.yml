@@ -1,0 +1,120 @@
+name: Functions
+
+# Cloud Functions (functions/, Python) 와 Firestore 규칙을 배포한다.
+# 프로젝트 id 는 FIREBASE_SERVICE_ACCOUNT 시크릿에서 읽는다. 비밀 값은 찍지 않는다.
+on:
+  push:
+    paths:
+      - 'functions/**'
+      - 'firebase.json'
+      - 'firestore.rules'
+      - '.github/workflows/functions.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: functions
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Service account present?
+        id: sa
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SA" ]; then
+            echo "::warning::FIREBASE_SERVICE_ACCOUNT is not set: functions are not deployed (the app still works as guest/device-only)."
+            echo "ok=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          P=$(printf %s "$SA" | python3 -c "import json,sys; print(json.load(sys.stdin)['project_id'])")
+          echo "PROJECT=$P" >> "$GITHUB_ENV"
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+          echo "Firebase project: $P"
+
+      - uses: actions/setup-python@v5
+        if: steps.sa.outputs.ok == 'true'
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v5
+        if: steps.sa.outputs.ok == 'true'
+        with:
+          node-version: '22'
+      - uses: google-github-actions/auth@v2
+        if: steps.sa.outputs.ok == 'true'
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+        if: steps.sa.outputs.ok == 'true'
+
+      - name: Enable APIs (fails here if the project is not on Blaze or the account lacks rights)
+        if: steps.sa.outputs.ok == 'true'
+        run: |
+          if ! out=$(gcloud services enable --project "$PROJECT" \
+            cloudfunctions.googleapis.com run.googleapis.com cloudbuild.googleapis.com \
+            artifactregistry.googleapis.com eventarc.googleapis.com identitytoolkit.googleapis.com \
+            iamcredentials.googleapis.com firestore.googleapis.com firebaserules.googleapis.com 2>&1); then
+            echo "$out" | grep -E "permission:|reason:|billing|Billing|FAILED_PRECONDITION" | sort -u | head -10
+            echo "::error::Could not enable the APIs. The service account needs the Service Usage Admin role, and the project must be on Blaze."
+            exit 1
+          fi
+          echo "APIs enabled"
+
+      - name: Python environment for the functions
+        if: steps.sa.outputs.ok == 'true'
+        working-directory: functions
+        run: |
+          python3 -m venv venv
+          venv/bin/pip install -q -r requirements.txt
+          venv/bin/python -c "import main" && echo "functions import ok"
+
+      # 함수가 읽는 설정(비밀 아님): 우리 카카오 앱의 숫자 id. 다른 카카오 앱의 토큰을 거부한다.
+      - name: Functions env
+        if: steps.sa.outputs.ok == 'true'
+        env:
+          KAKAO_APP_ID: ${{ secrets.KAKAO_APP_ID }}
+        run: |
+          : > functions/.env
+          if [ -n "$KAKAO_APP_ID" ]; then
+            echo "KAKAO_APP_ID=$KAKAO_APP_ID" >> functions/.env
+            echo "Kakao app id: set (tokens from other apps are refused)"
+          else
+            echo "::warning::KAKAO_APP_ID is not set: Kakao tokens are checked to be valid, but not that they were made for this app."
+          fi
+
+      - name: Deploy functions
+        if: steps.sa.outputs.ok == 'true'
+        run: |
+          npx -y firebase-tools deploy --project "$PROJECT" --non-interactive --force \
+            --only functions:login,functions:deleteAccount
+
+      - name: Firestore rules (users/{uid} 는 본인만)
+        if: steps.sa.outputs.ok == 'true'
+        shell: bash
+        run: |
+          if ! npx -y firebase-tools deploy --only firestore:rules --project "$PROJECT" --non-interactive 2>&1 | tee rules.log; then
+            grep -iE "permission|denied|403" rules.log | head -5
+            echo "::error::Could not deploy Firestore rules. Give the deploy service account the Firebase Rules Admin role."
+            exit 1
+          fi
+
+      - name: Can the functions sign login tokens? (Service Account Token Creator on itself)
+        if: steps.sa.outputs.ok == 'true'
+        run: |
+          num=$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')
+          sa="$num-compute@developer.gserviceaccount.com"
+          echo "Functions run as: $sa" | tee -a "$GITHUB_STEP_SUMMARY"
+          roles=$(gcloud iam service-accounts get-iam-policy "$sa" --project "$PROJECT" --format=json 2>/dev/null \
+            | python3 -c "import json,sys; print(' '.join(b['role'] for b in json.load(sys.stdin).get('bindings', []) if any('$sa' in m for m in b['members'])))" || true)
+          proj=$(gcloud projects get-iam-policy "$PROJECT" --flatten='bindings[].members' --filter="bindings.members:serviceAccount:$sa" --format='value(bindings.role)' 2>/dev/null | tr '\n' ' ' || true)
+          echo "on the account: ${roles:-none}"; echo "on the project: ${proj:-none}"
+          if ! echo "$roles $proj" | grep -q 'roles/iam.serviceAccountTokenCreator'; then
+            echo "::warning::$sa lacks Service Account Token Creator; Kakao login will fail."
+          fi

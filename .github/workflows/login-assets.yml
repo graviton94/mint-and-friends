@@ -1,0 +1,53 @@
+name: Login button assets
+
+# 카카오 · Google 공식 로그인 버튼 리소스를 받아 design/login/official/ 에 커밋한다
+# (개발 세션에서는 그 사이트에 접속할 수 없어서 Actions 에서 받는다). 브랜드 가이드를 따르기 위함.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Find and download
+        run: |
+          out=design/login/official
+          mkdir -p "$out" /tmp/pages
+          ua='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/130 Safari/537.36'
+          get() { curl -sL -A "$ua" --max-time 40 -o "$2" -w '%{http_code}' "$1" || echo 000; }
+          for page in \
+            https://developers.kakao.com/docs/latest/ko/kakaologin/design-guide \
+            https://developers.kakao.com/tool/resource/login \
+            https://developers.google.com/identity/branding-guidelines; do
+            f=/tmp/pages/$(echo "$page" | md5sum | cut -c1-8)
+            echo "== $(get "$page" "$f") $page"
+            grep -oiE 'href="[^"]*(download|resource|zip)[^"]*"' "$f" | sort -u | head -20
+            grep -oE '(https?:)?//[^"'"'"' )]+\.(zip|png|svg|PNG|SVG)|/[^"'"'"' )]+\.(zip|png|svg)' "$f" | sort -u | head -40
+          done
+          while read -r name url; do
+            code=$(get "$url" "${out:?}/${name:?}")
+            if [ "$code" != 200 ] || [ ! -s "${out:?}/${name:?}" ] || file "${out:?}/${name:?}" | grep -qi html; then rm -f "${out:?}/${name:?}"; fi
+            echo "$code $name $url"
+          done <<'LIST'
+          kakao-login-complete-ko.svg https://developers.kakao.com/tool/images/resource/preview/login-complete-ko.svg
+          kakao-login-simple-ko.svg https://developers.kakao.com/tool/images/resource/preview/login-simple-ko.svg
+          kakao-login-complete-en.svg https://developers.kakao.com/tool/images/resource/preview/login-complete-en.svg
+          kakao-login-standard-ko.png https://developers.kakao.com/docs/latest/ko/assets/style/img/login_button_standard_ko.png
+          google-signin-assets.zip https://developers.google.com/static/identity/images/signin-assets.zip
+          LIST
+          for z in "$out"/*.zip; do [ -f "$z" ] && unzip -o -q "$z" -d "${z%.zip}" && rm "${z:?}"; done
+          find "$out" -name .DS_Store -delete
+          find "$out" -type f | head -80
+      - name: Commit
+        run: |
+          git config user.name github-actions
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add design/login/official
+          git diff --cached --quiet && { echo "nothing new"; exit 0; }
+          git commit -m "Official login button resources"
+          git push

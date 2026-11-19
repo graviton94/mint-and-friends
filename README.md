@@ -37,10 +37,10 @@ lib/i18n/          다국어 모듈(l10n), 콘텐츠 이름(names)        assets
 lib/art/           아트 등록부: 규칙에 맞는 PNG 가 있으면 사용, 없으면 이모지   docs/ART_SPEC.md
 lib/services/      광고, 구독, 로그인(Firebase·Google·카카오), 저장(기기+Firestore), 앱 설정
 lib/ui/            화면. garden/ (정원 씬 레이어), board/ (보드 레이어), 시트, 로그인
-functions/         Cloud Functions: kakaoLogin, deleteAccount
+functions/         Cloud Functions (Python): login (카카오 → 커스텀 토큰), deleteAccount
 firestore.rules    users/{uid} 본인만
 test/              규칙·저장 동기화·다국어 일관성 테스트
-tool/              balance_sim_test.dart (밸런스 시뮬레이터), make_keystores.sh
+tool/              balance_sim_test.dart (밸런스 시뮬레이터), ci_defines.py (CI dart-define)
 ```
 
 ## 개발

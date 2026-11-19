@@ -1,0 +1,98 @@
+name: App
+
+# 푸시마다: 분석 · 테스트 · 시험용 APK(시험 키 sideload 로 서명) → Releases `android-latest`.
+# 시험 키가 아직 없으면(android-signing-key.yml 미실행) 디버그 키로 서명하고 경고만 남긴다.
+on:
+  push:
+    paths-ignore: ["docs/**", "**.md", "functions/**", "firestore.rules", "firebase.json"]
+  workflow_dispatch:
+
+concurrency:
+  group: app-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+env:
+  FLUTTER_VERSION: "3.50.0"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+      - name: Analyze
+        run: flutter analyze
+      - name: Tests
+        run: flutter test test/
+
+      - name: Sideload signing key
+        env:
+          P: ${{ secrets.SIDELOAD_PASSPHRASE }}
+        run: |
+          if [ -z "$P" ] || [ ! -f android/keystore/sideload.jks.gpg ]; then
+            echo "::warning::시험 키가 없어 디버그 키로 서명합니다 (SIDELOAD_PASSPHRASE 시크릿 + android-signing-key.yml 실행 필요)"
+            exit 0
+          fi
+          gpg --batch --yes --pinentry-mode loopback --passphrase-fd 3 -d -o "$RUNNER_TEMP/sideload.jks" android/keystore/sideload.jks.gpg 3<<<"$P"
+          echo "HF_SIDELOAD_STORE=$RUNNER_TEMP/sideload.jks" >> "$GITHUB_ENV"
+
+      - name: Firebase settings and login keys
+        env:
+          GSJ: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          KAKAO: ${{ secrets.KAKAO_NATIVE_APP_KEY }}
+        run: |
+          python3 tool/ci_defines.py > "$RUNNER_TEMP/app.defines"
+          echo "dart-define: $(wc -l < "$RUNNER_TEMP/app.defines") values"
+          if [ -n "$KAKAO" ]; then echo "HF_KAKAO_NATIVE_APP_KEY=$KAKAO" >> "$GITHUB_ENV"; fi
+
+      - name: Build test APK
+        env:
+          HF_SIDELOAD_PASSWORD: ${{ secrets.SIDELOAD_PASSPHRASE }}
+        run: |
+          set -o pipefail
+          V="0.1.${{ github.run_number }}"
+          flutter build apk --release --target-platform android-arm64 \
+            --build-number ${{ github.run_number }} --build-name "$V" \
+            $(cat "$RUNNER_TEMP/app.defines") 2>&1 | tee build.log
+          mkdir -p out
+          cp build/app/outputs/flutter-apk/app-release.apk "out/MintAndFriends-dev-${{ github.run_number }}.apk"
+          ls -la out
+
+      - name: APK is signed with the sideload key
+        if: env.HF_SIDELOAD_STORE != ''
+        run: |
+          SIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$SIGNER" verify --print-certs out/*.apk | tee certs.txt | grep -E "certificate DN|SHA-1"
+          grep -qi "CN=Mint and Friends sideload" certs.txt || (echo "::error::APK is not signed with the sideload key" && exit 1)
+
+      - name: Show build errors
+        if: failure()
+        run: grep -E "error|Error|FAILURE|What went wrong" -A3 build.log | head -150 || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MintAndFriends-apk
+          path: out/*.apk
+
+      - name: Publish to Releases (android-latest)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete android-latest --cleanup-tag -y || true
+          gh release create android-latest out/*.apk --prerelease --target "$GITHUB_SHA" \
+            --title "Mint & Friends test build ${{ github.run_number }}" \
+            --notes "Test APK from ${GITHUB_REF_NAME} @ ${GITHUB_SHA::7}. Install on the phone; it updates the previous test build."
