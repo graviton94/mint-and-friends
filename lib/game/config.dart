@@ -265,7 +265,7 @@ class Chains {
 
 // ------------------------------------------------------------------ 강화
 
-enum UpgradeType { spawnSpeed, income, autoMerge, spawnLevel, offlineCap }
+enum UpgradeType { energyRegen, income, autoMerge, spawnLevel, offlineCap }
 
 class UpgradeDef {
   final UpgradeType type;
@@ -291,7 +291,7 @@ class UpgradeDef {
 /// 비용은 단계마다 x1.13~1.15, 수익 강화는 x1.08 + 10/25/50/100 단계 달성 시 x2.
 class Upgrades {
   static const List<UpgradeDef> all = [
-    UpgradeDef(UpgradeType.spawnSpeed, 'timer', 30, 40, 1.15),
+    UpgradeDef(UpgradeType.energyRegen, 'timer', 30, 40, 1.15),
     UpgradeDef(UpgradeType.income, 'coinbag', 100, 60, 1.13),
     UpgradeDef(
       UpgradeType.autoMerge,
@@ -321,8 +321,10 @@ class Upgrades {
 
   static UpgradeDef of(UpgradeType t) => all.firstWhere((u) => u.type == t);
 
-  /// 바구니가 저절로 만드는 간격(초). 탭(에너지)이 주 생산, 자동 생성은 방치용 보조.
-  static double spawnInterval(int lv) => max(3.0, 15.0 * pow(0.95, lv));
+  /// 에너지 1 회복 간격(초). 아이템은 바구니 탭(에너지 1)으로만 나온다 (머지 장르 표준:
+  /// Merge Mansion · Travel Town 모두 생산은 에너지, 방치 요소는 수익·자동 합치기).
+  static double energyRegenSeconds(int lv) =>
+      max(45.0, GameConfig.energyRegenSeconds * pow(0.97, lv).toDouble());
 
   static const List<int> incomeMilestones = [10, 25, 50, 100];
   static double incomeMultiplier(int lv) =>
@@ -340,7 +342,7 @@ class Upgrades {
 // ------------------------------------------------------------------ 친구
 
 enum FriendBuff {
-  spawnSpeed,
+  energyRegen,
   income,
   orderCoins,
   lucky,
@@ -362,7 +364,7 @@ class FriendDef {
 
 class Friends {
   static const List<FriendDef> all = [
-    FriendDef('bori', '🐰', FriendBuff.spawnSpeed, 0.03),
+    FriendDef('bori', '🐰', FriendBuff.energyRegen, 0.03),
     FriendDef('dubu', '🐻', FriendBuff.income, 0.05),
     FriendDef('kwak', '🦆', FriendBuff.orderCoins, 0.10),
     FriendDef('nabi', '🐱', FriendBuff.lucky, 0.01),

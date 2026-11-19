@@ -38,7 +38,7 @@ def save(img, path):
 def import_sheet(sid, src, spec):
     img = Image.open(src)
     if spec.get("bg"):
-        save(img.convert("RGB").resize((1080, 720), Image.LANCZOS), spec["files"][0])
+        save(img.convert("RGB").resize((1536, 1024), Image.LANCZOS), spec["files"][0])
         return [spec["files"][0]]
     if spec.get("icon"):
         sq = img.convert("RGB")

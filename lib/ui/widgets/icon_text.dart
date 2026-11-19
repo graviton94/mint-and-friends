@@ -50,6 +50,26 @@ class IconText extends StatelessWidget {
     return Art.icon(token);
   }
 
+  /// 한국어는 낱말 사이(띄어쓰기)에서만 줄을 바꾼다: 붙어 있는 글자 사이에
+  /// 줄바꿈 금지 문자(U+2060)를 넣는다. 한글이 섞인 낱말에만 적용 (영어 · 일본어는 그대로).
+  static String keepWords(String s) {
+    bool space(int x) => x == 0x20 || x == 0x0A || x == 0x2060;
+    bool hangul(int c) =>
+        (c >= 0xAC00 && c <= 0xD7A3) || (c >= 0x3131 && c <= 0x318E);
+    final b = StringBuffer();
+    final runes = s.runes.toList();
+    for (var i = 0; i < runes.length; i++) {
+      final c = runes[i];
+      b.writeCharCode(c);
+      if (i + 1 < runes.length) {
+        final n = runes[i + 1];
+        if (!space(c) && !space(n) && (hangul(c) || hangul(n)))
+          b.write('\u2060');
+      }
+    }
+    return b.toString();
+  }
+
   /// 토큰을 지운 순수 글자 (접근성 라벨, 길이 계산용).
   static String plain(String s) => s.replaceAll(_token, '').trim();
 
@@ -61,7 +81,7 @@ class IconText extends StatelessWidget {
     var last = 0;
     for (final m in _token.allMatches(text)) {
       if (m.start > last)
-        spans.add(TextSpan(text: text.substring(last, m.start)));
+        spans.add(TextSpan(text: keepWords(text.substring(last, m.start))));
       spans.add(
         WidgetSpan(
           alignment: PlaceholderAlignment.middle,
@@ -73,7 +93,9 @@ class IconText extends StatelessWidget {
       );
       last = m.end;
     }
-    if (last < text.length) spans.add(TextSpan(text: text.substring(last)));
+    if (last < text.length) {
+      spans.add(TextSpan(text: keepWords(text.substring(last))));
+    }
     return Text.rich(
       TextSpan(children: spans),
       style: style,

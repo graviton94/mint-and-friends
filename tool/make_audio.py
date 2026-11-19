@@ -591,7 +591,7 @@ def sfx_deliver():
 
 
 def sfx_levelup():
-    b = buf(1.25)
+    b = buf(1.2)
     step = 0.095
     for k, n in enumerate(["C5", "E5", "G5", "C6"]):
         mix_into(b, marimba(hz(midi(n)), 0.6, 0.6), k * step)

@@ -71,6 +71,7 @@ flutter:
     - assets/art/ui/
     - assets/art/icons/
     - assets/art/frames/
+    - assets/art/brand/
     - assets/audio/
   fonts:
     - family: Jua

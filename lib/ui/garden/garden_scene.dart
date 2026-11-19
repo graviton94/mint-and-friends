@@ -30,6 +30,9 @@ class GardenScene extends StatefulWidget {
     required this.onSlotTap,
     required this.onVisitorTap,
     this.overlay = const [],
+    this.radius = 20,
+    this.focusY = 0.8,
+    this.markerScale = 1,
   });
 
   final GameState game;
@@ -37,6 +40,18 @@ class GardenScene extends StatefulWidget {
   final void Function(int slot) onSlotTap;
   final VoidCallback onVisitorTap;
   final List<Widget> overlay;
+
+  /// 모서리 둥글기 (전체 화면 정원은 0).
+  final double radius;
+
+  /// 상자가 3:2 보다 납작할 때 캔버스의 어느 높이를 보여 줄지 (0 위 ~ 1 아래). 땅이 보이게 아래쪽 기본.
+  final double focusY;
+
+  /// 빈 장식 자리 표시 크기 배율 (작은 창에서는 키워서 누르기 쉽게).
+  final double markerScale;
+
+  /// 배경 그림 비율 (1536x1024). 씬 안의 모든 좌표는 이 비율의 캔버스 기준.
+  static const double aspect = 1.5;
 
   @override
   State<GardenScene> createState() => _GardenSceneState();
@@ -163,29 +178,56 @@ class _GardenSceneState extends State<GardenScene>
     final area = Garden.areaAt(widget.area);
     return LayoutBuilder(
       builder: (context, c) {
-        final size = Size(c.maxWidth, c.maxHeight);
+        // 배경 비율(3:2) 그대로의 캔버스가 상자를 덮게 놓는다. 배경 · 장식 · 친구 좌표가 모두
+        // 같은 캔버스 기준이라 상자 모양이 바뀌어도 서로 어긋나거나 배경만 잘리지 않는다.
+        final cw = max(c.maxWidth, c.maxHeight * GardenScene.aspect);
+        final canvas = Size(cw, cw / GardenScene.aspect);
+        final left = (c.maxWidth - canvas.width) / 2;
+        final top = (c.maxHeight - canvas.height) * widget.focusY;
         return ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(widget.radius),
           child: Stack(
             children: [
-              Positioned.fill(
-                child: RepaintBoundary(
-                  child: _BackgroundLayer(area: area, t: _nightTwinkle(area)),
-                ),
-              ),
-              Positioned.fill(
-                child: RepaintBoundary(
-                  child: Stack(children: _worldLayer(area, size)),
-                ),
-              ),
-              Positioned.fill(
-                child: RepaintBoundary(
-                  child: Stack(children: _markerLayer(area, size)),
-                ),
-              ),
-              Positioned.fill(
-                child: RepaintBoundary(
-                  child: IgnorePointer(child: Stack(children: _fxLayer(size))),
+              Positioned(
+                left: left,
+                top: top,
+                width: canvas.width,
+                height: canvas.height,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: RepaintBoundary(
+                        child: _BackgroundLayer(
+                          area: area,
+                          t: _nightTwinkle(area),
+                        ),
+                      ),
+                    ),
+                    // 빈 장식 자리: 땅에 그린 표식이라 캐릭터 · 장식보다 아래 (캐릭터를 가리지 않는다)
+                    Positioned.fill(
+                      child: RepaintBoundary(
+                        child: IgnorePointer(
+                          child: Stack(children: _markerLayer(area, canvas)),
+                        ),
+                      ),
+                    ),
+                    Positioned.fill(
+                      child: RepaintBoundary(
+                        child: Stack(children: _worldLayer(area, canvas)),
+                      ),
+                    ),
+                    // 빈 자리 탭 영역: 보이지 않는 층 (표식을 눌렀는데 캐릭터가 가로채지 않게)
+                    Positioned.fill(
+                      child: Stack(children: _markerHits(area, canvas)),
+                    ),
+                    Positioned.fill(
+                      child: RepaintBoundary(
+                        child: IgnorePointer(
+                          child: Stack(children: _fxLayer(canvas)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               ...widget.overlay,
@@ -344,42 +386,85 @@ class _GardenSceneState extends State<GardenScene>
     return [for (final l in layers) l.child];
   }
 
-  // ---------------------------------------------------------------- L2 빈 자리 표시 (월드 위, 이펙트 아래)
-  // 캐릭터가 지나가도 가려지지 않고 탭이 캐릭터에게 뺏기지 않도록 월드와 분리한다.
+  // ---------------------------------------------------------------- 빈 장식 자리
+  // 장식이 놓일 바닥에 납작한 점선 타원 + 작은 비용 표 (땅 그림, 월드 아래).
+  // 누르는 영역은 _markerHits 가 월드 위에 투명하게 따로 둔다.
+
+  ({Offset c, double w}) _slotGeom(AreaDef area, int i, Size s) {
+    final unit = min(s.width, s.height * 1.6);
+    final d = area.decor[i];
+    final sz = unit * 0.21;
+    // 장식 그림의 바닥 (월드 정렬 기준과 같은 높이)
+    return (
+      c: Offset(d.x * s.width, d.y * s.height + sz * 0.36),
+      w: sz * 0.95 * widget.markerScale,
+    );
+  }
+
   List<Widget> _markerLayer(AreaDef area, Size s) {
     if (widget.area != game.currentArea) return const [];
-    final unit = min(s.width, s.height * 1.6);
     final out = <Widget>[];
     for (var i = 0; i < area.decor.length; i++) {
       if (game.isPlaced(widget.area, i)) continue;
-      final d = area.decor[i];
-      final p = Offset(d.x * s.width, d.y * s.height);
-      final sz = unit * 0.21;
-      final markerSz = sz * 0.8;
-      final affordable = game.canPlace(i);
-      final pulse = affordable ? 1 + 0.08 * sin(_t * 5) : 1.0;
+      final g = _slotGeom(area, i, s);
+      final affordable = game.canPlace(i) && !game.areaLocked;
+      final glow = affordable ? 0.5 + 0.5 * sin(_t * 4) : 0.0;
       out.add(
         Positioned(
-          left: p.dx - markerSz / 2,
-          top: p.dy - markerSz / 2,
-          width: markerSz,
-          height: markerSz,
-          child: GestureDetector(
-            onTap: () => widget.onSlotTap(i),
-            child: Transform.scale(
-              scale: pulse,
-              child: SlotMarker(
-                size: markerSz,
-                locked: game.areaLocked,
-                affordable: affordable,
-                cost: game.decorCost(i),
+          left: g.c.dx - g.w / 2,
+          top: g.c.dy - g.w * 0.62,
+          width: g.w,
+          height: g.w * 0.8,
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: g.w * 0.36,
+                child: CustomPaint(
+                  painter: _PlotPainter(affordable: affordable, glow: glow),
+                ),
               ),
-            ),
+              Positioned(
+                bottom: g.w * 0.1,
+                child: _CostTag(
+                  locked: game.areaLocked,
+                  affordable: affordable,
+                  cost: game.decorCost(i),
+                  size: g.w * 0.24,
+                ),
+              ),
+            ],
           ),
         ),
       );
     }
     return out;
+  }
+
+  List<Widget> _markerHits(AreaDef area, Size s) {
+    if (widget.area != game.currentArea) return const [];
+    return [
+      for (var i = 0; i < area.decor.length; i++)
+        if (!game.isPlaced(widget.area, i))
+          Builder(
+            builder: (_) {
+              final g = _slotGeom(area, i, s);
+              return Positioned(
+                left: g.c.dx - g.w / 2,
+                top: g.c.dy - g.w * 0.45,
+                width: g.w,
+                height: g.w * 0.6,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: () => widget.onSlotTap(i),
+                ),
+              );
+            },
+          ),
+    ];
   }
 
   // ---------------------------------------------------------------- L3 이펙트
@@ -435,7 +520,13 @@ class _BackgroundLayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = Art.areaBackground(area);
-    if (bg.available) return Image.asset(bg.path, fit: BoxFit.cover);
+    if (bg.available) {
+      return Image.asset(
+        bg.path,
+        fit: BoxFit.fill,
+        filterQuality: FilterQuality.medium,
+      );
+    }
     final night = Color(area.sky).computeLuminance() < 0.2;
     return LayoutBuilder(
       builder: (context, c) {
@@ -568,4 +659,83 @@ String areaLabel(GameState game, int areaIndex) {
   if (game.areaLocked)
     return '$icon $name  ${tr('common.lockedLevel', {'n': game.areaRequiredLevel})}';
   return '$icon $name  ${game.placed.length}/${Garden.slotsPerArea}';
+}
+
+/// 빈 장식 자리의 땅 표식: 납작한 점선 타원 (살 수 있으면 금빛으로 은은히 빛난다).
+class _PlotPainter extends CustomPainter {
+  _PlotPainter({required this.affordable, required this.glow});
+  final bool affordable;
+  final double glow;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final r = Offset.zero & size;
+    canvas.drawOval(
+      r,
+      Paint()
+        ..color = (affordable ? const Color(0xFFFFE27A) : Colors.white)
+            .withValues(alpha: affordable ? 0.25 + 0.25 * glow : 0.22),
+    );
+    final path = Path()..addOval(r.deflate(1.5));
+    final dash = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.2
+      ..strokeCap = StrokeCap.round
+      ..color = affordable ? const Color(0xFFF2B33D) : const Color(0xCCFFFFFF);
+    for (final m in path.computeMetrics()) {
+      const on = 7.0, off = 5.0;
+      for (var d = 0.0; d < m.length; d += on + off) {
+        canvas.drawPath(m.extractPath(d, d + on), dash);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PlotPainter o) =>
+      o.affordable != affordable || o.glow != glow;
+}
+
+/// 빈 자리 위 작은 표: 자물쇠 또는 망치 + 별 비용.
+class _CostTag extends StatelessWidget {
+  const _CostTag({
+    required this.locked,
+    required this.affordable,
+    required this.cost,
+    required this.size,
+  });
+  final bool locked;
+  final bool affordable;
+  final int cost;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: size * 0.25,
+        vertical: size * 0.08,
+      ),
+      decoration: BoxDecoration(
+        color: affordable
+            ? const Color(0xFFFFF3C4)
+            : Colors.white.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(size),
+        border: Border.all(
+          color: affordable ? const Color(0xFFF2B33D) : const Color(0xFFBBA98A),
+          width: 1.5,
+        ),
+      ),
+      child: locked
+          ? ArtImage(Art.lock, size: size * 0.9)
+          : IconText(
+              '[[decorate]][[star]]$cost',
+              iconScale: 1.0,
+              style: TextStyle(
+                fontSize: size * 0.8,
+                height: 1.0,
+                color: const Color(0xFF4A5A3A),
+              ),
+            ),
+    );
+  }
 }

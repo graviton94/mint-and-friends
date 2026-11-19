@@ -46,6 +46,8 @@ Actions → **Android signing key (one time)** 를 `sideload`, `upload` 로 한 
 | **App** (`app.yml`) | 앱 코드 push 마다 | 분석 · 테스트 → sideload 키로 서명한 arm64 APK → Releases `android-latest` |
 | **Store AAB** (`aab.yml`) | 직접 실행 ("릴리즈하자" 이후) | upload 키로 서명한 AAB, versionCode = 1000 + 실행 번호 → 초안 Release |
 | **Functions** (`functions.yml`) | `functions/` · 규칙 변경 push, 직접 실행 | 함수 · Firestore 규칙 배포 |
+| **Launch smoke test** (`smoke.yml`) | 안드로이드 설정 · 플러그인 · 서비스 변경 push, 직접 실행 | 릴리스 빌드를 에뮬레이터에서 실행해 바로 꺼지는지 확인, 크래시 로그 |
+| **Server logs** (`diag.yml`) | 직접 실행 | 로그인 · 계정 삭제 함수 로그, Firestore · 익명 로그인 상태 (로그인 문제 진단) |
 | **Login button assets** | 직접 실행 | 카카오 · Google 공식 로그인 버튼 리소스를 `design/login/official/` 에 커밋 |
 
 sideload 키가 아직 없으면 App 은 디버그 키로 서명하고 경고만 남깁니다.

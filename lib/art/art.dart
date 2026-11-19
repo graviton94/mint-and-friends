@@ -101,8 +101,6 @@ class Art {
     'area_pond': '🪷',
     'area_greenhouse': '🪴',
     'area_starry_hill': '🌙',
-    'kakao': '💬',
-    'google': 'G',
     'sprout': '🌱',
     'storage': '📦',
   };
@@ -122,6 +120,11 @@ class Art {
     if (ui != null) return ui;
     if (id == 'visitor') return visitor();
     if (id == 'sprout') return item(Chain.flower, 2);
+    // 로그인 회사 로고: 공식 리소스에서 뽑은 그림 (design/login/official)
+    if (id == 'kakao')
+      return const ArtRef('assets/art/brand/kakao_symbol.png', '');
+    if (id == 'google')
+      return const ArtRef('assets/art/brand/google_g.png', '');
     return ArtRef('assets/art/icons/$id.webp', iconFallback[id] ?? '•');
   }
 

@@ -11,6 +11,7 @@ import 'game/game_state.dart';
 import 'i18n/l10n.dart';
 import 'i18n/names.dart';
 import 'services/ads_service.dart';
+import 'services/audio_service.dart';
 import 'services/auth_service.dart';
 import 'services/billing_service.dart';
 import 'services/save_service.dart';
@@ -30,6 +31,7 @@ Future<void> main() async {
 
   final auth = AuthService();
   await auth.init();
+  await AudioService.instance.init();
 
   final save = SaveService(prefs);
   final game = GameState();
@@ -102,6 +104,7 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     widget.billing.addListener(() => game.adFree = widget.billing.adFree);
     auth.addListener(_onAuthChanged);
     _start();
+    AudioService.instance.startMusic();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _onAuthChanged();
       _offerOffline();
@@ -184,8 +187,10 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
       _stop();
+      AudioService.instance.pauseMusic();
     } else if (state == AppLifecycleState.resumed) {
       _start();
+      AudioService.instance.resumeMusic();
       _offerOffline();
     }
   }

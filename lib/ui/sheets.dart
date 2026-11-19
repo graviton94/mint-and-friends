@@ -6,6 +6,7 @@ import '../game/format.dart';
 import '../game/game_state.dart';
 import '../i18n/l10n.dart';
 import '../i18n/names.dart';
+import '../services/audio_service.dart';
 import '../services/billing_service.dart';
 import 'theme.dart';
 import 'widgets/frame_box.dart';
@@ -19,6 +20,7 @@ Future<void> _sheet(
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    useSafeArea: true, // 상태표시줄 · 아래 내비게이션 바를 피한다
     // 패널 프레임이 있으면 시트 배경을 투명하게 하고 SheetFrame 이 프레임을 그린다
     backgroundColor: Art.frame('panel').available
         ? Colors.transparent
@@ -554,6 +556,35 @@ Future<void> showSettingsSheet(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        ListenableBuilder(
+          listenable: AudioService.instance,
+          builder: (context, _) => Column(
+            children: [
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  tr('settings.music'),
+                  style: const TextStyle(fontSize: 18),
+                ),
+                value: AudioService.instance.musicOn,
+                onChanged: AudioService.instance.setMusic,
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  tr('settings.sfx'),
+                  style: const TextStyle(fontSize: 18),
+                ),
+                value: AudioService.instance.sfxOn,
+                onChanged: (v) {
+                  AudioService.instance.setSfx(v);
+                  if (v) sfx(Sfx.tap);
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
         IconText(tr('settings.language'), style: const TextStyle(fontSize: 18)),
         const SizedBox(height: 6),
         Wrap(

@@ -21,9 +21,13 @@ void main() {
     expect(g.isCellOpen(7), isTrue);
   });
 
-  test('바구니는 열린 칸에만 아이템을 만든다', () {
+  test('바구니는 탭(에너지)으로만, 열린 칸에만 아이템을 만든다', () {
     final g = make();
-    g.tick(g.spawnInterval * 20 + 0.01);
+    g.tick(600); // 시간이 흘러도 저절로 생기지 않는다
+    expect(g.board.whereType<Item>(), isEmpty);
+    for (var i = 0; i < 20; i++) {
+      g.tapSpawner();
+    }
     expect(g.board.whereType<Item>().length, 12);
     for (var i = 0; i < g.board.length; i++) {
       if (g.board[i] != null) expect(g.isCellOpen(i), isTrue);
@@ -33,7 +37,9 @@ void main() {
 
   test('간식은 레벨 3부터 나온다', () {
     final g = make();
-    g.tick(g.spawnInterval * 12 + 0.01);
+    for (var i = 0; i < 12; i++) {
+      g.tapSpawner();
+    }
     expect(
       g.board.whereType<Item>().every((it) => it.chain == Chain.flower),
       isTrue,
@@ -188,21 +194,21 @@ void main() {
   test('강화는 기능 해금과 레벨 상한을 따른다', () {
     final g = make();
     g.coins = 1e12;
-    expect(g.canBuyUpgrade(UpgradeType.spawnSpeed), isFalse); // 강화 메뉴 잠김
+    expect(g.canBuyUpgrade(UpgradeType.energyRegen), isFalse); // 강화 메뉴 잠김
     g.level = 2;
-    expect(g.canBuyUpgrade(UpgradeType.spawnSpeed), isTrue);
+    expect(g.canBuyUpgrade(UpgradeType.energyRegen), isTrue);
     expect(g.canBuyUpgrade(UpgradeType.autoMerge), isFalse);
-    while (g.buyUpgrade(UpgradeType.spawnSpeed)) {}
-    expect(g.lv(UpgradeType.spawnSpeed), Leveling.upgradeCap(2));
-    expect(g.upgradeCapped(UpgradeType.spawnSpeed), isTrue);
+    while (g.buyUpgrade(UpgradeType.energyRegen)) {}
+    expect(g.lv(UpgradeType.energyRegen), Leveling.upgradeCap(2));
+    expect(g.upgradeCapped(UpgradeType.energyRegen), isTrue);
   });
 
   test('친구 호감도는 버프가 된다', () {
     final g = make();
-    final base = g.spawnInterval;
+    final base = g.energyRegenSeconds;
     g.deliveries['bori'] = Friends.deliveriesPerAffection * 5;
     expect(g.affection('bori'), 5);
-    expect(g.spawnInterval, lessThan(base));
+    expect(g.energyRegenSeconds, lessThan(base));
   });
 
   test('깜짝 손님은 레벨 6부터, 받으면 사라진다', () {

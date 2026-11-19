@@ -109,13 +109,17 @@ class AuthService extends ChangeNotifier {
     kakao.KakaoAuthException() => 'kakao ${e.error.name}',
     kakao.KakaoApiException() => 'kakao api ${e.code.name}',
     kakao.KakaoClientException() => 'kakao ${e.reason.name}',
-    PlatformException() => '${e.code}${e.message == null ? '' : ': ${e.message}'}',
+    PlatformException() =>
+      '${e.code}${e.message == null ? '' : ': ${e.message}'}',
     _ => e.runtimeType.toString(),
   };
 
   /// 외부 앱 · 브라우저에 다녀오는 단계: 돌아왔는데 결과가 오지 않으면 무한 대기하지 않는다.
   /// 앱이 다시 앞으로 온 뒤 [grace] 안에 결과가 없으면 'cancelled'.
-  Future<T> _awayStep<T>(Future<T> Function() step, {Duration grace = const Duration(seconds: 6)}) {
+  Future<T> _awayStep<T>(
+    Future<T> Function() step, {
+    Duration grace = const Duration(seconds: 6),
+  }) {
     final done = Completer<T>();
     var wentAway = false;
     Timer? graceTimer;
@@ -130,11 +134,14 @@ class AuthService extends ChangeNotifier {
         });
       },
     );
-    step().then((v) {
-      if (!done.isCompleted) done.complete(v);
-    }, onError: (Object e, StackTrace st) {
-      if (!done.isCompleted) done.completeError(e, st);
-    });
+    step().then(
+      (v) {
+        if (!done.isCompleted) done.complete(v);
+      },
+      onError: (Object e, StackTrace st) {
+        if (!done.isCompleted) done.completeError(e, st);
+      },
+    );
     return done.future.timeout(const Duration(minutes: 3)).whenComplete(() {
       graceTimer?.cancel();
       listener.dispose();
@@ -208,7 +215,8 @@ class AuthService extends ChangeNotifier {
       'token': accessToken,
     });
     final customToken = res.data['token'];
-    if (customToken is! String) throw AuthException('failed', 'no custom token');
+    if (customToken is! String)
+      throw AuthException('failed', 'no custom token');
     await FirebaseAuth.instance
         .signInWithCustomToken(customToken)
         .timeout(const Duration(seconds: 20));

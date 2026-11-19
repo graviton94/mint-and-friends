@@ -22,9 +22,9 @@ String upgradeTitle(UpgradeType t) => tr('upgrade.${t.name}');
 
 String upgradeDescribe(UpgradeType t, int lv) {
   switch (t) {
-    case UpgradeType.spawnSpeed:
-      return tr('upgrade.spawnSpeed.desc', {
-        'v': Upgrades.spawnInterval(lv).toStringAsFixed(1),
+    case UpgradeType.energyRegen:
+      return tr('upgrade.energyRegen.desc', {
+        'v': Upgrades.energyRegenSeconds(lv).toStringAsFixed(0),
       });
     case UpgradeType.income:
       return tr('upgrade.income.desc', {

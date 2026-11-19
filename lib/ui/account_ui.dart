@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../art/art.dart';
 import '../game/config.dart';
 import '../i18n/l10n.dart';
+import '../services/audio_service.dart';
 import '../services/auth_service.dart';
 import '../services/save_service.dart';
 import 'theme.dart';
@@ -10,16 +11,46 @@ import 'widgets/icon_text.dart';
 import 'widgets/frame_box.dart';
 
 /// 첫 실행 로그인 화면: 카카오 / Google / 게스트.
-class LoginScreen extends StatelessWidget {
+///
+/// 버튼은 각 회사의 공식 가이드를 따른다:
+/// - 카카오: 배경 #FEE500, 검은 말풍선 심볼, 글자 85% 검정, 둥근 모서리 12 (카카오 로그인 디자인 가이드)
+/// - Google: 흰 배경, #747775 테두리, 공식 G 로고, 글자 #1F1F1F (Google 로그인 브랜딩 가이드)
+/// 실패하면 화면 안에 이유를 짧게 보여 준다 (어느 쪽이 거절했고 코드가 무엇인지).
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, required this.auth, required this.onError});
   final AuthService auth;
   final void Function(String code) onError;
 
-  Future<void> _go(Future<void> Function() f) async {
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  String? _pending; // 누른 버튼 (그 버튼에만 로딩 표시)
+  String? _error;
+  String? _detail;
+
+  AuthService get auth => widget.auth;
+
+  Future<void> _go(String which, Future<void> Function() f) async {
+    sfx(Sfx.tap);
+    setState(() {
+      _pending = which;
+      _error = null;
+      _detail = null;
+    });
     try {
       await f();
     } on AuthException catch (e) {
-      if (e.code != 'cancelled') onError(e.code);
+      if (e.code != 'cancelled' && mounted) {
+        sfx(Sfx.error);
+        setState(() {
+          _error = tr(e.code == 'timeout' ? 'login.timeout' : 'login.failed');
+          _detail = e.detail.isEmpty ? null : e.detail;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _pending = null);
     }
   }
 
@@ -29,7 +60,7 @@ class LoginScreen extends StatelessWidget {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Palette.bgTop, Palette.bgBottom],
+            colors: [Color(0xFFEAF6DF), Color(0xFFCFE8BC)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -37,94 +68,181 @@ class LoginScreen extends StatelessWidget {
         child: SafeArea(
           child: ListenableBuilder(
             listenable: Listenable.merge([auth, L10n.instance]),
-            builder: (context, _) => Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Spacer(flex: 2),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      for (final f in Friends.all.take(4))
-                        Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: ArtImage(Art.friend(f), size: 48),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  IconText(
-                    tr('app.title'),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 40,
-                      color: Palette.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  IconText(
-                    tr('login.subtitle'),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 16, color: Colors.black54),
-                  ),
-                  const Spacer(flex: 3),
-                  if (auth.kakaoEnabled)
-                    _LoginButton(
-                      label: tr('login.kakao'),
-                      color: const Color(0xFFFEE500),
-                      textColor: const Color(0xFF191600),
-                      icon: 'kakao',
-                      onTap: auth.busy ? null : () => _go(auth.signInKakao),
-                    ),
-                  if (auth.googleEnabled)
-                    _LoginButton(
-                      label: tr('login.google'),
-                      color: Colors.white,
-                      textColor: const Color(0xFF1F1F1F),
-                      icon: 'google',
-                      onTap: auth.busy ? null : () => _go(auth.signInGoogle),
-                    ),
-                  _LoginButton(
-                    label: tr('login.guest'),
-                    color: Palette.primary,
-                    textColor: Colors.white,
-                    icon: 'sprout',
-                    onTap: auth.busy ? null : () => _go(auth.signInGuest),
-                  ),
-                  const SizedBox(height: 10),
-                  IconText(
-                    tr('login.guestNote'),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 13, color: Colors.black45),
-                  ),
-                  const SizedBox(height: 10),
-                  Center(
-                    child: Wrap(
-                      spacing: 6,
+            builder: (context, _) => LayoutBuilder(
+              builder: (context, c) => SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: c.maxHeight),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        for (final e in L10n.supported.entries)
-                          TextButton(
-                            onPressed: () => L10n.instance.setLanguage(e.key),
-                            child: Text(
-                              e.value,
-                              style: TextStyle(
-                                color: L10n.instance.lang == e.key
-                                    ? Palette.primary
-                                    : Colors.black45,
+                        SizedBox(height: c.maxHeight * 0.07),
+                        // 친구들 (바닥선에 나란히)
+                        SizedBox(
+                          height: 104,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              for (final f in Friends.all.take(4))
+                                ArtImage(Art.friend(f), size: 82),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        IconText(
+                          tr('app.title'),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 44,
+                            color: Palette.primary,
+                            shadows: [
+                              Shadow(
+                                color: Colors.white,
+                                blurRadius: 0,
+                                offset: Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        IconText(
+                          tr('login.subtitle'),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF4F5F45),
+                          ),
+                        ),
+                        SizedBox(height: c.maxHeight * 0.1),
+                        if (auth.kakaoEnabled) ...[
+                          _BrandButton(
+                            label: tr('login.kakao'),
+                            background: const Color(0xFFFEE500),
+                            foreground: const Color(0xD9000000),
+                            logo: 'assets/art/brand/kakao_symbol.png',
+                            busy: _pending == 'kakao',
+                            onTap: _pending != null
+                                ? null
+                                : () => _go('kakao', auth.signInKakao),
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                        if (auth.googleEnabled) ...[
+                          _BrandButton(
+                            label: tr('login.google'),
+                            background: Colors.white,
+                            foreground: const Color(0xFF1F1F1F),
+                            border: const Color(0xFF747775),
+                            logo: 'assets/art/brand/google_g.png',
+                            busy: _pending == 'google',
+                            onTap: _pending != null
+                                ? null
+                                : () => _go('google', auth.signInGoogle),
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                        SizedBox(
+                          height: 52,
+                          child: FilledButton(
+                            style: framedButton(
+                              FilledButton.styleFrom(
+                                backgroundColor: Palette.primary,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              'button_green',
+                            ),
+                            onPressed: _pending != null
+                                ? null
+                                : () => _go('guest', auth.signInGuest),
+                            child: _pending == 'guest'
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 3,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    tr('login.guest'),
+                                    style: const TextStyle(fontSize: 18),
+                                  ),
+                          ),
+                        ),
+                        if (_error != null) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFEDE6),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: const Color(0xFFE07A5F),
                               ),
                             ),
+                            child: Column(
+                              children: [
+                                IconText(
+                                  _error!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Color(0xFF9A3B22),
+                                  ),
+                                ),
+                                if (_detail != null)
+                                  SelectableText(
+                                    _detail!,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.black45,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
+                        ],
+                        const SizedBox(height: 12),
+                        IconText(
+                          tr('login.guestNote'),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black54,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Center(
+                          child: Wrap(
+                            spacing: 6,
+                            children: [
+                              for (final e in L10n.supported.entries)
+                                TextButton(
+                                  onPressed: () =>
+                                      L10n.instance.setLanguage(e.key),
+                                  child: Text(
+                                    e.value,
+                                    style: TextStyle(
+                                      color: L10n.instance.lang == e.key
+                                          ? Palette.primary
+                                          : Colors.black45,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
                       ],
                     ),
                   ),
-                  if (auth.busy)
-                    const Padding(
-                      padding: EdgeInsets.all(8),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-                  const Spacer(),
-                ],
+                ),
               ),
             ),
           ),
@@ -134,43 +252,68 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
-class _LoginButton extends StatelessWidget {
-  const _LoginButton({
+/// 공식 가이드 모양의 로그인 버튼 (로고 왼쪽 고정, 글자 가운데).
+class _BrandButton extends StatelessWidget {
+  const _BrandButton({
     required this.label,
-    required this.color,
-    required this.textColor,
-    required this.icon,
+    required this.background,
+    required this.foreground,
+    required this.logo,
+    required this.busy,
     required this.onTap,
+    this.border,
   });
   final String label;
-  final Color color;
-  final Color textColor;
-  final String icon;
+  final Color background;
+  final Color foreground;
+  final Color? border;
+  final String logo;
+  final bool busy;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: SizedBox(
-        height: 54,
-        child: FilledButton(
-          style: plainButton(
-            FilledButton.styleFrom(
-              backgroundColor: color,
-              foregroundColor: textColor,
-              side: color == Colors.white
-                  ? const BorderSide(color: Color(0xFFDADCE0))
-                  : null,
-            ),
-          ),
-          onPressed: onTap,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+    return Material(
+      color: background,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: border == null ? BorderSide.none : BorderSide(color: border!),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          height: 52,
+          child: Stack(
+            alignment: Alignment.center,
             children: [
-              ArtImage(Art.icon(icon), size: 24),
-              const SizedBox(width: 10),
-              Text(label, style: TextStyle(fontSize: 17, color: textColor)),
+              Positioned(
+                left: 18,
+                child: Image.asset(
+                  logo,
+                  width: 22,
+                  height: 22,
+                  filterQuality: FilterQuality.medium,
+                ),
+              ),
+              busy
+                  ? SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 3,
+                        color: foreground,
+                      ),
+                    )
+                  : Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 17,
+                        color: foreground,
+                        fontFamily: 'Roboto',
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ],
           ),
         ),
@@ -179,7 +322,6 @@ class _LoginButton extends StatelessWidget {
   }
 }
 
-/// 설정 시트의 계정 영역.
 class AccountSection extends StatelessWidget {
   const AccountSection({
     super.key,

@@ -180,7 +180,6 @@ class GameState extends ChangeNotifier {
   final Map<UpgradeType, int> upgrades = {
     for (final u in UpgradeType.values) u: 0,
   };
-  double spawnProgress = 0;
   double autoMergeProgress = 0;
   final Map<Chain, int> highest = {for (final c in Chain.values) c: 1};
 
@@ -234,9 +233,10 @@ class GameState extends ChangeNotifier {
     return sum;
   }
 
-  double get spawnInterval =>
-      Upgrades.spawnInterval(lv(UpgradeType.spawnSpeed)) /
-      (1 + buff(FriendBuff.spawnSpeed));
+  /// 에너지 1 회복에 걸리는 시간(초): 강화 + 친구 버프.
+  double get energyRegenSeconds =>
+      Upgrades.energyRegenSeconds(lv(UpgradeType.energyRegen)) /
+      (1 + buff(FriendBuff.energyRegen));
 
   double? get autoMergeInterval {
     final i = Upgrades.autoMergeInterval(lv(UpgradeType.autoMerge));
@@ -340,16 +340,6 @@ class GameState extends ChangeNotifier {
     _earn(incomePerSec * dt);
     _regenEnergy(dt);
 
-    if (boardFull) {
-      spawnProgress = spawnInterval;
-    } else {
-      spawnProgress += dt;
-      while (spawnProgress >= spawnInterval && !boardFull) {
-        spawnProgress -= spawnInterval;
-        _spawnOne();
-      }
-    }
-
     final ami = autoMergeInterval;
     if (ami != null) {
       autoMergeProgress += dt;
@@ -396,9 +386,9 @@ class GameState extends ChangeNotifier {
       return;
     }
     energyProgress += dt;
-    while (energyProgress >= GameConfig.energyRegenSeconds &&
+    while (energyProgress >= energyRegenSeconds &&
         energy < GameConfig.energyCap) {
-      energyProgress -= GameConfig.energyRegenSeconds;
+      energyProgress -= energyRegenSeconds;
       energy++;
     }
   }
@@ -406,9 +396,7 @@ class GameState extends ChangeNotifier {
   /// 다음 에너지 1이 차기까지 남은 시간.
   Duration get energyNextIn => energy >= GameConfig.energyCap
       ? Duration.zero
-      : Duration(
-          seconds: (GameConfig.energyRegenSeconds - energyProgress).ceil(),
-        );
+      : Duration(seconds: (energyRegenSeconds - energyProgress).ceil());
 
   /// 바구니 탭: 에너지 1로 즉시 하나 생성. 결과를 돌려준다.
   TapResult tapSpawner() {
@@ -935,7 +923,6 @@ class GameState extends ChangeNotifier {
       'store': [for (final it in storage) it?.toJson()],
       'nextId': _nextId,
       'up': {for (final e in upgrades.entries) e.key.name: e.value},
-      'sp': spawnProgress,
       'energy': energy,
       'ep': energyProgress,
       'adsDay': _adsDay,
@@ -994,9 +981,12 @@ class GameState extends ChangeNotifier {
     _nextId = (j['nextId'] as num?)?.toInt() ?? 1;
     final up = (j['up'] as Map?)?.cast<String, dynamic>() ?? {};
     for (final t in UpgradeType.values) {
-      upgrades[t] = (up[t.name] as num?)?.toInt() ?? 0;
+      // 예전 저장의 바구니 속도(spawnSpeed) 단계는 에너지 회복 속도로 옮긴다.
+      final v =
+          up[t.name] ??
+          (t == UpgradeType.energyRegen ? up['spawnSpeed'] : null);
+      upgrades[t] = (v as num?)?.toInt() ?? 0;
     }
-    spawnProgress = (j['sp'] as num?)?.toDouble() ?? 0;
     energy = (j['energy'] as num?)?.toInt() ?? GameConfig.energyStart;
     energyProgress = (j['ep'] as num?)?.toDouble() ?? 0;
     _adsDay = j['adsDay'] as String? ?? '';
