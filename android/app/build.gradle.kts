@@ -67,6 +67,8 @@ android {
             signingConfig = signingConfigs.findByName("sideload") ?: signingConfigs.getByName("debug")
         }
         release {
+            // 코드 축소 규칙 (proguard-rules.pro): 실행 직후 꺼지던 WorkManager 문제 포함
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.findByName("upload") ?: signingConfigs.findByName("sideload")
                 ?: signingConfigs.getByName("debug")
         }

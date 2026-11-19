@@ -3,6 +3,8 @@ name: Launch smoke test
 # 릴리스 빌드(x86_64, 시험 키 서명)를 에뮬레이터에서 실행해 바로 꺼지는지 확인한다.
 # 꺼지면 크래시 로그를 실행 요약과 아티팩트(logcat)로 남긴다.
 on:
+  push:
+    paths: ["android/**", "pubspec.yaml", "pubspec.lock", "lib/main.dart", "lib/services/**", ".github/workflows/smoke.yml"]
   workflow_dispatch:
 
 permissions:
