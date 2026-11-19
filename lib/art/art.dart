@@ -103,6 +103,10 @@ class Art {
     'area_starry_hill': '🌙',
     'sprout': '🌱',
     'storage': '📦',
+    'boost': '',
+    'energy_jar': '',
+    'hand_point': '',
+    'hand_press': '',
   };
 
   /// 이미 받은 UI 그림(assets/art/ui)으로 그리는 아이콘.

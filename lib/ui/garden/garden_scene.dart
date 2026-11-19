@@ -223,7 +223,17 @@ class _GardenSceneState extends State<GardenScene>
                     Positioned.fill(
                       child: RepaintBoundary(
                         child: IgnorePointer(
-                          child: Stack(children: _fxLayer(canvas)),
+                          child: Stack(
+                            children: _fxLayer(
+                              canvas,
+                              Rect.fromLTWH(
+                                -left,
+                                -top,
+                                c.maxWidth,
+                                c.maxHeight,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -481,7 +491,8 @@ class _GardenSceneState extends State<GardenScene>
 
   // ---------------------------------------------------------------- L3 이펙트
 
-  List<Widget> _fxLayer(Size s) {
+  /// [visible] = 캔버스 좌표로 본 실제 화면에 보이는 영역 (창이 캔버스 일부만 보여 줄 때 말풍선이 잘리지 않게).
+  List<Widget> _fxLayer(Size s, Rect visible) {
     final out = <Widget>[];
     final unit = min(s.width, s.height * 1.6);
     for (final e in _walkers.entries) {
@@ -490,8 +501,14 @@ class _GardenSceneState extends State<GardenScene>
       final p = Offset(wk.pos.dx * s.width, wk.pos.dy * s.height);
       out.add(
         Positioned(
-          left: (p.dx - 90).clamp(4.0, max(4.0, s.width - 184)),
-          top: max(4.0, p.dy - unit * 0.13 * 2.1),
+          left: (p.dx - 90).clamp(
+            visible.left + 4,
+            max(visible.left + 4, visible.right - 184),
+          ),
+          top: (p.dy - unit * 0.13 * 2.1).clamp(
+            visible.top + 4,
+            max(visible.top + 4, visible.bottom - 60),
+          ),
           width: 180,
           child: _Bubble(text: '${friendName(e.key)}: ${friendLine(e.key)}'),
         ),
@@ -667,7 +684,7 @@ class _Bubble extends StatelessWidget {
       ),
       corner: 14,
     ),
-    child: Text(
+    child: IconText(
       text,
       textAlign: TextAlign.center,
       style: const TextStyle(fontSize: 13, color: Color(0xFF3A3A3A)),

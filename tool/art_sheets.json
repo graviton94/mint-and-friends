@@ -239,5 +239,6 @@
     ]
   },
   "ui_icons4": {"cols": 1, "rows": 1, "size": 192, "files": ["assets/art/icons/storage.webp"]},
-  "ui_popup": {"cols": 2, "rows": 2, "frame": true, "files": ["assets/art/frames/banner_green.webp", "assets/art/frames/banner_gold.webp", "assets/art/frames/levelup_burst.webp", "assets/art/frames/confetti.webp"]}
+  "ui_popup": {"cols": 2, "rows": 2, "frame": true, "files": ["assets/art/frames/banner_green.webp", "assets/art/frames/banner_gold.webp", "assets/art/frames/levelup_burst.webp", "assets/art/frames/confetti.webp"]},
+  "ui_onboard": {"cols": 2, "rows": 2, "size": 256, "files": ["assets/art/icons/hand_point.webp", "assets/art/icons/hand_press.webp", "assets/art/icons/boost.webp", "assets/art/icons/energy_jar.webp"]}
 }

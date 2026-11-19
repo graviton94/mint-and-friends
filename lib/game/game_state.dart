@@ -202,6 +202,9 @@ class GameState extends ChangeNotifier {
   final Map<String, DateTime> _friendTapReady = {};
   _Sale? _lastSale;
 
+  /// 최근 전달한 부탁 (종류-단계), 최대 6개. 새 부탁이 같은 것을 바로 다시 원하지 않게.
+  final List<String> _recentOrders = [];
+
   /// 결제 서비스가 넣어준다 (저장하지 않음).
   bool adFree = false;
 
@@ -698,12 +701,18 @@ class GameState extends ChangeNotifier {
     for (var attempt = 0; ; attempt++) {
       final friendId = pool[_rng.nextInt(pool.length)];
       final chain = preferChain ?? chains[_rng.nextInt(chains.length)];
-      final lvl = (center + _rng.nextDouble() * 2 - 1).round().clamp(
+      // 피할 것이 많아 고를 게 없으면 단계 폭을 조금씩 넓힌다 (±1 → ±2 → ±3)
+      final spread = 1.0 + attempt ~/ 10;
+      final lvl = (center + (_rng.nextDouble() * 2 - 1) * spread).round().clamp(
         2,
         GameConfig.maxLevel,
       );
       final dup = orders.any((o) => o.chain == chain && o.level == lvl);
-      if (!dup || attempt > 10) {
+      // 같은 부탁을 연달아 받아 별을 쉽게 모으지 못하게: 최근 전달한 것 · 판에 이미 있는 것은 피한다
+      // (부탁은 합쳐서 만들어야 하는 아이템이 기본 · 장르 표준)
+      final recent = _recentOrders.contains('${chain.index}-$lvl');
+      final onBoard = _findItem(chain, lvl) >= 0;
+      if ((!dup && !recent && !onBoard) || attempt > 30) {
         return Order(_nextId++, friendId, chain, lvl, Garden.orderStars(lvl));
       }
     }
@@ -737,6 +746,8 @@ class GameState extends ChangeNotifier {
     final before = affection(o.friendId);
     deliveries[o.friendId] = (deliveries[o.friendId] ?? 0) + 1;
     final up = affection(o.friendId) > before;
+    _recentOrders.add('${o.chain.index}-${o.level}');
+    if (_recentOrders.length > 6) _recentOrders.removeAt(0);
     orders[orderIndex] = _placeholder;
     orders[orderIndex] = _newOrder();
     _events.add(OrderDeliveredEvent(o.friendId, gained, c, up));

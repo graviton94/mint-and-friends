@@ -229,7 +229,7 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
               'button_purple',
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(
+            child: IconText(
               adFree
                   ? tr('offline.double')
                   : tr('ctrl.ad', {'label': tr('offline.double')}),

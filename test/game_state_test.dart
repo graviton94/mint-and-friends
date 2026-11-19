@@ -368,4 +368,28 @@ void main() {
     expect(fmt(2.5e6), '2.50M');
     expect(fmt(1e15), '1.00aa');
   });
+
+  test('방금 전달한 부탁 · 판에 이미 있는 아이템은 새 부탁으로 바로 나오지 않는다', () {
+    final g = make();
+    for (var round = 0; round < 30; round++) {
+      final o = g.orders[0];
+      final cell = g.board.indexWhere((it) => it == null);
+      if (cell < 0) break;
+      g.board[cell] = Item(9000 + round, o.chain, o.level);
+      expect(g.deliver(0), isTrue);
+      final n = g.orders[0];
+      expect(n.chain == o.chain && n.level == o.level, isFalse);
+      expect(
+        g.board.any(
+          (it) =>
+              it != null &&
+              !it.isBubble &&
+              it.chain == n.chain &&
+              it.level == n.level,
+        ),
+        isFalse,
+        reason: '판에 이미 있는 아이템을 새 부탁으로 내면 안 됨',
+      );
+    }
+  });
 }
