@@ -1,22 +1,18 @@
 {
   "app.title": "Bloom Garden",
-
   "common.ok": "OK",
   "common.cancel": "Cancel",
   "common.close": "Close",
   "common.max": "MAX",
   "common.lockedLevel": "🔒 Lv.{n}",
-
   "hud.perSec": "{v}/sec",
   "hud.level": "Lv.{n}",
   "hud.boost": "⚡x2 {time}",
-
   "menu.removeAds": "No Ads",
   "menu.book": "Album",
   "menu.upgrade": "Upgrade",
   "menu.decorate": "Decorate",
   "menu.settings": "Settings",
-
   "ctrl.boost": "2x Income",
   "ctrl.boost.duration": "10 min",
   "ctrl.boost.extend": "+10 min",
@@ -24,10 +20,8 @@
   "ctrl.ad": "📺 {label}",
   "spawner.tap": "Tap!",
   "spawner.full": "Full!",
-
   "order.deliver": "Tap to give!",
   "order.refresh": "New request",
-
   "board.hint": "Drag matching items together to merge",
   "board.stuck": "Board full! Tap an item to sell it, or unlock more tiles",
   "board.selected": "Lv.{lv} {name} · {v}/sec",
@@ -35,13 +29,11 @@
   "board.undo": "↩ Undo",
   "board.bubble": "🫧 Bubble {s}s",
   "board.bubblePop": "Pop",
-
   "cell.title": "Unlock tile",
   "cell.body": "Unlock one more tile for 🪙{cost}?\nEach tile costs more than the last.",
   "cell.needLevel": "Reach Lv.{n} to unlock the next tile",
   "cell.needCoins": "You need 🪙{cost}",
   "cell.open": "Unlock",
-
   "toast.discovery": "{emoji} New: {name}!  +🪙{coins}",
   "toast.maxMerge": "✨ Top-tier harvest! +🪙{coins}",
   "toast.thanks": "{emoji} Thank you!  ⭐+{stars}",
@@ -59,12 +51,10 @@
   "toast.sold": "Sold for 🪙{coins}",
   "toast.bubble": "🫧 A bubble appeared! Tap it to pop it out",
   "toast.featureLocked": "🔒 Opens at Lv.{n}",
-
   "levelUp.title": "Level up! Lv.{n}",
-  "levelUp.reward": "🪙{coins}  ⭐+{stars}",
+  "levelUp.reward": "🪙{coins}  ⚡+{energy}",
   "levelUp.unlocked": "Newly unlocked",
   "levelUp.ok": "Great!",
-
   "feature.upgrades": "⬆️ Upgrades",
   "feature.boost": "⚡ 2x Income",
   "feature.snack": "🍒 Snack basket",
@@ -73,17 +63,14 @@
   "feature.visitor": "🦔 Surprise guest",
   "feature.spawnLevel": "⭐ Basket quality",
   "feature.offlineCap": "🌙 Offline earnings time",
-
   "visitor.title": "🦔 Surprise guest!",
   "visitor.body": "A passing hedgehog left you a present.",
   "visitor.take": "Take 🪙{coins}",
   "visitor.takeBig": "Take more 🪙{coins} ⭐{stars}",
-
   "offline.title": "🌙 While your garden grew",
   "offline.body": "In {time}\nyou collected 🪙 {coins}!",
   "offline.take": "Collect",
   "offline.double": "Collect 2x",
-
   "upgrade.title": "⬆️ Upgrades",
   "upgrade.needLevel": "Needs Lv.{n}",
   "upgrade.spawnSpeed": "Basket speed",
@@ -96,23 +83,19 @@
   "upgrade.spawnLevel": "Basket quality",
   "upgrade.spawnLevel.desc": "Makes Lv.{v} items",
   "upgrade.offlineCap": "Offline earnings time",
-  "upgrade.offlineCap.desc": "Up to {v}h",
-
+  "upgrade.offlineCap.desc": "Up to {v}",
   "decor.title": "🔨 Decorate {name}",
   "decor.progress": "{done} / {total} built · ⭐{stars} · Charm x{mult}",
   "decor.done": "Done ✅",
   "decor.bringsFriend": "{emoji} {name} will come to visit!",
   "decor.areaLocked": "🔒 You can decorate this area at Lv.{n}",
-
   "book.title": "📖 Album",
   "book.friends": "Friends",
   "book.noEffect": "Help them to activate",
   "book.invite": "Invite by decorating",
   "book.unknown": "???",
-
   "chain.flower": "Flowers",
   "chain.snack": "Snacks",
-
   "buff.spawnSpeed": "Basket speed +{v}%",
   "buff.income": "Income +{v}%",
   "buff.orderCoins": "Request coins +{v}%",
@@ -120,19 +103,16 @@
   "buff.offline": "Offline earnings +{v}%",
   "buff.starBonus": "Bonus star chance +{v}%",
   "buff.autoMerge": "Auto merge speed +{v}%",
-
   "shop.title": "🚫 Remove ads (1 month)",
   "shop.body": "• No banner or interstitial ads\n• Get rewarded-ad rewards instantly, no ad\n• Renews monthly, cancel anytime in Play Store",
   "shop.active": "✅ Ad-free active",
   "shop.connecting": "Connecting to store…",
   "shop.subscribe": "Subscribe {price} / month",
   "shop.restore": "Restore purchases",
-
   "settings.title": "⚙️ Settings",
   "settings.language": "Language",
   "settings.account": "Account",
   "settings.version": "Version {v}",
-
   "account.guest": "Playing as guest",
   "account.signedIn": "Signed in with {provider}",
   "account.provider.google": "Google",
@@ -150,28 +130,23 @@
   "account.offline": "Offline (saved on this device)",
   "account.error": "Couldn't sign in. Please try again later.",
   "account.alreadyLinked": "This account is already linked to other game data.",
-
   "login.subtitle": "Merge flowers and snacks, and build a garden with animal friends",
   "login.kakao": "Continue with Kakao",
   "login.google": "Continue with Google",
   "login.guest": "Play as guest",
   "login.guestNote": "Guest data is saved on this device and in Google backup. You can link an account later in Settings.",
-
   "conflict.title": "Choose save data",
   "conflict.body": "This device and the cloud have different progress. Which one do you want to continue?",
   "conflict.local": "This device (Lv.{lv}, area {area})",
   "conflict.cloud": "Cloud (Lv.{lv}, area {area})",
-
   "time.hm": "{h}h {m}m",
   "time.ms": "{m}m {s}s",
   "time.s": "{s}s",
-
   "area.round": "{name} (#{n})",
   "area.yard": "Sunny Yard",
   "area.pond": "Sparkle Pond",
   "area.greenhouse": "Fragrant Greenhouse",
   "area.starry_hill": "Starlight Hill",
-
   "decor.big_tree": "Big tree",
   "decor.bench": "Wooden bench",
   "decor.mailbox": "Mailbox",
@@ -204,7 +179,6 @@
   "decor.moon_statue": "Moon statue",
   "decor.little_castle": "Little castle",
   "decor.fireworks": "Fireworks",
-
   "friend.bori.name": "Bori",
   "friend.bori.species": "Bunny",
   "friend.bori.line": "Another lovely day for gardening!",
@@ -229,7 +203,6 @@
   "friend.kongtteok.name": "Bean",
   "friend.kongtteok.species": "Hamster",
   "friend.kongtteok.line": "Working hard, like on my wheel!",
-
   "item.flower.1": "Seed",
   "item.flower.2": "Sprout",
   "item.flower.3": "Clover",
@@ -259,5 +232,13 @@
   "item.snack.12": "Cake slice",
   "item.snack.13": "Parfait",
   "item.snack.14": "Birthday cake",
-  "item.snack.15": "Picnic box"
+  "item.snack.15": "Picnic box",
+  "feature.energyAd": "⚡ Energy refill ad",
+  "energy.title": "⚡ Out of energy",
+  "energy.body": "Energy refills 1 every 2 minutes (max {cap}).\nNext +1 in {time}",
+  "energy.watch": "Get +{n}",
+  "energy.left": "{n} left today",
+  "energy.wait": "I'll wait",
+  "toast.adLimit": "Daily limit reached. It opens again tomorrow",
+  "ctrl.left": "{n} left"
 }

@@ -66,8 +66,9 @@ void main() {
     await Future<void>.delayed(Duration.zero);
     expect(g.level, 2);
     final up = events.whereType<LevelUpEvent>().single;
-    expect(up.unlocked, containsAll([Feature.upgrades, Feature.boost]));
+    expect(up.unlocked, containsAll([Feature.energyAd, Feature.upgrades]));
     expect(g.stars, Leveling.levelUpStars);
+    expect(up.energy, Leveling.levelUpEnergy(2, 0));
   });
 
   test('칸 구매: 레벨과 코인이 필요하고 살수록 비싸진다', () {
@@ -280,6 +281,79 @@ void main() {
 
   test('예전 버전 저장은 무시한다', () {
     expect(make().load('{"v":2,"coins":5}'), isFalse);
+  });
+
+  test('에너지: 탭 1회에 1 소모, 2분에 1 회복, 상한 100', () {
+    final g = make();
+    expect(g.energy, GameConfig.energyStart);
+    expect(g.tapSpawner(), TapResult.spawned);
+    expect(g.energy, GameConfig.energyStart - 1);
+    g.energy = 0;
+    expect(g.tapSpawner(), TapResult.noEnergy);
+    g.tick(GameConfig.energyRegenSeconds.toDouble());
+    expect(g.energy, 1);
+    g.energy = GameConfig.energyCap;
+    g.tick(1000);
+    expect(g.energy, GameConfig.energyCap);
+  });
+
+  test('에너지는 오프라인 동안에도 찬다', () {
+    final g = make();
+    g.energy = 0;
+    now = now.add(const Duration(minutes: 60));
+    g.computeOffline();
+    expect(g.energy, 30);
+  });
+
+  test('보상형 광고는 종류별 하루 상한이 있고 날짜가 바뀌면 초기화', () {
+    final g = make();
+    final cap = GameConfig.adDailyCap[AdKind.energy]!;
+    for (var i = 0; i < cap; i++) {
+      expect(g.canWatchAd(AdKind.energy), isTrue);
+      g.recordAd(AdKind.energy);
+      g.grantEnergyAd();
+    }
+    expect(g.canWatchAd(AdKind.energy), isFalse);
+    expect(g.energy, GameConfig.energyStart + cap * GameConfig.energyAdAmount);
+    now = now.add(const Duration(days: 1));
+    expect(g.canWatchAd(AdKind.energy), isTrue);
+  });
+
+  test('레벨업은 에너지를 준다', () {
+    final g = make();
+    g.energy = 3;
+    g.xp = g.xpToNext - 1;
+    g.board[open[0]] = Item(1, Chain.flower, 1);
+    g.board[open[1]] = Item(2, Chain.flower, 1);
+    g.orders = [
+      Order(1, 'bori', Chain.flower, 2, 1),
+      Order(2, 'bori', Chain.flower, 9, 1),
+      Order(3, 'bori', Chain.flower, 10, 1),
+    ];
+    g.move(open[0], open[1]);
+    expect(g.deliver(0), isTrue);
+    expect(g.level, 2);
+    expect(g.energy, 3 + Leveling.levelUpEnergy(2, 3));
+  });
+
+  test('수익 강화는 10/25/50/100 단계에서 2배', () {
+    expect(
+      Upgrades.incomeMultiplier(10) / Upgrades.incomeMultiplier(9),
+      closeTo(1.08 * 2, 1e-9),
+    );
+    expect(
+      Upgrades.incomeMultiplier(11) / Upgrades.incomeMultiplier(10),
+      closeTo(1.08, 1e-9),
+    );
+  });
+
+  test('경험치 곡선: 누적 Lv10≈520, Lv20≈2.8K, Lv30≈9.3K', () {
+    int cum(int to) =>
+        [for (var l = 1; l < to; l++) Leveling.xpToNext(l)]
+            .fold(0, (a, b) => a + b);
+    expect(cum(10), inInclusiveRange(480, 560));
+    expect(cum(20), inInclusiveRange(2500, 3100));
+    expect(cum(30), inInclusiveRange(8500, 10500));
   });
 
   test('숫자 포맷', () {

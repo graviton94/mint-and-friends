@@ -1,22 +1,18 @@
 {
   "app.title": "ブルームガーデン",
-
   "common.ok": "OK",
   "common.cancel": "キャンセル",
   "common.close": "閉じる",
   "common.max": "MAX",
   "common.lockedLevel": "🔒 Lv.{n}",
-
   "hud.perSec": "毎秒 {v}",
   "hud.level": "Lv.{n}",
   "hud.boost": "⚡x2 {time}",
-
   "menu.removeAds": "広告削除",
   "menu.book": "図鑑",
   "menu.upgrade": "強化",
   "menu.decorate": "飾る",
   "menu.settings": "設定",
-
   "ctrl.boost": "収益2倍",
   "ctrl.boost.duration": "10分",
   "ctrl.boost.extend": "+10分延長",
@@ -24,10 +20,8 @@
   "ctrl.ad": "📺 {label}",
   "spawner.tap": "タップ",
   "spawner.full": "満杯!",
-
   "order.deliver": "タップで渡す!",
   "order.refresh": "新しいお願い",
-
   "board.hint": "同じアイテムをドラッグして合成しよう",
   "board.stuck": "マスがいっぱい! アイテムをタップして売るか、マスを解放しよう",
   "board.selected": "Lv.{lv} {name} · 毎秒 {v}",
@@ -35,13 +29,11 @@
   "board.undo": "↩ 元に戻す",
   "board.bubble": "🫧 シャボン玉 {s}秒",
   "board.bubblePop": "取り出す",
-
   "cell.title": "マスを解放",
   "cell.body": "🪙{cost} でマスを1つ解放しますか?\n解放するほど次のマスは高くなります。",
   "cell.needLevel": "Lv.{n} から次のマスを解放できます",
   "cell.needCoins": "🪙{cost} 必要です",
   "cell.open": "解放",
-
   "toast.discovery": "{emoji} 新しい{name}を発見!  +🪙{coins}",
   "toast.maxMerge": "✨ 最高段階を収穫! +🪙{coins}",
   "toast.thanks": "{emoji} ありがとう!  ⭐+{stars}",
@@ -59,12 +51,10 @@
   "toast.sold": "🪙{coins} で売りました",
   "toast.bubble": "🫧 シャボン玉が出たよ! タップして取り出そう",
   "toast.featureLocked": "🔒 Lv.{n} で解放",
-
   "levelUp.title": "レベルアップ! Lv.{n}",
-  "levelUp.reward": "🪙{coins}  ⭐+{stars}",
+  "levelUp.reward": "🪙{coins}  ⚡+{energy}",
   "levelUp.unlocked": "新しく解放された機能",
   "levelUp.ok": "やったね!",
-
   "feature.upgrades": "⬆️ 強化",
   "feature.boost": "⚡ 収益2倍",
   "feature.snack": "🍒 おやつのかご",
@@ -73,17 +63,14 @@
   "feature.visitor": "🦔 びっくりお客さん",
   "feature.spawnLevel": "⭐ かごの品質",
   "feature.offlineCap": "🌙 オフライン収益時間",
-
   "visitor.title": "🦔 びっくりお客さん!",
   "visitor.body": "通りがかりのハリネズミがプレゼントを置いていったよ。",
   "visitor.take": "受け取る 🪙{coins}",
   "visitor.takeBig": "大きく受け取る 🪙{coins} ⭐{stars}",
-
   "offline.title": "🌙 お庭が育っている間に",
   "offline.body": "{time} の間に\n🪙 {coins} 集めました!",
   "offline.take": "受け取る",
   "offline.double": "2倍で受け取る",
-
   "upgrade.title": "⬆️ 強化",
   "upgrade.needLevel": "Lv.{n} 必要",
   "upgrade.spawnSpeed": "かごの速さ",
@@ -96,23 +83,19 @@
   "upgrade.spawnLevel": "かごの品質",
   "upgrade.spawnLevel.desc": "Lv.{v} のアイテムを生成",
   "upgrade.offlineCap": "オフライン収益時間",
-  "upgrade.offlineCap.desc": "最大 {v}時間",
-
+  "upgrade.offlineCap.desc": "最大 {v}",
   "decor.title": "🔨 {name}を飾る",
   "decor.progress": "{done} / {total} 完成 · ⭐{stars} · 魅力 x{mult}",
   "decor.done": "完了 ✅",
   "decor.bringsFriend": "{emoji} {name}が遊びに来るよ!",
   "decor.areaLocked": "🔒 Lv.{n} からこのエリアを飾れます",
-
   "book.title": "📖 図鑑",
   "book.friends": "なかま",
   "book.noEffect": "お願いを叶えると効果発動",
   "book.invite": "飾り付けで招待",
   "book.unknown": "???",
-
   "chain.flower": "お花",
   "chain.snack": "おやつ",
-
   "buff.spawnSpeed": "かごの速さ +{v}%",
   "buff.income": "収益 +{v}%",
   "buff.orderCoins": "お願いコイン +{v}%",
@@ -120,19 +103,16 @@
   "buff.offline": "オフライン収益 +{v}%",
   "buff.starBonus": "星ボーナス確率 +{v}%",
   "buff.autoMerge": "自動合成の速さ +{v}%",
-
   "shop.title": "🚫 広告削除 (1か月)",
   "shop.body": "• バナー・インタースティシャル広告がなくなります\n• リワード広告の報酬を広告なしですぐ受け取れます\n• 毎月自動更新、Playストアでいつでも解約可能",
   "shop.active": "✅ 広告削除 利用中",
   "shop.connecting": "ストアに接続中…",
   "shop.subscribe": "{price} / 月で購読",
   "shop.restore": "購入を復元",
-
   "settings.title": "⚙️ 設定",
   "settings.language": "言語",
   "settings.account": "アカウント",
   "settings.version": "バージョン {v}",
-
   "account.guest": "ゲストでプレイ中",
   "account.signedIn": "{provider} でログイン中",
   "account.provider.google": "Google",
@@ -150,28 +130,23 @@
   "account.offline": "オフライン (この端末に保存)",
   "account.error": "ログインできませんでした。しばらくしてからもう一度お試しください。",
   "account.alreadyLinked": "このアカウントは他のゲームデータに連携済みです。",
-
   "login.subtitle": "お花とおやつを合成して、動物のなかまとお庭を飾ろう",
   "login.kakao": "カカオではじめる",
   "login.google": "Google ではじめる",
   "login.guest": "ゲストではじめる",
   "login.guestNote": "ゲストデータはこの端末と Google バックアップに保存されます。あとで設定からアカウントを連携できます。",
-
   "conflict.title": "セーブデータの選択",
   "conflict.body": "この端末とクラウドで進行状況が異なります。どちらで続けますか?",
   "conflict.local": "この端末 (Lv.{lv}, エリア {area})",
   "conflict.cloud": "クラウド (Lv.{lv}, エリア {area})",
-
   "time.hm": "{h}時間{m}分",
   "time.ms": "{m}分{s}秒",
   "time.s": "{s}秒",
-
   "area.round": "{name} ({n}周目)",
   "area.yard": "ひだまりの前庭",
   "area.pond": "きらきら池",
   "area.greenhouse": "花かおる温室",
   "area.starry_hill": "星あかりの丘",
-
   "decor.big_tree": "大きな木",
   "decor.bench": "木のベンチ",
   "decor.mailbox": "郵便ポスト",
@@ -204,7 +179,6 @@
   "decor.moon_statue": "月のオブジェ",
   "decor.little_castle": "小さなお城",
   "decor.fireworks": "花火",
-
   "friend.bori.name": "ボリ",
   "friend.bori.species": "ウサギ",
   "friend.bori.line": "今日もお庭づくり日和だね!",
@@ -229,7 +203,6 @@
   "friend.kongtteok.name": "マメ",
   "friend.kongtteok.species": "ハムスター",
   "friend.kongtteok.line": "回し車みたいにがんばるよ!",
-
   "item.flower.1": "たね",
   "item.flower.2": "新芽",
   "item.flower.3": "クローバー",
@@ -259,5 +232,13 @@
   "item.snack.12": "ショートケーキ",
   "item.snack.13": "パフェ",
   "item.snack.14": "バースデーケーキ",
-  "item.snack.15": "ピクニック弁当"
+  "item.snack.15": "ピクニック弁当",
+  "feature.energyAd": "⚡ エネルギー広告",
+  "energy.title": "⚡ エネルギーが足りません",
+  "energy.body": "エネルギーは2分ごとに1回復します (最大 {cap})。\n次の+1まで {time}",
+  "energy.watch": "+{n} もらう",
+  "energy.left": "今日あと{n}回",
+  "energy.wait": "待つ",
+  "toast.adLimit": "今日の上限です。明日また開きます",
+  "ctrl.left": "あと{n}回"
 }

@@ -39,7 +39,7 @@ String upgradeDescribe(UpgradeType t, int lv) {
       return tr('upgrade.spawnLevel.desc', {'v': Upgrades.spawnLevel(lv)});
     case UpgradeType.offlineCap:
       return tr('upgrade.offlineCap.desc', {
-        'v': Upgrades.offlineCap(lv).inHours,
+        'v': fmtDuration(Upgrades.offlineCap(lv)),
       });
   }
 }

@@ -70,6 +70,8 @@ class _Sale {
   _Sale(this.cell, this.item, this.price, this.at);
 }
 
+enum TapResult { spawned, noEnergy, boardFull }
+
 enum MoveResult { none, moved, swapped, merged, maxMerged }
 
 sealed class GameEvent {}
@@ -115,7 +117,8 @@ class LevelUpEvent extends GameEvent {
   final List<Feature> unlocked;
   final double coins;
   final int stars;
-  LevelUpEvent(this.level, this.unlocked, this.coins, this.stars);
+  final int energy;
+  LevelUpEvent(this.level, this.unlocked, this.coins, this.stars, this.energy);
 }
 
 /// 합치기 연출용 (UI 이펙트 레이어가 사용).
@@ -162,6 +165,12 @@ class GameState extends ChangeNotifier {
   double lifetimeCoins = 0;
   int level = 1;
   int xp = 0;
+  int energy = GameConfig.energyStart;
+  double energyProgress = 0;
+
+  /// 오늘 본 보상형 광고 수 (종류별). 날짜가 바뀌면 초기화.
+  final Map<AdKind, int> adsToday = {};
+  String _adsDay = '';
   List<Item?> board = List<Item?>.filled(GameConfig.cellCount, null);
   Set<int> unlockedCells = {...GameConfig.startCells};
   int _nextId = 1;
@@ -307,8 +316,12 @@ class GameState extends ChangeNotifier {
       final c = max(100.0, baseIncomePerSec * Leveling.levelUpCoinSeconds);
       _earn(c);
       stars += Leveling.levelUpStars;
+      final gotEnergy = Leveling.levelUpEnergy(level, energy);
+      energy += gotEnergy;
       final opened = Leveling.unlockedAt(level);
-      _events.add(LevelUpEvent(level, opened, c, Leveling.levelUpStars));
+      _events.add(
+        LevelUpEvent(level, opened, c, Leveling.levelUpStars, gotEnergy),
+      );
       // 간식이 열리면 첫 부탁을 간식으로 바꿔 바로 체감되게 한다
       if (opened.contains(Feature.snack) && orders.isNotEmpty) {
         orders[0] = _placeholder;
@@ -322,6 +335,7 @@ class GameState extends ChangeNotifier {
   void tick(double dt) {
     if (dt <= 0) return;
     _earn(incomePerSec * dt);
+    _regenEnergy(dt);
 
     if (boardFull) {
       spawnProgress = spawnInterval;
@@ -371,14 +385,65 @@ class GameState extends ChangeNotifier {
     lifetimeCoins += v;
   }
 
-  /// 바구니 탭: 생성 게이지를 크게 채운다.
-  void tapSpawner() {
-    if (boardFull) return;
-    spawnProgress += max(spawnInterval * 0.5, 0.4);
-    if (spawnProgress >= spawnInterval) {
-      spawnProgress = 0;
-      _spawnOne();
+  // ---------------------------------------------------------------- 에너지
+
+  void _regenEnergy(double dt) {
+    if (energy >= GameConfig.energyCap) {
+      energyProgress = 0;
+      return;
     }
+    energyProgress += dt;
+    while (energyProgress >= GameConfig.energyRegenSeconds &&
+        energy < GameConfig.energyCap) {
+      energyProgress -= GameConfig.energyRegenSeconds;
+      energy++;
+    }
+  }
+
+  /// 다음 에너지 1이 차기까지 남은 시간.
+  Duration get energyNextIn => energy >= GameConfig.energyCap
+      ? Duration.zero
+      : Duration(
+          seconds: (GameConfig.energyRegenSeconds - energyProgress).ceil(),
+        );
+
+  /// 바구니 탭: 에너지 1로 즉시 하나 생성. 결과를 돌려준다.
+  TapResult tapSpawner() {
+    if (boardFull) return TapResult.boardFull;
+    if (energy < GameConfig.energyPerTap) return TapResult.noEnergy;
+    energy -= GameConfig.energyPerTap;
+    _spawnOne();
+    notifyListeners();
+    return TapResult.spawned;
+  }
+
+  void grantEnergyAd() {
+    energy += GameConfig.energyAdAmount; // 상한을 넘어도 된다 (Travel Town 방식)
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------- 광고 하루 상한
+
+  String _dayKey(DateTime t) => '${t.year}-${t.month}-${t.day}';
+
+  void _rollAdDay() {
+    final k = _dayKey(now);
+    if (k != _adsDay) {
+      _adsDay = k;
+      adsToday.clear();
+    }
+  }
+
+  int adsLeft(AdKind kind) {
+    _rollAdDay();
+    return max(0, (GameConfig.adDailyCap[kind] ?? 999) - (adsToday[kind] ?? 0));
+  }
+
+  bool canWatchAd(AdKind kind) => adsLeft(kind) > 0;
+
+  void recordAd(AdKind kind) {
+    _rollAdDay();
+    adsToday[kind] = (adsToday[kind] ?? 0) + 1;
     notifyListeners();
   }
 
@@ -632,7 +697,7 @@ class GameState extends ChangeNotifier {
     orders[orderIndex] = _placeholder;
     orders[orderIndex] = _newOrder();
     _events.add(OrderDeliveredEvent(o.friendId, gained, c, up));
-    _gainXp(Leveling.xpForOrder(o.stars));
+    _gainXp(Leveling.xpForOrder(o.level));
     notifyListeners();
     return true;
   }
@@ -776,6 +841,7 @@ class GameState extends ChangeNotifier {
     final t = now;
     var away = t.difference(lastSeen);
     if (away < const Duration(minutes: 1)) return null;
+    _regenEnergy(away.inMilliseconds / 1000); // 에너지는 오프라인 상한 없이 찬다 (최대치까지)
     if (away > offlineCap) away = offlineCap;
     final c =
         baseIncomePerSec *
@@ -814,6 +880,10 @@ class GameState extends ChangeNotifier {
       'nextId': _nextId,
       'up': {for (final e in upgrades.entries) e.key.name: e.value},
       'sp': spawnProgress,
+      'energy': energy,
+      'ep': energyProgress,
+      'adsDay': _adsDay,
+      'ads': {for (final e in adsToday.entries) e.key.name: e.value},
       'hi': {for (final e in highest.entries) e.key.name: e.value},
       'area': currentArea,
       'placed': placed.toList(),
@@ -861,6 +931,15 @@ class GameState extends ChangeNotifier {
       upgrades[t] = (up[t.name] as num?)?.toInt() ?? 0;
     }
     spawnProgress = (j['sp'] as num?)?.toDouble() ?? 0;
+    energy = (j['energy'] as num?)?.toInt() ?? GameConfig.energyStart;
+    energyProgress = (j['ep'] as num?)?.toDouble() ?? 0;
+    _adsDay = j['adsDay'] as String? ?? '';
+    adsToday.clear();
+    final ads = (j['ads'] as Map?)?.cast<String, dynamic>() ?? {};
+    for (final k in AdKind.values) {
+      final v = (ads[k.name] as num?)?.toInt();
+      if (v != null) adsToday[k] = v;
+    }
     final hi = (j['hi'] as Map?)?.cast<String, dynamic>() ?? {};
     for (final c in Chain.values) {
       highest[c] = (hi[c.name] as num?)?.toInt() ?? 1;

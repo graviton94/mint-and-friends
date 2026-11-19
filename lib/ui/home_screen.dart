@@ -145,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              tr('levelUp.reward', {'coins': fmt(e.coins), 'stars': e.stars}),
+              tr('levelUp.reward', {'coins': fmt(e.coins), 'energy': e.energy}),
               style: const TextStyle(fontSize: 20),
             ),
             if (e.unlocked.isNotEmpty) ...[
@@ -187,9 +187,63 @@ class _HomeScreenState extends State<HomeScreen> {
     return false;
   }
 
+  /// 하루 상한이 있는 광고: 남은 횟수 확인 → 시청 → 기록.
+  Future<bool> _rewardedCapped(AdKind kind) async {
+    if (!game.canWatchAd(kind)) {
+      _toast(tr('toast.adLimit'));
+      return false;
+    }
+    if (!await _rewarded()) return false;
+    game.recordAd(kind);
+    return true;
+  }
+
+  Future<void> _onSpawnerTap() async {
+    if (game.tapSpawner() == TapResult.noEnergy) await _energyDialog();
+  }
+
+  Future<void> _energyDialog() async {
+    final canAd =
+        game.isUnlocked(Feature.energyAd) && game.canWatchAd(AdKind.energy);
+    final watch = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('energy.title'), textAlign: TextAlign.center),
+        content: Text(
+          tr('energy.body', {
+                'cap': GameConfig.energyCap,
+                'time': fmtDuration(game.energyNextIn),
+              }) +
+              (game.isUnlocked(Feature.energyAd)
+                  ? '\n${tr('energy.left', {'n': game.adsLeft(AdKind.energy)})}'
+                  : ''),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 16, height: 1.5),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(tr('energy.wait')),
+          ),
+          if (canAd)
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: Palette.ad),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(
+                _adLabel(tr('energy.watch', {'n': GameConfig.energyAdAmount})),
+              ),
+            ),
+        ],
+      ),
+    );
+    if (watch == true && await _rewardedCapped(AdKind.energy))
+      game.grantEnergyAd();
+  }
+
   Future<void> _watchBoost() async {
     if (!_gate(Feature.boost)) return;
-    if (await _rewarded()) {
+    if (await _rewardedCapped(AdKind.boost)) {
       game.grantBoost();
       _toast(tr('toast.boost', {'time': fmtDuration(game.boostRemaining)}));
     }
@@ -197,12 +251,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _watchCoinBag() async {
     if (!_gate(Feature.coinBag)) return;
-    if (await _rewarded())
+    if (await _rewardedCapped(AdKind.coinBag))
       _toast(tr('toast.coins', {'coins': fmt(game.grantCoinBag())}));
   }
 
   Future<void> _refreshOrder(int i) async {
-    if (await _rewarded()) game.refreshOrder(i);
+    if (await _rewardedCapped(AdKind.refresh)) game.refreshOrder(i);
   }
 
   void _onSlotTap(int slot) {
@@ -405,6 +459,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text(
                         ' ${game.stars}',
                         style: const TextStyle(fontSize: 22),
+                      ),
+                      const SizedBox(width: 12),
+                      GestureDetector(
+                        onTap: _energyDialog,
+                        child: Text(
+                          '⚡${game.energy}/${GameConfig.energyCap}',
+                          style: TextStyle(
+                            fontSize: 22,
+                            color: game.energy == 0
+                                ? const Color(0xFFB0640A)
+                                : null,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -649,9 +716,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ? tr('common.lockedLevel', {
                       'n': Leveling.unlockLevel[Feature.boost],
                     })
-                  : game.boostActive
-                  ? tr('ctrl.boost.extend')
-                  : tr('ctrl.boost.duration'),
+                  : '${game.boostActive ? tr('ctrl.boost.extend') : tr('ctrl.boost.duration')} · ${tr('ctrl.left', {'n': game.adsLeft(AdKind.boost)})}',
               onTap:
                   !boostOpen || (game.canAddBoost && widget.ads.rewardedReady)
                   ? _watchBoost
@@ -659,7 +724,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(width: 10),
-          _Spawner(game: game),
+          _Spawner(game: game, onTap: _onSpawnerTap),
           const SizedBox(width: 10),
           Expanded(
             child: _AdButton(
@@ -670,6 +735,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   ? tr('common.lockedLevel', {
                       'n': Leveling.unlockLevel[Feature.coinBag],
                     })
+                  : !game.canWatchAd(AdKind.coinBag)
+                  ? tr('ctrl.left', {'n': 0})
                   : game.coinBagReady
                   ? '🪙${fmt(game.coinBagAmount)}'
                   : fmtDuration(game.coinBagCooldownLeft),
@@ -734,14 +801,15 @@ class _LevelBadge extends StatelessWidget {
 }
 
 class _Spawner extends StatelessWidget {
-  const _Spawner({required this.game});
+  const _Spawner({required this.game, required this.onTap});
   final GameState game;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final full = game.boardFull;
     return GestureDetector(
-      onTap: game.tapSpawner,
+      onTap: onTap,
       child: SizedBox(
         width: 70,
         height: 70,
@@ -773,7 +841,7 @@ class _Spawner extends StatelessWidget {
                 children: [
                   ArtImage(Art.basket, size: 26),
                   Text(
-                    tr(full ? 'spawner.full' : 'spawner.tap'),
+                    full ? tr('spawner.full') : '⚡${game.energy}',
                     style: const TextStyle(fontSize: 11),
                   ),
                 ],

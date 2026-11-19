@@ -1,24 +1,19 @@
 {
   "_comment": "기본 언어. 키는 영어 소문자+점. {이름} 은 코드가 채워 넣는 값. 다른 언어 파일은 이 파일과 같은 키를 가져야 한다 (test/i18n_test.dart 가 검사).",
-
   "app.title": "블룸 가든",
-
   "common.ok": "확인",
   "common.cancel": "취소",
   "common.close": "닫기",
   "common.max": "MAX",
   "common.lockedLevel": "🔒 Lv.{n}",
-
   "hud.perSec": "초당 {v}",
   "hud.level": "Lv.{n}",
   "hud.boost": "⚡x2 {time}",
-
   "menu.removeAds": "광고제거",
   "menu.book": "도감",
   "menu.upgrade": "강화",
   "menu.decorate": "꾸미기",
   "menu.settings": "설정",
-
   "ctrl.boost": "수익 2배",
   "ctrl.boost.duration": "10분",
   "ctrl.boost.extend": "+10분 연장",
@@ -26,10 +21,8 @@
   "ctrl.ad": "📺 {label}",
   "spawner.tap": "톡톡",
   "spawner.full": "가득!",
-
   "order.deliver": "탭해서 전달!",
   "order.refresh": "새 부탁",
-
   "board.hint": "같은 아이템을 끌어서 합쳐 보세요",
   "board.stuck": "칸이 가득! 아이템을 눌러 판매하거나 잠긴 칸을 열어 보세요",
   "board.selected": "Lv.{lv} {name} · 초당 {v}",
@@ -37,13 +30,11 @@
   "board.undo": "↩ 되돌리기",
   "board.bubble": "🫧 비눗방울 {s}초",
   "board.bubblePop": "꺼내기",
-
   "cell.title": "칸 열기",
   "cell.body": "🪙{cost} 로 칸을 하나 더 열까요?\n칸을 열수록 다음 칸이 비싸져요.",
   "cell.needLevel": "Lv.{n} 부터 다음 칸을 열 수 있어요",
   "cell.needCoins": "🪙{cost} 이 필요해요",
   "cell.open": "열기",
-
   "toast.discovery": "{emoji} 새로운 {name} 발견!  +🪙{coins}",
   "toast.maxMerge": "✨ 최고 단계 수확! +🪙{coins}",
   "toast.thanks": "{emoji} 고마워!  ⭐+{stars}",
@@ -61,12 +52,10 @@
   "toast.sold": "🪙{coins} 에 판매했어요",
   "toast.bubble": "🫧 비눗방울이 생겼어요! 눌러서 꺼내 보세요",
   "toast.featureLocked": "🔒 Lv.{n} 에 열려요",
-
   "levelUp.title": "레벨 업! Lv.{n}",
-  "levelUp.reward": "🪙{coins}  ⭐+{stars}",
+  "levelUp.reward": "🪙{coins}  ⚡+{energy}",
   "levelUp.unlocked": "새로 열린 기능",
   "levelUp.ok": "좋아요!",
-
   "feature.upgrades": "⬆️ 강화",
   "feature.boost": "⚡ 수익 2배",
   "feature.snack": "🍒 간식 바구니",
@@ -75,17 +64,14 @@
   "feature.visitor": "🦔 깜짝 손님",
   "feature.spawnLevel": "⭐ 바구니 품질",
   "feature.offlineCap": "🌙 오프라인 수익 시간",
-
   "visitor.title": "🦔 깜짝 손님!",
   "visitor.body": "지나가던 고슴도치가 선물을 두고 갔어요.",
   "visitor.take": "받기 🪙{coins}",
   "visitor.takeBig": "크게 받기 🪙{coins} ⭐{stars}",
-
   "offline.title": "🌙 정원이 자라는 동안",
   "offline.body": "{time} 동안\n🪙 {coins} 을(를) 모았어요!",
   "offline.take": "받기",
   "offline.double": "2배로 받기",
-
   "upgrade.title": "⬆️ 강화",
   "upgrade.needLevel": "Lv.{n} 필요",
   "upgrade.spawnSpeed": "바구니 속도",
@@ -98,23 +84,19 @@
   "upgrade.spawnLevel": "바구니 품질",
   "upgrade.spawnLevel.desc": "Lv.{v} 아이템 생성",
   "upgrade.offlineCap": "오프라인 수익 시간",
-  "upgrade.offlineCap.desc": "최대 {v}시간",
-
+  "upgrade.offlineCap.desc": "최대 {v}",
   "decor.title": "🔨 {name} 꾸미기",
   "decor.progress": "{done} / {total} 완성 · 보유 ⭐{stars} · 정원 매력 x{mult}",
   "decor.done": "완료 ✅",
   "decor.bringsFriend": "{emoji} {name}(이)가 놀러 와요!",
   "decor.areaLocked": "🔒 Lv.{n} 부터 이 구역을 꾸밀 수 있어요",
-
   "book.title": "📖 도감",
   "book.friends": "친구들",
   "book.noEffect": "부탁을 들어주면 효과 발동",
   "book.invite": "꾸미기로 초대",
   "book.unknown": "???",
-
   "chain.flower": "꽃",
   "chain.snack": "간식",
-
   "buff.spawnSpeed": "바구니 속도 +{v}%",
   "buff.income": "수익 +{v}%",
   "buff.orderCoins": "부탁 코인 +{v}%",
@@ -122,19 +104,16 @@
   "buff.offline": "오프라인 수익 +{v}%",
   "buff.starBonus": "별 추가 획득 확률 +{v}%",
   "buff.autoMerge": "자동 합치기 속도 +{v}%",
-
   "shop.title": "🚫 광고 제거 (1개월)",
   "shop.body": "• 배너·전면 광고가 사라져요\n• 보상 광고 보상을 광고 없이 바로 받아요\n• 매월 자동 갱신, Play 스토어에서 언제든 해지",
   "shop.active": "✅ 광고 제거 이용 중",
   "shop.connecting": "스토어 연결 중…",
   "shop.subscribe": "{price} / 월 구독하기",
   "shop.restore": "구매 복원",
-
   "settings.title": "⚙️ 설정",
   "settings.language": "언어",
   "settings.account": "계정",
   "settings.version": "버전 {v}",
-
   "account.guest": "게스트로 플레이 중",
   "account.signedIn": "{provider} 계정으로 로그인됨",
   "account.provider.google": "Google",
@@ -152,28 +131,23 @@
   "account.offline": "오프라인 (기기에만 저장)",
   "account.error": "로그인하지 못했어요. 잠시 후 다시 시도해 주세요.",
   "account.alreadyLinked": "이미 다른 게임 데이터에 연결된 계정이에요.",
-
   "login.subtitle": "꽃과 간식을 합치고, 동물 친구들과 정원을 꾸며요",
   "login.kakao": "카카오로 시작",
   "login.google": "Google로 시작",
   "login.guest": "게스트로 시작",
   "login.guestNote": "게스트 데이터는 이 기기와 Google 백업에 저장돼요. 나중에 설정에서 계정을 연결할 수 있어요.",
-
   "conflict.title": "저장 데이터 선택",
   "conflict.body": "이 기기와 클라우드에 서로 다른 진행 기록이 있어요. 어느 쪽으로 이어서 할까요?",
   "conflict.local": "이 기기 (Lv.{lv}, 구역 {area})",
   "conflict.cloud": "클라우드 (Lv.{lv}, 구역 {area})",
-
   "time.hm": "{h}시간 {m}분",
   "time.ms": "{m}분 {s}초",
   "time.s": "{s}초",
-
   "area.round": "{name} ({n}번째)",
   "area.yard": "햇살 앞마당",
   "area.pond": "반짝 연못",
   "area.greenhouse": "꽃향기 온실",
   "area.starry_hill": "별빛 언덕",
-
   "decor.big_tree": "큰 나무",
   "decor.bench": "나무 벤치",
   "decor.mailbox": "우체통",
@@ -206,7 +180,6 @@
   "decor.moon_statue": "달 조형물",
   "decor.little_castle": "작은 성",
   "decor.fireworks": "불꽃놀이",
-
   "friend.bori.name": "보리",
   "friend.bori.species": "토끼",
   "friend.bori.line": "오늘도 정원 가꾸기 좋은 날이야!",
@@ -231,7 +204,6 @@
   "friend.kongtteok.name": "콩떡",
   "friend.kongtteok.species": "햄스터",
   "friend.kongtteok.line": "쳇바퀴 돌리듯 열심히!",
-
   "item.flower.1": "씨앗",
   "item.flower.2": "새싹",
   "item.flower.3": "클로버",
@@ -261,5 +233,13 @@
   "item.snack.12": "조각 케이크",
   "item.snack.13": "파르페",
   "item.snack.14": "생일 케이크",
-  "item.snack.15": "피크닉 도시락"
+  "item.snack.15": "피크닉 도시락",
+  "feature.energyAd": "⚡ 에너지 충전 광고",
+  "energy.title": "⚡ 에너지가 부족해요",
+  "energy.body": "에너지는 2분마다 1씩 차요 (최대 {cap}).\n다음 1까지 {time}",
+  "energy.watch": "+{n} 받기",
+  "energy.left": "오늘 {n}회 남음",
+  "energy.wait": "기다릴게요",
+  "toast.adLimit": "오늘은 더 볼 수 없어요. 내일 다시 열려요",
+  "ctrl.left": "오늘 {n}회"
 }
