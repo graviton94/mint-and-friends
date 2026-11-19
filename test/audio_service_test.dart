@@ -39,5 +39,8 @@ void main() {
   test('효과음 파일 이름', () {
     expect(Sfx.mergeBig.asset, 'audio/merge_big.ogg');
     expect(Sfx.values.length, 14);
+    expect(Sfx.spawn.assets, hasLength(3));
+    expect(Sfx.merge.throttleMs, 60);
+    expect(Sfx.coin.throttleMs, 40);
   });
 }
