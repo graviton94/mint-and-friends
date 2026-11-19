@@ -33,10 +33,13 @@ class Art {
     Chains.item(c, level).emoji,
   );
 
-  static ArtRef friend(FriendDef f, {bool happy = false}) => ArtRef(
-    'assets/art/friends/${f.id}_${happy ? 'happy' : 'idle'}.png',
-    f.emoji,
-  );
+  /// 기쁨 표정 그림이 아직 없으면 기본 그림을 쓴다 (탭할 때 이모지로 바뀌지 않게).
+  static ArtRef friend(FriendDef f, {bool happy = false}) {
+    final idle = ArtRef('assets/art/friends/${f.id}_idle.png', f.emoji);
+    if (!happy) return idle;
+    final h = ArtRef('assets/art/friends/${f.id}_happy.png', f.emoji);
+    return h.available || !idle.available ? h : idle;
+  }
 
   static ArtRef visitor() =>
       const ArtRef('assets/art/friends/visitor_idle.png', Friends.visitorEmoji);
