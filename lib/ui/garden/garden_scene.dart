@@ -83,14 +83,31 @@ class _GardenSceneState extends State<GardenScene>
     super.dispose();
   }
 
-  Offset _randomSpot() =>
-      Offset(0.08 + _rng.nextDouble() * 0.84, 0.40 + _rng.nextDouble() * 0.50);
+  /// 지금 보고 있는 구역의 걸을 수 있는 땅에서 무작위 지점.
+  Offset _randomSpot() {
+    final zones = Garden.areaAt(widget.area).walk;
+    final z = zones[_rng.nextInt(zones.length)];
+    return Offset(
+      z.x0 + _rng.nextDouble() * (z.x1 - z.x0),
+      z.y0 + _rng.nextDouble() * (z.y1 - z.y0),
+    );
+  }
+
+  int? _walkArea;
 
   void _onTick(Duration elapsed) {
     final dt = ((elapsed - _last).inMicroseconds / 1e6).clamp(0.0, 0.1);
     _last = elapsed;
     _t += dt;
 
+    // 구역을 넘기면 친구들을 그 구역의 땅 위로 옮긴다
+    if (_walkArea != widget.area) {
+      _walkArea = widget.area;
+      for (final w in _walkers.values) {
+        w.pos = _randomSpot();
+        w.target = _randomSpot();
+      }
+    }
     for (final id in game.friends) {
       _walkers.putIfAbsent(
         id,
@@ -184,7 +201,7 @@ class _GardenSceneState extends State<GardenScene>
     for (var i = 0; i < area.decor.length; i++) {
       final d = area.decor[i];
       final p = px(d.x, d.y);
-      final sz = unit * 0.16;
+      final sz = unit * 0.21;
       Widget child;
       if (game.isPlaced(widget.area, i)) {
         child = TweenAnimationBuilder<double>(
@@ -248,7 +265,7 @@ class _GardenSceneState extends State<GardenScene>
       final f = Friends.byId(e.key);
       final wk = e.value;
       final p = px(wk.pos.dx, wk.pos.dy);
-      final sz = unit * 0.13;
+      final sz = unit * 0.17;
       final walking = wk.pauseLeft <= 0 && wk.happyLeft <= 0;
       final bob = walking ? -(sin(_t * 10).abs()) * sz * 0.12 : 0.0;
       final jump = wk.happyLeft > 0
@@ -282,8 +299,8 @@ class _GardenSceneState extends State<GardenScene>
     }
 
     if (game.visitorVisible) {
-      final p = px(_visitorX, 0.62);
-      final sz = unit * 0.14;
+      final p = px(_visitorX, Garden.areaAt(widget.area).walk.first.y1 - 0.04);
+      final sz = unit * 0.17;
       final bounce = sin(_t * 6).abs() * sz * 0.1;
       layers.add((
         y: 0.62,

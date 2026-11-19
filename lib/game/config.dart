@@ -384,6 +384,12 @@ class DecorDef {
   String get key => 'decor.$id';
 }
 
+/// 친구들이 걸어 다닐 수 있는 땅 (씬 대비 0~1 사각형). 배경 그림의 물·길을 피한다.
+class WalkZone {
+  final double x0, y0, x1, y1;
+  const WalkZone(this.x0, this.y0, this.x1, this.y1);
+}
+
 class AreaDef {
   final String id; // 문구 키: area.<id>
   final String emoji;
@@ -391,6 +397,7 @@ class AreaDef {
   final int ground;
   final List<DecorDef> decor;
   final int round; // 순환 회차 (1부터)
+  final List<WalkZone> walk;
   const AreaDef(
     this.id,
     this.emoji,
@@ -398,6 +405,7 @@ class AreaDef {
     this.ground,
     this.decor, {
     this.round = 1,
+    this.walk = const [WalkZone(0.08, 0.42, 0.92, 0.92)],
   });
 
   String get key => 'area.$id';
@@ -408,44 +416,51 @@ class Garden {
 
   static const List<AreaDef> areas = [
     AreaDef('yard', '🏡', 0xFFBFE6F7, 0xFFA8D88E, [
-      DecorDef('big_tree', '🌳', 0.14, 0.30),
-      DecorDef('bench', '🪑', 0.42, 0.34),
-      DecorDef('mailbox', '📮', 0.70, 0.30),
-      DecorDef('veggie_patch', '🥕', 0.88, 0.52, bringsFriend: 'dubu'),
-      DecorDef('lantern', '🏮', 0.12, 0.74),
-      DecorDef('bird_feeder', '🐦', 0.38, 0.70),
-      DecorDef('hut', '🛖', 0.64, 0.76),
-      DecorDef('fountain', '⛲', 0.88, 0.84),
+      DecorDef('big_tree', '🌳', 0.12, 0.44),
+      DecorDef('bench', '🪑', 0.36, 0.40),
+      DecorDef('mailbox', '📮', 0.64, 0.36),
+      DecorDef('veggie_patch', '🥕', 0.56, 0.58, bringsFriend: 'dubu'),
+      DecorDef('lantern', '🏮', 0.10, 0.80),
+      DecorDef('bird_feeder', '🐦', 0.32, 0.74),
+      DecorDef('hut', '🛖', 0.90, 0.64),
+      DecorDef('fountain', '⛲', 0.86, 0.90),
     ]),
-    AreaDef('pond', '🦆', 0xFFC6E2FA, 0xFF9CD3B0, [
-      DecorDef('stepping_stones', '🪨', 0.14, 0.32),
-      DecorDef('water_lily', '🪷', 0.42, 0.30, bringsFriend: 'kwak'),
-      DecorDef('fishing_spot', '🎣', 0.70, 0.34),
-      DecorDef('rowboat', '🛶', 0.88, 0.52),
-      DecorDef('reeds', '🌾', 0.12, 0.74),
-      DecorDef('log_chair', '🪵', 0.38, 0.70, bringsFriend: 'nabi'),
-      DecorDef('tent', '🏕️', 0.64, 0.76),
-      DecorDef('wooden_bridge', '🌉', 0.88, 0.84),
-    ]),
+    AreaDef(
+      'pond',
+      '🦆',
+      0xFFC6E2FA,
+      0xFF9CD3B0,
+      [
+        DecorDef('stepping_stones', '🪨', 0.12, 0.60),
+        DecorDef('water_lily', '🪷', 0.45, 0.58, bringsFriend: 'kwak'),
+        DecorDef('fishing_spot', '🎣', 0.76, 0.46),
+        DecorDef('rowboat', '🛶', 0.62, 0.70),
+        DecorDef('reeds', '🌾', 0.08, 0.86),
+        DecorDef('log_chair', '🪵', 0.32, 0.92, bringsFriend: 'nabi'),
+        DecorDef('tent', '🏕️', 0.84, 0.90),
+        DecorDef('wooden_bridge', '🌉', 0.26, 0.44),
+      ],
+      walk: [WalkZone(0.05, 0.80, 0.95, 0.95)],
+    ),
     AreaDef('greenhouse', '🪴', 0xFFF6E3F0, 0xFFB9DFA0, [
-      DecorDef('glasshouse', '🪟', 0.14, 0.30),
-      DecorDef('cactus', '🌵', 0.42, 0.34),
-      DecorDef('mushroom_bed', '🍄', 0.70, 0.30, bringsFriend: 'dotori'),
-      DecorDef('watering_can', '🚿', 0.88, 0.52),
-      DecorDef('sunflower_field', '🌻', 0.12, 0.74),
-      DecorDef('tea_table', '🫖', 0.38, 0.70),
-      DecorDef('bamboo', '🎋', 0.64, 0.76, bringsFriend: 'mochi'),
-      DecorDef('wind_chime', '🎐', 0.88, 0.84),
+      DecorDef('glasshouse', '🪟', 0.14, 0.46),
+      DecorDef('cactus', '🌵', 0.34, 0.50),
+      DecorDef('mushroom_bed', '🍄', 0.68, 0.50, bringsFriend: 'dotori'),
+      DecorDef('watering_can', '🚿', 0.86, 0.52),
+      DecorDef('sunflower_field', '🌻', 0.20, 0.72),
+      DecorDef('tea_table', '🫖', 0.50, 0.66),
+      DecorDef('bamboo', '🎋', 0.80, 0.72, bringsFriend: 'mochi'),
+      DecorDef('wind_chime', '🎐', 0.92, 0.90),
     ]),
     AreaDef('starry_hill', '🌙', 0xFF2E3A6B, 0xFF6F9A6A, [
-      DecorDef('telescope', '🔭', 0.14, 0.30),
-      DecorDef('camp_tent', '⛺', 0.42, 0.34),
-      DecorDef('campfire', '🔥', 0.70, 0.30, bringsFriend: 'danpung'),
-      DecorDef('ferris_wheel', '🎡', 0.88, 0.52),
-      DecorDef('carousel', '🎠', 0.12, 0.74),
-      DecorDef('moon_statue', '🌙', 0.38, 0.70),
-      DecorDef('little_castle', '🏰', 0.64, 0.76, bringsFriend: 'kongtteok'),
-      DecorDef('fireworks', '🎆', 0.88, 0.84),
+      DecorDef('telescope', '🔭', 0.14, 0.46),
+      DecorDef('camp_tent', '⛺', 0.42, 0.44),
+      DecorDef('campfire', '🔥', 0.70, 0.48, bringsFriend: 'danpung'),
+      DecorDef('ferris_wheel', '🎡', 0.88, 0.56),
+      DecorDef('carousel', '🎠', 0.14, 0.78),
+      DecorDef('moon_statue', '🌙', 0.40, 0.74),
+      DecorDef('little_castle', '🏰', 0.66, 0.80, bringsFriend: 'kongtteok'),
+      DecorDef('fireworks', '🎆', 0.90, 0.88),
     ]),
   ];
 
@@ -463,6 +478,7 @@ class Garden {
       base.ground,
       decor,
       round: index ~/ areas.length + 1,
+      walk: base.walk,
     );
   }
 

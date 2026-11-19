@@ -63,7 +63,11 @@ dev_dependencies:
 flutter:
   assets:
     - assets/i18n/
+    - assets/art/items/
     - assets/art/friends/
+    - assets/art/decor/
+    - assets/art/areas/
+    - assets/art/ui/
   fonts:
     - family: Jua
       fonts:

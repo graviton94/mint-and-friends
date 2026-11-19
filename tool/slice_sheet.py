@@ -43,7 +43,45 @@ def remove_white_bg(img: Image.Image, thresh: int = 235) -> Image.Image:
     return img
 
 
+def drop_edge_fragments(cell: Image.Image, keep_ratio: float = 0.3) -> Image.Image:
+    """칸 테두리에 닿은 작은 조각(옆 칸 그림이 삐져나온 것)을 지운다.
+    가장 큰 덩어리의 keep_ratio 보다 작고 테두리에 닿은 덩어리만 지우므로, 안쪽의 반짝이 같은 장식은 남는다."""
+    cell = cell.copy()
+    w, h = cell.size
+    alpha = cell.getchannel("A").load()
+    seen = bytearray(w * h)
+    comps = []
+    for sy in range(h):
+        for sx in range(w):
+            if seen[sy * w + sx] or alpha[sx, sy] == 0:
+                continue
+            stack = [(sx, sy)]
+            seen[sy * w + sx] = 1
+            pts = []
+            edge = False
+            while stack:
+                x, y = stack.pop()
+                pts.append((x, y))
+                if x == 0 or y == 0 or x == w - 1 or y == h - 1:
+                    edge = True
+                for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                    if 0 <= nx < w and 0 <= ny < h and not seen[ny * w + nx] and alpha[nx, ny] > 0:
+                        seen[ny * w + nx] = 1
+                        stack.append((nx, ny))
+            comps.append((pts, edge))
+    if not comps:
+        return cell
+    biggest = max(len(p) for p, _ in comps)
+    px = cell.load()
+    for pts, edge in comps:
+        if edge and len(pts) < biggest * keep_ratio:
+            for x, y in pts:
+                px[x, y] = (0, 0, 0, 0)
+    return cell
+
+
 def fit_square(cell: Image.Image, size: int, margin: float = 0.06) -> Image.Image:
+    cell = drop_edge_fragments(cell)
     box = cell.getbbox()
     out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     if not box:
