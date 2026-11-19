@@ -309,50 +309,51 @@ def normalize(x, target_lufs, peak_db=-1.0, block=0.4):
 
 
 # ---------------------------------------------------------------------------
-# BGM 악보 (F 장조, 96 BPM, 4/4, 32마디 = 80초)
+# BGM 악보 (D 장조, 110 BPM, 4/4, 32마디 ≈ 69.8초) - 밝고 통통 튀는 느낌
 # ---------------------------------------------------------------------------
-BPM = 96
+BPM = 110
 BEAT = 60.0 / BPM
 BAR = 4 * BEAT
 
 CHORDS = {  # 근음 pc, 구성음 간격
-    "Fmaj7": (5, [0, 4, 7, 11]), "Dm7": (2, [0, 3, 7, 10]), "Bbmaj7": (10, [0, 4, 7, 11]),
-    "C7sus": (0, [0, 5, 7, 10]), "C7": (0, [0, 4, 7, 10]), "Am7": (9, [0, 3, 7, 10]),
-    "Gm7": (7, [0, 3, 7, 10]), "C": (0, [0, 4, 7]), "Csus": (0, [0, 5, 7]),
-    "Gm9": (7, [0, 3, 7, 10, 14]), "Fadd9": (5, [0, 4, 7, 14]),
+    "Dadd9": (2, [0, 4, 7, 14]), "D6": (2, [0, 4, 7, 9]), "Bm7": (11, [0, 3, 7, 10]),
+    "Gmaj7": (7, [0, 4, 7, 11]), "A7sus": (9, [0, 5, 7, 10]), "A7": (9, [0, 4, 7, 10]),
+    "F#m7": (6, [0, 3, 7, 10]), "Em7": (4, [0, 3, 7, 10]), "A": (9, [0, 4, 7]),
+    "Asus": (9, [0, 5, 7]), "Em9": (4, [0, 3, 7, 10, 14]), "G6": (7, [0, 4, 7, 9]),
 }
 
 # 마디별 코드: [(이름, 박수)]
-A_PROG = [[("Fmaj7", 4)], [("Dm7", 4)], [("Bbmaj7", 4)], [("C7sus", 2), ("C7", 2)],
-          [("Fadd9", 4)], [("Am7", 4)], [("Bbmaj7", 4)], [("Gm7", 2), ("C7", 2)]]
-B_PROG = [[("Bbmaj7", 4)], [("C", 4)], [("Am7", 4)], [("Dm7", 4)],
-          [("Gm9", 4)], [("Am7", 4)], [("Bbmaj7", 4)], [("Csus", 2), ("C7", 2)]]
+A_PROG = [[("Dadd9", 4)], [("Bm7", 4)], [("Gmaj7", 4)], [("A7sus", 2), ("A7", 2)],
+          [("D6", 4)], [("F#m7", 4)], [("Gmaj7", 4)], [("Em7", 2), ("A7", 2)]]
+B_PROG = [[("Gmaj7", 4)], [("A", 4)], [("F#m7", 4)], [("Bm7", 4)],
+          [("Em9", 4)], [("F#m7", 4)], [("G6", 4)], [("Asus", 2), ("A7", 2)]]
 
+# 멜로디(음이름:박). 8분 당김음이 많은 통통 튀는 선율, 마림바는 스타카토로 연주.
 MEL_A = [
-    "C5:1 A4:.5 C5:.5 F5:1.5 E5:.5",
-    "D5:1.5 C5:.5 A4:1 r:1",
-    "Bb4:.5 D5:.5 F5:1 A5:1 G5:1",
-    "F5:1.5 E5:.5 C5:2",
-    "C5:1 A4:.5 C5:.5 F5:1 G5:1",
-    "A5:1.5 G5:.5 E5:1 C5:1",
-    "D5:1 F5:.5 E5:.5 D5:1 Bb4:1",
-    "G4:.5 A4:.5 Bb4:.5 C5:.5 E5:1 r:1",
+    "A4:.5 D5:.5 F#5:.5 A5:1 F#5:.5 A5:1",
+    "B5:.5 A5:.5 F#5:1 D5:.5 F#5:1 r:.5",
+    "G5:.5 F#5:.5 E5:.5 D5:.5 B4:1 D5:1",
+    "E5:1.5 D5:.5 C#5:.5 E5:1 r:.5",
+    "A4:.5 D5:.5 F#5:.5 A5:1 B5:.5 A5:1",
+    "C#6:.5 A5:.5 F#5:1 E5:.5 C#5:1 r:.5",
+    "D5:.5 E5:.5 F#5:.5 G5:1 F#5:.5 E5:1",
+    "B4:.5 C#5:.5 D5:.5 E5:.5 G5:.5 F#5:.5 E5:1",
 ]
 MEL_A2_TAIL = [  # A' 의 5~8마디 변주
-    "A5:1 G5:.5 F5:.5 C5:1 F5:1",
-    "E5:1.5 G5:.5 C6:1 A5:1",
-    "Bb5:1 A5:.5 G5:.5 F5:1 D5:1",
-    "D5:1 E5:1 C5:2",
+    "F#5:.5 A5:.5 D6:1 A5:.5 F#5:1 r:.5",
+    "E5:.5 F#5:.5 A5:1.5 F#5:.5 C#5:1",
+    "B4:.5 D5:.5 G5:1 F#5:.5 D5:.5 B4:1",
+    "C#5:1 E5:.5 G5:.5 F#5:2",
 ]
 MEL_B = [
-    "D5:2 F5:1 A5:1",
-    "G5:3 E5:1",
-    "C5:2 E5:1 G5:1",
-    "F5:2 D5:1 A4:1",
-    "Bb4:1 D5:1 F5:1 A5:1",
-    "G5:2 E5:1 C5:1",
-    "D5:1.5 C5:.5 Bb4:1 D5:1",
-    "C5:2.5 E5:.5 G5:1",
+    "B5:1.5 A5:.5 G5:1 D5:1",
+    "E5:1.5 F#5:.5 E5:1 C#5:1",
+    "F#5:.5 A5:1 C#6:.5 A5:1 E5:1",
+    "D6:1.5 C#6:.5 B5:1 F#5:1",
+    "G5:.5 F#5:.5 E5:1 B4:.5 E5:1 r:.5",
+    "F#5:1.5 E5:.5 C#5:1 A4:1",
+    "B4:.5 D5:.5 G5:1 F#5:.5 G5:.5 A5:1",
+    "A5:1.5 G5:.5 E5:1 C#5:.5 E5:.5",
 ]
 
 
@@ -374,6 +375,12 @@ def chord_notes(name, lo=55):
     return notes, root
 
 
+def staccato(y, gate_s, rel=0.05):
+    """gate_s 이후 rel 동안 빠르게 줄여 짧게 끊는다(스타카토/피치카토)."""
+    t = np.arange(len(y)) / SR
+    return y * np.clip(1 - (t - gate_s) / rel, 0, 1)
+
+
 def render_bgm():
     sections = [("A", A_PROG, MEL_A), ("A2", A_PROG, MEL_A[:4] + MEL_A2_TAIL),
                 ("B", B_PROG, MEL_B), ("A3", A_PROG, MEL_A)]
@@ -385,7 +392,13 @@ def render_bgm():
     pad = np.zeros((2, total))
 
     def hum():  # 사람 손 느낌의 미세한 타이밍 흔들림
-        return rng.normal(0, 0.006)
+        return rng.normal(0, 0.005)
+
+    swing = 0.04 * BEAT  # 8분 뒷박을 살짝 늦춰 통통 튀게
+
+    def at(t0, b):  # 박 위치 -> 초 (뒷박 8분에 스윙)
+        frac = b % 1.0
+        return t0 + b * BEAT + (swing if abs(frac - 0.5) < 1e-6 else 0.0)
 
     bar_i = 0
     for sec, prog, mel in sections:
@@ -397,67 +410,70 @@ def render_bgm():
                 cs = t0 + beat * BEAT
                 notes, root = chord_notes(name)
                 dur = nb * BEAT
-                for k, m in enumerate(notes):
-                    for v, (det, p) in enumerate([(-7, -0.7), (0, 0.0), (7, 0.7)]):
-                        y = pad_voice(hz(m), dur + 0.05, detune_cents=det + rng.normal(0, 1.5)) * 0.055
+                for m in notes:
+                    for det, p in [(-7, -0.7), (0, 0.0), (7, 0.7)]:
+                        y = pad_voice(hz(m), dur + 0.05, attack=0.5, release=1.0,
+                                      detune_cents=det + rng.normal(0, 1.5)) * 0.04
                         i = int(round(cs * SR))
                         seg = pan2(y, p)
                         j = min(total, i + seg.shape[1])
                         pad[:, i:j] += seg[:, : j - i]
-                # 베이스: 근음(1박) - 5도(2.5박) - 근음, 2코드 마디는 각 코드 근음
+                # 장난스러운 베이스: 근음 - 옥타브 튕김 - 5도, 당김음
                 rb = 36 + ((root - 36) % 12)
                 if rb > 43:
                     rb -= 12
                 if nb == 4:
-                    pat = [(0, 1.4, rb, 0.9), (1.5, 0.45, rb + 7, 0.55), (2, 1.4, rb, 0.75),
-                           (3.5, 0.45, rb + 12, 0.5)]
+                    pat = [(0, .45, rb, .9), (1, .3, rb + 12, .5), (1.5, .4, rb + 7, .6),
+                           (2.5, .4, rb, .75), (3, .3, rb + 7, .5), (3.5, .35, rb + 12, .55)]
                 else:
-                    pat = [(0, 1.4, rb, 0.85), (1.5, 0.45, rb + 7, 0.5)]
+                    pat = [(0, .45, rb, .85), (1, .3, rb + 12, .5), (1.5, .4, rb + 7, .55)]
                 for bb, d, m, v in pat:
-                    mix_into(bus["bass"], pluck_bass(hz(m), v, d * BEAT), cs + bb * BEAT + hum())
+                    mix_into(bus["bass"], pluck_bass(hz(m), v, d * BEAT), at(cs, bb) + hum())
                 beat += nb
 
-            # --- 멜로디: A 계열은 마림바(+A3 는 벨 옥타브 더블), B 는 벨 리드
+            # --- 멜로디: A 계열은 스타카토 마림바(+A3 는 벨 옥타브 더블), B 는 벨 리드 + 칼림바
             for nb_, d, m in parse_bar(mel[b]):
-                st = t0 + nb_ * BEAT + hum()
-                acc = 1.0 if nb_ in (0.0, 2.0) else 0.85
+                st = at(t0, nb_) + hum()
+                acc = 1.0 if nb_ in (0.0, 2.0) else 0.88
                 v = acc * rng.uniform(0.85, 1.0)
+                gate = min(d, 1.0) * BEAT * 0.6
                 if sec == "B":
-                    mix_into(bus["bell"], bell(hz(m), 0.55 * v, max(1.6, d * BEAT + 1.0)), st)
-                    mix_into(bus["kal"], kalimba(hz(m - 12), 0.25 * v), st)
+                    mix_into(bus["bell"], bell(hz(m), 0.5 * v, max(1.2, d * BEAT + 0.8)), st)
+                    mix_into(bus["kal"], staccato(kalimba(hz(m - 12), 0.25 * v), gate), st)
                 else:
-                    mix_into(bus["mar"], marimba(hz(m), 0.75 * v), st)
+                    mix_into(bus["mar"], staccato(marimba(hz(m), 0.75 * v), gate + 0.05, 0.08), st)
                     if sec == "A3" and nb_ in (0.0, 2.0):
-                        mix_into(bus["bell"], bell(hz(m + 12), 0.18 * v), st)
+                        mix_into(bus["bell"], bell(hz(m + 12), 0.16 * v, 1.2), st)
 
-            # --- 반주: B 는 칼림바 8분 아르페지오, A2/A3 는 벨 반짝이
-            notes, _ = chord_notes(prog[b][0][0], lo=60)
+            # --- 반주: 뒷박 피치카토 코드(칼림바), B 는 8분 아르페지오, A2/A3 는 벨 반짝이
+            notes, _ = chord_notes(prog[b][0][0], lo=62)
             if sec == "B":
-                arp = notes + [notes[-1] + 12 - (notes[-1] - notes[0]) % 12] if len(notes) < 4 else notes
                 order = [0, 1, 2, 3, 2, 1, 2, 3]
                 for k in range(8):
-                    m = arp[order[k] % len(arp)]
-                    if b % 8 == 7 and k >= 4:
-                        m = chord_notes(prog[b][-1][0], lo=60)[0][order[k] % 3]
-                    mix_into(bus["kal"], kalimba(hz(m), 0.32 if k % 2 == 0 else 0.22), t0 + k * 0.5 * BEAT + hum())
-            elif sec in ("A2", "A3"):
-                hi = [m + 12 for m in notes]
-                for bb, idx in [(1.5, 1), (3.0, 2), (3.5, 3)]:
-                    mix_into(bus["bell"], bell(hz(hi[idx % len(hi)]), 0.12, 1.4), t0 + bb * BEAT + hum())
-            else:  # A: 첫 섹션은 아주 옅은 칼림바 오프비트만
-                for bb in (1.0, 3.0):
-                    mix_into(bus["kal"], kalimba(hz(notes[1]), 0.16), t0 + bb * BEAT + hum())
+                    src = prog[b][-1][0] if k >= 4 else prog[b][0][0]
+                    ns = chord_notes(src, lo=62)[0]
+                    m = ns[order[k] % len(ns)]
+                    mix_into(bus["kal"], staccato(kalimba(hz(m), 0.3 if k % 2 == 0 else 0.22), 0.12),
+                             at(t0, k * 0.5) + hum())
+            else:
+                for bb in (0.5, 1.5, 2.5, 3.5):  # 뒷박 "칙" 피치카토 화음
+                    src = prog[b][-1][0] if bb > 2 else prog[b][0][0]
+                    for m in chord_notes(src, lo=62)[0][:3]:
+                        mix_into(bus["kal"], staccato(kalimba(hz(m), 0.11), 0.07, 0.04), at(t0, bb) + hum())
+                if sec in ("A2", "A3"):
+                    hi = [m + 12 for m in notes]
+                    for bb, idx in [(1.5, 1), (3.5, 2)]:
+                        mix_into(bus["bell"], bell(hz(hi[idx % len(hi)]), 0.1, 1.0), at(t0, bb) + hum())
 
-            # --- 퍼커션: A 는 셰이커만, A2/A3 는 풀, B 는 킥 빼고 브러시 가볍게
+            # --- 퍼커션: 셰이커 8분(스윙), A2/A3 는 킥(당김음)+브러시, B 는 브러시만
             for k in range(8):
-                st = t0 + k * 0.5 * BEAT + (0.03 * BEAT if k % 2 else 0)  # 살짝 스윙
-                mix_into(bus["shk"], shaker(0.5 if k % 2 == 0 else 0.32) * rng.uniform(0.85, 1.0), st)
-            if sec != "A":
+                mix_into(bus["shk"], shaker(0.5 if k % 2 == 0 else 0.34) * rng.uniform(0.85, 1.0), at(t0, k * 0.5))
+            if sec != "A" or b % 2 == 1:
                 for bb in (1, 3):
-                    mix_into(bus["brs"], brush(0.55 if sec != "B" else 0.4), t0 + bb * BEAT + hum())
+                    mix_into(bus["brs"], brush(0.5 if sec != "B" else 0.38), t0 + bb * BEAT + hum())
             if sec in ("A2", "A3"):
-                for bb in (0, 2.5) if b % 2 else (0, 2):
-                    mix_into(bus["kick"], soft_kick(0.7), t0 + bb * BEAT)
+                for bb in (0, 1.5, 2.5) if b % 2 else (0, 2.5):
+                    mix_into(bus["kick"], soft_kick(0.7), at(t0, bb))
             bar_i += 1
 
     # --- 버스 처리 + 스테레오 믹스
@@ -497,7 +513,12 @@ def render_bgm():
 
 
 # ---------------------------------------------------------------------------
-# 효과음 (모노)
+# 효과음 (모노). 자주 나는 소리일수록 짧고 담백하게.
+#   상시(tap/spawn/merge): 작은 "뾱" 한 번, 40~110 ms, 잔향 없음, 변주 파일 여러 개
+#   잦음(coin/sell/bubble/error/open): 0.35 s 이하, 단순·부드럽게
+#   가끔(deliver/merge_big/unlock/place/splash): 2~3음 또는 반짝임, 0.8 s 이하
+#   드묾(levelup): 제대로 된 징글 1.2~1.5 s
+# 모든 효과음은 6 kHz 위를 깎아 날카롭지 않게 한다.
 # ---------------------------------------------------------------------------
 def buf(dur):
     return np.zeros(int(dur * SR))
@@ -519,137 +540,115 @@ def small_room(x, wet=0.15, seconds=0.6):
 
 
 def sparkle(b, start, count, span, vel=0.12, seed=1):
-    """높은 펜타토닉 벨 알갱이를 흩뿌림."""
+    """D 장조 펜타토닉 고음 벨 알갱이(1.1~2.3 kHz)를 흩뿌림."""
     r = np.random.default_rng(seed)
-    pent = [midi(n) for n in ["C7", "D7", "E7", "G7", "A7", "C8"]]
+    pent = [midi(n) for n in ["C#6", "E6", "F#6", "A6", "B6", "D7"]]
     for _ in range(count):
-        mix_into(b, bell(hz(r.choice(pent)), vel * r.uniform(0.5, 1.0), 0.5), start + r.uniform(0, span))
+        mix_into(b, bell(hz(r.choice(pent)), vel * r.uniform(0.5, 1.0), 0.45), start + r.uniform(0, span))
 
 
+def pop(f, dur=0.09, drop=1.5, drop_t=0.018, tau=0.028, h2=0.18, rise=False):
+    """둥근 "뾱": 사인 한 방. 시작 음높이에서 f 로 빠르게 떨어지거나(rise=True 면 올라감)."""
+    t = tvec(dur)
+    ratio = (1 / drop) if rise else drop
+    fr = f * (1 + (ratio - 1) * np.exp(-t / drop_t))
+    ph = 2 * np.pi * np.cumsum(fr) / SR
+    y = np.sin(ph) + h2 * np.sin(2 * ph) * np.exp(-t / (tau * 0.5))
+    y *= np.clip(t / 0.0015, 0, 1) * np.exp(-t / tau)
+    return fade(lowpass(y, 4000), 0.0005, 0.012)
+
+
+# --- 상시 ---------------------------------------------------------------
 def sfx_tap():
-    b = buf(0.09)
-    t = tvec(0.09)
-    body = np.sin(2 * np.pi * 620 * t) * np.exp(-t / 0.018)
-    tick = np.sin(2 * np.pi * 1750 * t) * np.exp(-t / 0.006) * 0.5
-    noise = bandpass(rng.standard_normal(len(t)), 1500, 6000) * np.exp(-t / 0.003) * 0.25
-    b += (body + tick + noise) * np.clip(t / 0.001, 0, 1)
-    return lowpass(b, 6000)
+    return pop(720, dur=0.05, drop=1.35, drop_t=0.008, tau=0.012, h2=0.1)
 
 
-def sfx_spawn():
-    b = buf(0.38)
-    s, t = sweep_sine(280, 950, 0.09)
-    pop = s * np.sin(np.pi * np.clip(t / 0.09, 0, 1)) ** 1.5
-    mix_into(b, pop, 0, 0.8)
-    mix_into(b, marimba(hz(midi("G5")), 0.5, 0.3), 0.06)
-    mix_into(b, bell(hz(midi("D6")), 0.15, 0.3), 0.07)
-    return small_room(b, 0.12)
+def sfx_spawn(v):
+    f = [560, 600, 640][v]
+    return pop(f, dur=0.09, drop=1.6, drop_t=0.02, tau=0.026, h2=[0.15, 0.2, 0.12][v], rise=True)
 
 
-def sfx_merge():
-    b = buf(0.75)
-    for k, n in enumerate(["E5", "G5", "C6"]):
-        mix_into(b, marimba(hz(midi(n)), 0.55 + 0.1 * k, 0.6), k * 0.065)
-        mix_into(b, bell(hz(midi(n) + 12), 0.12 + 0.04 * k, 0.6), k * 0.065)
-    # 부드러운 상승 쉬익(노이즈 + 상승 사인 블룹)
-    s, t = sweep_sine(400, 1200, 0.18)
-    mix_into(b, s * np.sin(np.pi * t / 0.18) ** 2 * 0.25, 0.0)
-    return small_room(b, 0.18)
+def sfx_merge(v):
+    f = [780, 840, 900][v]
+    return pop(f, dur=0.1, drop=1.45, drop_t=0.014, tau=0.03, h2=[0.22, 0.16, 0.25][v])
 
 
-def sfx_merge_big():
-    b = buf(1.15)
-    for k, n in enumerate(["C5", "E5", "G5", "C6", "E6"]):
-        mix_into(b, marimba(hz(midi(n)), 0.45 + 0.06 * k, 0.7), k * 0.055)
-        mix_into(b, bell(hz(midi(n) + 12), 0.14 + 0.03 * k, 0.9), k * 0.055)
-    for n in ["C6", "E6", "G6"]:
-        mix_into(b, bell(hz(midi(n)), 0.22, 0.9), 0.3)
-    # 은은한 패드 스웰
-    swell = sum(pad_voice(hz(midi(n)), 0.5, attack=0.12, release=0.4, detune_cents=c)
-                for n in ["C5", "G5", "E6"] for c in (-6, 6))
-    mix_into(b, lowpass(swell, 2500) * 0.05, 0.1)
-    sparkle(b, 0.28, 9, 0.5, 0.1, seed=5)
-    return small_room(b, 0.22)
-
-
+# --- 잦음 ---------------------------------------------------------------
 def sfx_coin():
-    b = buf(0.5)
-    mix_into(b, bell(hz(midi("B5")), 0.5, 0.12), 0)
-    mix_into(b, bell(hz(midi("E6")), 0.6, 0.45), 0.075)
-    mix_into(b, kalimba(hz(midi("E6")), 0.25, 0.45), 0.075)
-    return small_room(lowpass(b, 9000), 0.1)
-
-
-def sfx_deliver():
-    b = buf(0.95)
-    for k, n in enumerate(["C5", "E5", "G5"]):
-        mix_into(b, marimba(hz(midi(n)), 0.6, 0.7), k * 0.11)
-        mix_into(b, kalimba(hz(midi(n) + 12), 0.25, 0.7), k * 0.11)
-    for n in ["C6", "E6"]:
-        mix_into(b, bell(hz(midi(n)), 0.2, 0.6), 0.33)
-    return small_room(b, 0.18)
-
-
-def sfx_levelup():
-    b = buf(1.2)
-    step = 0.095
-    for k, n in enumerate(["C5", "E5", "G5", "C6"]):
-        mix_into(b, marimba(hz(midi(n)), 0.6, 0.6), k * step)
-    for n in ["G5", "C6", "E6"]:
-        mix_into(b, bell(hz(midi(n)), 0.3, 0.85), 4 * step + 0.02)
-        mix_into(b, kalimba(hz(midi(n)), 0.2, 0.8), 4 * step + 0.02)
-    swell = sum(pad_voice(hz(midi(n)), 0.45, attack=0.15, release=0.35, detune_cents=c)
-                for n in ["C4", "G4", "E5"] for c in (-7, 7))
-    mix_into(b, lowpass(swell, 2200) * 0.06, 4 * step)
-    sparkle(b, 0.45, 8, 0.55, 0.09, seed=9)
-    return small_room(b, 0.22)
-
-
-def sfx_unlock():
-    b = buf(0.75)
-    t = tvec(0.05)
-    for st, f in [(0, 900), (0.06, 1300)]:  # 딸깍-딸깍(나무)
-        click = np.sin(2 * np.pi * f * t) * np.exp(-t / 0.008)
-        click += bandpass(rng.standard_normal(len(t)), 800, 4000) * np.exp(-t / 0.004) * 0.3
-        mix_into(b, click, st, 0.5)
-    mix_into(b, bell(hz(midi("G5")), 0.4, 0.6), 0.12)
-    mix_into(b, bell(hz(midi("D6")), 0.45, 0.6), 0.2)
-    sparkle(b, 0.22, 4, 0.3, 0.08, seed=11)
-    return small_room(b, 0.18)
+    b = buf(0.3)
+    mix_into(b, bell(hz(midi("A5")), 0.4, 0.08), 0)
+    mix_into(b, bell(hz(midi("D6")), 0.5, 0.25), 0.06)
+    return b
 
 
 def sfx_sell():
-    b = buf(0.55)
-    mix_into(b, marimba(hz(midi("G5")), 0.5, 0.4), 0)
-    mix_into(b, bell(hz(midi("D6")), 0.4, 0.45), 0.07)
-    mix_into(b, bell(hz(midi("G6")), 0.3, 0.45), 0.07)
-    t = tvec(0.12)  # 작은 동전 짤랑
-    jing = bandpass(rng.standard_normal(len(t)), 5000, 10000) * np.exp(-t / 0.03) * 0.08
-    mix_into(b, jing, 0.07)
-    return small_room(b, 0.12)
+    b = buf(0.3)
+    mix_into(b, staccato(marimba(hz(midi("F#5")), 0.5, 0.2), 0.06), 0)
+    mix_into(b, marimba(hz(midi("A5")), 0.55, 0.24), 0.07)
+    return b
+
+
+def sfx_bubble():
+    b = buf(0.12)
+    s, t = sweep_sine(420, 1000, 0.06)
+    mix_into(b, s * np.clip(t / 0.003, 0, 1) * np.exp(-t / 0.025), 0, 0.9)
+    return b
 
 
 def sfx_error():
-    b = buf(0.42)
-    for st, n in [(0, "D4"), (0.13, "Bb3")]:
-        f = hz(midi(n))
-        t = tvec(0.28)
-        y = np.sin(2 * np.pi * f * t) + 0.25 * np.sin(2 * np.pi * 2 * f * t) * np.exp(-t / 0.05)
-        y *= np.clip(t / 0.006, 0, 1) * np.exp(-t / 0.09)
-        mix_into(b, fade(y, 0, 0.03), st, 0.6)
-    return small_room(lowpass(b, 1800), 0.1)
+    b = buf(0.26)
+    for st, n in [(0, "A3"), (0.12, "F#3")]:
+        mix_into(b, pop(hz(midi(n)), dur=0.1, drop=1.12, drop_t=0.015, tau=0.04, h2=0.45), st, 0.7)
+    return lowpass(b, 1500)
+
+
+def sfx_open():
+    b = buf(0.18)
+    t = tvec(0.16)
+    shape = np.sin(np.pi * t / 0.16) ** 2
+    whoosh = tv_lowpass(rng.standard_normal(len(t)), 400 + 1600 * shape) * shape * 0.5
+    mix_into(b, highpass(whoosh, 150), 0)
+    mix_into(b, pop(620, dur=0.07, drop=1.3, drop_t=0.015, tau=0.02), 0.05, 0.25)
+    return b
+
+
+# --- 가끔 ---------------------------------------------------------------
+def sfx_deliver():
+    b = buf(0.75)
+    for k, n in enumerate(["D5", "F#5", "A5"]):
+        mix_into(b, marimba(hz(midi(n)), 0.6, 0.55), k * 0.1)
+        mix_into(b, kalimba(hz(midi(n) + 12), 0.2, 0.5), k * 0.1)
+    return small_room(b, 0.12)
+
+
+def sfx_merge_big():
+    b = buf(0.8)
+    for k, n in enumerate(["A5", "D6", "F#6"]):
+        mix_into(b, marimba(hz(midi(n) - 12), 0.45, 0.5), k * 0.06)
+        mix_into(b, bell(hz(midi(n)), 0.3 + 0.05 * k, 0.6), k * 0.06)
+    sparkle(b, 0.18, 5, 0.3, 0.08, seed=5)
+    return small_room(b, 0.15)
+
+
+def sfx_unlock():
+    b = buf(0.6)
+    t = tvec(0.04)
+    for st, f in [(0, 900), (0.06, 1250)]:  # 딸깍-딸깍(나무)
+        mix_into(b, np.sin(2 * np.pi * f * t) * np.exp(-t / 0.007), st, 0.45)
+    mix_into(b, bell(hz(midi("A5")), 0.4, 0.5), 0.12)
+    mix_into(b, bell(hz(midi("E6")), 0.4, 0.45), 0.2)
+    return small_room(b, 0.12)
 
 
 def sfx_place():
-    b = buf(0.6)
+    b = buf(0.5)
     s, t = sweep_sine(170, 85, 0.12)
     thunk = s * np.exp(-t / 0.035) * np.clip(t / 0.002, 0, 1)
     knock = bandpass(rng.standard_normal(len(t)), 350, 1400) * np.exp(-t / 0.012) * 0.5
     mix_into(b, fade(thunk + knock, 0, 0.02), 0, 0.9)
-    mix_into(b, bell(hz(midi("E6")), 0.14, 0.4), 0.07)
-    mix_into(b, bell(hz(midi("B6")), 0.11, 0.4), 0.12)
-    sparkle(b, 0.12, 3, 0.15, 0.05, seed=13)
-    return small_room(b, 0.12)
+    mix_into(b, bell(hz(midi("F#6")), 0.12, 0.35), 0.07)
+    mix_into(b, bell(hz(midi("A6")), 0.1, 0.35), 0.12)
+    return small_room(b, 0.1)
 
 
 def tv_lowpass(x, fc):
@@ -665,52 +664,45 @@ def tv_lowpass(x, fc):
 
 
 def sfx_splash():
-    b = buf(0.7)
-    t = tvec(0.45)
+    b = buf(0.55)
+    t = tvec(0.4)
     noise = rng.standard_normal(len(t))
-    fc = 900 + 3200 * np.exp(-t / 0.06)
-    body = tv_lowpass(noise, fc) * np.clip(t / 0.008, 0, 1) * np.exp(-t / 0.11)
-    fizz = bandpass(rng.standard_normal(len(t)), 3000, 8000) * np.exp(-t / 0.05) * 0.25
-    mix_into(b, highpass(body, 200) + fizz, 0, 0.9)
+    fc = 800 + 2600 * np.exp(-t / 0.05)
+    body = tv_lowpass(noise, fc) * np.clip(t / 0.008, 0, 1) * np.exp(-t / 0.1)
+    mix_into(b, highpass(body, 200), 0, 0.9)
     r = np.random.default_rng(17)
-    for _ in range(6):  # 물방울
-        f0 = r.uniform(700, 1400)
-        s, tt = sweep_sine(f0, f0 * 1.8, 0.03)
-        mix_into(b, s * np.sin(np.pi * tt / 0.03) * 0.18, r.uniform(0.04, 0.35))
-    return small_room(b, 0.15)
+    for _ in range(5):  # 물방울
+        f0 = r.uniform(700, 1300)
+        s, tt = sweep_sine(f0, f0 * 1.7, 0.03)
+        mix_into(b, s * np.sin(np.pi * tt / 0.03) * 0.18, r.uniform(0.04, 0.3))
+    return small_room(b, 0.1)
 
 
-def sfx_bubble():
-    b = buf(0.16)
-    s, t = sweep_sine(420, 1150, 0.07)
-    y = s * np.clip(t / 0.004, 0, 1) * np.exp(-t / 0.03)
-    mix_into(b, y, 0, 0.9)
-    s2, t2 = sweep_sine(900, 1600, 0.03)
-    mix_into(b, s2 * np.sin(np.pi * t2 / 0.03) * 0.25, 0.055)
-    return small_room(b, 0.1, 0.3)
+# --- 드묾 ---------------------------------------------------------------
+def sfx_levelup():
+    b = buf(1.4)
+    step = 0.1
+    for k, n in enumerate(["D5", "F#5", "A5", "D6"]):
+        mix_into(b, marimba(hz(midi(n)), 0.6, 0.6), k * step)
+        mix_into(b, kalimba(hz(midi(n)), 0.15, 0.5), k * step)
+    for n in ["A5", "D6", "F#6"]:
+        mix_into(b, bell(hz(midi(n)), 0.28, 1.0), 4 * step + 0.02)
+        mix_into(b, marimba(hz(midi(n) - 12), 0.3, 0.9), 4 * step + 0.02)
+    swell = sum(pad_voice(hz(midi(n)), 0.55, attack=0.15, release=0.4, detune_cents=c)
+                for n in ["D4", "A4", "F#5"] for c in (-7, 7))
+    mix_into(b, lowpass(swell, 2200) * 0.06, 4 * step)
+    sparkle(b, 0.45, 8, 0.55, 0.09, seed=9)
+    return small_room(b, 0.2)
 
 
-def sfx_open():
-    b = buf(0.34)
-    t = tvec(0.3)
-    noise = rng.standard_normal(len(t))
-    shape = np.sin(np.pi * np.clip(t / 0.3, 0, 1)) ** 2
-    fc = 500 + 2500 * np.sin(np.pi * np.clip(t / 0.3, 0, 1)) ** 1.5
-    whoosh = tv_lowpass(noise, fc) * shape * 0.6
-    s, _ = sweep_sine(520, 780, 0.3)
-    mix_into(b, highpass(whoosh, 150) + s * shape * 0.08, 0)
-    mix_into(b, bell(hz(midi("A6")), 0.05, 0.25), 0.12)
-    return small_room(b, 0.1, 0.4)
-
-
+# 이름 -> (생성 함수, 목표 LUFS(짧은 블록, 모노)). 변주는 name_1..3 으로 저장.
 SFX = {
-    "tap": sfx_tap, "spawn": sfx_spawn, "merge": sfx_merge, "merge_big": sfx_merge_big,
-    "coin": sfx_coin, "deliver": sfx_deliver, "levelup": sfx_levelup, "unlock": sfx_unlock,
-    "sell": sfx_sell, "error": sfx_error, "place": sfx_place, "splash": sfx_splash,
-    "bubble": sfx_bubble, "open": sfx_open,
+    "tap": (sfx_tap, -24), "coin": (sfx_coin, -21), "sell": (sfx_sell, -21),
+    "bubble": (sfx_bubble, -21), "error": (sfx_error, -21), "open": (sfx_open, -26),
+    "deliver": (sfx_deliver, -18), "merge_big": (sfx_merge_big, -18), "unlock": (sfx_unlock, -19),
+    "place": (sfx_place, -19), "splash": (sfx_splash, -20), "levelup": (sfx_levelup, -16),
 }
-# 효과음별 목표 라우드니스(짧은 블록 기준). UI 성 소리는 조금 작게.
-SFX_LUFS = {"tap": -20, "open": -21, "bubble": -18, "error": -18}
+SFX_VARIANTS = {"spawn": (sfx_spawn, -23), "merge": (sfx_merge, -22)}
 
 
 # ---------------------------------------------------------------------------
@@ -746,7 +738,7 @@ def check():
         total += size
         pk = np.max(np.abs(x))
         rms = np.sqrt(np.mean(x ** 2))
-        block = 0.4 if f.startswith("bgm") else 0.1
+        block = 0.4 if f.startswith("bgm") else min(0.1, x.shape[1] / SR)
         print(f"{f:<16}{x.shape[0]:>3}{x.shape[1] / SR:>8.2f}{size / 1024:>8.1f}{db(pk):>9.2f}{db(rms):>8.2f}"
               f"{loudness(x, block):>7.1f}  {'YES' if pk >= 0.999 else 'no'}")
         if f.startswith("bgm"):
@@ -766,15 +758,27 @@ def check():
     print(f"total {total / 1024:.1f} KB")
 
 
+def render_sfx(fn, lufs):
+    x = fade(lowpass(fn(), 6000, 4), 0.0005, 0.012)
+    return normalize(x, lufs, peak_db=-1.0, block=min(0.1, len(x) / SR))
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     if "--check" not in sys.argv:
         bgm = render_bgm()
         encode(bgm, os.path.join(OUT, "bgm_garden.ogg"), 3)
-        for name, fn in SFX.items():
-            x = fade(fn(), 0.001, 0.015)
-            x = normalize(x, SFX_LUFS.get(name, -16.0), peak_db=-1.0, block=0.1)
-            encode(x, os.path.join(OUT, f"{name}.ogg"), 4)
+        names = {"bgm_garden"}
+        for name, (fn, lufs) in SFX.items():
+            encode(render_sfx(fn, lufs), os.path.join(OUT, f"{name}.ogg"), 4)
+            names.add(name)
+        for name, (fn, lufs) in SFX_VARIANTS.items():
+            for v in range(3):
+                encode(render_sfx(lambda: fn(v), lufs), os.path.join(OUT, f"{name}_{v + 1}.ogg"), 4)
+                names.add(f"{name}_{v + 1}")
+        for f in os.listdir(OUT):  # 더 이상 만들지 않는 옛 파일 정리
+            if f.endswith(".ogg") and f[:-4] not in names:
+                os.remove(os.path.join(OUT, f))
     check()
 
 

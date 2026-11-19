@@ -1,31 +1,42 @@
 import 'dart:async';
 import 'dart:io' show Platform;
+import 'dart:math';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// 게임 효과음 종류. 파일은 assets/audio/<파일명>.ogg (tool/make_audio.py 로 생성).
+/// 게임 효과음 종류. 파일은 assets/audio/*.ogg (tool/make_audio.py 로 생성).
+///
+/// 자주 나는 소리(spawn/merge)는 변주 파일 여러 개 중 하나를 무작위로 골라 덜 질리게 한다.
 enum Sfx {
-  tap('tap'),
-  spawn('spawn'),
-  merge('merge'),
-  mergeBig('merge_big'),
-  coin('coin'),
-  deliver('deliver'),
-  levelup('levelup'),
-  unlock('unlock'),
-  sell('sell'),
-  error('error'),
-  place('place'),
-  splash('splash'),
-  bubble('bubble'),
-  open('open');
+  tap(['tap'], throttleMs: 60),
+  spawn(['spawn_1', 'spawn_2', 'spawn_3'], throttleMs: 60),
+  merge(['merge_1', 'merge_2', 'merge_3'], throttleMs: 60),
+  mergeBig(['merge_big']),
+  coin(['coin']),
+  deliver(['deliver']),
+  levelup(['levelup']),
+  unlock(['unlock']),
+  sell(['sell']),
+  error(['error']),
+  place(['place']),
+  splash(['splash']),
+  bubble(['bubble']),
+  open(['open']);
 
-  const Sfx(this.file);
-  final String file;
+  const Sfx(this.files, {this.throttleMs = 40});
 
-  String get asset => 'audio/$file.ogg';
+  /// 파일 이름(확장자 제외) 목록. 여러 개면 재생할 때 하나를 무작위로 고른다.
+  final List<String> files;
+
+  /// 같은 효과음을 다시 재생하기까지의 최소 간격.
+  final int throttleMs;
+
+  List<String> get assets => [for (final f in files) 'audio/$f.ogg'];
+
+  /// 첫 번째(대표) 파일 경로.
+  String get asset => assets.first;
 }
 
 /// BGM 과 효과음 재생. 앱 전체에서 하나만 쓴다([AudioService.instance]).
@@ -54,7 +65,6 @@ class AudioService extends ChangeNotifier {
   static const double musicVolume = 0.45;
   static const double sfxVolume = 0.9;
   static const int _poolSize = 6;
-  static const int _throttleMs = 40;
 
   bool _musicOn = true;
   bool _sfxOn = true;
@@ -70,6 +80,7 @@ class AudioService extends ChangeNotifier {
   int _next = 0;
   final Stopwatch _clock = Stopwatch()..start();
   final Map<Sfx, int> _lastPlayed = {};
+  final Random _random = Random();
 
   /// 설정을 읽고 플레이어를 준비한다. 여러 번 불러도 한 번만 실행된다.
   Future<void> init() {
@@ -104,7 +115,8 @@ class AudioService extends ChangeNotifier {
       // 에셋을 임시 파일로 미리 풀어 둬서 첫 재생 지연을 줄인다.
       await Future.wait([
         AudioCache.instance.load(_bgmAsset),
-        for (final s in Sfx.values) AudioCache.instance.load(s.asset),
+        for (final s in Sfx.values)
+          for (final a in s.assets) AudioCache.instance.load(a),
       ]);
       _ready = true;
     } catch (_) {
@@ -139,23 +151,27 @@ class AudioService extends ChangeNotifier {
     } catch (_) {}
   }
 
-  /// 효과음 재생. 같은 효과음은 40 ms 안에 한 번만, 여러 효과음은 겹쳐 난다.
+  /// 효과음 재생. 같은 효과음은 [Sfx.throttleMs] 안에 한 번만, 여러 효과음은 겹쳐 난다.
   void play(Sfx s) {
     if (!enabled || !_sfxOn || !_ready || _pool.isEmpty) return;
     final now = _clock.elapsedMilliseconds;
     final last = _lastPlayed[s];
-    if (last != null && now - last < _throttleMs) return;
+    if (last != null && now - last < s.throttleMs) return;
     _lastPlayed[s] = now;
     final p = _pool[_next];
     _next = (_next + 1) % _pool.length;
-    unawaited(_playOn(p, s));
+    final assets = s.assets;
+    final asset = assets.length == 1
+        ? assets.first
+        : assets[_random.nextInt(assets.length)];
+    unawaited(_playOn(p, asset));
   }
 
-  Future<void> _playOn(AudioPlayer p, Sfx s) async {
+  Future<void> _playOn(AudioPlayer p, String asset) async {
     try {
       await p.stop();
       await p.play(
-        AssetSource(s.asset),
+        AssetSource(asset),
         volume: sfxVolume,
         mode: PlayerMode.lowLatency,
       );
