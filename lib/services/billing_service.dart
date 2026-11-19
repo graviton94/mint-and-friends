@@ -78,7 +78,9 @@ class BillingService extends ChangeNotifier {
     purchasing = true;
     notifyListeners();
     try {
-      await _iap.buyNonConsumable(purchaseParam: PurchaseParam(productDetails: p));
+      await _iap.buyNonConsumable(
+        purchaseParam: PurchaseParam(productDetails: p),
+      );
     } catch (_) {
       purchasing = false;
       notifyListeners();

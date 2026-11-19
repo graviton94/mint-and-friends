@@ -18,10 +18,16 @@ ThemeData buildTheme() {
   final base = ThemeData(
     useMaterial3: true,
     fontFamily: 'Jua',
-    colorScheme: ColorScheme.fromSeed(seedColor: Palette.primary, brightness: Brightness.light),
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: Palette.primary,
+      brightness: Brightness.light,
+    ),
   );
   return base.copyWith(
-    textTheme: base.textTheme.apply(bodyColor: Palette.text, displayColor: Palette.text),
+    textTheme: base.textTheme.apply(
+      bodyColor: Palette.text,
+      displayColor: Palette.text,
+    ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         minimumSize: const Size(48, 48),

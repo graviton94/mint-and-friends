@@ -5,7 +5,11 @@ const _units = ['', 'K', 'M', 'B', 'T'];
 /// 1234 -> 1.23K, 큰 수는 aa, ab ... 표기.
 String fmt(double v) {
   if (v.isNaN || v.isInfinite) return '∞';
-  if (v < 1000) return v < 10 && v != v.floorToDouble() ? v.toStringAsFixed(1) : v.floor().toString();
+  if (v < 1000) {
+    return v < 10 && v != v.floorToDouble()
+        ? v.toStringAsFixed(1)
+        : v.floor().toString();
+  }
   final exp = (log(v) / ln10).floor();
   var tier = exp ~/ 3;
   var scaled = v / pow(10, tier * 3);

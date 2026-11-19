@@ -13,7 +13,8 @@ class AdIds {
   static const _testRewarded = 'ca-app-pub-3940256099942544/5224354917';
 
   static String get banner => kReleaseMode ? _prodBanner : _testBanner;
-  static String get interstitial => kReleaseMode ? _prodInterstitial : _testInterstitial;
+  static String get interstitial =>
+      kReleaseMode ? _prodInterstitial : _testInterstitial;
   static String get rewarded => kReleaseMode ? _prodRewarded : _testRewarded;
 }
 

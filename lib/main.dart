@@ -18,13 +18,13 @@ Future<void> main() async {
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   final prefs = await SharedPreferences.getInstance();
-  final game = GameState();
+  var game = GameState();
   final raw = prefs.getString(_saveKey);
   if (raw != null) {
     try {
-      game.load(raw);
+      if (!game.load(raw)) game = GameState(); // 예전 버전 저장
     } catch (_) {
-      // 손상된 저장 데이터는 무시하고 새로 시작.
+      game = GameState(); // 손상된 저장 데이터는 무시하고 새로 시작
     }
   }
 
@@ -39,7 +39,13 @@ Future<void> main() async {
 }
 
 class BloomApp extends StatefulWidget {
-  const BloomApp({super.key, required this.game, required this.ads, required this.billing, required this.prefs});
+  const BloomApp({
+    super.key,
+    required this.game,
+    required this.ads,
+    required this.billing,
+    required this.prefs,
+  });
   final GameState game;
   final AdsService ads;
   final BillingService billing;
@@ -88,7 +94,8 @@ class _BloomAppState extends State<BloomApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
       _stop();
     } else if (state == AppLifecycleState.resumed) {
       _start();
@@ -109,11 +116,18 @@ class _BloomAppState extends State<BloomApp> with WidgetsBindingObserver {
         content: Text(
           '${fmtDuration(reward.away)} 동안\n🪙 ${fmt(reward.coins)} 을(를) 모았어요!',
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, height: 1.5),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            height: 1.5,
+          ),
         ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('받기', style: TextStyle(fontSize: 16))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('받기', style: TextStyle(fontSize: 16)),
+          ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Palette.ad),
             onPressed: () => Navigator.pop(ctx, true),

@@ -89,7 +89,10 @@ class AdsService extends ChangeNotifier {
     if (isAdFree()) return;
     final now = DateTime.now();
     if (now.difference(_startedAt) < GameConfig.interstitialGrace) return;
-    if (_lastInterstitial != null && now.difference(_lastInterstitial!) < GameConfig.interstitialGap) return;
+    if (_lastInterstitial != null &&
+        now.difference(_lastInterstitial!) < GameConfig.interstitialGap) {
+      return;
+    }
     final ad = _interstitial;
     if (ad == null) return;
     _interstitial = null;
