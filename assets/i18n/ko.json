@@ -52,7 +52,7 @@
   "toast.sold": "[[coin]]{coins} 에 판매했어요",
   "toast.bubble": "[[bubble]] 비눗방울이 생겼어요! 눌러서 꺼내 보세요",
   "toast.featureLocked": "[[lock]] Lv.{n} 에 열려요",
-  "levelUp.title": "레벨 업! Lv.{n}",
+  "levelUp.title": "레벨 업!",
   "levelUp.reward": "[[coin]]{coins}  [[energy]]+{energy}",
   "levelUp.unlocked": "새로 열린 기능",
   "levelUp.ok": "좋아요!",

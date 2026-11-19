@@ -51,7 +51,7 @@
   "toast.sold": "Sold for [[coin]]{coins}",
   "toast.bubble": "[[bubble]] A bubble appeared! Tap it to pop it out",
   "toast.featureLocked": "[[lock]] Opens at Lv.{n}",
-  "levelUp.title": "Level up! Lv.{n}",
+  "levelUp.title": "Level up!",
   "levelUp.reward": "[[coin]]{coins}  [[energy]]+{energy}",
   "levelUp.unlocked": "Newly unlocked",
   "levelUp.ok": "Great!",

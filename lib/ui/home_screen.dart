@@ -155,6 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (ctx) => GameDialog(
         banner: 'gold',
         emblem: 'levelup_burst',
+        emblemText: '${e.level}',
         title: IconText(
           tr('levelUp.title', {'n': e.level}),
           textAlign: TextAlign.center,

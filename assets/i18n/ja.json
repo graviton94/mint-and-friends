@@ -51,7 +51,7 @@
   "toast.sold": "[[coin]]{coins} で売りました",
   "toast.bubble": "[[bubble]] シャボン玉が出たよ! タップして取り出そう",
   "toast.featureLocked": "[[lock]] Lv.{n} で解放",
-  "levelUp.title": "レベルアップ! Lv.{n}",
+  "levelUp.title": "レベルアップ!",
   "levelUp.reward": "[[coin]]{coins}  [[energy]]+{energy}",
   "levelUp.unlocked": "新しく解放された機能",
   "levelUp.ok": "やったね!",

@@ -59,7 +59,11 @@ class GameDialog extends StatelessWidget {
     this.actionsAlignment,
     this.banner = 'green',
     this.emblem,
+    this.emblemText,
   });
+
+  /// 엠블럼 가운데 글자 (예: 레벨 숫자).
+  final String? emblemText;
 
   /// 제목 띠 색: 'green' (보통) · 'gold' (레벨업 · 보상).
   final String banner;
@@ -118,7 +122,7 @@ class GameDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      insetPadding: EdgeInsets.fromLTRB(28, emblem != null ? 150 : 52, 28, 24),
+      insetPadding: EdgeInsets.fromLTRB(28, emblem != null ? 160 : 52, 28, 24),
       clipBehavior: Clip.none,
       child: !hasRibbon
           ? panel
@@ -144,13 +148,27 @@ class GameDialog extends StatelessWidget {
                   ),
                 if (emblem != null && Art.frame(emblem!).available)
                   Positioned(
-                    top: -112,
+                    top: -130,
                     child: IgnorePointer(
                       child: _Pop(
-                        child: Image.asset(
-                          Art.frame(emblem!).path,
-                          height: 96,
-                          filterQuality: FilterQuality.medium,
+                        child: SizedBox(
+                          height: 114,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Image.asset(
+                                Art.frame(emblem!).path,
+                                height: 114,
+                                filterQuality: FilterQuality.medium,
+                              ),
+                              if (emblemText != null)
+                                // 별 몸통 가운데 (그림 높이의 64%)
+                                Positioned(
+                                  top: 114 * 0.64 - 26,
+                                  child: _OutlinedNumber(emblemText!),
+                                ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -415,6 +433,46 @@ class _Pop extends StatelessWidget {
         );
       },
       child: child,
+    );
+  }
+}
+
+/// 굵은 숫자: 흰 글자 + 두꺼운 갈색 외곽선 (별 · 배지 위에 얹는 용).
+class _OutlinedNumber extends StatelessWidget {
+  const _OutlinedNumber(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = text.length >= 3 ? 32.0 : 42.0;
+    return SizedBox(
+      height: 52,
+      child: Stack(
+        children: [
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: size,
+              height: 1.2,
+              fontWeight: FontWeight.w900,
+              foreground: Paint()
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 6
+                ..strokeJoin = StrokeJoin.round
+                ..color = const Color(0xFF7A4A12),
+            ),
+          ),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: size,
+              height: 1.2,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
