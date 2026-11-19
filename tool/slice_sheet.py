@@ -17,6 +17,10 @@ from collections import deque
 from PIL import Image
 
 
+def _kw(path):
+    return dict(quality=90, method=6, alpha_quality=100) if path.endswith('.webp') else {}
+
+
 def remove_white_bg(img: Image.Image, thresh: int = 235) -> Image.Image:
     img = img.convert("RGBA")
     w, h = img.size
@@ -107,7 +111,7 @@ def main():
     a = ap.parse_args()
     src = Image.open(a.sheet)
     if a.keep_bg:
-        src.convert("RGB").resize((1080, 720), Image.LANCZOS).save(a.outputs[0])
+        src.convert("RGB").resize((1080, 720), Image.LANCZOS).save(a.outputs[0], **_kw(a.outputs[0]))
         print("saved", a.outputs[0])
         return
     img = remove_white_bg(src)
@@ -115,7 +119,7 @@ def main():
     for i, out in enumerate(a.outputs):
         r, c = divmod(i, a.cols)
         cell = img.crop((round(c * cw), round(r * ch), round((c + 1) * cw), round((r + 1) * ch)))
-        fit_square(cell, a.size).save(out)
+        fit_square(cell, a.size).save(out, **_kw(out))
         print("saved", out)
 
 

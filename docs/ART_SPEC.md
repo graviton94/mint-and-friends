@@ -4,19 +4,21 @@
 없는 파일은 이모지 임시 그림으로 그려집니다 (`lib/art/art.dart`).
 `pubspec.yaml` 의 `assets:` 에 폴더를 한 번만 등록하면 됩니다 (아트를 처음 넣을 때 같이 등록).
 
+> 앱에 들어가는 그림은 WebP(q90, 알파 보존)로 저장된다. `tool/import_art.py` 가 출력 경로 확장자에 맞춰 자동 변환하므로 받은 시트는 PNG/JPG 그대로 넣으면 된다.
+
 ## 발주 방식 (시트)
 비슷한 에셋은 한 장의 그리드 이미지(스프라이트 시트)로 받습니다. 그래야 그림체와 크기가 서로 맞습니다.
 발주서 아티팩트에 14장의 시트 프롬프트가 있습니다 (꽃 5×3, 간식 5×3, 친구 기본 3×3, 친구 기쁨 4×2, 장식 구역별 4×2 ×4, 배경 4장, UI 3×2, 앱 아이콘).
 받은 시트는 `tool/slice_sheet.py` 로 흰 배경을 지우고 칸별로 잘라 아래 파일 이름으로 넣습니다.
 
 ```bash
-python3 tool/slice_sheet.py flower_sheet.png 5 3 assets/art/items/flower_{01..15}.png
-python3 tool/slice_sheet.py yard.png 1 1 assets/art/areas/yard_bg.png --keep-bg
+python3 tool/slice_sheet.py flower_sheet.png 5 3 assets/art/items/flower_{01..15}.webp
+python3 tool/slice_sheet.py yard.png 1 1 assets/art/areas/yard_bg.webp --keep-bg
 ```
 
 ## 공통 규칙
 - 형식: PNG, 투명 배경 (배경 이미지 제외), sRGB
-- 스타일 (확정): **B 말랑 스티커**. 굵은 짙은 갈색 외곽선, 밝은 파스텔 단색 면, 셀 음영 1단 + 작은 흰 하이라이트, 통통한 형태. 기준 이미지 = `assets/art/friends/bori_idle.png`
+- 스타일 (확정): **B 말랑 스티커**. 굵은 짙은 갈색 외곽선, 밝은 파스텔 단색 면, 셀 음영 1단 + 작은 흰 하이라이트, 통통한 형태. 기준 이미지 = `assets/art/friends/bori_idle.webp`
 - 배경만 **C 플랫 파스텔** (외곽선 없음). 선 있는 캐릭터·장식이 앞으로 떠 보이게 하기 위함
 - 여백: 캔버스 가장자리에서 약 6% 띄우기 (칸 안에서 꽉 차 보이지 않게)
 - 시선/방향: 캐릭터는 **왼쪽을 바라보게**. 오른쪽으로 걸을 때는 코드가 좌우 반전합니다
@@ -27,7 +29,7 @@ python3 tool/slice_sheet.py yard.png 1 1 assets/art/areas/yard_bg.png --keep-bg
 
 | 레이어 | 내용 | 아트 |
 |---|---|---|
-| L0 배경 | 하늘 + 땅 | `areas/<구역>_bg.png` 한 장 (없으면 단색) |
+| L0 배경 | 하늘 + 땅 | `areas/<구역>_bg.webp` 한 장 (없으면 단색) |
 | L1 월드 | 장식, 친구, 손님. 발 위치(y) 기준으로 앞뒤를 정렬 | `decor/*`, `friends/*` |
 | L2 이펙트 | 말풍선, 하트·코인 숫자 | 코드 |
 | L3 UI | 구역 이름, 메뉴 버튼 | `ui/*` |
@@ -36,8 +38,8 @@ python3 tool/slice_sheet.py yard.png 1 1 assets/art/areas/yard_bg.png --keep-bg
 
 | 레이어 | 내용 | 아트 |
 |---|---|---|
-| L0 칸 | 바닥 타일, 잠긴 칸 자물쇠 | `ui/lock.png` |
-| L1 아이템 | 아이템, 비눗방울, 선택 테두리 | `items/*`, `ui/bubble.png` |
+| L0 칸 | 바닥 타일, 잠긴 칸 자물쇠 | `ui/lock.webp` |
+| L1 아이템 | 아이템, 비눗방울, 선택 테두리 | `items/*`, `ui/bubble.webp` |
 | L2 드래그 | 손가락을 따라오는 아이템 | 같은 아이템 그림 |
 | L3 이펙트 | 합치기 반짝임 | 코드 |
 
@@ -97,7 +99,7 @@ python3 tool/slice_sheet.py yard.png 1 1 assets/art/areas/yard_bg.png --keep-bg
 
 ## UI 아이콘·프레임 (2차 발주)
 
-### 아이콘: `assets/art/icons/<id>.png` (192px, 투명)
+### 아이콘: `assets/art/icons/<id>.webp` (192px, 투명)
 문구와 화면에서 이모지를 쓰지 않는다. 문구(assets/i18n)에는 `[[id]]` 토큰을 쓰고 `IconText` 가 그림으로 바꾼다.
 그림 파일이 없으면 `Art.iconFallback` 의 이모지로 대신 그리고, 파일이 들어오면 코드 수정 없이 바뀐다.
 
@@ -110,7 +112,7 @@ python3 tool/slice_sheet.py yard.png 1 1 assets/art/areas/yard_bg.png --keep-bg
 동적 토큰: `[[item:flower:3]]`, `[[friend:bori]]`, `[[decor:bench]]`.
 `test/i18n_test.dart` 가 문구 속 이모지와 모르는 토큰을 잡아낸다.
 
-### 프레임: `assets/art/frames/<id>.png` (384×384, 9-slice)
+### 프레임: `assets/art/frames/<id>.webp` (384×384, 9-slice)
 가장자리 116px 는 고정, 가운데만 늘어난다 (`Art.frameCenter`). 가운데는 무늬 없는 단색이어야 한다.
 
 | id | 쓰는 곳 |

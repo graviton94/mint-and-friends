@@ -47,29 +47,29 @@ class Art {
 
   // ---- 경로 규칙 (docs/ART_SPEC.md 와 같아야 함)
   static ArtRef item(Chain c, int level) => ArtRef(
-    'assets/art/items/${c.name}_${level.toString().padLeft(2, '0')}.png',
+    'assets/art/items/${c.name}_${level.toString().padLeft(2, '0')}.webp',
     Chains.item(c, level).emoji,
   );
 
   /// 기쁨 표정 그림이 아직 없으면 기본 그림을 쓴다 (탭할 때 이모지로 바뀌지 않게).
   static ArtRef friend(FriendDef f, {bool happy = false}) {
-    final idle = ArtRef('assets/art/friends/${f.id}_idle.png', f.emoji);
+    final idle = ArtRef('assets/art/friends/${f.id}_idle.webp', f.emoji);
     if (!happy) return idle;
-    final h = ArtRef('assets/art/friends/${f.id}_happy.png', f.emoji);
+    final h = ArtRef('assets/art/friends/${f.id}_happy.webp', f.emoji);
     return h.available || !idle.available ? h : idle;
   }
 
   static ArtRef visitor() =>
-      const ArtRef('assets/art/friends/visitor_idle.png', Friends.visitorEmoji);
+      const ArtRef('assets/art/friends/visitor_idle.webp', Friends.visitorEmoji);
 
   static ArtRef decor(DecorDef d) =>
-      ArtRef('assets/art/decor/${d.id}.png', d.emoji);
+      ArtRef('assets/art/decor/${d.id}.webp', d.emoji);
 
   static ArtRef areaBackground(AreaDef a) =>
-      ArtRef('assets/art/areas/${a.id}_bg.png', '');
+      ArtRef('assets/art/areas/${a.id}_bg.webp', '');
 
   static ArtRef ui(String name, String emoji) =>
-      ArtRef('assets/art/ui/$name.png', emoji);
+      ArtRef('assets/art/ui/$name.webp', emoji);
 
   /// UI 아이콘. 발주서 "UI 아이콘 2·3" 시트로 받는다. 파일이 없으면 이모지로 대신 그린다.
   static const Map<String, String> iconFallback = {
@@ -119,13 +119,13 @@ class Art {
     if (ui != null) return ui;
     if (id == 'visitor') return visitor();
     if (id == 'sprout') return item(Chain.flower, 2);
-    return ArtRef('assets/art/icons/$id.png', iconFallback[id] ?? '•');
+    return ArtRef('assets/art/icons/$id.webp', iconFallback[id] ?? '•');
   }
 
   static ArtRef areaIcon(AreaDef a) => icon('area_${a.id}');
 
   /// 9-slice 프레임 (버튼, 모달, 카드, 토스트, 말풍선…). 384x384 정사각, 가장자리 30% 는 늘어나지 않는다.
-  static ArtRef frame(String id) => ArtRef('assets/art/frames/$id.png', '');
+  static ArtRef frame(String id) => ArtRef('assets/art/frames/$id.webp', '');
 
   /// 프레임 원본 크기 (assets/art/frames/frames.json, tool/import_art.py 가 만든다).
   static Map<String, Size> _frameSizes = {};
@@ -144,12 +144,12 @@ class Art {
     return sz == null ? 0 : min(sz.width, sz.height) * 0.4;
   }
 
-  static const coin = ArtRef('assets/art/ui/coin.png', '🪙');
-  static const star = ArtRef('assets/art/ui/star.png', '⭐');
-  static const basket = ArtRef('assets/art/ui/basket.png', '🧺');
-  static const lock = ArtRef('assets/art/ui/lock.png', '🔒');
-  static const bubble = ArtRef('assets/art/ui/bubble.png', '🫧');
-  static const gift = ArtRef('assets/art/ui/gift.png', '🎁');
+  static const coin = ArtRef('assets/art/ui/coin.webp', '🪙');
+  static const star = ArtRef('assets/art/ui/star.webp', '⭐');
+  static const basket = ArtRef('assets/art/ui/basket.webp', '🧺');
+  static const lock = ArtRef('assets/art/ui/lock.webp', '🔒');
+  static const bubble = ArtRef('assets/art/ui/bubble.webp', '🫧');
+  static const gift = ArtRef('assets/art/ui/gift.webp', '🎁');
 }
 
 class ArtRef {

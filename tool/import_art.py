@@ -25,10 +25,20 @@ def out(path):
     return p
 
 
+def save(img, path):
+    """앱에 들어가는 그림은 WebP(q90, 알파 보존), 그 밖(앱 아이콘 원본·mipmap·스토어)은 PNG."""
+    p = out(path)
+    if p.endswith(".webp"):
+        rgba = img.mode in ("RGBA", "LA", "P")
+        img.convert("RGBA" if rgba else "RGB").save(p, "WEBP", quality=90, method=6, alpha_quality=100)
+    else:
+        img.save(p, optimize=True)
+
+
 def import_sheet(sid, src, spec):
     img = Image.open(src)
     if spec.get("bg"):
-        img.convert("RGB").resize((1080, 720), Image.LANCZOS).save(out(spec["files"][0]), optimize=True)
+        save(img.convert("RGB").resize((1080, 720), Image.LANCZOS), spec["files"][0])
         return [spec["files"][0]]
     if spec.get("icon"):
         sq = img.convert("RGB")
@@ -48,7 +58,7 @@ def import_sheet(sid, src, spec):
     for i, f in enumerate(spec["files"]):
         r, c = divmod(i, cols)
         cell = clear.crop((round(c * cw), round(r * ch), round((c + 1) * cw), round((r + 1) * ch)))
-        fit_square(cell, size).save(out(f), optimize=True)
+        save(fit_square(cell, size), f)
         done.append(f)
     return done
 
@@ -70,7 +80,7 @@ def import_frames(clear, spec):
             cell = cell.crop(box)
         k = 384 / max(cell.size)
         cell = cell.resize((max(1, round(cell.width * k)), max(1, round(cell.height * k))), Image.LANCZOS)
-        cell.save(out(f), optimize=True)
+        save(cell, f)
         manifest[os.path.splitext(os.path.basename(f))[0]] = [cell.width, cell.height]
         done.append(f)
     json.dump(manifest, open(manifest_path, "w"), indent=1, sort_keys=True)
