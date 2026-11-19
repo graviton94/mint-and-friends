@@ -2,37 +2,56 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'art/art.dart';
 import 'game/format.dart';
 import 'game/game_state.dart';
+import 'i18n/l10n.dart';
+import 'i18n/names.dart';
 import 'services/ads_service.dart';
+import 'services/auth_service.dart';
 import 'services/billing_service.dart';
+import 'services/save_service.dart';
+import 'ui/account_ui.dart';
 import 'ui/home_screen.dart';
+import 'ui/sheets.dart';
 import 'ui/theme.dart';
-
-const _saveKey = 'save_v1';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   final prefs = await SharedPreferences.getInstance();
-  var game = GameState();
-  final raw = prefs.getString(_saveKey);
-  if (raw != null) {
-    try {
-      if (!game.load(raw)) game = GameState(); // 예전 버전 저장
-    } catch (_) {
-      game = GameState(); // 손상된 저장 데이터는 무시하고 새로 시작
-    }
-  }
+  await Future.wait([L10n.instance.init(), Art.init()]);
+
+  final auth = AuthService();
+  await auth.init();
+
+  final save = SaveService(prefs);
+  final game = GameState();
+  save.loadLocal(game);
 
   final billing = BillingService();
   final ads = AdsService(isAdFree: () => billing.adFree);
-  billing.addListener(() => game.adFree = billing.adFree);
 
-  runApp(BloomApp(game: game, ads: ads, billing: billing, prefs: prefs));
+  String version = '';
+  try {
+    final info = await PackageInfo.fromPlatform();
+    version = '${info.version} (${info.buildNumber})';
+  } catch (_) {}
+
+  runApp(
+    BloomApp(
+      game: game,
+      ads: ads,
+      billing: billing,
+      auth: auth,
+      save: save,
+      version: version,
+    ),
+  );
 
   unawaited(billing.init());
   unawaited(ads.init());
@@ -44,12 +63,16 @@ class BloomApp extends StatefulWidget {
     required this.game,
     required this.ads,
     required this.billing,
-    required this.prefs,
+    required this.auth,
+    required this.save,
+    this.version = '',
   });
   final GameState game;
   final AdsService ads;
   final BillingService billing;
-  final SharedPreferences prefs;
+  final AuthService auth;
+  final SaveService save;
+  final String version;
 
   @override
   State<BloomApp> createState() => _BloomAppState();
@@ -57,19 +80,78 @@ class BloomApp extends StatefulWidget {
 
 class _BloomAppState extends State<BloomApp> with WidgetsBindingObserver {
   final _navKey = GlobalKey<NavigatorState>();
+  late GameState game;
   Timer? _loop;
   Timer? _autosave;
   DateTime _lastTick = DateTime.now();
+  String? _attachedUid;
+  bool _attaching = false;
+  StreamSubscription<GameEvent>? _gameSub;
 
-  GameState get game => widget.game;
+  AuthService get auth => widget.auth;
+  SaveService get save => widget.save;
 
   @override
   void initState() {
     super.initState();
+    game = widget.game;
+    _bindGame();
     WidgetsBinding.instance.addObserver(this);
+    widget.billing.addListener(() => game.adFree = widget.billing.adFree);
+    auth.addListener(_onAuthChanged);
     _start();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _offerOffline());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _onAuthChanged();
+      _offerOffline();
+    });
   }
+
+  /// 중요한 순간(레벨업, 장식, 구역 완성)에는 바로 클라우드에 올린다.
+  void _bindGame() {
+    _gameSub?.cancel();
+    _gameSub = game.events.listen((e) {
+      if (e is LevelUpEvent ||
+          e is DecorPlacedEvent ||
+          e is AreaCompletedEvent) {
+        save.saveLocal(game);
+        save.upload(game);
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------- 로그인 ↔ 저장
+
+  Future<void> _onAuthChanged() async {
+    final uid = auth.uid;
+    if (!mounted) return;
+    setState(() {});
+    if (uid == null || uid == _attachedUid || _attaching) return;
+    _attaching = true;
+    try {
+      await save.attach(
+        uid,
+        game,
+        askUser: (local, cloud) async {
+          final ctx = _navKey.currentContext;
+          if (ctx == null) return true;
+          return askSaveConflict(ctx, local, cloud);
+        },
+      );
+      _attachedUid = uid;
+    } finally {
+      _attaching = false;
+    }
+  }
+
+  void _resetGame() {
+    _gameSub?.cancel();
+    setState(() {
+      game = GameState()..adFree = widget.billing.adFree;
+      _bindGame();
+    });
+  }
+
+  // ---------------------------------------------------------------- 게임 루프
 
   void _start() {
     _lastTick = DateTime.now();
@@ -78,19 +160,22 @@ class _BloomAppState extends State<BloomApp> with WidgetsBindingObserver {
       final now = DateTime.now();
       final dt = now.difference(_lastTick).inMicroseconds / 1e6;
       _lastTick = now;
-      game.tick(dt.clamp(0, 1)); // 긴 공백은 오프라인 보상으로 처리
+      if (auth.signedIn) game.tick(dt.clamp(0, 1)); // 긴 공백은 오프라인 보상으로 처리
     });
     _autosave?.cancel();
-    _autosave = Timer.periodic(const Duration(seconds: 5), (_) => _save());
+    _autosave = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (auth.signedIn) save.saveLocal(game);
+    });
   }
 
   void _stop() {
     _loop?.cancel();
     _autosave?.cancel();
-    _save();
+    if (auth.signedIn) {
+      save.saveLocal(game);
+      save.upload(game);
+    }
   }
-
-  void _save() => widget.prefs.setString(_saveKey, game.encode());
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -104,6 +189,7 @@ class _BloomAppState extends State<BloomApp> with WidgetsBindingObserver {
   }
 
   Future<void> _offerOffline() async {
+    if (!auth.signedIn) return;
     final reward = game.computeOffline();
     final ctx = _navKey.currentContext;
     if (reward == null || ctx == null) return;
@@ -112,26 +198,32 @@ class _BloomAppState extends State<BloomApp> with WidgetsBindingObserver {
       context: ctx,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        title: const Text('🌙 정원이 자라는 동안', textAlign: TextAlign.center),
+        title: Text(tr('offline.title'), textAlign: TextAlign.center),
         content: Text(
-          '${fmtDuration(reward.away)} 동안\n🪙 ${fmt(reward.coins)} 을(를) 모았어요!',
+          tr('offline.body', {
+            'time': fmtDuration(reward.away),
+            'coins': fmt(reward.coins),
+          }),
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            height: 1.5,
-          ),
+          style: const TextStyle(fontSize: 18, height: 1.5),
         ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('받기', style: TextStyle(fontSize: 16)),
+            child: Text(
+              tr('offline.take'),
+              style: const TextStyle(fontSize: 16),
+            ),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Palette.ad),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(adFree ? '2배로 받기' : '📺 2배로 받기'),
+            child: Text(
+              adFree
+                  ? tr('offline.double')
+                  : tr('ctrl.ad', {'label': tr('offline.double')}),
+            ),
           ),
         ],
       ),
@@ -139,24 +231,124 @@ class _BloomAppState extends State<BloomApp> with WidgetsBindingObserver {
     var x2 = false;
     if (doubled == true) x2 = await widget.ads.showRewarded();
     game.grantOffline(reward, doubled: x2);
-    _save();
+    save.saveLocal(game);
+  }
+
+  // ---------------------------------------------------------------- 설정 / 계정
+
+  void _snack(String code) {
+    final ctx = _navKey.currentContext;
+    if (ctx == null) return;
+    ScaffoldMessenger.of(ctx).showSnackBar(
+      SnackBar(
+        content: Text(
+          tr(
+            code == 'already_linked'
+                ? 'account.alreadyLinked'
+                : 'account.error',
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _guard(Future<void> Function() f) async {
+    try {
+      await f();
+    } on AuthException catch (e) {
+      if (e.code != 'cancelled') _snack(e.code);
+    }
+  }
+
+  Future<void> _signOut(BuildContext sheetCtx) async {
+    Navigator.of(sheetCtx).pop();
+    await save.upload(game);
+    await _guard(auth.signOut);
+    save.detach();
+    await save.clearLocal();
+    _attachedUid = null;
+    _resetGame();
+  }
+
+  Future<void> _deleteAccount(BuildContext sheetCtx) async {
+    final ok = await showDialog<bool>(
+      context: sheetCtx,
+      builder: (ctx) => AlertDialog(
+        content: Text(tr('account.deleteConfirm')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(tr('common.cancel')),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(tr('account.deleteYes')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !sheetCtx.mounted) return;
+    Navigator.of(sheetCtx).pop();
+    await _guard(auth.deleteAccount);
+    save.detach();
+    await save.clearLocal();
+    _attachedUid = null;
+    _resetGame();
+  }
+
+  void _openSettings(BuildContext context) {
+    showSettingsSheet(
+      context,
+      listen: Listenable.merge([auth, save]),
+      version: widget.version,
+      accountSection: () => Builder(
+        builder: (sheetCtx) => AccountSection(
+          auth: auth,
+          save: save,
+          onLinkGoogle: () => _guard(auth.signInGoogle),
+          onLinkKakao: () => _guard(auth.signInKakao),
+          onSignOut: () => _signOut(sheetCtx),
+          onDelete: () => _deleteAccount(sheetCtx),
+        ),
+      ),
+    );
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    auth.removeListener(_onAuthChanged);
+    _gameSub?.cancel();
     _stop();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: _navKey,
-      title: '블룸 가든',
-      debugShowCheckedModeBanner: false,
-      theme: buildTheme(),
-      home: HomeScreen(game: game, ads: widget.ads, billing: widget.billing),
+    return ListenableBuilder(
+      listenable: Listenable.merge([L10n.instance, auth]),
+      builder: (context, _) => MaterialApp(
+        navigatorKey: _navKey,
+        onGenerateTitle: (_) => tr('app.title'),
+        debugShowCheckedModeBanner: false,
+        theme: buildTheme(),
+        locale: L10n.instance.locale,
+        supportedLocales: [for (final c in L10n.supported.keys) Locale(c)],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        home: !auth.ready
+            ? const Scaffold(body: Center(child: CircularProgressIndicator()))
+            : !auth.signedIn
+            ? LoginScreen(auth: auth, onError: _snack)
+            : HomeScreen(
+                key: ObjectKey(game),
+                game: game,
+                ads: widget.ads,
+                billing: widget.billing,
+                openSettings: _openSettings,
+                extraListenable: save,
+              ),
+      ),
     );
   }
 }

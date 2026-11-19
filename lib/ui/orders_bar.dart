@@ -1,7 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../art/art.dart';
 import '../game/config.dart';
 import '../game/game_state.dart';
+import '../i18n/l10n.dart';
 import 'theme.dart';
 
 /// 친구들의 부탁 3개. 보드에 아이템이 있으면 탭 한 번으로 전달된다.
@@ -57,8 +59,8 @@ class _OrderCard extends StatelessWidget {
       onTap: ready ? () => game.deliver(index) : null,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: 64,
-        padding: const EdgeInsets.symmetric(horizontal: 6),
+        height: 62,
+        padding: const EdgeInsets.symmetric(horizontal: 5),
         decoration: BoxDecoration(
           color: ready ? const Color(0xFFFFF3C4) : Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -69,7 +71,7 @@ class _OrderCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Text(friend.emoji, style: const TextStyle(fontSize: 24)),
+            ArtImage(Art.friend(friend), size: 28),
             const SizedBox(width: 2),
             Expanded(
               child: Column(
@@ -79,10 +81,7 @@ class _OrderCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          o.item.emoji,
-                          style: const TextStyle(fontSize: 22),
-                        ),
+                        ArtImage(Art.item(o.chain, o.level), size: 26),
                         Text(
                           ' Lv${o.level}',
                           style: const TextStyle(fontSize: 13),
@@ -92,7 +91,7 @@ class _OrderCard extends StatelessWidget {
                   ),
                   FittedBox(
                     child: Text(
-                      ready ? '탭해서 전달!' : '⭐${o.stars}',
+                      ready ? tr('order.deliver') : '⭐${o.stars}',
                       style: TextStyle(
                         fontSize: 13,
                         color: ready ? const Color(0xFFB0640A) : Palette.text,
@@ -103,14 +102,17 @@ class _OrderCard extends StatelessWidget {
               ),
             ),
             if (!ready)
-              GestureDetector(
-                onTap: onRefresh,
-                child: Padding(
-                  padding: const EdgeInsets.all(2),
-                  child: Text(
-                    adFree ? '🔄' : '🔄\n📺',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 11),
+              Tooltip(
+                message: tr('order.refresh'),
+                child: GestureDetector(
+                  onTap: onRefresh,
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: Text(
+                      adFree ? '🔄' : '🔄\n📺',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 11),
+                    ),
                   ),
                 ),
               ),

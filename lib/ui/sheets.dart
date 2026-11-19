@@ -1,29 +1,42 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../art/art.dart';
 import '../game/config.dart';
 import '../game/format.dart';
 import '../game/game_state.dart';
+import '../i18n/l10n.dart';
+import '../i18n/names.dart';
 import '../services/billing_service.dart';
 import 'theme.dart';
 
-Future<void> showUpgradesSheet(BuildContext context, GameState game) {
+Future<void> _sheet(
+  BuildContext context,
+  Listenable listen,
+  Widget Function() build,
+) {
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Palette.board,
     builder: (_) => ListenableBuilder(
-      listenable: game,
-      builder: (context, _) => SheetFrame(
-        title: '⬆️ 강화',
-        child: Column(
-          children: [
-            for (final u in Upgrades.all) _UpgradeRow(game: game, def: u),
-          ],
-        ),
-      ),
+      listenable: Listenable.merge([listen, L10n.instance]),
+      builder: (context, _) => build(),
     ),
   );
 }
+
+// ---------------------------------------------------------------- 강화
+
+Future<void> showUpgradesSheet(BuildContext context, GameState game) => _sheet(
+  context,
+  game,
+  () => SheetFrame(
+    title: tr('upgrade.title'),
+    child: Column(
+      children: [for (final u in Upgrades.all) _UpgradeRow(game: game, def: u)],
+    ),
+  ),
+);
 
 class _UpgradeRow extends StatelessWidget {
   const _UpgradeRow({required this.game, required this.def});
@@ -32,91 +45,115 @@ class _UpgradeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lv = game.lv(def.type);
-    final maxed = game.upgradeMaxed(def.type);
-    return Card(
-      color: Colors.white,
-      margin: const EdgeInsets.symmetric(vertical: 5),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Text(def.icon, style: const TextStyle(fontSize: 30)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${def.title}  Lv.$lv',
-                    style: const TextStyle(fontSize: 17),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    maxed
-                        ? Upgrades.describe(def.type, lv)
-                        : '${Upgrades.describe(def.type, lv)} → ${Upgrades.describe(def.type, lv + 1)}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF5E6B5E),
+    final t = def.type;
+    final lv = game.lv(t);
+    final featureLocked = game.upgradeFeatureLocked(t);
+    final maxed = game.upgradeMaxed(t);
+    final capped = game.upgradeCapped(t);
+    final featureLevel = Leveling.unlockLevel[def.feature ?? Feature.upgrades]!;
+    String button;
+    if (featureLocked) {
+      button = tr('common.lockedLevel', {'n': featureLevel});
+    } else if (maxed) {
+      button = tr('common.max');
+    } else if (capped) {
+      button = tr('upgrade.needLevel', {'n': game.level + 1});
+    } else {
+      button = '🪙 ${fmt(game.upgradeCost(t))}';
+    }
+    return Opacity(
+      opacity: featureLocked ? 0.55 : 1,
+      child: Card(
+        color: Colors.white,
+        margin: const EdgeInsets.symmetric(vertical: 5),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Text(def.icon, style: const TextStyle(fontSize: 30)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${upgradeTitle(t)}  Lv.$lv',
+                      style: const TextStyle(fontSize: 17),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      maxed
+                          ? upgradeDescribe(t, lv)
+                          : '${upgradeDescribe(t, lv)} → ${upgradeDescribe(t, lv + 1)}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF5E6B5E),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            FilledButton(
-              onPressed: game.canBuyUpgrade(def.type)
-                  ? () => game.buyUpgrade(def.type)
-                  : null,
-              child: Text(
-                maxed ? 'MAX' : '🪙 ${fmt(game.upgradeCost(def.type))}',
+              const SizedBox(width: 8),
+              FilledButton(
+                onPressed: game.canBuyUpgrade(t)
+                    ? () => game.buyUpgrade(t)
+                    : null,
+                child: Text(button),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// 꾸미기 목록. 정원 씬의 빈 자리를 탭해도 같은 일을 한다.
-Future<void> showDecorSheet(BuildContext context, GameState game) {
-  return showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Palette.board,
-    builder: (_) => ListenableBuilder(
-      listenable: game,
-      builder: (context, _) {
-        final area = Garden.areaAt(game.currentArea);
-        final done = game.placed.length;
-        return SheetFrame(
-          title: '🔨 ${area.name} 꾸미기',
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              LinearProgressIndicator(
-                value: done / Garden.slotsPerArea,
-                minHeight: 10,
-                borderRadius: BorderRadius.circular(5),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '$done / ${Garden.slotsPerArea} 완성 · 보유 ⭐${game.stars} · 정원 매력 x${game.gardenMultiplier.toStringAsFixed(1)}',
+// ---------------------------------------------------------------- 꾸미기
+
+Future<void> showDecorSheet(BuildContext context, GameState game) => _sheet(
+  context,
+  game,
+  () {
+    final area = Garden.areaAt(game.currentArea);
+    final done = game.placed.length;
+    return SheetFrame(
+      title: tr('decor.title', {'name': areaName(area)}),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (game.areaLocked)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                tr('decor.areaLocked', {'n': game.areaRequiredLevel}),
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 15),
+                style: const TextStyle(fontSize: 16, color: Color(0xFFB0640A)),
               ),
-              const SizedBox(height: 8),
-              for (var i = 0; i < area.decor.length; i++)
-                _DecorRow(game: game, area: area, slot: i),
-            ],
+            ),
+          LinearProgressIndicator(
+            value: done / Garden.slotsPerArea,
+            minHeight: 10,
+            borderRadius: BorderRadius.circular(5),
           ),
-        );
-      },
-    ),
-  );
-}
+          const SizedBox(height: 6),
+          Text(
+            tr('decor.progress', {
+              'done': done,
+              'total': Garden.slotsPerArea,
+              'stars': game.stars,
+              'mult': game.gardenMultiplier.toStringAsFixed(1),
+            }),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 15),
+          ),
+          const SizedBox(height: 8),
+          for (var i = 0; i < area.decor.length; i++)
+            _DecorRow(game: game, area: area, slot: i),
+        ],
+      ),
+    );
+  },
+);
 
 class _DecorRow extends StatelessWidget {
   const _DecorRow({required this.game, required this.area, required this.slot});
@@ -128,85 +165,89 @@ class _DecorRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final d = area.decor[slot];
     final placed = game.placed.contains(slot);
-    final friend = d.bringsFriend == null
-        ? null
-        : Friends.byId(d.bringsFriend!);
-    final newFriend = friend != null && !game.friends.contains(friend.id);
+    final fid = d.bringsFriend;
+    final newFriend = fid != null && !game.friends.contains(fid);
     return Card(
       color: placed ? const Color(0xFFE3F1DD) : Colors.white,
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
-        leading: Text(d.emoji, style: const TextStyle(fontSize: 30)),
-        title: Text(d.name, style: const TextStyle(fontSize: 17)),
+        leading: ArtImage(Art.decor(d), size: 40),
+        title: Text(decorName(d), style: const TextStyle(fontSize: 17)),
         subtitle: newFriend
-            ? Text('${friend.emoji} ${friend.name}(이)가 놀러 와요!')
+            ? Text(
+                tr('decor.bringsFriend', {
+                  'emoji': Friends.byId(fid).emoji,
+                  'name': friendName(fid),
+                }),
+              )
             : null,
         trailing: placed
-            ? const Text('완료 ✅', style: TextStyle(fontSize: 15))
+            ? Text(tr('decor.done'), style: const TextStyle(fontSize: 15))
             : FilledButton(
                 onPressed: game.canPlace(slot)
                     ? () => game.placeDecor(slot)
                     : null,
-                child: Text('⭐ ${game.decorCost(slot)}'),
+                child: Text(
+                  game.areaLocked
+                      ? tr('common.lockedLevel', {'n': game.areaRequiredLevel})
+                      : '⭐ ${game.decorCost(slot)}',
+                ),
               ),
       ),
     );
   }
 }
 
-/// 도감: 친구(호감도, 효과)와 발견한 아이템.
-Future<void> showCollectionSheet(BuildContext context, GameState game) {
-  return showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Palette.board,
-    builder: (_) => ListenableBuilder(
-      listenable: game,
-      builder: (context, _) => SheetFrame(
-        title: '📖 도감',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+// ---------------------------------------------------------------- 도감
+
+Future<void> showCollectionSheet(
+  BuildContext context,
+  GameState game,
+) => _sheet(
+  context,
+  game,
+  () => SheetFrame(
+    title: tr('book.title'),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(tr('book.friends'), style: const TextStyle(fontSize: 18)),
+        const SizedBox(height: 6),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          childAspectRatio: 2.0,
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
           children: [
-            const Text('친구들', style: TextStyle(fontSize: 18)),
-            const SizedBox(height: 6),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 2.0,
-              mainAxisSpacing: 8,
-              crossAxisSpacing: 8,
-              children: [
-                for (final f in Friends.all) _FriendCard(game: game, def: f),
-              ],
-            ),
-            const SizedBox(height: 14),
-            for (final chain in Chain.values) ...[
-              Text(
-                chain == Chain.flower ? '꽃' : '간식',
-                style: const TextStyle(fontSize: 18),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (var lv = 1; lv <= GameConfig.maxLevel; lv++)
-                    _ItemChip(
-                      def: Chains.item(chain, lv),
-                      level: lv,
-                      found: lv <= (game.highest[chain] ?? 1),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-            ],
+            for (final f in Friends.all) _FriendCard(game: game, def: f),
           ],
         ),
-      ),
+        const SizedBox(height: 14),
+        for (final chain in Chain.values) ...[
+          Text(chainName(chain), style: const TextStyle(fontSize: 18)),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (var lv = 1; lv <= GameConfig.maxLevel; lv++)
+                _ItemChip(
+                  chain: chain,
+                  level: lv,
+                  found: game.isUnlocked(Feature.snack) || chain == Chain.flower
+                      ? lv <= (game.highest[chain] ?? 0)
+                      : false,
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+        ],
+      ],
     ),
-  );
-}
+  ),
+);
 
 class _FriendCard extends StatelessWidget {
   const _FriendCard({required this.game, required this.def});
@@ -226,11 +267,8 @@ class _FriendCard extends StatelessWidget {
       child: Row(
         children: [
           Opacity(
-            opacity: has ? 1 : 0.25,
-            child: Text(
-              has ? def.emoji : '❔',
-              style: const TextStyle(fontSize: 34),
-            ),
+            opacity: has ? 1 : 0.2,
+            child: ArtImage(Art.friend(def), size: 38),
           ),
           const SizedBox(width: 6),
           Expanded(
@@ -240,7 +278,9 @@ class _FriendCard extends StatelessWidget {
               children: [
                 FittedBox(
                   child: Text(
-                    has ? '${def.name} (${def.species})' : '???',
+                    has
+                        ? '${friendName(def.id)} (${friendSpecies(def.id)})'
+                        : tr('book.unknown'),
                     style: const TextStyle(fontSize: 15),
                   ),
                 ),
@@ -251,7 +291,7 @@ class _FriendCard extends StatelessWidget {
                   ),
                   FittedBox(
                     child: Text(
-                      aff == 0 ? '부탁을 들어주면 효과 발동' : def.buffText(aff),
+                      aff == 0 ? tr('book.noEffect') : buffText(def, aff),
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF5E6B5E),
@@ -259,9 +299,12 @@ class _FriendCard extends StatelessWidget {
                     ),
                   ),
                 ] else
-                  const Text(
-                    '꾸미기로 초대',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF8A8A7A)),
+                  Text(
+                    tr('book.invite'),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF8A8A7A),
+                    ),
                   ),
               ],
             ),
@@ -274,18 +317,20 @@ class _FriendCard extends StatelessWidget {
 
 class _ItemChip extends StatelessWidget {
   const _ItemChip({
-    required this.def,
+    required this.chain,
     required this.level,
     required this.found,
   });
-  final ItemDef def;
+  final Chain chain;
   final int level;
   final bool found;
 
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: found ? 'Lv$level ${def.name}' : '???',
+      message: found
+          ? 'Lv$level ${itemName(Chains.item(chain, level))}'
+          : tr('book.unknown'),
       child: Container(
         width: 46,
         height: 46,
@@ -294,36 +339,38 @@ class _ItemChip extends StatelessWidget {
           color: found ? Colors.white : const Color(0xFFEDE8DC),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Text(
-          found ? def.emoji : '❔',
-          style: TextStyle(fontSize: 24, color: found ? null : Colors.black26),
-        ),
+        child: found
+            ? ArtImage(Art.item(chain, level), size: 30)
+            : const Text(
+                '❔',
+                style: TextStyle(fontSize: 22, color: Colors.black26),
+              ),
       ),
     );
   }
 }
 
-Future<void> showShopSheet(BuildContext context, BillingService billing) {
-  return showModalBottomSheet(
-    context: context,
-    backgroundColor: Palette.board,
-    builder: (_) => ListenableBuilder(
-      listenable: billing,
-      builder: (context, _) => SheetFrame(
-        title: '🚫 광고 제거 (1개월)',
+// ---------------------------------------------------------------- 상점
+
+Future<void> showShopSheet(BuildContext context, BillingService billing) =>
+    _sheet(
+      context,
+      billing,
+      () => SheetFrame(
+        title: tr('shop.title'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              '• 배너·전면 광고가 사라져요\n• 보상 광고 보상을 광고 없이 바로 받아요\n• 매월 자동 갱신, Play 스토어에서 언제든 해지',
-              style: TextStyle(fontSize: 16, height: 1.6),
+            Text(
+              tr('shop.body'),
+              style: const TextStyle(fontSize: 16, height: 1.6),
             ),
             const SizedBox(height: 16),
             if (billing.adFree)
-              const Text(
-                '✅ 광고 제거 이용 중',
+              Text(
+                tr('shop.active'),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18),
+                style: const TextStyle(fontSize: 18),
               )
             else
               FilledButton(
@@ -332,17 +379,64 @@ Future<void> showShopSheet(BuildContext context, BillingService billing) {
                     : billing.buyRemoveAds,
                 child: Text(
                   billing.product == null
-                      ? '스토어 연결 중…'
-                      : '${billing.product!.price} / 월 구독하기',
+                      ? tr('shop.connecting')
+                      : tr('shop.subscribe', {'price': billing.product!.price}),
                 ),
               ),
-            TextButton(onPressed: billing.restore, child: const Text('구매 복원')),
+            TextButton(
+              onPressed: billing.restore,
+              child: Text(tr('shop.restore')),
+            ),
           ],
         ),
       ),
+    );
+
+// ---------------------------------------------------------------- 설정
+
+/// 설정: 언어 전환 + 계정 영역(로그인/연결/삭제는 accountSection 으로 주입).
+Future<void> showSettingsSheet(
+  BuildContext context, {
+  required Listenable listen,
+  required Widget Function() accountSection,
+  String version = '',
+}) => _sheet(
+  context,
+  listen,
+  () => SheetFrame(
+    title: tr('settings.title'),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(tr('settings.language'), style: const TextStyle(fontSize: 18)),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final e in L10n.supported.entries)
+              ChoiceChip(
+                label: Text(e.value, style: const TextStyle(fontSize: 16)),
+                selected: L10n.instance.lang == e.key,
+                onSelected: (_) => L10n.instance.setLanguage(e.key),
+              ),
+          ],
+        ),
+        const SizedBox(height: 18),
+        Text(tr('settings.account'), style: const TextStyle(fontSize: 18)),
+        const SizedBox(height: 6),
+        accountSection(),
+        if (version.isNotEmpty) ...[
+          const SizedBox(height: 18),
+          Text(
+            tr('settings.version', {'v': version}),
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.black45),
+          ),
+        ],
+      ],
     ),
-  );
-}
+  ),
+);
 
 class SheetFrame extends StatelessWidget {
   const SheetFrame({super.key, required this.title, required this.child});

@@ -1,16 +1,29 @@
 import 'dart:math';
 
 /// 밸런스와 콘텐츠 상수. 숫자 튜닝은 대부분 이 파일에서 한다.
-/// 이모지는 아트가 들어오기 전까지 쓰는 임시 그림이다.
+/// 화면에 보이는 이름·문구는 여기 두지 않는다. id 를 키로 assets/i18n/*.json 에서 찾는다.
+/// 이모지는 아트가 들어오기 전까지 쓰는 임시 그림이다 (ArtRegistry 참고).
 class GameConfig {
   static const int cols = 6;
   static const int rows = 5;
   static const int cellCount = cols * rows;
 
+  /// 처음부터 열려 있는 칸: 가운데 4x3.
+  static final Set<int> startCells = {
+    for (var r = 1; r <= 3; r++)
+      for (var c = 1; c <= 4; c++) r * cols + c,
+  };
+
   static const int maxLevel = 15;
 
   /// 아이템 1개의 초당 코인 생산량.
   static double incomeOf(int level) => pow(2.2, level - 1).toDouble();
+
+  /// 판매 가격 = 해당 아이템 N초분 수익.
+  static const double sellSeconds = 25;
+
+  /// 판매 되돌리기 가능 시간.
+  static const Duration sellUndoWindow = Duration(seconds: 6);
 
   /// 최고 레벨 두 개를 합치면 사라지면서 지급되는 코인 (해당 아이템 N초분).
   static const double maxMergePayoutSeconds = 1800;
@@ -18,8 +31,13 @@ class GameConfig {
   /// 신규 아이템 발견 보너스 (해당 레벨 아이템 N초분).
   static const double discoveryBonusSeconds = 120;
 
-  /// 행운 스폰 확률 (스폰 레벨 +1).
+  /// 행운 생성 확률 (생성 레벨 +1).
   static const double luckySpawnChance = 0.06;
+
+  /// 합칠 때 같은 아이템이 든 비눗방울이 생길 확률. 광고를 보면 꺼내서 가질 수 있다.
+  static const double bubbleChance = 0.05;
+  static const Duration bubbleLife = Duration(seconds: 60);
+  static const int bubbleMinLevel = 4;
 
   /// 오프라인 수익 효율.
   static const double offlineEfficiency = 0.5;
@@ -59,54 +77,120 @@ class GameConfig {
   static const double areaIncomeBonus = 0.50;
 }
 
+// ------------------------------------------------------------------ 레벨, 해금
+
+/// 플레이어 레벨에 따라 열리는 기능.
+enum Feature {
+  upgrades,
+  boost,
+  snack,
+  coinBag,
+  autoMerge,
+  visitor,
+  spawnLevel,
+  offlineCap,
+}
+
+class Leveling {
+  /// 다음 레벨까지 필요한 경험치.
+  static int xpToNext(int level) => (15 * pow(1.24, level - 1)).round();
+
+  /// 기능별 해금 레벨.
+  static const Map<Feature, int> unlockLevel = {
+    Feature.upgrades: 2,
+    Feature.boost: 2,
+    Feature.snack: 3,
+    Feature.coinBag: 4,
+    Feature.autoMerge: 5,
+    Feature.visitor: 6,
+    Feature.spawnLevel: 8,
+    Feature.offlineCap: 10,
+  };
+
+  /// 구역별 입장 레벨. 별이 있어도 레벨이 낮으면 다음 구역을 꾸밀 수 없다.
+  static int areaLevel(int area) => area <= 0 ? 1 : 2 + area * 4;
+
+  /// 강화 단계 상한 = 플레이어 레벨 기준.
+  static int upgradeCap(int playerLevel) => 3 + playerLevel * 2;
+
+  /// n번째(0부터) 칸 구매에 필요한 레벨.
+  static int cellLevel(int n) => 2 + n;
+
+  /// 경험치
+  static int xpForMerge(int resultLevel) => 0; // 경험치는 부탁·꾸미기 위주 (머지 장르 표준)
+  static int xpForOrder(int stars) => 5 * stars;
+  static int xpForDecor(int cost) => 3 * cost;
+  static const int xpForDiscovery = 2;
+
+  /// 레벨업 보상 = 초당 수익 N초분 (최소 보장) + 별.
+  static const double levelUpCoinSeconds = 120;
+  static const int levelUpStars = 1;
+
+  static List<Feature> unlockedAt(int level) => [
+    for (final e in unlockLevel.entries)
+      if (e.value == level) e.key,
+  ];
+}
+
+/// 칸 구매 비용 (지금까지 산 칸 수 기준, 살수록 비싸짐).
+double cellCost(int purchased) => 200 * pow(2.4, purchased).toDouble();
+
+// ------------------------------------------------------------------ 아이템
+
 enum Chain { flower, snack }
 
 class ItemDef {
-  final String name;
+  final Chain chain;
+  final int level;
   final String emoji;
-  const ItemDef(this.name, this.emoji);
+  const ItemDef(this.chain, this.level, this.emoji);
+
+  /// 문구 키: item.flower.3
+  String get key => 'item.${chain.name}.$level';
 }
 
 class Chains {
-  static const Map<Chain, List<ItemDef>> items = {
+  static const Map<Chain, List<String>> _emoji = {
     Chain.flower: [
-      ItemDef('씨앗', '🌰'),
-      ItemDef('새싹', '🌱'),
-      ItemDef('클로버', '☘️'),
-      ItemDef('어린 잎', '🌿'),
-      ItemDef('화분', '🪴'),
-      ItemDef('데이지', '🌼'),
-      ItemDef('튤립', '🌷'),
-      ItemDef('벚꽃', '🌸'),
-      ItemDef('장미', '🌹'),
-      ItemDef('히비스커스', '🌺'),
-      ItemDef('해바라기', '🌻'),
-      ItemDef('연꽃', '🪷'),
-      ItemDef('꽃다발', '💐'),
-      ItemDef('무지개꽃', '🌈'),
-      ItemDef('황금 꽃', '🏵️'),
+      '🌰',
+      '🌱',
+      '☘️',
+      '🌿',
+      '🪴',
+      '🌼',
+      '🌷',
+      '🌸',
+      '🌹',
+      '🌺',
+      '🌻',
+      '🪷',
+      '💐',
+      '🌈',
+      '🏵️',
     ],
     Chain.snack: [
-      ItemDef('체리', '🍒'),
-      ItemDef('딸기', '🍓'),
-      ItemDef('사과', '🍎'),
-      ItemDef('복숭아', '🍑'),
-      ItemDef('레몬', '🍋'),
-      ItemDef('쿠키', '🍪'),
-      ItemDef('컵케이크', '🧁'),
-      ItemDef('도넛', '🍩'),
-      ItemDef('팬케이크', '🥞'),
-      ItemDef('파이', '🥧'),
-      ItemDef('푸딩', '🍮'),
-      ItemDef('조각 케이크', '🍰'),
-      ItemDef('파르페', '🍨'),
-      ItemDef('생일 케이크', '🎂'),
-      ItemDef('피크닉 도시락', '🍱'),
+      '🍒',
+      '🍓',
+      '🍎',
+      '🍑',
+      '🍋',
+      '🍪',
+      '🧁',
+      '🍩',
+      '🥞',
+      '🥧',
+      '🍮',
+      '🍰',
+      '🍨',
+      '🎂',
+      '🍱',
     ],
   };
 
-  static ItemDef item(Chain c, int level) =>
-      items[c]![(level - 1).clamp(0, GameConfig.maxLevel - 1)];
+  static ItemDef item(Chain c, int level) {
+    final l = level.clamp(1, GameConfig.maxLevel);
+    return ItemDef(c, l, _emoji[c]![l - 1]);
+  }
 }
 
 // ------------------------------------------------------------------ 강화
@@ -115,30 +199,52 @@ enum UpgradeType { spawnSpeed, income, autoMerge, spawnLevel, offlineCap }
 
 class UpgradeDef {
   final UpgradeType type;
-  final String title;
   final String icon;
   final int maxLevel;
   final double baseCost;
   final double costGrowth;
+  final Feature? feature; // 이 기능이 해금돼야 살 수 있음
   const UpgradeDef(
     this.type,
-    this.title,
     this.icon,
     this.maxLevel,
     this.baseCost,
-    this.costGrowth,
-  );
+    this.costGrowth, {
+    this.feature,
+  });
 
   double costAt(int level) => baseCost * pow(costGrowth, level);
+  String get key => 'upgrade.${type.name}';
 }
 
 class Upgrades {
   static const List<UpgradeDef> all = [
-    UpgradeDef(UpgradeType.spawnSpeed, '바구니 속도', '⏱️', 25, 30, 1.55),
-    UpgradeDef(UpgradeType.income, '수익 배율', '💰', 100, 60, 1.45),
-    UpgradeDef(UpgradeType.autoMerge, '자동 합치기', '🤖', 20, 600, 2.0),
-    UpgradeDef(UpgradeType.spawnLevel, '바구니 품질', '⭐', 6, 8000, 40),
-    UpgradeDef(UpgradeType.offlineCap, '오프라인 수익 시간', '🌙', 10, 1500, 2.6),
+    UpgradeDef(UpgradeType.spawnSpeed, '⏱️', 25, 30, 1.55),
+    UpgradeDef(UpgradeType.income, '💰', 100, 60, 1.45),
+    UpgradeDef(
+      UpgradeType.autoMerge,
+      '🤖',
+      20,
+      600,
+      2.0,
+      feature: Feature.autoMerge,
+    ),
+    UpgradeDef(
+      UpgradeType.spawnLevel,
+      '⭐',
+      6,
+      8000,
+      40,
+      feature: Feature.spawnLevel,
+    ),
+    UpgradeDef(
+      UpgradeType.offlineCap,
+      '🌙',
+      10,
+      1500,
+      2.6,
+      feature: Feature.offlineCap,
+    ),
   ];
 
   static UpgradeDef of(UpgradeType t) => all.firstWhere((u) => u.type == t);
@@ -149,22 +255,6 @@ class Upgrades {
       lv <= 0 ? null : max(0.6, 8.0 * pow(0.86, lv - 1));
   static int spawnLevel(int lv) => 1 + lv;
   static Duration offlineCap(int lv) => Duration(hours: 2 + lv);
-
-  static String describe(UpgradeType t, int lv) {
-    switch (t) {
-      case UpgradeType.spawnSpeed:
-        return '${spawnInterval(lv).toStringAsFixed(1)}초마다 생성';
-      case UpgradeType.income:
-        return '수익 x${incomeMultiplier(lv).toStringAsFixed(2)}';
-      case UpgradeType.autoMerge:
-        final i = autoMergeInterval(lv);
-        return i == null ? '꺼짐' : '${i.toStringAsFixed(1)}초마다 자동';
-      case UpgradeType.spawnLevel:
-        return 'Lv.${spawnLevel(lv)} 아이템 생성';
-      case UpgradeType.offlineCap:
-        return '최대 ${offlineCap(lv).inHours}시간';
-    }
-  }
 }
 
 // ------------------------------------------------------------------ 친구
@@ -181,125 +271,30 @@ enum FriendBuff {
 
 class FriendDef {
   final String id;
-  final String name;
-  final String species;
   final String emoji;
   final FriendBuff buff;
   final double perLevel; // 호감도 1당 효과
-  final String line; // 탭했을 때 대사
-  const FriendDef(
-    this.id,
-    this.name,
-    this.species,
-    this.emoji,
-    this.buff,
-    this.perLevel,
-    this.line,
-  );
+  const FriendDef(this.id, this.emoji, this.buff, this.perLevel);
 
-  String buffText(int lv) {
-    final v = perLevel * lv * 100;
-    final s = v.toStringAsFixed(v == v.roundToDouble() ? 0 : 1);
-    switch (buff) {
-      case FriendBuff.spawnSpeed:
-        return '바구니 속도 +$s%';
-      case FriendBuff.income:
-        return '수익 +$s%';
-      case FriendBuff.orderCoins:
-        return '부탁 코인 +$s%';
-      case FriendBuff.lucky:
-        return '행운 생성 +$s%';
-      case FriendBuff.offline:
-        return '오프라인 수익 +$s%';
-      case FriendBuff.starBonus:
-        return '별 추가 획득 확률 +$s%';
-      case FriendBuff.autoMerge:
-        return '자동 합치기 속도 +$s%';
-    }
-  }
+  /// 문구 키: friend.bori.name / .species / .line
+  String key(String field) => 'friend.$id.$field';
 }
 
 class Friends {
   static const List<FriendDef> all = [
-    FriendDef(
-      'bori',
-      '보리',
-      '토끼',
-      '🐰',
-      FriendBuff.spawnSpeed,
-      0.03,
-      '오늘도 정원 가꾸기 좋은 날이야!',
-    ),
-    FriendDef(
-      'dubu',
-      '두부',
-      '곰',
-      '🐻',
-      FriendBuff.income,
-      0.05,
-      '꿀 냄새가 나는 것 같아…',
-    ),
-    FriendDef(
-      'kwak',
-      '꽥이',
-      '오리',
-      '🦆',
-      FriendBuff.orderCoins,
-      0.10,
-      '연못 물이 반짝반짝해!',
-    ),
-    FriendDef(
-      'nabi',
-      '나비',
-      '고양이',
-      '🐱',
-      FriendBuff.lucky,
-      0.01,
-      '햇볕 좋은 자리 찾았다냥.',
-    ),
-    FriendDef(
-      'dotori',
-      '도토리',
-      '다람쥐',
-      '🐿️',
-      FriendBuff.offline,
-      0.03,
-      '도토리 숨겨둔 곳 비밀이야!',
-    ),
-    FriendDef(
-      'mochi',
-      '모찌',
-      '판다',
-      '🐼',
-      FriendBuff.income,
-      0.05,
-      '대나무 차 한 잔 할래?',
-    ),
-    FriendDef(
-      'danpung',
-      '단풍',
-      '여우',
-      '🦊',
-      FriendBuff.starBonus,
-      0.03,
-      '밤하늘 별이 정말 예쁘지?',
-    ),
-    FriendDef(
-      'kongtteok',
-      '콩떡',
-      '햄스터',
-      '🐹',
-      FriendBuff.autoMerge,
-      0.04,
-      '쳇바퀴 돌리듯 열심히!',
-    ),
+    FriendDef('bori', '🐰', FriendBuff.spawnSpeed, 0.03),
+    FriendDef('dubu', '🐻', FriendBuff.income, 0.05),
+    FriendDef('kwak', '🦆', FriendBuff.orderCoins, 0.10),
+    FriendDef('nabi', '🐱', FriendBuff.lucky, 0.01),
+    FriendDef('dotori', '🐿️', FriendBuff.offline, 0.03),
+    FriendDef('mochi', '🐼', FriendBuff.income, 0.05),
+    FriendDef('danpung', '🦊', FriendBuff.starBonus, 0.03),
+    FriendDef('kongtteok', '🐹', FriendBuff.autoMerge, 0.04),
   ];
 
   static FriendDef byId(String id) => all.firstWhere((f) => f.id == id);
 
-  /// 처음부터 함께하는 친구.
   static const String starter = 'bori';
-
   static const int maxAffection = 10;
 
   /// 부탁 N번 들어줄 때마다 호감도 1.
@@ -311,83 +306,95 @@ class Friends {
 // ------------------------------------------------------------------ 정원
 
 class DecorDef {
-  final String name;
+  final String id; // 문구 키: decor.<id>
   final String emoji;
   final double x; // 정원 씬 안의 상대 위치 (0~1)
   final double y;
   final String? bringsFriend; // 설치하면 놀러 오는 친구
-  const DecorDef(this.name, this.emoji, this.x, this.y, {this.bringsFriend});
+  const DecorDef(this.id, this.emoji, this.x, this.y, {this.bringsFriend});
+
+  String get key => 'decor.$id';
 }
 
 class AreaDef {
-  final String name;
+  final String id; // 문구 키: area.<id>
   final String emoji;
-  final int sky; // 배경 색 (임시)
+  final int sky; // 배경 색 (아트 전 임시)
   final int ground;
   final List<DecorDef> decor;
-  const AreaDef(this.name, this.emoji, this.sky, this.ground, this.decor);
+  final int round; // 순환 회차 (1부터)
+  const AreaDef(
+    this.id,
+    this.emoji,
+    this.sky,
+    this.ground,
+    this.decor, {
+    this.round = 1,
+  });
+
+  String get key => 'area.$id';
 }
 
 class Garden {
   static const int slotsPerArea = 8;
 
   static const List<AreaDef> areas = [
-    AreaDef('햇살 앞마당', '🏡', 0xFFBFE6F7, 0xFFA8D88E, [
-      DecorDef('큰 나무', '🌳', 0.14, 0.30),
-      DecorDef('나무 벤치', '🪑', 0.42, 0.34),
-      DecorDef('우체통', '📮', 0.70, 0.30),
-      DecorDef('작은 텃밭', '🥕', 0.88, 0.52, bringsFriend: 'dubu'),
-      DecorDef('등불', '🏮', 0.12, 0.74),
-      DecorDef('새 모이대', '🐦', 0.38, 0.70),
-      DecorDef('오두막', '🛖', 0.64, 0.76),
-      DecorDef('분수', '⛲', 0.88, 0.84),
+    AreaDef('yard', '🏡', 0xFFBFE6F7, 0xFFA8D88E, [
+      DecorDef('big_tree', '🌳', 0.14, 0.30),
+      DecorDef('bench', '🪑', 0.42, 0.34),
+      DecorDef('mailbox', '📮', 0.70, 0.30),
+      DecorDef('veggie_patch', '🥕', 0.88, 0.52, bringsFriend: 'dubu'),
+      DecorDef('lantern', '🏮', 0.12, 0.74),
+      DecorDef('bird_feeder', '🐦', 0.38, 0.70),
+      DecorDef('hut', '🛖', 0.64, 0.76),
+      DecorDef('fountain', '⛲', 0.88, 0.84),
     ]),
-    AreaDef('반짝 연못', '🦆', 0xFFC6E2FA, 0xFF9CD3B0, [
-      DecorDef('징검다리', '🪨', 0.14, 0.32),
-      DecorDef('수련', '🪷', 0.42, 0.30, bringsFriend: 'kwak'),
-      DecorDef('낚시터', '🎣', 0.70, 0.34),
-      DecorDef('나룻배', '🛶', 0.88, 0.52),
-      DecorDef('갈대숲', '🌾', 0.12, 0.74),
-      DecorDef('통나무 의자', '🪵', 0.38, 0.70, bringsFriend: 'nabi'),
-      DecorDef('텐트', '🏕️', 0.64, 0.76),
-      DecorDef('나무다리', '🌉', 0.88, 0.84),
+    AreaDef('pond', '🦆', 0xFFC6E2FA, 0xFF9CD3B0, [
+      DecorDef('stepping_stones', '🪨', 0.14, 0.32),
+      DecorDef('water_lily', '🪷', 0.42, 0.30, bringsFriend: 'kwak'),
+      DecorDef('fishing_spot', '🎣', 0.70, 0.34),
+      DecorDef('rowboat', '🛶', 0.88, 0.52),
+      DecorDef('reeds', '🌾', 0.12, 0.74),
+      DecorDef('log_chair', '🪵', 0.38, 0.70, bringsFriend: 'nabi'),
+      DecorDef('tent', '🏕️', 0.64, 0.76),
+      DecorDef('wooden_bridge', '🌉', 0.88, 0.84),
     ]),
-    AreaDef('꽃향기 온실', '🪴', 0xFFF6E3F0, 0xFFB9DFA0, [
-      DecorDef('유리 온실', '🪟', 0.14, 0.30),
-      DecorDef('선인장 화분', '🌵', 0.42, 0.34),
-      DecorDef('버섯 정원', '🍄', 0.70, 0.30, bringsFriend: 'dotori'),
-      DecorDef('물뿌리개', '🚿', 0.88, 0.52),
-      DecorDef('해바라기 밭', '🌻', 0.12, 0.74),
-      DecorDef('티 테이블', '🫖', 0.38, 0.70),
-      DecorDef('대나무', '🎋', 0.64, 0.76, bringsFriend: 'mochi'),
-      DecorDef('풍경', '🎐', 0.88, 0.84),
+    AreaDef('greenhouse', '🪴', 0xFFF6E3F0, 0xFFB9DFA0, [
+      DecorDef('glasshouse', '🪟', 0.14, 0.30),
+      DecorDef('cactus', '🌵', 0.42, 0.34),
+      DecorDef('mushroom_bed', '🍄', 0.70, 0.30, bringsFriend: 'dotori'),
+      DecorDef('watering_can', '🚿', 0.88, 0.52),
+      DecorDef('sunflower_field', '🌻', 0.12, 0.74),
+      DecorDef('tea_table', '🫖', 0.38, 0.70),
+      DecorDef('bamboo', '🎋', 0.64, 0.76, bringsFriend: 'mochi'),
+      DecorDef('wind_chime', '🎐', 0.88, 0.84),
     ]),
-    AreaDef('별빛 언덕', '🌙', 0xFF2E3A6B, 0xFF6F9A6A, [
-      DecorDef('망원경', '🔭', 0.14, 0.30),
-      DecorDef('캠핑 텐트', '⛺', 0.42, 0.34),
-      DecorDef('모닥불', '🔥', 0.70, 0.30, bringsFriend: 'danpung'),
-      DecorDef('관람차', '🎡', 0.88, 0.52),
-      DecorDef('회전목마', '🎠', 0.12, 0.74),
-      DecorDef('달 조형물', '🌙', 0.38, 0.70),
-      DecorDef('작은 성', '🏰', 0.64, 0.76, bringsFriend: 'kongtteok'),
-      DecorDef('불꽃놀이', '🎆', 0.88, 0.84),
+    AreaDef('starry_hill', '🌙', 0xFF2E3A6B, 0xFF6F9A6A, [
+      DecorDef('telescope', '🔭', 0.14, 0.30),
+      DecorDef('camp_tent', '⛺', 0.42, 0.34),
+      DecorDef('campfire', '🔥', 0.70, 0.30, bringsFriend: 'danpung'),
+      DecorDef('ferris_wheel', '🎡', 0.88, 0.52),
+      DecorDef('carousel', '🎠', 0.12, 0.74),
+      DecorDef('moon_statue', '🌙', 0.38, 0.70),
+      DecorDef('little_castle', '🏰', 0.64, 0.76, bringsFriend: 'kongtteok'),
+      DecorDef('fireworks', '🎆', 0.88, 0.84),
     ]),
   ];
 
-  /// 정해진 구역 이후로는 순환하며 "N번째" 로 무한 진행 (새 친구는 없음).
+  /// 정해진 구역 이후로는 순환하며 무한 진행 (새 친구 없음).
   static AreaDef areaAt(int index) {
     final base = areas[index % areas.length];
     if (index < areas.length) return base;
-    final round = index ~/ areas.length + 1;
     final decor = [
-      for (final d in base.decor) DecorDef(d.name, d.emoji, d.x, d.y),
+      for (final d in base.decor) DecorDef(d.id, d.emoji, d.x, d.y),
     ];
     return AreaDef(
-      '${base.name} ($round번째)',
+      base.id,
       base.emoji,
       base.sky,
       base.ground,
       decor,
+      round: index ~/ areas.length + 1,
     );
   }
 

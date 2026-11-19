@@ -1,0 +1,209 @@
+import 'dart:async';
+
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart' as kakao;
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'app_config.dart';
+
+enum LoginProvider { guest, google, kakao }
+
+class AuthException implements Exception {
+  final String code; // 'cancelled' | 'already_linked' | 'failed'
+  AuthException(this.code);
+  @override
+  String toString() => 'AuthException($code)';
+}
+
+/// 로그인 담당.
+///
+/// - 게스트: Firebase 익명 로그인 (Firebase 설정이 없으면 기기 전용 게스트).
+/// - Google: Google ID 토큰 → Firebase. 게스트 상태면 같은 계정(uid)에 연결해 진행도가 그대로 이어진다.
+/// - 카카오: 카카오 액세스 토큰 → Cloud Function(kakaoLogin)이 검증 후 커스텀 토큰 발급 → Firebase.
+///   익명 계정에 커스텀 토큰을 직접 연결할 수 없어서, 로그인 후 CloudSave 가 기기 데이터를 옮긴다.
+class AuthService extends ChangeNotifier {
+  static const _localGuestKey = 'local_guest';
+
+  bool ready = false;
+  bool busy = false;
+  User? user;
+  bool _localGuest = false;
+  StreamSubscription<User?>? _sub;
+
+  bool get firebaseEnabled => AppConfig.firebaseEnabled;
+  bool get googleEnabled => AppConfig.googleEnabled;
+  bool get kakaoEnabled => AppConfig.kakaoEnabled;
+
+  /// 로그인 화면을 건너뛸 수 있는 상태인지.
+  bool get signedIn => user != null || _localGuest;
+  String? get uid => user?.uid;
+
+  LoginProvider get provider {
+    final u = user;
+    if (u == null) return LoginProvider.guest;
+    if (u.uid.startsWith('kakao:')) return LoginProvider.kakao;
+    if (u.providerData.any((p) => p.providerId == 'google.com'))
+      return LoginProvider.google;
+    return LoginProvider.guest;
+  }
+
+  bool get isGuest => provider == LoginProvider.guest;
+
+  Future<void> init() async {
+    final prefs = await SharedPreferences.getInstance();
+    _localGuest = prefs.getBool(_localGuestKey) ?? false;
+    if (firebaseEnabled) {
+      try {
+        await Firebase.initializeApp(options: AppConfig.firebaseOptions);
+        user = FirebaseAuth.instance.currentUser;
+        _sub = FirebaseAuth.instance.authStateChanges().listen((u) {
+          user = u;
+          notifyListeners();
+        });
+        if (googleEnabled) {
+          await GoogleSignIn.instance.initialize(
+            serverClientId: AppConfig.googleServerClientId,
+          );
+        }
+        if (kakaoEnabled) {
+          kakao.KakaoSdk.init(nativeAppKey: AppConfig.kakaoNativeAppKey);
+        }
+      } catch (e) {
+        debugPrint('Firebase init failed: $e');
+      }
+    }
+    ready = true;
+    notifyListeners();
+  }
+
+  Future<T> _run<T>(Future<T> Function() body) async {
+    busy = true;
+    notifyListeners();
+    try {
+      return await body();
+    } on AuthException {
+      rethrow;
+    } catch (e) {
+      debugPrint('auth error: $e');
+      throw AuthException('failed');
+    } finally {
+      busy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> signInGuest() => _run(() async {
+    if (firebaseEnabled && Firebase.apps.isNotEmpty) {
+      if (FirebaseAuth.instance.currentUser == null) {
+        await FirebaseAuth.instance.signInAnonymously();
+      }
+    } else {
+      _localGuest = true;
+      (await SharedPreferences.getInstance()).setBool(_localGuestKey, true);
+    }
+  });
+
+  /// Google 로그인. 익명 계정이면 연결(link)해서 uid 를 유지한다.
+  Future<void> signInGoogle() => _run(() async {
+    if (!googleEnabled) throw AuthException('failed');
+    final GoogleSignInAccount account;
+    try {
+      account = await GoogleSignIn.instance.authenticate();
+    } on GoogleSignInException catch (e) {
+      throw AuthException(
+        e.code == GoogleSignInExceptionCode.canceled ? 'cancelled' : 'failed',
+      );
+    }
+    final idToken = account.authentication.idToken;
+    final cred = GoogleAuthProvider.credential(idToken: idToken);
+    final current = FirebaseAuth.instance.currentUser;
+    if (current != null && current.isAnonymous) {
+      try {
+        await current.linkWithCredential(cred);
+        await current.reload();
+        user = FirebaseAuth.instance.currentUser;
+        return;
+      } on FirebaseAuthException catch (e) {
+        // 이미 다른 진행도가 있는 Google 계정 → 그 계정으로 전환 (CloudSave 가 어느 쪽을 쓸지 묻는다)
+        if (e.code != 'credential-already-in-use') rethrow;
+      }
+    }
+    await FirebaseAuth.instance.signInWithCredential(cred);
+  });
+
+  /// 카카오 로그인 → Cloud Function 으로 Firebase 커스텀 토큰을 받아 로그인.
+  Future<void> signInKakao() => _run(() async {
+    if (!kakaoEnabled) throw AuthException('failed');
+    kakao.OAuthToken token;
+    try {
+      token = await kakao.isKakaoTalkInstalled()
+          ? await kakao.UserApi.instance.loginWithKakaoTalk()
+          : await kakao.UserApi.instance.loginWithKakaoAccount();
+    } on PlatformException catch (e) {
+      if (e.code == 'CANCELED') throw AuthException('cancelled');
+      // 카카오톡이 있지만 로그인 안 된 경우 등 → 카카오계정 로그인으로 재시도
+      token = await kakao.UserApi.instance.loginWithKakaoAccount();
+    }
+    final fn = FirebaseFunctions.instanceFor(region: AppConfig.functionsRegion)
+        .httpsCallable('kakaoLogin');
+    final res = await fn.call<Map<String, dynamic>>({
+      'accessToken': token.accessToken,
+    });
+    final customToken = res.data['token'] as String;
+    await FirebaseAuth.instance.signInWithCustomToken(customToken);
+  });
+
+  Future<void> signOut() => _run(() async {
+    if (firebaseEnabled && Firebase.apps.isNotEmpty) {
+      if (provider == LoginProvider.google) {
+        try {
+          await GoogleSignIn.instance.signOut();
+        } catch (_) {}
+      }
+      if (provider == LoginProvider.kakao) {
+        try {
+          await kakao.UserApi.instance.logout();
+        } catch (_) {}
+      }
+      await FirebaseAuth.instance.signOut();
+    }
+    _localGuest = false;
+    (await SharedPreferences.getInstance()).remove(_localGuestKey);
+    user = null;
+  });
+
+  /// 계정과 클라우드 데이터 삭제 (Play 정책: 앱 안에서 계정 삭제 제공 필수).
+  Future<void> deleteAccount() => _run(() async {
+    if (firebaseEnabled && user != null) {
+      final fn = FirebaseFunctions.instanceFor(
+        region: AppConfig.functionsRegion,
+      ).httpsCallable('deleteAccount');
+      await fn.call<void>();
+      if (provider == LoginProvider.kakao) {
+        try {
+          await kakao.UserApi.instance.unlink();
+        } catch (_) {}
+      }
+      if (provider == LoginProvider.google) {
+        try {
+          await GoogleSignIn.instance.disconnect();
+        } catch (_) {}
+      }
+      await FirebaseAuth.instance.signOut();
+    }
+    _localGuest = false;
+    (await SharedPreferences.getInstance()).remove(_localGuestKey);
+    user = null;
+  });
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+}

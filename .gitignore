@@ -46,3 +46,9 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# 앱 설정 (CI 는 APP_CONFIG_JSON 시크릿으로 생성)
+config/app_config.json
+# 복호화된 키스토어는 절대 커밋하지 않음 (.gpg 만 커밋)
+*.jks
+*.keystore

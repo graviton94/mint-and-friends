@@ -30,9 +30,3 @@ String _unit(int tier) {
   final b = String.fromCharCode(97 + i % 26);
   return '$a$b';
 }
-
-String fmtDuration(Duration d) {
-  if (d.inHours > 0) return '${d.inHours}시간 ${d.inMinutes % 60}분';
-  if (d.inMinutes > 0) return '${d.inMinutes}분 ${d.inSeconds % 60}초';
-  return '${d.inSeconds}초';
-}

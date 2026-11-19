@@ -1,48 +1,52 @@
 # 블룸 가든 (가제)
 
-머지 + 방치형 꽃 정원 게임. Flutter, Android 전용.
+머지 + 방치형 정원 꾸미기 게임. Flutter, Android 전용. 한국어/영어/일본어.
 
 ## 게임 루프
-- 바구니가 자동으로 씨앗을 만든다 (탭하면 더 빨리 만든다)
-- 같은 꽃 2개를 드래그해서 합치면 다음 단계로 올라간다 (15종 x 일반/황금/다이아 = 45단계)
-- 보드 위의 꽃은 초당 코인을 만든다. 오프라인일 때도 쌓인다
-- 코인으로 **강화**(생성 속도, 수익, 자동 합치기, 씨앗 품질, 오프라인 시간)와 **정원 복구**(영구 수익 보너스)를 산다
+1. 바구니가 꽃·간식을 자동으로 만든다 (탭하면 더 빨리)
+2. 같은 아이템 2개를 끌어서 합치면 다음 단계 (2종 × 15단계)
+3. 동물 친구들의 **부탁**에 아이템을 전달 → **별** + 코인 + 경험치 + 호감도
+4. 별로 정원에 **장식**을 설치 → 새 친구 합류, 정원 매력도(수익 배율) 상승
+5. 보드 위 아이템과 정원은 방치해도(오프라인 포함) 코인을 만든다 → **강화**
 
-## 수익 구조
+### 성장 장치 (계속 느껴지는 허들)
+| 장치 | 내용 |
+|---|---|
+| 플레이어 레벨 | 경험치는 부탁·장식에서 얻는다. 레벨별로 기능 해금 (강화 Lv2, 간식 Lv3, 코인 주머니 Lv4, 자동 합치기 Lv5, 깜짝 손님 Lv6, 바구니 품질 Lv8, 오프라인 시간 Lv10) |
+| 구역 입장 레벨 | 별이 있어도 레벨이 모자라면 다음 구역을 못 꾸민다 (Lv6, 10, 14, 18 …) |
+| 칸 해금 | 처음엔 가운데 4×3 만 열림. 바깥 18칸은 한 칸씩 구매. 살수록 비싸지고 칸마다 요구 레벨 |
+| 강화 상한 | 강화 단계 ≤ 3 + 레벨×2 |
+| 판매 | 칸이 막히면 아이템을 눌러 판매 (6초 안에 되돌리기) |
+| 비눗방울 | 합칠 때 5% 확률로 같은 아이템이 든 비눗방울 → 60초 안에 광고 보면 획득 |
+
+### 수익
 | 위치 | 종류 |
 |---|---|
-| 수익 2배 10분 (최대 60분 누적) | 보상형 |
-| 코인 주머니 (4분 쿨다운) | 보상형 |
-| 오프라인 보상 2배 | 보상형 |
-| 정원 작업 완료 시 (3분 간격, 앱 시작 후 2분 유예) | 전면 |
+| 수익 2배 10분 (최대 60분), 코인 주머니, 오프라인 2배, 깜짝 손님 선물, 비눗방울, 부탁 새로고침 | 보상형 |
+| 장식 설치 직후 (3분 간격, 시작 2분 유예) | 전면 |
 | 하단 | 적응형 배너 |
-| `remove_ads_1m` 구독 | 배너·전면 광고 제거, 보상형 보상은 광고 없이 즉시 지급 |
+| `remove_ads_1m` 구독 | 배너·전면 제거 + 보상형 보상을 광고 없이 즉시 |
 
 ## 구조
 ```
-lib/game/config.dart       밸런스 수치, 아이템, 강화, 정원 데이터 (튜닝은 여기서)
-lib/game/game_state.dart   게임 규칙과 저장 (UI와 분리, 테스트 있음)
-lib/services/              AdMob, Play Billing
-lib/ui/                    화면
-test/                      규칙 단위 테스트
-tool/balance_sim_test.dart 밸런스 시뮬레이터 (flutter test tool/balance_sim_test.dart)
+lib/game/          규칙(game_state), 밸런스·콘텐츠 수치(config), 숫자 포맷 — UI 와 분리, 테스트 있음
+lib/i18n/          다국어 모듈(l10n), 콘텐츠 이름(names)        assets/i18n/{ko,en,ja}.json
+lib/art/           아트 등록부: 규칙에 맞는 PNG 가 있으면 사용, 없으면 이모지   docs/ART_SPEC.md
+lib/services/      광고, 구독, 로그인(Firebase·Google·카카오), 저장(기기+Firestore), 앱 설정
+lib/ui/            화면. garden/ (정원 씬 레이어), board/ (보드 레이어), 시트, 로그인
+functions/         Cloud Functions: kakaoLogin, deleteAccount
+firestore.rules    users/{uid} 본인만
+test/              규칙·저장 동기화·다국어 일관성 테스트
+tool/              balance_sim_test.dart (밸런스 시뮬레이터), make_keystores.sh
 ```
 
-## 빌드
-GitHub Actions(`.github/workflows/android.yml`)가 push 할 때마다 APK와 AAB를 빌드한다. 결과물은 Actions 실행 페이지의 Artifacts에서 받는다.
-업로드 키 Secrets가 없으면 디버그 키로 서명된다. 이 빌드는 기기 설치 테스트만 가능하고 Play 업로드는 안 된다.
+## 개발
+```bash
+flutter test test/                          # 테스트
+flutter test tool/balance_sim_test.dart     # 진행 속도 시뮬레이션
+flutter run --dart-define-from-file=config/app_config.json
+```
+문구를 추가할 때는 `assets/i18n/ko.json` 에 키를 넣고 en/ja 에도 같은 키를 넣습니다. 빠지면 `test/i18n_test.dart` 가 실패합니다.
 
-로컬 빌드: `flutter build appbundle --release`
-
-## 출시 전 체크리스트
-1. **업로드 키 생성**
-   `keytool -genkey -v -keystore upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload`
-   GitHub Secrets 등록: `ANDROID_KEYSTORE_BASE64` (`base64 -w0 upload.jks`), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`
-2. **AdMob**: 앱 생성 후 다음 두 곳을 교체한다.
-   - `android/app/src/main/AndroidManifest.xml`의 `APPLICATION_ID`
-   - `lib/services/ad_ids.dart`의 `_prod*` 3개
-   디버그 빌드는 항상 테스트 광고 ID를 쓴다.
-3. **Play Console 구독**: 상품 ID `remove_ads_1m`, 기본 요금제 1개월 자동 갱신
-4. 구독 상품은 앱이 비공개 테스트 트랙에 한 번 업로드된 뒤에 생성할 수 있다. 그래서 첫 AAB를 먼저 올린다.
-5. 개인정보처리방침 URL과 데이터 보안 양식 작성 (AdMob이 광고 ID를 수집함)
-6. `applicationId` = `com.graviton94.bloomgarden` (출시 후 변경 불가)
+## 배포
+`docs/RELEASE.md` 참고 (서명 키, Firebase, 카카오, AdMob, 구독, CI).

@@ -3,28 +3,36 @@ import 'dart:async';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../art/art.dart';
 import '../game/config.dart';
 import '../game/format.dart';
 import '../game/game_state.dart';
+import '../i18n/l10n.dart';
+import '../i18n/names.dart';
 import '../services/ad_ids.dart';
 import '../services/ads_service.dart';
 import '../services/billing_service.dart';
-import 'board_view.dart';
-import 'garden_scene.dart';
+import 'board/board_view.dart';
+import 'garden/garden_scene.dart';
 import 'orders_bar.dart';
 import 'sheets.dart';
 import 'theme.dart';
 
+/// 메인 화면. 배치(위→아래): 상단 HUD / 정원 씬 / 부탁 / 머지 보드 / 정보 줄 / 광고·바구니 / 배너
 class HomeScreen extends StatefulWidget {
   const HomeScreen({
     super.key,
     required this.game,
     required this.ads,
     required this.billing,
+    required this.openSettings,
+    this.extraListenable,
   });
   final GameState game;
   final AdsService ads;
   final BillingService billing;
+  final void Function(BuildContext context) openSettings;
+  final Listenable? extraListenable;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -35,6 +43,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<_Toast> _toasts = [];
   int _toastId = 0;
   late int _viewArea;
+  int? _selected;
+  final List<LevelUpEvent> _levelUps = [];
+  bool _levelDialogOpen = false;
 
   GameState get game => widget.game;
   bool get adFree => widget.billing.adFree;
@@ -52,33 +63,59 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  // ---------------------------------------------------------------- 이벤트
+
   void _onEvent(GameEvent e) {
     switch (e) {
       case DiscoveryEvent(:final chain, :final level, :final bonus):
         final d = Chains.item(chain, level);
-        _toast('${d.emoji} 새로운 ${d.name} 발견!  +🪙${fmt(bonus)}');
+        _toast(
+          tr('toast.discovery', {
+            'emoji': d.emoji,
+            'name': itemName(d),
+            'coins': fmt(bonus),
+          }),
+        );
       case MaxMergeEvent(:final payout):
-        _toast('✨ 최고 단계 수확! +🪙${fmt(payout)}');
+        _toast(tr('toast.maxMerge', {'coins': fmt(payout)}));
       case OrderDeliveredEvent(
         :final friendId,
         :final stars,
         :final affectionUp,
       ):
-        final f = Friends.byId(friendId);
-        _toast('${f.emoji} 고마워!  ⭐+$stars${affectionUp ? '  💗호감도 UP' : ''}');
+        _toast(
+          tr('toast.thanks', {
+                'emoji': Friends.byId(friendId).emoji,
+                'stars': stars,
+              }) +
+              (affectionUp ? tr('toast.affectionUp') : ''),
+        );
       case DecorPlacedEvent(:final area, :final slot):
         final d = Garden.areaAt(area).decor[slot];
-        _toast('${d.emoji} ${d.name} 완성!');
+        _toast(tr('toast.decorDone', {'emoji': d.emoji, 'name': decorName(d)}));
         setState(() => _viewArea = area);
         widget.ads.maybeShowInterstitial();
       case FriendJoinedEvent(:final friendId):
-        final f = Friends.byId(friendId);
-        _toast('🎉 ${f.emoji} ${f.name}(이)가 놀러 왔어요!');
+        _toast(
+          tr('toast.friendJoined', {
+            'emoji': Friends.byId(friendId).emoji,
+            'name': friendName(friendId),
+          }),
+        );
       case AreaCompletedEvent(:final area):
-        _toast('🏆 ${Garden.areaAt(area).name} 완성! 새 구역이 열렸어요');
+        _toast(tr('toast.areaDone', {'name': areaName(Garden.areaAt(area))}));
         Future.delayed(const Duration(milliseconds: 1500), () {
           if (mounted) setState(() => _viewArea = game.currentArea);
         });
+      case LevelUpEvent():
+        _levelUps.add(e);
+        _showLevelUps();
+      case BubbleEvent():
+        _toast(tr('toast.bubble'));
+      case SoldEvent(:final price):
+        _toast(tr('toast.sold', {'coins': fmt(price)}));
+      case MergedEvent():
+        break;
     }
   }
 
@@ -93,21 +130,75 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  Future<void> _showLevelUps() async {
+    if (_levelDialogOpen || _levelUps.isEmpty || !mounted) return;
+    _levelDialogOpen = true;
+    final e = _levelUps.removeAt(0);
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          tr('levelUp.title', {'n': e.level}),
+          textAlign: TextAlign.center,
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              tr('levelUp.reward', {'coins': fmt(e.coins), 'stars': e.stars}),
+              style: const TextStyle(fontSize: 20),
+            ),
+            if (e.unlocked.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Text(
+                tr('levelUp.unlocked'),
+                style: const TextStyle(fontSize: 15, color: Colors.black54),
+              ),
+              const SizedBox(height: 6),
+              for (final f in e.unlocked)
+                Text(featureName(f), style: const TextStyle(fontSize: 19)),
+            ],
+          ],
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(tr('levelUp.ok')),
+          ),
+        ],
+      ),
+    );
+    _levelDialogOpen = false;
+    _showLevelUps();
+  }
+
+  // ---------------------------------------------------------------- 행동
+
   Future<bool> _rewarded() async {
     final ok = await widget.ads.showRewarded();
-    if (!ok) _toast('광고를 불러오는 중이에요. 잠시 후 다시 시도해 주세요.');
+    if (!ok) _toast(tr('toast.adLoading'));
     return ok;
   }
 
+  bool _gate(Feature f) {
+    if (game.isUnlocked(f)) return true;
+    _toast(tr('toast.featureLocked', {'n': Leveling.unlockLevel[f]}));
+    return false;
+  }
+
   Future<void> _watchBoost() async {
+    if (!_gate(Feature.boost)) return;
     if (await _rewarded()) {
       game.grantBoost();
-      _toast('⚡ 수익 2배! (${fmtDuration(game.boostRemaining)})');
+      _toast(tr('toast.boost', {'time': fmtDuration(game.boostRemaining)}));
     }
   }
 
   Future<void> _watchCoinBag() async {
-    if (await _rewarded()) _toast('💰 +🪙${fmt(game.grantCoinBag())}');
+    if (!_gate(Feature.coinBag)) return;
+    if (await _rewarded())
+      _toast(tr('toast.coins', {'coins': fmt(game.grantCoinBag())}));
   }
 
   Future<void> _refreshOrder(int i) async {
@@ -115,40 +206,92 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onSlotTap(int slot) {
-    if (game.canPlace(slot)) {
+    if (game.areaLocked) {
+      _toast(tr('toast.areaLocked', {'n': game.areaRequiredLevel}));
+    } else if (game.canPlace(slot)) {
       game.placeDecor(slot);
     } else {
       final d = Garden.areaAt(game.currentArea).decor[slot];
       _toast(
-        '${d.emoji} ${d.name}: ⭐${game.decorCost(slot)} 필요 (부탁을 들어주면 별을 받아요)',
+        tr('toast.needStars', {
+          'emoji': d.emoji,
+          'name': decorName(d),
+          'cost': game.decorCost(slot),
+        }),
       );
     }
+  }
+
+  Future<void> _onLockedCell(int cell) async {
+    if (game.level < game.nextCellLevel) {
+      _toast(tr('cell.needLevel', {'n': game.nextCellLevel}));
+      return;
+    }
+    final cost = game.nextCellCost;
+    final enough = game.coins >= cost;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(tr('cell.title'), textAlign: TextAlign.center),
+        content: Text(
+          tr('cell.body', {'cost': fmt(cost)}),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 16),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(tr('common.cancel')),
+          ),
+          FilledButton(
+            onPressed: enough ? () => Navigator.pop(ctx, true) : null,
+            child: Text(
+              enough
+                  ? tr('cell.open')
+                  : tr('cell.needCoins', {'cost': fmt(cost)}),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) game.buyCell(cell);
+  }
+
+  Future<void> _onBubble(int cell) async {
+    if (await _rewarded()) game.popBubble(cell);
   }
 
   Future<void> _onVisitorTap() async {
     final withAd = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(
-          '${Friends.visitorEmoji} 깜짝 손님!',
+        title: Text(tr('visitor.title'), textAlign: TextAlign.center),
+        content: Text(
+          tr('visitor.body'),
           textAlign: TextAlign.center,
-        ),
-        content: const Text(
-          '지나가던 고슴도치가 선물을 두고 갔어요.',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 17),
+          style: const TextStyle(fontSize: 17),
         ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('받기 🪙${fmt(game.visitorCoins(withAd: false))}'),
+            child: Text(
+              tr('visitor.take', {
+                'coins': fmt(game.visitorCoins(withAd: false)),
+              }),
+            ),
           ),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Palette.ad),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
-              '${adFree ? '' : '📺 '}크게 받기 🪙${fmt(game.visitorCoins(withAd: true))} ⭐${GameConfig.visitorAdStars}',
+              _adLabel(
+                tr('visitor.takeBig', {
+                  'coins': fmt(game.visitorCoins(withAd: true)),
+                  'stars': GameConfig.visitorAdStars,
+                }),
+              ),
             ),
           ),
         ],
@@ -158,12 +301,21 @@ class _HomeScreenState extends State<HomeScreen> {
     final ok = withAd ? await widget.ads.showRewarded() : false;
     final r = game.claimVisitor(withAd: ok);
     if (r != null) {
-      _toast('🎁 +🪙${fmt(r.coins)}${r.stars > 0 ? '  ⭐+${r.stars}' : ''}');
+      _toast(
+        tr('toast.gift', {'coins': fmt(r.coins)}) +
+            (r.stars > 0 ? tr('toast.giftStars', {'stars': r.stars}) : ''),
+      );
     }
   }
 
+  String _adLabel(String label) =>
+      adFree ? label : tr('ctrl.ad', {'label': label});
+
+  // ---------------------------------------------------------------- 화면
+
   @override
   Widget build(BuildContext context) {
+    final extra = widget.extraListenable;
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -175,32 +327,52 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: SafeArea(
           child: ListenableBuilder(
-            listenable: Listenable.merge([game, widget.ads, widget.billing]),
-            builder: (context, _) => Column(
-              children: [
-                _topBar(),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-                    child: _sceneArea(),
+            listenable: Listenable.merge([
+              game,
+              widget.ads,
+              widget.billing,
+              L10n.instance,
+              ?extra,
+            ]),
+            builder: (context, _) {
+              final sel = _selected;
+              if (sel != null &&
+                  (game.board[sel] == null || game.board[sel]!.isBubble))
+                _selected = null;
+              if (_viewArea > game.currentArea) _viewArea = game.currentArea;
+              return Column(
+                children: [
+                  _topBar(),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+                      child: _sceneArea(),
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: OrdersBar(
-                    game: game,
-                    onRefresh: _refreshOrder,
-                    adFree: adFree,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: OrdersBar(
+                      game: game,
+                      onRefresh: _refreshOrder,
+                      adFree: adFree,
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
-                  child: BoardView(game: game),
-                ),
-                _controls(),
-                if (!adFree) const BannerSlot(),
-              ],
-            ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+                    child: BoardView(
+                      game: game,
+                      selected: _selected,
+                      onSelect: (c) => setState(() => _selected = c),
+                      onLockedTap: _onLockedCell,
+                      onBubbleTap: _onBubble,
+                    ),
+                  ),
+                  _infoBar(),
+                  _controls(),
+                  if (!adFree) const BannerSlot(),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -209,9 +381,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _topBar() {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 6, 10, 6),
+      padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
       child: Row(
         children: [
+          _LevelBadge(level: game.level, progress: game.xp / game.xpToNext),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -221,14 +395,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   alignment: Alignment.centerLeft,
                   child: Row(
                     children: [
+                      ArtImage(Art.coin, size: 24),
                       Text(
-                        '🪙 ${fmt(game.coins)}',
-                        style: const TextStyle(fontSize: 23),
+                        ' ${fmt(game.coins)}',
+                        style: const TextStyle(fontSize: 22),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 12),
+                      ArtImage(Art.star, size: 24),
                       Text(
-                        '⭐ ${game.stars}',
-                        style: const TextStyle(fontSize: 23),
+                        ' ${game.stars}',
+                        style: const TextStyle(fontSize: 22),
                       ),
                     ],
                   ),
@@ -239,7 +415,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     children: [
                       Text(
-                        '초당 ${fmt(game.incomePerSec)}',
+                        tr('hud.perSec', {'v': fmt(game.incomePerSec)}),
                         style: const TextStyle(fontSize: 14),
                       ),
                       if (game.boostActive) ...[
@@ -254,7 +430,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Text(
-                            '⚡x2 ${fmtDuration(game.boostRemaining)}',
+                            tr('hud.boost', {
+                              'time': fmtDuration(game.boostRemaining),
+                            }),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
@@ -271,35 +449,15 @@ class _HomeScreenState extends State<HomeScreen> {
           if (!adFree) ...[
             _MenuButton(
               icon: '🚫',
-              label: '광고제거',
+              label: tr('menu.removeAds'),
               onTap: () => showShopSheet(context, widget.billing),
             ),
             const SizedBox(width: 5),
           ],
           _MenuButton(
-            icon: '📖',
-            label: '도감',
-            onTap: () => showCollectionSheet(context, game),
-          ),
-          const SizedBox(width: 5),
-          _MenuButton(
-            icon: '⬆️',
-            label: '강화',
-            badge: Upgrades.all.any((u) => game.canBuyUpgrade(u.type)),
-            onTap: () => showUpgradesSheet(context, game),
-          ),
-          const SizedBox(width: 5),
-          _MenuButton(
-            icon: '🔨',
-            label: '꾸미기',
-            badge: List.generate(
-              Garden.slotsPerArea,
-              game.canPlace,
-            ).any((x) => x),
-            onTap: () {
-              setState(() => _viewArea = game.currentArea);
-              showDecorSheet(context, game);
-            },
+            icon: '⚙️',
+            label: tr('menu.settings'),
+            onTap: () => widget.openSettings(context),
           ),
         ],
       ),
@@ -307,18 +465,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _sceneArea() {
-    final area = Garden.areaAt(_viewArea);
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: GardenScene(
-            game: game,
-            area: _viewArea,
-            onSlotTap: _onSlotTap,
-            onVisitorTap: _onVisitorTap,
-          ),
-        ),
-        // 구역 이름, 이동
+    final canDecorate = List.generate(
+      Garden.slotsPerArea,
+      game.canPlace,
+    ).any((x) => x);
+    return GardenScene(
+      game: game,
+      area: _viewArea,
+      onSlotTap: _onSlotTap,
+      onVisitorTap: _onVisitorTap,
+      overlay: [
+        // L3: 구역 이름과 이동
         Positioned(
           left: 6,
           top: 6,
@@ -340,8 +497,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '${area.emoji} ${area.name}${_viewArea == game.currentArea ? '  ${game.placed.length}/${Garden.slotsPerArea}' : ' ✅'}',
-                  style: const TextStyle(fontSize: 14),
+                  areaLabel(game, _viewArea),
+                  style: const TextStyle(fontSize: 13),
                 ),
               ),
               if (_viewArea < game.currentArea)
@@ -352,11 +509,47 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+        // L3: 메뉴 (하늘 영역 오른쪽 위, 장식 자리와 겹치지 않음)
+        Positioned(
+          right: 6,
+          top: 6,
+          child: Row(
+            children: [
+              _MenuButton(
+                icon: '📖',
+                label: tr('menu.book'),
+                small: true,
+                onTap: () => showCollectionSheet(context, game),
+              ),
+              const SizedBox(width: 4),
+              _MenuButton(
+                icon: game.isUnlocked(Feature.upgrades) ? '⬆️' : '🔒',
+                label: tr('menu.upgrade'),
+                small: true,
+                badge: Upgrades.all.any((u) => game.canBuyUpgrade(u.type)),
+                onTap: () {
+                  if (_gate(Feature.upgrades)) showUpgradesSheet(context, game);
+                },
+              ),
+              const SizedBox(width: 4),
+              _MenuButton(
+                icon: '🔨',
+                label: tr('menu.decorate'),
+                small: true,
+                badge: canDecorate,
+                onTap: () {
+                  setState(() => _viewArea = game.currentArea);
+                  showDecorSheet(context, game);
+                },
+              ),
+            ],
+          ),
+        ),
         // 알림
         Positioned(
           left: 10,
           right: 10,
-          top: 44,
+          top: 56,
           child: IgnorePointer(
             child: Column(
               children: [
@@ -370,17 +563,97 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// 보드 아래 한 줄: 선택한 아이템 정보·판매 / 되돌리기 / 막힘 안내 / 도움말.
+  Widget _infoBar() {
+    final idx = _selected;
+    final sel = idx == null ? null : game.board[idx];
+    Widget child;
+    if (idx != null && sel != null) {
+      child = Row(
+        children: [
+          ArtImage(Art.item(sel.chain, sel.level), size: 26),
+          const SizedBox(width: 6),
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                tr('board.selected', {
+                  'lv': sel.level,
+                  'name': itemName(sel.def),
+                  'v': fmt(GameConfig.incomeOf(sel.level)),
+                }),
+                style: const TextStyle(fontSize: 15),
+              ),
+            ),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFE07A5F),
+              minimumSize: const Size(40, 36),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+            ),
+            onPressed: () {
+              game.sell(idx);
+              setState(() => _selected = null);
+            },
+            child: Text(
+              tr('board.sell', {'price': fmt(game.sellPrice(sel))}),
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ],
+      );
+    } else if (game.canUndoSell) {
+      child = Center(
+        child: TextButton(
+          onPressed: game.undoSell,
+          child: Text(tr('board.undo'), style: const TextStyle(fontSize: 16)),
+        ),
+      );
+    } else {
+      final stuck = game.boardStuck;
+      child = Center(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            tr(stuck ? 'board.stuck' : 'board.hint'),
+            style: TextStyle(
+              fontSize: 14,
+              color: stuck ? const Color(0xFFB0640A) : Colors.black45,
+            ),
+          ),
+        ),
+      );
+    }
+    return SizedBox(
+      height: 44,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: child,
+      ),
+    );
+  }
+
   Widget _controls() {
-    final adLabel = adFree ? '' : '📺 ';
+    final boostOpen = game.isUnlocked(Feature.boost);
+    final bagOpen = game.isUnlocked(Feature.coinBag);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 6),
+      padding: const EdgeInsets.fromLTRB(10, 0, 10, 6),
       child: Row(
         children: [
           Expanded(
             child: _AdButton(
-              label: '$adLabel수익 2배',
-              sub: game.boostActive ? '+10분 연장' : '10분',
-              onTap: game.canAddBoost && widget.ads.rewardedReady
+              label: boostOpen ? _adLabel(tr('ctrl.boost')) : tr('ctrl.boost'),
+              sub: !boostOpen
+                  ? tr('common.lockedLevel', {
+                      'n': Leveling.unlockLevel[Feature.boost],
+                    })
+                  : game.boostActive
+                  ? tr('ctrl.boost.extend')
+                  : tr('ctrl.boost.duration'),
+              onTap:
+                  !boostOpen || (game.canAddBoost && widget.ads.rewardedReady)
                   ? _watchBoost
                   : null,
             ),
@@ -390,13 +663,68 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: _AdButton(
-              label: '$adLabel코인 주머니',
-              sub: game.coinBagReady
+              label: bagOpen
+                  ? _adLabel(tr('ctrl.coinBag'))
+                  : tr('ctrl.coinBag'),
+              sub: !bagOpen
+                  ? tr('common.lockedLevel', {
+                      'n': Leveling.unlockLevel[Feature.coinBag],
+                    })
+                  : game.coinBagReady
                   ? '🪙${fmt(game.coinBagAmount)}'
                   : fmtDuration(game.coinBagCooldownLeft),
-              onTap: game.coinBagReady && widget.ads.rewardedReady
+              onTap: !bagOpen || (game.coinBagReady && widget.ads.rewardedReady)
                   ? _watchCoinBag
                   : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------- 작은 위젯들
+
+class _LevelBadge extends StatelessWidget {
+  const _LevelBadge({required this.level, required this.progress});
+  final int level;
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 52,
+      height: 52,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 52,
+            height: 52,
+            child: CircularProgressIndicator(
+              value: progress.clamp(0, 1),
+              strokeWidth: 5,
+              backgroundColor: Colors.white70,
+              color: Palette.accent,
+            ),
+          ),
+          Container(
+            width: 42,
+            height: 42,
+            decoration: const BoxDecoration(
+              color: Palette.primary,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: FittedBox(
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Text(
+                  tr('hud.level', {'n': level}),
+                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                ),
+              ),
             ),
           ),
         ],
@@ -415,14 +743,14 @@ class _Spawner extends StatelessWidget {
     return GestureDetector(
       onTap: game.tapSpawner,
       child: SizedBox(
-        width: 72,
-        height: 72,
+        width: 70,
+        height: 70,
         child: Stack(
           alignment: Alignment.center,
           children: [
             SizedBox(
-              width: 72,
-              height: 72,
+              width: 70,
+              height: 70,
               child: CircularProgressIndicator(
                 value: full
                     ? 1
@@ -433,8 +761,8 @@ class _Spawner extends StatelessWidget {
               ),
             ),
             Container(
-              width: 58,
-              height: 58,
+              width: 56,
+              height: 56,
               decoration: const BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
@@ -443,9 +771,9 @@ class _Spawner extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('🧺', style: TextStyle(fontSize: 24)),
+                  ArtImage(Art.basket, size: 26),
                   Text(
-                    full ? '가득!' : '톡톡',
+                    tr(full ? 'spawner.full' : 'spawner.tap'),
                     style: const TextStyle(fontSize: 11),
                   ),
                 ],
@@ -492,25 +820,29 @@ class _MenuButton extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.badge = false,
+    this.small = false,
   });
   final String icon;
   final String label;
   final VoidCallback onTap;
   final bool badge;
+  final bool small;
 
   @override
   Widget build(BuildContext context) {
+    final w = small ? 46.0 : 50.0;
+    final h = small ? 44.0 : 48.0;
     return GestureDetector(
       onTap: onTap,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
           Container(
-            width: 50,
-            height: 48,
+            width: w,
+            height: h,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.92),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x22000000),
@@ -522,11 +854,14 @@ class _MenuButton extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(icon, style: const TextStyle(fontSize: 19)),
-                FittedBox(
-                  child: Text(
-                    label,
-                    style: const TextStyle(fontSize: 11, color: Palette.text),
+                Text(icon, style: TextStyle(fontSize: small ? 17 : 19)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: FittedBox(
+                    child: Text(
+                      label,
+                      style: const TextStyle(fontSize: 11, color: Palette.text),
+                    ),
                   ),
                 ),
               ],
@@ -550,21 +885,19 @@ class _RoundButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 30,
-        height: 30,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.85),
-          shape: BoxShape.circle,
-        ),
-        child: Text(label, style: const TextStyle(fontSize: 13)),
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      width: 30,
+      height: 30,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.85),
+        shape: BoxShape.circle,
       ),
-    );
-  }
+      child: Text(label, style: const TextStyle(fontSize: 13)),
+    ),
+  );
 }
 
 class _Toast {

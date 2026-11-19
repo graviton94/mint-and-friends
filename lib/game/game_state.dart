@@ -10,13 +10,30 @@ class Item {
   final int id;
   final Chain chain;
   int level;
-  Item(this.id, this.chain, this.level);
 
+  /// 비눗방울 아이템이면 터지는 시각. 광고를 보면 꺼낼 수 있다. null 이면 보통 아이템.
+  DateTime? bubbleUntil;
+
+  Item(this.id, this.chain, this.level, {this.bubbleUntil});
+
+  bool get isBubble => bubbleUntil != null;
   ItemDef get def => Chains.item(chain, level);
 
-  Map<String, dynamic> toJson() => {'i': id, 'c': chain.index, 'l': level};
-  static Item fromJson(Map<String, dynamic> j) =>
-      Item(j['i'] as int, Chain.values[j['c'] as int], j['l'] as int);
+  Map<String, dynamic> toJson() => {
+    'i': id,
+    'c': chain.index,
+    'l': level,
+    if (bubbleUntil != null) 'b': bubbleUntil!.millisecondsSinceEpoch,
+  };
+
+  static Item fromJson(Map<String, dynamic> j) => Item(
+    j['i'] as int,
+    Chain.values[j['c'] as int],
+    j['l'] as int,
+    bubbleUntil: j['b'] == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(j['b'] as int),
+  );
 }
 
 class Order {
@@ -43,6 +60,14 @@ class Order {
     j['l'] as int,
     j['s'] as int,
   );
+}
+
+class _Sale {
+  final int cell;
+  final Item item;
+  final double price;
+  final DateTime at;
+  _Sale(this.cell, this.item, this.price, this.at);
 }
 
 enum MoveResult { none, moved, swapped, merged, maxMerged }
@@ -85,6 +110,32 @@ class AreaCompletedEvent extends GameEvent {
   AreaCompletedEvent(this.area);
 }
 
+class LevelUpEvent extends GameEvent {
+  final int level;
+  final List<Feature> unlocked;
+  final double coins;
+  final int stars;
+  LevelUpEvent(this.level, this.unlocked, this.coins, this.stars);
+}
+
+/// 합치기 연출용 (UI 이펙트 레이어가 사용).
+class MergedEvent extends GameEvent {
+  final int cell;
+  final int level;
+  MergedEvent(this.cell, this.level);
+}
+
+class BubbleEvent extends GameEvent {
+  final int cell;
+  BubbleEvent(this.cell);
+}
+
+class SoldEvent extends GameEvent {
+  final Item item;
+  final double price;
+  SoldEvent(this.item, this.price);
+}
+
 class OfflineReward {
   final Duration away;
   final double coins;
@@ -109,7 +160,10 @@ class GameState extends ChangeNotifier {
   double coins = 0;
   int stars = 0;
   double lifetimeCoins = 0;
+  int level = 1;
+  int xp = 0;
   List<Item?> board = List<Item?>.filled(GameConfig.cellCount, null);
+  Set<int> unlockedCells = {...GameConfig.startCells};
   int _nextId = 1;
   final Map<UpgradeType, int> upgrades = {
     for (final u in UpgradeType.values) u: 0,
@@ -131,7 +185,11 @@ class GameState extends ChangeNotifier {
   DateTime? visitorUntil;
   int totalMerges = 0;
 
+  /// 마지막 저장 시각 (클라우드 동기화 시 최신 판단용).
+  DateTime? savedAt;
+
   final Map<String, DateTime> _friendTapReady = {};
+  _Sale? _lastSale;
 
   /// 결제 서비스가 넣어준다 (저장하지 않음).
   bool adFree = false;
@@ -139,6 +197,14 @@ class GameState extends ChangeNotifier {
   // ---------------------------------------------------------------- 파생 값
 
   DateTime get now => _clock();
+
+  bool isUnlocked(Feature f) => level >= (Leveling.unlockLevel[f] ?? 1);
+  int get xpToNext => Leveling.xpToNext(level);
+
+  List<Chain> get availableChains => [
+    Chain.flower,
+    if (isUnlocked(Feature.snack)) Chain.snack,
+  ];
 
   int lv(UpgradeType t) => upgrades[t] ?? 0;
 
@@ -150,9 +216,8 @@ class GameState extends ChangeNotifier {
   double buff(FriendBuff b) {
     double sum = 0;
     for (final f in Friends.all) {
-      if (f.buff == b && friends.contains(f.id)) {
+      if (f.buff == b && friends.contains(f.id))
         sum += f.perLevel * affection(f.id);
-      }
     }
     return sum;
   }
@@ -172,6 +237,10 @@ class GameState extends ChangeNotifier {
   bool isPlaced(int area, int slot) =>
       area < currentArea || (area == currentArea && placed.contains(slot));
   int get decorCount => currentArea * Garden.slotsPerArea + placed.length;
+
+  /// 지금 구역을 꾸미는 데 필요한 레벨. 모자라면 별이 있어도 설치할 수 없다.
+  int get areaRequiredLevel => Leveling.areaLevel(currentArea);
+  bool get areaLocked => level < areaRequiredLevel;
 
   /// 정원 매력도 = 수익 배율.
   double get gardenMultiplier =>
@@ -198,14 +267,55 @@ class GameState extends ChangeNotifier {
   double get baseIncomePerSec {
     double sum = 0;
     for (final it in board) {
-      if (it != null) sum += GameConfig.incomeOf(it.level);
+      if (it != null && !it.isBubble) sum += GameConfig.incomeOf(it.level);
     }
     return sum * _incomeMult;
   }
 
   double get incomePerSec => baseIncomePerSec * (boostActive ? 2 : 1);
 
-  bool get boardFull => !board.contains(null);
+  bool isCellOpen(int i) => unlockedCells.contains(i);
+  int? get _emptyCell {
+    for (var i = 0; i < board.length; i++) {
+      if (board[i] == null && unlockedCells.contains(i)) return i;
+    }
+    return null;
+  }
+
+  bool get boardFull => _emptyCell == null;
+
+  /// 꽉 찼고 합칠 수 있는 쌍도 없으면 true (판매를 안내할 때 사용).
+  bool get boardStuck => boardFull && !_hasMergeablePair();
+
+  bool _hasMergeablePair() {
+    final seen = <String>{};
+    for (final it in board) {
+      if (it == null || it.isBubble || it.level >= GameConfig.maxLevel)
+        continue;
+      if (!seen.add('${it.chain.index}-${it.level}')) return true;
+    }
+    return false;
+  }
+
+  // ---------------------------------------------------------------- 경험치
+
+  void _gainXp(int amount) {
+    xp += amount;
+    while (xp >= xpToNext) {
+      xp -= xpToNext;
+      level++;
+      final c = max(100.0, baseIncomePerSec * Leveling.levelUpCoinSeconds);
+      _earn(c);
+      stars += Leveling.levelUpStars;
+      final opened = Leveling.unlockedAt(level);
+      _events.add(LevelUpEvent(level, opened, c, Leveling.levelUpStars));
+      // 간식이 열리면 첫 부탁을 간식으로 바꿔 바로 체감되게 한다
+      if (opened.contains(Feature.snack) && orders.isNotEmpty) {
+        orders[0] = _placeholder;
+        orders[0] = _newOrder(preferChain: Chain.snack);
+      }
+    }
+  }
 
   // ---------------------------------------------------------------- 진행
 
@@ -232,7 +342,16 @@ class GameState extends ChangeNotifier {
       }
     }
 
-    if (!visitorVisible && !now.isBefore(nextVisitorAt)) {
+    // 시간이 다 된 비눗방울은 터진다
+    for (var i = 0; i < board.length; i++) {
+      final it = board[i];
+      if (it != null && it.isBubble && !it.bubbleUntil!.isAfter(now))
+        board[i] = null;
+    }
+
+    if (isUnlocked(Feature.visitor) &&
+        !visitorVisible &&
+        !now.isBefore(nextVisitorAt)) {
       visitorUntil = now.add(GameConfig.visitorStay);
       nextVisitorAt = visitorUntil!.add(_randomVisitorGap());
     }
@@ -264,33 +383,34 @@ class GameState extends ChangeNotifier {
   }
 
   int? _spawnOne() {
-    final cell = board.indexOf(null);
-    if (cell < 0) return null;
-    final chain = Chain.values[_rng.nextInt(Chain.values.length)];
-    var level = spawnLevel;
+    final cell = _emptyCell;
+    if (cell == null) return null;
+    final chains = availableChains;
+    final chain = chains[_rng.nextInt(chains.length)];
+    var lvl = spawnLevel;
     if (_rng.nextDouble() <
-        GameConfig.luckySpawnChance + buff(FriendBuff.lucky)) {
-      level += 1;
-    }
-    level = min(level, GameConfig.maxLevel);
-    board[cell] = Item(_nextId++, chain, level);
-    _checkDiscovery(chain, level);
+        GameConfig.luckySpawnChance + buff(FriendBuff.lucky))
+      lvl += 1;
+    lvl = min(lvl, GameConfig.maxLevel);
+    board[cell] = Item(_nextId++, chain, lvl);
+    _checkDiscovery(chain, lvl);
     return cell;
   }
 
-  void _checkDiscovery(Chain chain, int level) {
-    if (level > (highest[chain] ?? 1)) {
-      highest[chain] = level;
+  void _checkDiscovery(Chain chain, int lvl) {
+    if (lvl > (highest[chain] ?? 1)) {
+      highest[chain] = lvl;
       final bonus =
-          GameConfig.incomeOf(level) *
+          GameConfig.incomeOf(lvl) *
           _incomeMult *
           GameConfig.discoveryBonusSeconds;
       _earn(bonus);
-      _events.add(DiscoveryEvent(chain, level, bonus));
+      _events.add(DiscoveryEvent(chain, lvl, bonus));
+      _gainXp(Leveling.xpForDiscovery);
     }
   }
 
-  /// 드래그 앤 드롭.
+  /// 드래그 앤 드롭. 잠긴 칸, 비눗방울은 움직일 수 없다.
   MoveResult move(int from, int to) {
     if (from == to ||
         from < 0 ||
@@ -299,9 +419,11 @@ class GameState extends ChangeNotifier {
         to >= board.length) {
       return MoveResult.none;
     }
+    if (!isCellOpen(from) || !isCellOpen(to)) return MoveResult.none;
     final a = board[from];
     final b = board[to];
-    if (a == null) return MoveResult.none;
+    if (a == null || a.isBubble || (b != null && b.isBubble))
+      return MoveResult.none;
     MoveResult r;
     if (b == null) {
       board[to] = a;
@@ -330,11 +452,36 @@ class GameState extends ChangeNotifier {
       board[to] = null;
       _earn(payout);
       _events.add(MaxMergeEvent(payout));
+      _gainXp(Leveling.xpForMerge(b.level));
       return MoveResult.maxMerged;
     }
     b.level += 1;
+    _events.add(MergedEvent(to, b.level));
     _checkDiscovery(b.chain, b.level);
+    _gainXp(Leveling.xpForMerge(b.level));
+    if (b.level >= GameConfig.bubbleMinLevel &&
+        _rng.nextDouble() < GameConfig.bubbleChance) {
+      final cell = _emptyCell;
+      if (cell != null) {
+        board[cell] = Item(
+          _nextId++,
+          b.chain,
+          b.level,
+          bubbleUntil: now.add(GameConfig.bubbleLife),
+        );
+        _events.add(BubbleEvent(cell));
+      }
+    }
     return MoveResult.merged;
+  }
+
+  /// 비눗방울 꺼내기 (보상형 광고를 본 뒤 호출).
+  bool popBubble(int cell) {
+    final it = board[cell];
+    if (it == null || !it.isBubble) return false;
+    it.bubbleUntil = null;
+    notifyListeners();
+    return true;
   }
 
   bool _isOrderTarget(Item it) =>
@@ -345,9 +492,11 @@ class GameState extends ChangeNotifier {
     final groups = <String, List<int>>{};
     for (var i = 0; i < board.length; i++) {
       final it = board[i];
-      if (it == null || it.level >= GameConfig.maxLevel || _isOrderTarget(it)) {
+      if (it == null ||
+          it.isBubble ||
+          it.level >= GameConfig.maxLevel ||
+          _isOrderTarget(it))
         continue;
-      }
       groups
           .putIfAbsent(
             '${it.level.toString().padLeft(2, '0')}-${it.chain.index}',
@@ -367,6 +516,65 @@ class GameState extends ChangeNotifier {
     return false;
   }
 
+  // ---------------------------------------------------------------- 칸 해금, 판매
+
+  int get cellsPurchased => unlockedCells.length - GameConfig.startCells.length;
+  int get lockedCellCount => GameConfig.cellCount - unlockedCells.length;
+  double get nextCellCost => cellCost(cellsPurchased);
+  int get nextCellLevel => Leveling.cellLevel(cellsPurchased);
+
+  bool canBuyCell(int cell) =>
+      cell >= 0 &&
+      cell < GameConfig.cellCount &&
+      !isCellOpen(cell) &&
+      level >= nextCellLevel &&
+      coins >= nextCellCost;
+
+  bool buyCell(int cell) {
+    if (!canBuyCell(cell)) return false;
+    coins -= nextCellCost;
+    unlockedCells.add(cell);
+    notifyListeners();
+    return true;
+  }
+
+  double sellPrice(Item it) => max(
+    1,
+    GameConfig.incomeOf(it.level) * _incomeMult * GameConfig.sellSeconds,
+  );
+
+  /// 아이템 판매. 판매 금액을 돌려준다.
+  double? sell(int cell) {
+    final it = board[cell];
+    if (it == null || it.isBubble) return null;
+    final price = sellPrice(it);
+    board[cell] = null;
+    _earn(price);
+    _lastSale = _Sale(cell, it, price, now);
+    _events.add(SoldEvent(it, price));
+    notifyListeners();
+    return price;
+  }
+
+  bool get canUndoSell {
+    final s = _lastSale;
+    return s != null &&
+        now.difference(s.at) < GameConfig.sellUndoWindow &&
+        board[s.cell] == null &&
+        coins >= s.price;
+  }
+
+  bool undoSell() {
+    if (!canUndoSell) return false;
+    final s = _lastSale!;
+    coins -= s.price;
+    lifetimeCoins -= s.price;
+    board[s.cell] = s.item;
+    _lastSale = null;
+    notifyListeners();
+    return true;
+  }
+
   // ---------------------------------------------------------------- 부탁
 
   void _fillOrders() {
@@ -375,31 +583,26 @@ class GameState extends ChangeNotifier {
     }
   }
 
-  Order _newOrder() {
+  Order _newOrder({Chain? preferChain}) {
     final pool = friends.toList()..sort();
+    final chains = availableChains;
     final center = Garden.orderLevelCenter(currentArea, placed.length);
     for (var attempt = 0; ; attempt++) {
       final friendId = pool[_rng.nextInt(pool.length)];
-      final chain = Chain.values[_rng.nextInt(Chain.values.length)];
-      final level = (center + _rng.nextDouble() * 2 - 1).round().clamp(
+      final chain = preferChain ?? chains[_rng.nextInt(chains.length)];
+      final lvl = (center + _rng.nextDouble() * 2 - 1).round().clamp(
         2,
         GameConfig.maxLevel,
       );
-      final dup = orders.any((o) => o.chain == chain && o.level == level);
+      final dup = orders.any((o) => o.chain == chain && o.level == lvl);
       if (!dup || attempt > 10) {
-        return Order(
-          _nextId++,
-          friendId,
-          chain,
-          level,
-          Garden.orderStars(level),
-        );
+        return Order(_nextId++, friendId, chain, lvl, Garden.orderStars(lvl));
       }
     }
   }
 
-  int _findItem(Chain chain, int level) => board.indexWhere(
-    (it) => it != null && it.chain == chain && it.level == level,
+  int _findItem(Chain chain, int lvl) => board.indexWhere(
+    (it) => it != null && !it.isBubble && it.chain == chain && it.level == lvl,
   );
 
   bool canDeliver(int orderIndex) {
@@ -429,6 +632,7 @@ class GameState extends ChangeNotifier {
     orders[orderIndex] = _placeholder;
     orders[orderIndex] = _newOrder();
     _events.add(OrderDeliveredEvent(o.friendId, gained, c, up));
+    _gainXp(Leveling.xpForOrder(o.stars));
     notifyListeners();
     return true;
   }
@@ -451,11 +655,13 @@ class GameState extends ChangeNotifier {
       slot >= 0 &&
       slot < Garden.slotsPerArea &&
       !placed.contains(slot) &&
+      !areaLocked &&
       stars >= decorCost(slot);
 
   bool placeDecor(int slot) {
     if (!canPlace(slot)) return false;
-    stars -= decorCost(slot);
+    final cost = decorCost(slot);
+    stars -= cost;
     placed.add(slot);
     final area = currentArea;
     final def = Garden.areaAt(area).decor[slot];
@@ -470,6 +676,7 @@ class GameState extends ChangeNotifier {
       placed = {};
       _events.add(AreaCompletedEvent(area));
     }
+    _gainXp(Leveling.xpForDecor(cost));
     notifyListeners();
     return true;
   }
@@ -511,12 +718,24 @@ class GameState extends ChangeNotifier {
     return (coins: c, stars: s);
   }
 
-  // ---------------------------------------------------------------- 구매
+  // ---------------------------------------------------------------- 강화
 
   double upgradeCost(UpgradeType t) => Upgrades.of(t).costAt(lv(t));
   bool upgradeMaxed(UpgradeType t) => lv(t) >= Upgrades.of(t).maxLevel;
+
+  bool upgradeFeatureLocked(UpgradeType t) {
+    final f = Upgrades.of(t).feature;
+    return !isUnlocked(Feature.upgrades) || (f != null && !isUnlocked(f));
+  }
+
+  /// 플레이어 레벨 상한에 걸렸는지.
+  bool upgradeCapped(UpgradeType t) => lv(t) >= Leveling.upgradeCap(level);
+
   bool canBuyUpgrade(UpgradeType t) =>
-      !upgradeMaxed(t) && coins >= upgradeCost(t);
+      !upgradeFeatureLocked(t) &&
+      !upgradeMaxed(t) &&
+      !upgradeCapped(t) &&
+      coins >= upgradeCost(t);
 
   bool buyUpgrade(UpgradeType t) {
     if (!canBuyUpgrade(t)) return false;
@@ -575,61 +794,79 @@ class GameState extends ChangeNotifier {
 
   // ---------------------------------------------------------------- 저장
 
-  static const int saveVersion = 2;
+  static const int saveVersion = 3;
 
-  Map<String, dynamic> toJson() => {
-    'v': saveVersion,
-    'coins': coins,
-    'stars': stars,
-    'life': lifetimeCoins,
-    'board': [for (final it in board) it?.toJson()],
-    'nextId': _nextId,
-    'up': {for (final e in upgrades.entries) e.key.name: e.value},
-    'sp': spawnProgress,
-    'hi': {for (final e in highest.entries) e.key.name: e.value},
-    'area': currentArea,
-    'placed': placed.toList(),
-    'friends': friends.toList(),
-    'deliv': deliveries,
-    'orders': [for (final o in orders) o.toJson()],
-    'boost': boostUntil?.millisecondsSinceEpoch,
-    'bag': coinBagReadyAt?.millisecondsSinceEpoch,
-    'seen': lastSeen.millisecondsSinceEpoch,
-    'visitorNext': nextVisitorAt.millisecondsSinceEpoch,
-    'merges': totalMerges,
-  };
+  /// 진행도 비교용 점수 (클라우드와 로컬 중 어느 쪽이 더 진행됐는지).
+  double get progressScore =>
+      level * 1e6 + decorCount * 1e3 + log(lifetimeCoins + 1);
+
+  Map<String, dynamic> toJson() {
+    savedAt = now;
+    return {
+      'v': saveVersion,
+      'coins': coins,
+      'stars': stars,
+      'life': lifetimeCoins,
+      'level': level,
+      'xp': xp,
+      'board': [for (final it in board) it?.toJson()],
+      'cells': unlockedCells.toList()..sort(),
+      'nextId': _nextId,
+      'up': {for (final e in upgrades.entries) e.key.name: e.value},
+      'sp': spawnProgress,
+      'hi': {for (final e in highest.entries) e.key.name: e.value},
+      'area': currentArea,
+      'placed': placed.toList(),
+      'friends': friends.toList(),
+      'deliv': deliveries,
+      'orders': [for (final o in orders) o.toJson()],
+      'boost': boostUntil?.millisecondsSinceEpoch,
+      'bag': coinBagReadyAt?.millisecondsSinceEpoch,
+      'seen': lastSeen.millisecondsSinceEpoch,
+      'visitorNext': nextVisitorAt.millisecondsSinceEpoch,
+      'merges': totalMerges,
+      'savedAt': savedAt!.millisecondsSinceEpoch,
+    };
+  }
 
   String encode() => jsonEncode(toJson());
 
   /// 저장 데이터를 불러온다. 버전이 다르면 false (새로 시작).
-  bool load(String raw) {
-    final j = jsonDecode(raw) as Map<String, dynamic>;
+  bool load(String raw) => loadJson(jsonDecode(raw) as Map<String, dynamic>);
+
+  bool loadJson(Map<String, dynamic> j) {
     if (j['v'] != saveVersion) return false;
-    DateTime? ts(String k) =>
-        j[k] == null ? null : DateTime.fromMillisecondsSinceEpoch(j[k] as int);
+    DateTime? ts(String k) => j[k] == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch((j[k] as num).toInt());
 
     coins = (j['coins'] as num).toDouble();
-    stars = j['stars'] as int? ?? 0;
+    stars = (j['stars'] as num?)?.toInt() ?? 0;
     lifetimeCoins = (j['life'] as num?)?.toDouble() ?? coins;
+    level = (j['level'] as num?)?.toInt() ?? 1;
+    xp = (j['xp'] as num?)?.toInt() ?? 0;
     final b = j['board'] as List;
     board = List<Item?>.filled(GameConfig.cellCount, null);
     for (var i = 0; i < b.length && i < board.length; i++) {
-      if (b[i] != null) {
+      if (b[i] != null)
         board[i] = Item.fromJson((b[i] as Map).cast<String, dynamic>());
-      }
     }
-    _nextId = j['nextId'] as int? ?? 1;
+    unlockedCells = {
+      ...GameConfig.startCells,
+      for (final c in (j['cells'] as List? ?? [])) (c as num).toInt(),
+    };
+    _nextId = (j['nextId'] as num?)?.toInt() ?? 1;
     final up = (j['up'] as Map?)?.cast<String, dynamic>() ?? {};
     for (final t in UpgradeType.values) {
-      upgrades[t] = (up[t.name] as int?) ?? 0;
+      upgrades[t] = (up[t.name] as num?)?.toInt() ?? 0;
     }
     spawnProgress = (j['sp'] as num?)?.toDouble() ?? 0;
     final hi = (j['hi'] as Map?)?.cast<String, dynamic>() ?? {};
     for (final c in Chain.values) {
-      highest[c] = (hi[c.name] as int?) ?? 1;
+      highest[c] = (hi[c.name] as num?)?.toInt() ?? 1;
     }
-    currentArea = j['area'] as int? ?? 0;
-    placed = {for (final s in (j['placed'] as List? ?? [])) s as int};
+    currentArea = (j['area'] as num?)?.toInt() ?? 0;
+    placed = {for (final s in (j['placed'] as List? ?? [])) (s as num).toInt()};
     friends = {
       Friends.starter,
       for (final f in (j['friends'] as List? ?? [])) f as String,
@@ -638,7 +875,7 @@ class GameState extends ChangeNotifier {
       ..clear()
       ..addAll(
         ((j['deliv'] as Map?) ?? {}).map(
-          (k, v) => MapEntry(k as String, v as int),
+          (k, v) => MapEntry(k as String, (v as num).toInt()),
         ),
       );
     orders = [
@@ -650,7 +887,8 @@ class GameState extends ChangeNotifier {
     coinBagReadyAt = ts('bag');
     lastSeen = ts('seen') ?? now;
     nextVisitorAt = ts('visitorNext') ?? now.add(GameConfig.visitorMinGap);
-    totalMerges = j['merges'] as int? ?? 0;
+    totalMerges = (j['merges'] as num?)?.toInt() ?? 0;
+    savedAt = ts('savedAt');
     notifyListeners();
     return true;
   }
