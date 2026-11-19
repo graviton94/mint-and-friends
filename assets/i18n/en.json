@@ -5,7 +5,6 @@
   "common.close": "Close",
   "common.max": "MAX",
   "common.lockedLevel": "[[lock]] Lv.{n}",
-  "hud.perSec": "{v}/sec",
   "hud.level": "Lv.{n}",
   "hud.boost": "[[energy]]x2 {time}",
   "menu.removeAds": "No Ads",
@@ -24,7 +23,7 @@
   "order.refresh": "New request",
   "board.hint": "Drag matching items together to merge",
   "board.stuck": "Board full! Tap an item to sell or store it, or unlock more tiles",
-  "board.selected": "Lv.{lv} {name} · {v}/sec",
+  "board.selected": "Lv.{lv} {name} · [[coin]]{v}/hour",
   "board.sell": "Sell [[coin]]{price}",
   "board.undo": "↩ Undo",
   "board.bubble": "[[bubble]] Bubble {s}s",
@@ -79,7 +78,7 @@
   "upgrade.autoMerge.desc": "Every {v}s",
   "upgrade.autoMerge.off": "Off",
   "upgrade.spawnLevel": "Basket quality",
-  "upgrade.spawnLevel.desc": "Makes Lv.{v} items",
+  "upgrade.spawnLevel.desc": "Lv.2 chance {v}%",
   "upgrade.offlineCap": "Offline earnings time",
   "upgrade.offlineCap.desc": "Up to {v}",
   "decor.title": "🔨 Decorate {name}",
@@ -272,5 +271,6 @@
   "feature.visitor.desc": "A visitor sometimes drops by with a [[gift]] gift",
   "feature.spawnLevel.desc": "The basket drops higher-level items",
   "feature.offlineCap.desc": "Earn [[coin]] coins for longer while you're away",
-  "feature.storage.desc": "Keep items in [[storage]] storage when the board is full"
+  "feature.storage.desc": "Keep items in [[storage]] storage when the board is full",
+  "hud.perHour": "{v}/hour"
 }

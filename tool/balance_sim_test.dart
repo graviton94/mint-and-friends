@@ -31,6 +31,7 @@ void sim() {
   final milestones = <int, String>{};
   final areas = <int, String>{};
   var lastArea = 0, sold = 0, ads = 0;
+  var orderCoins = 0.0;
 
   String stamp() {
     final d = now.difference(start).inDays + 1;
@@ -85,7 +86,9 @@ void sim() {
           bags++;
         }
         for (var i = 0; i < g.orders.length; i++) {
-          g.deliver(i);
+          final o = g.orders[i];
+          final c = g.orderCoins(o);
+          if (g.deliver(i)) orderCoins += c;
         }
         final slots = [
           for (var x = 0; x < Garden.slotsPerArea; x++)
@@ -130,7 +133,7 @@ void sim() {
         for (final m in [5, 10, 15, 20, 25, 30, 35, 40]) {
           if (g.level >= m && !milestones.containsKey(m)) {
             milestones[m] =
-                '${stamp()}  칸 ${g.unlockedCells.length}/30  구역 ${g.currentArea}(${g.placed.length}/8)  친구 ${g.friends.length}';
+                '${stamp()}  칸 ${g.unlockedCells.length}/30  구역 ${g.currentArea}(${g.placed.length}/8)  친구 ${g.friends.length}  코인 ${g.coins.round()}  강화 ${g.upgrades.values.fold(0, (a, b) => a + b)}';
           }
         }
         if (g.currentArea != lastArea) {
@@ -140,6 +143,10 @@ void sim() {
       }
     }
   }
+  print('=== 코인 출처 (45일 합계) ===');
+  print(
+    '부탁 ${orderCoins.round()}  방치(접속 중+오프라인) ${(g.lifetimeCoins - orderCoins).round()} (기타 보상 포함)',
+  );
   print('=== 레벨 도달 (실제 날짜 기준) ===');
   milestones.forEach((k, v) => print('Lv${k.toString().padLeft(2)}: $v'));
   print('=== 구역 완성 ===');

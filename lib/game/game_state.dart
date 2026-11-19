@@ -202,7 +202,7 @@ class GameState extends ChangeNotifier {
   final Map<String, DateTime> _friendTapReady = {};
   _Sale? _lastSale;
 
-  /// 최근 전달한 부탁 (종류-단계), 최대 6개. 새 부탁이 같은 것을 바로 다시 원하지 않게.
+  /// 최근 전달한 부탁 (종류-단계), 최대 3개. 새 부탁이 같은 것을 바로 다시 원하지 않게.
   final List<String> _recentOrders = [];
 
   /// 결제 서비스가 넣어준다 (저장하지 않음).
@@ -246,7 +246,13 @@ class GameState extends ChangeNotifier {
     return i == null ? null : i / (1 + buff(FriendBuff.autoMerge));
   }
 
-  int get spawnLevel => Upgrades.spawnLevel(lv(UpgradeType.spawnLevel));
+  int get spawnLevel => 1;
+
+  /// 바구니에서 2단계가 나올 확률 (기본 + 품질 강화 + 친구 버프).
+  double get luckyChance =>
+      GameConfig.luckySpawnChance +
+      Upgrades.qualityChance(lv(UpgradeType.spawnLevel)) +
+      buff(FriendBuff.lucky);
   Duration get offlineCap => Upgrades.offlineCap(lv(UpgradeType.offlineCap));
 
   bool isPlaced(int area, int slot) =>
@@ -263,9 +269,9 @@ class GameState extends ChangeNotifier {
       decorCount * GameConfig.decorIncomeBonus +
       currentArea * GameConfig.areaIncomeBonus;
 
+  /// 방치 수익 배율 (수익 강화 · 친구 버프). 정원 매력은 부탁 코인에만.
   double get _incomeMult =>
       Upgrades.incomeMultiplier(lv(UpgradeType.income)) *
-      gardenMultiplier *
       (1 + buff(FriendBuff.income));
 
   bool get boostActive => boostUntil != null && boostUntil!.isAfter(now);
@@ -288,6 +294,20 @@ class GameState extends ChangeNotifier {
   }
 
   double get incomePerSec => baseIncomePerSec * (boostActive ? 2 : 1);
+
+  /// 시간당 방치 수익 (화면 표시용).
+  double get incomePerHour => incomePerSec * 3600;
+
+  /// 코인 보상 배율 (정원 매력 · 친구 버프 · 2배 부스트). 수익 강화는 방치 수익에만 걸린다
+  /// (부탁 코인에까지 곱하면 코인이 눈덩이처럼 불어난다).
+  double get _coinMult =>
+      gardenMultiplier * (1 + buff(FriendBuff.income)) * (boostActive ? 2 : 1);
+
+  /// 에너지 광고: 해금 · 하루 횟수 · 에너지가 적을 때만.
+  bool get energyAdAvailable =>
+      isUnlocked(Feature.energyAd) &&
+      canWatchAd(AdKind.energy) &&
+      energy < GameConfig.energyAdBelow;
 
   bool isCellOpen(int i) => unlockedCells.contains(i);
   int? get _emptyCell {
@@ -319,7 +339,7 @@ class GameState extends ChangeNotifier {
     while (xp >= xpToNext) {
       xp -= xpToNext;
       level++;
-      final c = max(100.0, baseIncomePerSec * Leveling.levelUpCoinSeconds);
+      final c = Leveling.levelUpCoins(level);
       _earn(c);
       stars += Leveling.levelUpStars;
       final gotEnergy = Leveling.levelUpEnergy(level, energy);
@@ -447,9 +467,7 @@ class GameState extends ChangeNotifier {
     final chains = availableChains;
     final chain = chains[_rng.nextInt(chains.length)];
     var lvl = spawnLevel;
-    if (_rng.nextDouble() <
-        GameConfig.luckySpawnChance + buff(FriendBuff.lucky))
-      lvl += 1;
+    if (_rng.nextDouble() < luckyChance) lvl += 1;
     lvl = min(lvl, GameConfig.maxLevel);
     board[cell] = Item(_nextId++, chain, lvl);
     _checkDiscovery(chain, lvl);
@@ -459,10 +477,7 @@ class GameState extends ChangeNotifier {
   void _checkDiscovery(Chain chain, int lvl) {
     if (lvl > (highest[chain] ?? 1)) {
       highest[chain] = lvl;
-      final bonus =
-          GameConfig.incomeOf(lvl) *
-          _incomeMult *
-          GameConfig.discoveryBonusSeconds;
+      final bonus = GameConfig.discoveryBonusOf(lvl) * _coinMult;
       _earn(bonus);
       _events.add(DiscoveryEvent(chain, lvl, bonus));
       _gainXp(Leveling.xpForDiscovery);
@@ -504,10 +519,7 @@ class GameState extends ChangeNotifier {
     totalMerges++;
     board[from] = null;
     if (b.level >= GameConfig.maxLevel) {
-      final payout =
-          GameConfig.incomeOf(b.level) *
-          _incomeMult *
-          GameConfig.maxMergePayoutSeconds;
+      final payout = GameConfig.maxMergePayoutOf(b.level) * _coinMult;
       board[to] = null;
       _earn(payout);
       _events.add(MaxMergeEvent(payout));
@@ -597,10 +609,7 @@ class GameState extends ChangeNotifier {
     return true;
   }
 
-  double sellPrice(Item it) => max(
-    1,
-    GameConfig.incomeOf(it.level) * _incomeMult * GameConfig.sellSeconds,
-  );
+  double sellPrice(Item it) => GameConfig.sellValueOf(it.level);
 
   /// 아이템 판매. 판매 금액을 돌려준다.
   double? sell(int cell) {
@@ -697,12 +706,12 @@ class GameState extends ChangeNotifier {
   Order _newOrder({Chain? preferChain}) {
     final pool = friends.toList()..sort();
     final chains = availableChains;
-    final center = Garden.orderLevelCenter(currentArea, placed.length);
+    final center = Leveling.orderLevelCenter(level);
     for (var attempt = 0; ; attempt++) {
       final friendId = pool[_rng.nextInt(pool.length)];
       final chain = preferChain ?? chains[_rng.nextInt(chains.length)];
       // 피할 것이 많아 고를 게 없으면 단계 폭을 조금씩 넓힌다 (±1 → ±2 → ±3)
-      final spread = 1.0 + attempt ~/ 10;
+      final spread = 1.0 + min(1, attempt ~/ 15);
       final lvl = (center + (_rng.nextDouble() * 2 - 1) * spread).round().clamp(
         2,
         GameConfig.maxLevel,
@@ -712,7 +721,13 @@ class GameState extends ChangeNotifier {
       // (부탁은 합쳐서 만들어야 하는 아이템이 기본 · 장르 표준)
       final recent = _recentOrders.contains('${chain.index}-$lvl');
       final onBoard = _findItem(chain, lvl) >= 0;
-      if ((!dup && !recent && !onBoard) || attempt > 30) {
+      final justGiven =
+          _recentOrders.isNotEmpty &&
+          _recentOrders.last == '${chain.index}-$lvl';
+      // 30번 안에 못 찾으면 '방금 전달한 것'만 피하고, 60번 넘으면 아무거나
+      if ((!dup && !recent && !onBoard) ||
+          (attempt > 30 && !justGiven && !onBoard) ||
+          attempt > 60) {
         return Order(_nextId++, friendId, chain, lvl, Garden.orderStars(lvl));
       }
     }
@@ -729,9 +744,8 @@ class GameState extends ChangeNotifier {
   }
 
   double orderCoins(Order o) =>
-      GameConfig.incomeOf(o.level) *
-      _incomeMult *
-      GameConfig.orderCoinSeconds *
+      GameConfig.orderCoinsOf(o.level) *
+      _coinMult *
       (1 + buff(FriendBuff.orderCoins));
 
   bool deliver(int orderIndex) {
@@ -747,7 +761,7 @@ class GameState extends ChangeNotifier {
     deliveries[o.friendId] = (deliveries[o.friendId] ?? 0) + 1;
     final up = affection(o.friendId) > before;
     _recentOrders.add('${o.chain.index}-${o.level}');
-    if (_recentOrders.length > 6) _recentOrders.removeAt(0);
+    if (_recentOrders.length > 3) _recentOrders.removeAt(0);
     orders[orderIndex] = _placeholder;
     orders[orderIndex] = _newOrder();
     _events.add(OrderDeliveredEvent(o.friendId, gained, c, up));
@@ -811,19 +825,16 @@ class GameState extends ChangeNotifier {
   double? tapFriend(String id) {
     if (!friends.contains(id) || !friendTapReady(id)) return null;
     _friendTapReady[id] = now.add(GameConfig.friendTapCooldown);
-    final v = max(1.0, baseIncomePerSec * GameConfig.friendTapSeconds);
+    final v = GameConfig.friendTapCoins;
     _earn(v);
     notifyListeners();
     return v;
   }
 
-  double visitorCoins({required bool withAd}) => max(
-    30,
-    baseIncomePerSec *
-        (withAd
-            ? GameConfig.visitorAdCoinSeconds
-            : GameConfig.visitorCoinSeconds),
-  );
+  double visitorCoins({required bool withAd}) =>
+      GameConfig.visitorCoinsOf(level) *
+      _coinMult *
+      (withAd ? GameConfig.visitorAdMultiplier : 1);
 
   /// 깜짝 손님 선물 받기. 광고를 봤으면 더 크게.
   ({double coins, int stars})? claimVisitor({required bool withAd}) {
@@ -878,8 +889,7 @@ class GameState extends ChangeNotifier {
   bool get canAddBoost =>
       boostRemaining < GameConfig.boostMax - const Duration(minutes: 1);
 
-  double get coinBagAmount =>
-      max(50, baseIncomePerSec * GameConfig.coinBagSeconds);
+  double get coinBagAmount => GameConfig.coinBagOf(level) * _coinMult;
 
   double grantCoinBag() {
     final amount = coinBagAmount;

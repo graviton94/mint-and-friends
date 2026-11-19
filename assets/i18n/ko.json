@@ -6,7 +6,6 @@
   "common.close": "닫기",
   "common.max": "MAX",
   "common.lockedLevel": "[[lock]] Lv.{n}",
-  "hud.perSec": "초당 {v}",
   "hud.level": "Lv.{n}",
   "hud.boost": "[[energy]]x2 {time}",
   "menu.removeAds": "광고제거",
@@ -25,7 +24,7 @@
   "order.refresh": "새 부탁",
   "board.hint": "같은 아이템을 끌어서 합쳐 보세요",
   "board.stuck": "칸이 가득! 아이템을 눌러 판매·보관하거나 잠긴 칸을 열어 보세요",
-  "board.selected": "Lv.{lv} {name} · 초당 {v}",
+  "board.selected": "Lv.{lv} {name} · 시간당 [[coin]]{v}",
   "board.sell": "판매 [[coin]]{price}",
   "board.undo": "↩ 되돌리기",
   "board.bubble": "[[bubble]] 비눗방울 {s}초",
@@ -80,7 +79,7 @@
   "upgrade.autoMerge.desc": "{v}초마다 자동",
   "upgrade.autoMerge.off": "꺼짐",
   "upgrade.spawnLevel": "바구니 품질",
-  "upgrade.spawnLevel.desc": "Lv.{v} 아이템 생성",
+  "upgrade.spawnLevel.desc": "2단계 확률 {v}%",
   "upgrade.offlineCap": "오프라인 수익 시간",
   "upgrade.offlineCap.desc": "최대 {v}",
   "decor.title": "🔨 {name} 꾸미기",
@@ -273,5 +272,6 @@
   "feature.visitor.desc": "가끔 정원에 손님이 와서 [[gift]]선물을 줘요",
   "feature.spawnLevel.desc": "바구니에서 더 높은 단계 아이템이 나와요",
   "feature.offlineCap.desc": "게임을 꺼 둔 동안 더 오래 [[coin]]코인을 벌어요",
-  "feature.storage.desc": "판이 가득할 때 아이템을 [[storage]]보관함에 맡겨요"
+  "feature.storage.desc": "판이 가득할 때 아이템을 [[storage]]보관함에 맡겨요",
+  "hud.perHour": "시간당 {v}"
 }

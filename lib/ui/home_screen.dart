@@ -647,7 +647,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _Pill(
                     icon: Art.coin,
                     text: fmt(game.coins),
-                    sub: tr('hud.perSec', {'v': fmt(game.incomePerSec)}),
+                    sub: tr('hud.perHour', {'v': fmt(game.incomePerHour)}),
                   ),
                   const SizedBox(width: 6),
                   _Pill(icon: Art.star, text: '${game.stars}'),
@@ -904,7 +904,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 tr('board.selected', {
                   'lv': sel.level,
                   'name': itemName(sel.def),
-                  'v': fmt(GameConfig.incomeOf(sel.level)),
+                  'v': fmt(GameConfig.incomeOf(sel.level) * 3600),
                 }),
                 style: const TextStyle(fontSize: 15),
               ),

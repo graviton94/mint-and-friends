@@ -16,23 +16,29 @@ class GameConfig {
 
   static const int maxLevel = 15;
 
-  /// 아이템 1개의 초당 코인 생산량.
-  static double incomeOf(int level) => pow(2.2, level - 1).toDouble();
+  // ---- 코인 (머지 장르 기준: 코인은 주로 부탁으로 번다. 방치 수익은 부탁 수입의 약 10%)
+  // 참고: Merge Mansion · Gossip Harbor 등 — 에너지 1 ≈ 코인 1, 코인은 칸 · 보관함 · 강화에 쓴다.
 
-  /// 판매 가격 = 해당 아이템 N초분 수익.
-  static const double sellSeconds = 25;
+  /// 판 위 아이템 1개의 초당 방치 수익 (시간당 0.15 × 단계 코인. 단계에 비례만 하고 지수로 늘지 않는다).
+  static double incomeOf(int level) => 0.15 * level / 3600;
+
+  /// 부탁 보상 코인의 기준 (아이템을 만드는 데 든 에너지 수 = 2^(단계-1)).
+  static double orderCoinsOf(int level) => pow(2, level - 1).toDouble();
+
+  /// 판매 가격: 만드는 데 든 에너지의 절반 (최소 1).
+  static double sellValueOf(int level) => max(1, pow(2, level - 1) * 0.5);
 
   /// 판매 되돌리기 가능 시간.
   static const Duration sellUndoWindow = Duration(seconds: 6);
 
-  /// 최고 레벨 두 개를 합치면 사라지면서 지급되는 코인 (해당 아이템 N초분).
-  static const double maxMergePayoutSeconds = 1800;
+  /// 최고 레벨 두 개를 합치면 사라지면서 지급되는 코인.
+  static double maxMergePayoutOf(int level) => 20.0 * level;
 
-  /// 신규 아이템 발견 보너스 (해당 레벨 아이템 N초분).
-  static const double discoveryBonusSeconds = 120;
+  /// 신규 아이템 발견 보너스 코인.
+  static double discoveryBonusOf(int level) => 3.0 * level;
 
-  /// 행운 생성 확률 (생성 레벨 +1).
-  static const double luckySpawnChance = 0.06;
+  /// 바구니에서 2단계가 나올 확률 (기본). 바구니 품질 강화로 더 오른다.
+  static const double luckySpawnChance = 0.08;
 
   /// 합칠 때 같은 아이템이 든 비눗방울이 생길 확률. 광고를 보면 꺼내서 가질 수 있다.
   static const double bubbleChance = 0.05;
@@ -42,13 +48,13 @@ class GameConfig {
   /// 오프라인 수익 효율.
   static const double offlineEfficiency = 0.5;
 
-  /// 보상형 광고: 수익 2배 부스트 1회당 시간, 최대 누적.
-  static const Duration boostPerAd = Duration(minutes: 10);
+  /// 보상형 광고: 코인 2배 (부탁 · 방치 수익 모두) 1회당 시간, 최대 누적.
+  static const Duration boostPerAd = Duration(minutes: 15);
   static const Duration boostMax = Duration(minutes: 60);
 
-  /// 보상형 광고: 코인 주머니 = 현재 초당 수익 * N초, 쿨다운.
-  static const double coinBagSeconds = 300;
-  static const Duration coinBagCooldown = Duration(minutes: 4);
+  /// 보상형 광고: 코인 주머니 = 20 + 8 × 레벨, 쿨다운.
+  static double coinBagOf(int playerLevel) => 20.0 + 8 * playerLevel;
+  static const Duration coinBagCooldown = Duration(minutes: 30);
 
   /// 전면 광고 최소 간격, 앱 시작 후 유예.
   static const Duration interstitialGap = Duration(minutes: 3);
@@ -57,41 +63,40 @@ class GameConfig {
   /// 동시에 떠 있는 부탁 수.
   static const int orderSlots = 3;
 
-  /// 부탁 보상 코인 = 해당 아이템 N초분.
-  static const double orderCoinSeconds = 90;
-
-  /// 친구 탭 보상 = 초당 수익 N초분, 친구별 쿨다운.
-  static const double friendTapSeconds = 3;
-  static const Duration friendTapCooldown = Duration(seconds: 8);
+  /// 친구 탭 보상 코인, 친구별 쿨다운 (작은 즐거움).
+  static const double friendTapCoins = 1;
+  static const Duration friendTapCooldown = Duration(seconds: 30);
 
   /// 깜짝 손님.
-  static const Duration visitorMinGap = Duration(minutes: 3);
-  static const Duration visitorMaxGap = Duration(minutes: 6);
+  static const Duration visitorMinGap = Duration(minutes: 6);
+  static const Duration visitorMaxGap = Duration(minutes: 12);
   static const Duration visitorStay = Duration(seconds: 50);
-  static const double visitorCoinSeconds = 60; // 그냥 받기
-  static const double visitorAdCoinSeconds = 300; // 광고 보고 받기
-  static const int visitorAdStars = 2;
+  static double visitorCoinsOf(int playerLevel) =>
+      10.0 + 3 * playerLevel; // 그냥 받기
+  static const double visitorAdMultiplier = 3; // 광고 보고 받기
+  static const int visitorAdStars = 1;
 
-  // ---- 에너지 (머지 장르 표준: 상한 100, 2분에 1, 탭 1회 = 1)
+  // ---- 에너지 (장르: 상한 100 · 2분에 1. 캐주얼 3~4회 접속에 맞춰 2분 30초로 조금 느리게)
   static const int energyCap = 100;
-  static const int energyRegenSeconds = 120;
+  static const int energyRegenSeconds = 150;
   static const int energyPerTap = 1;
   static const int energyStart = 100;
 
-  /// 보상형 광고 1회 에너지 (+25, 하루 4회 = 100).
-  static const int energyAdAmount = 25;
+  /// 보상형 광고 1회 에너지 (장르 15~25), 하루 5회 = 100. 에너지가 이만큼 아래일 때만 제안.
+  static const int energyAdAmount = 20;
+  static const int energyAdBelow = 20;
 
-  /// 보상형 광고 종류별 하루 횟수 상한 (합계 약 20회/일, 장르 평균 10~20회).
+  /// 보상형 광고 종류별 하루 횟수 상한.
   static const Map<AdKind, int> adDailyCap = {
-    AdKind.energy: 4,
-    AdKind.boost: 6,
+    AdKind.energy: 5,
+    AdKind.boost: 4,
     AdKind.coinBag: 5,
-    AdKind.refresh: 5,
+    AdKind.refresh: 3,
   };
 
-  /// 장식 1개 / 구역 완성 시 정원 매력도 (수익 배율) 증가.
-  static const double decorIncomeBonus = 0.10;
-  static const double areaIncomeBonus = 0.50;
+  /// 장식 1개 / 구역 완성 시 정원 매력도 (코인 배율) 증가.
+  static const double decorIncomeBonus = 0.02;
+  static const double areaIncomeBonus = 0.10;
 }
 
 /// 하루 횟수 제한이 있는 보상형 광고 종류 (오프라인 2배·손님·비눗방울은 제한 없음).
@@ -118,11 +123,9 @@ class Leveling {
   /// 장르 기준(Merge Mansion 실측 x1.12~1.13): 초반은 가파르게(x1.25), Lv9 이후 완만하게(x1.12).
   /// 누적: Lv10 ≈ 520, Lv20 ≈ 2.8K, Lv30 ≈ 9.3K, Lv40 ≈ 29K, Lv50 ≈ 90K
   /// 기준값 = 초반 부탁 약 4건 분량 (부탁 1건 = 별1 = 5xp).
-  static const double _xpBase = 20;
-  static int xpToNext(int level) {
-    if (level < 9) return (_xpBase * pow(1.25, level - 1)).round();
-    return (_xpBase * pow(1.25, 8) * pow(1.12, level - 9)).round();
-  }
+  /// 장르 조사 곡선(10 + 5·(L−1)^1.6)에 1.3배: 시뮬레이션(하루 4회 × 12분)에서
+  /// Lv5 첫 세션 · Lv10 2~3일 · Lv20 약 2주 · Lv30 약 6주가 되도록 맞춘 값.
+  static int xpToNext(int level) => (13 + 6.5 * pow(level - 1, 1.6)).round();
 
   /// 기능별 해금 레벨.
   static const Map<Feature, int> unlockLevel = {
@@ -135,7 +138,7 @@ class Leveling {
     Feature.autoMerge: 6,
     Feature.visitor: 7,
     Feature.offlineCap: 8,
-    Feature.spawnLevel: 12,
+    Feature.spawnLevel: 10,
   };
 
   /// 구역별 입장 레벨. 별이 있어도 레벨이 낮으면 다음 구역을 꾸밀 수 없다.
@@ -174,17 +177,40 @@ class Leveling {
   /// 경험치: 부탁·꾸미기 위주 (머지 장르 표준). 합치기는 경험치 없음.
   static int xpForMerge(int resultLevel) => 0;
 
-  /// 부탁 경험치는 요구 아이템 레벨에 비례 (높은 단계일수록 에너지가 많이 드는 만큼 보상).
-  static int xpForOrder(int itemLevel) => 2 * itemLevel - 2;
-  static int xpForDecor(int cost) => 2 * cost;
+  /// 부탁 경험치: 아이템 단계별 표 (에너지 1 ≈ 경험치 0.7).
+  static const List<int> _orderXp = [
+    1,
+    1,
+    3,
+    6,
+    11,
+    22,
+    45,
+    80,
+    130,
+    200,
+    300,
+    450,
+    650,
+    900,
+    1200,
+  ];
+  static int xpForOrder(int itemLevel) =>
+      _orderXp[(itemLevel - 1).clamp(0, _orderXp.length - 1)];
+  static int xpForDecor(int cost) => cost;
+
+  /// 부탁 아이템 단계의 중심값: 플레이어 레벨 기준 (Lv1 ≈ 3, Lv10 = 5, Lv20 이상 7.5).
+  static double orderLevelCenter(int playerLevel) =>
+      min(7.5, 2.5 + playerLevel * 0.25);
+
+  /// 레벨업 코인.
+  static double levelUpCoins(int newLevel) => 10.0 + 5 * newLevel;
   static const int xpForDiscovery = 2;
 
-  /// 레벨업 보상: 코인(초당 수익 N초분, 최소 보장) + 별 1 + 에너지.
-  /// 에너지는 Lv10 까지 +25, 이후 +20.
-  static const double levelUpCoinSeconds = 120;
+  /// 레벨업 에너지: Lv10 까지 +15, 이후 +10 (작은 선물. 에너지는 회복 · 광고가 주 공급원).
   static const int levelUpStars = 0; // 별은 부탁으로만 (꾸미기 속도 조절)
   static int levelUpEnergy(int newLevel, int current) =>
-      newLevel <= 10 ? 25 : 20;
+      newLevel <= 10 ? 15 : 10;
 
   static List<Feature> unlockedAt(int level) => [
     for (final e in unlockLevel.entries)
@@ -193,7 +219,8 @@ class Leveling {
 }
 
 /// 칸 구매 비용 (지금까지 산 칸 수 기준, 살수록 비싸짐).
-double cellCost(int purchased) => 300 * pow(1.8, purchased).toDouble();
+/// n번째(0부터) 칸 구매 비용: 150 × 1.3^n (Merge Mansion 보관함 +20%/칸보다 조금 가파르게).
+double cellCost(int purchased) => 150 * pow(1.3, purchased).toDouble();
 
 /// 보관함: 판 밖에 아이템을 맡겨 두는 칸 (수익·부탁 대상 아님).
 /// 장르 기준(Travel Town·Merge Mansion): 처음 2칸, 칸마다 비용이 가파르게 오른다.
@@ -201,8 +228,8 @@ class Storage {
   static const int startSlots = 2;
   static const int maxSlots = 10;
 
-  /// n번째(0부터) 추가 칸 비용. 500 → 1K → 2K → … (×2)
-  static double slotCost(int purchased) => 500 * pow(2.0, purchased).toDouble();
+  /// n번째(0부터) 추가 칸 비용: 50 × 1.2^n (Merge Mansion 보관함과 같은 +20%/칸).
+  static double slotCost(int purchased) => 50 * pow(1.2, purchased).toDouble();
 }
 
 // ------------------------------------------------------------------ 아이템
@@ -291,29 +318,29 @@ class UpgradeDef {
 /// 비용은 단계마다 x1.13~1.15, 수익 강화는 x1.08 + 10/25/50/100 단계 달성 시 x2.
 class Upgrades {
   static const List<UpgradeDef> all = [
-    UpgradeDef(UpgradeType.energyRegen, 'timer', 30, 40, 1.15),
-    UpgradeDef(UpgradeType.income, 'coinbag', 100, 60, 1.13),
+    UpgradeDef(UpgradeType.energyRegen, 'timer', 30, 100, 1.18),
+    UpgradeDef(UpgradeType.income, 'coinbag', 20, 80, 1.25),
     UpgradeDef(
       UpgradeType.autoMerge,
       'auto',
-      30,
-      500,
-      1.15,
+      20,
+      400,
+      1.3,
       feature: Feature.autoMerge,
     ),
     UpgradeDef(
       UpgradeType.spawnLevel,
       'quality',
-      4,
-      20000,
-      12,
+      3,
+      500,
+      3,
       feature: Feature.spawnLevel,
     ),
     UpgradeDef(
       UpgradeType.offlineCap,
       'moon',
       8,
-      2000,
+      300,
       1.6,
       feature: Feature.offlineCap,
     ),
@@ -324,16 +351,16 @@ class Upgrades {
   /// 에너지 1 회복 간격(초). 아이템은 바구니 탭(에너지 1)으로만 나온다 (머지 장르 표준:
   /// Merge Mansion · Travel Town 모두 생산은 에너지, 방치 요소는 수익·자동 합치기).
   static double energyRegenSeconds(int lv) =>
-      max(45.0, GameConfig.energyRegenSeconds * pow(0.97, lv).toDouble());
+      max(90.0, GameConfig.energyRegenSeconds * pow(0.98, lv).toDouble());
 
-  static const List<int> incomeMilestones = [10, 25, 50, 100];
-  static double incomeMultiplier(int lv) =>
-      pow(1.08, lv) *
-      pow(2, incomeMilestones.where((m) => lv >= m).length).toDouble();
+  /// 방치 수익 배율: 단계마다 +5% (최대 20단계 = ×2). 크게 키우면 방치 수익이 부탁 수입을 압도한다.
+  static double incomeMultiplier(int lv) => 1 + 0.05 * lv;
 
   static double? autoMergeInterval(int lv) =>
       lv <= 0 ? null : max(1.0, 10.0 * pow(0.93, lv - 1));
-  static int spawnLevel(int lv) => 1 + lv;
+
+  /// 바구니 품질: 2단계가 나올 확률 추가 (+4% / 단계).
+  static double qualityChance(int lv) => 0.04 * lv;
 
   /// 오프라인 수익 최대 시간: 2시간 + 30분씩, 최대 6시간.
   static Duration offlineCap(int lv) => Duration(minutes: 120 + 30 * lv);
@@ -510,14 +537,9 @@ class Garden {
     );
   }
 
-  /// 장식 별 비용. 구역이 올라갈수록 비싸진다.
-  static int decorCost(int area, int slot) =>
-      ((1 + slot ~/ 2) * pow(2.0, area)).ceil();
+  /// 장식 별 비용: 구역 안에서 2 → 5, 구역마다 (1 + 구역) 배. 앞마당 28, 연못 56, 온실 84 …
+  static int decorCost(int area, int slot) => (2 + slot ~/ 2) * (1 + area);
 
-  /// 부탁 아이템 레벨의 중심값 (구역, 설치한 장식 수 기준).
-  static double orderLevelCenter(int area, int placed) =>
-      min(13.5, 4.0 + area * 2.2 + placed * 0.25);
-
-  /// 부탁 1건의 별 보상.
-  static int orderStars(int level) => 1 + (level - 2) ~/ 3;
+  /// 부탁 1건의 별 보상: 에너지 10 이하(≤4단계) 1, 30 이하(5단계) 2, 그 이상 3.
+  static int orderStars(int level) => level <= 4 ? 1 : (level == 5 ? 2 : 3);
 }

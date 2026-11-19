@@ -308,7 +308,7 @@ void main() {
     g.energy = 0;
     now = now.add(const Duration(minutes: 60));
     g.computeOffline();
-    expect(g.energy, 30);
+    expect(g.energy, 3600 ~/ GameConfig.energyRegenSeconds); // 2분 30초에 1
   });
 
   test('보상형 광고는 종류별 하루 상한이 있고 날짜가 바뀌면 초기화', () {
@@ -342,25 +342,24 @@ void main() {
     expect(g.energy, 3 + Leveling.levelUpEnergy(2, 3));
   });
 
-  test('수익 강화는 10/25/50/100 단계에서 2배', () {
-    expect(
-      Upgrades.incomeMultiplier(10) / Upgrades.incomeMultiplier(9),
-      closeTo(1.08 * 2, 1e-9),
-    );
-    expect(
-      Upgrades.incomeMultiplier(11) / Upgrades.incomeMultiplier(10),
-      closeTo(1.08, 1e-9),
-    );
+  test('수익 강화: 단계마다 +5%, 최대 ×2', () {
+    expect(Upgrades.incomeMultiplier(0), 1);
+    expect(Upgrades.incomeMultiplier(10), closeTo(1.5, 1e-9));
+    expect(Upgrades.incomeMultiplier(20), closeTo(2.0, 1e-9));
   });
 
-  test('경험치 곡선: 누적 Lv10≈520, Lv20≈2.8K, Lv30≈9.3K', () {
-    int cum(int to) =>
-        [for (var l = 1; l < to; l++) Leveling.xpToNext(l)]
-            .fold(0, (a, b) => a + b);
-    expect(cum(10), inInclusiveRange(480, 560));
-    expect(cum(20), inInclusiveRange(2500, 3100));
-    expect(cum(30), inInclusiveRange(8500, 10500));
-  });
+  test(
+    '경험치 곡선: 누적 Lv5≈116, Lv10≈770, Lv20≈5.2K, Lv30≈15.5K (장르 조사 곡선 × 1.3)',
+    () {
+      int cum(int to) =>
+          [for (var l = 1; l < to; l++) Leveling.xpToNext(l)]
+              .fold(0, (a, b) => a + b);
+      expect(cum(5), inInclusiveRange(105, 125));
+      expect(cum(10), inInclusiveRange(720, 820));
+      expect(cum(20), inInclusiveRange(4900, 5500));
+      expect(cum(30), inInclusiveRange(14800, 16200));
+    },
+  );
 
   test('숫자 포맷', () {
     expect(fmt(999), '999');

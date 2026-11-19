@@ -36,7 +36,10 @@ String upgradeDescribe(UpgradeType t, int lv) {
           ? tr('upgrade.autoMerge.off')
           : tr('upgrade.autoMerge.desc', {'v': i.toStringAsFixed(1)});
     case UpgradeType.spawnLevel:
-      return tr('upgrade.spawnLevel.desc', {'v': Upgrades.spawnLevel(lv)});
+      return tr('upgrade.spawnLevel.desc', {
+        'v': ((GameConfig.luckySpawnChance + Upgrades.qualityChance(lv)) * 100)
+            .round(),
+      });
     case UpgradeType.offlineCap:
       return tr('upgrade.offlineCap.desc', {
         'v': fmtDuration(Upgrades.offlineCap(lv)),
