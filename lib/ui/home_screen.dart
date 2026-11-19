@@ -153,6 +153,8 @@ class _HomeScreenState extends State<HomeScreen> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => GameDialog(
+        banner: 'gold',
+        emblem: 'levelup_burst',
         title: IconText(
           tr('levelUp.title', {'n': e.level}),
           textAlign: TextAlign.center,

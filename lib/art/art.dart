@@ -136,6 +136,9 @@ class Art {
   /// 프레임 원본 크기 (assets/art/frames/frames.json, tool/import_art.py 가 만든다).
   static Map<String, Size> _frameSizes = {};
 
+  /// 프레임 그림 원본 크기 (frames.json). 없으면 null.
+  static Size? frameSize(String id) => _frameSizes[id];
+
   /// 9-slice 가운데 영역: 짧은 변의 40% 를 모서리로 남긴다 (알약 버튼의 둥근 끝이 찌그러지지 않게).
   static Rect? frameCenter(String id) {
     final sz = _frameSizes[id];

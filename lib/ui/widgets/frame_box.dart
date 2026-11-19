@@ -57,7 +57,15 @@ class GameDialog extends StatelessWidget {
     this.content,
     this.actions,
     this.actionsAlignment,
+    this.banner = 'green',
+    this.emblem,
   });
+
+  /// 제목 띠 색: 'green' (보통) · 'gold' (레벨업 · 보상).
+  final String banner;
+
+  /// 제목 띠 위에 얹는 그림 (예: 레벨업 별). 그림이 없으면 생략.
+  final String? emblem;
 
   final Widget? title;
   final Widget? content;
@@ -68,7 +76,7 @@ class GameDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     // 리본은 패널 위 테두리에 걸쳐 놓는다 (게임 팝업의 일반적인 모양). 패널 안은 리본 아래부터.
-    final hasRibbon = title != null && Art.frame('ribbon').available;
+    final hasRibbon = title != null;
     final panel = FrameBox(
       frame: 'panel',
       fallback: BoxDecoration(
@@ -76,7 +84,7 @@ class GameDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
       ),
       corner: 30,
-      padding: EdgeInsets.fromLTRB(24, hasRibbon ? 58 : 22, 24, 20),
+      padding: EdgeInsets.fromLTRB(24, hasRibbon ? 40 : 22, 24, 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -110,7 +118,7 @@ class GameDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      insetPadding: const EdgeInsets.fromLTRB(28, 52, 28, 24),
+      insetPadding: EdgeInsets.fromLTRB(28, emblem != null ? 110 : 52, 28, 24),
       clipBehavior: Clip.none,
       child: !hasRibbon
           ? panel
@@ -119,7 +127,19 @@ class GameDialog extends StatelessWidget {
               alignment: Alignment.topCenter,
               children: [
                 panel,
-                Positioned(top: -40, child: _Ribbon(child: title!)),
+                if (emblem != null && Art.frame(emblem!).available)
+                  Positioned(
+                    top: -112,
+                    child: Image.asset(
+                      Art.frame(emblem!).path,
+                      height: 100,
+                      filterQuality: FilterQuality.medium,
+                    ),
+                  ),
+                Positioned(
+                  top: -26,
+                  child: _Ribbon(gold: banner == 'gold', child: title!),
+                ),
               ],
             ),
     );
@@ -270,70 +290,86 @@ class _NineSlicePainter extends BoxPainter {
   }
 }
 
-/// 대화상자 제목 리본: 폭 240 고정(비율 그대로). 글자는 띠 부분(아래 꼬리 제외)에만 놓는다.
+/// 대화상자 제목 띠: 패널 위 테두리에 걸친다. 글자는 띠 가운데에만.
+/// 띠 그림(banner_green / banner_gold)이 들어오면 그 그림을, 없으면 코드로 그린 둥근 띠를 쓴다.
 class _Ribbon extends StatelessWidget {
-  const _Ribbon({required this.child});
+  const _Ribbon({required this.child, this.gold = false});
   final Widget child;
+  final bool gold;
 
-  static const double width = 240;
+  static const double height = 52;
 
   @override
   Widget build(BuildContext context) {
-    final art = Art.frame('ribbon');
-    const h = width * 174 / 384;
-    return SizedBox(
-      width: width,
-      height: h,
-      child: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              art.path,
-              fit: BoxFit.fill,
-              filterQuality: FilterQuality.medium,
-            ),
-          ),
-          Positioned(
-            left: width * 0.2,
-            right: width * 0.2,
-            top: h * 0.31,
-            height: h * 0.32,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: DefaultTextStyle.merge(
-                style: const TextStyle(
-                  fontSize: 20,
-                  color: Colors.white,
-                  shadows: [
-                    Shadow(
-                      color: Color(0xFF3F6A12),
-                      offset: Offset(0, 1.5),
-                      blurRadius: 0,
-                    ),
-                    Shadow(
-                      color: Color(0xFF3F6A12),
-                      offset: Offset(1.2, 0),
-                      blurRadius: 0,
-                    ),
-                    Shadow(
-                      color: Color(0xFF3F6A12),
-                      offset: Offset(-1.2, 0),
-                      blurRadius: 0,
-                    ),
-                    Shadow(
-                      color: Color(0xFF3F6A12),
-                      offset: Offset(0, -1.2),
-                      blurRadius: 0,
-                    ),
-                  ],
-                ),
-                textAlign: TextAlign.center,
-                child: child,
+    final art = Art.frame(gold ? 'banner_gold' : 'banner_green');
+    final text = DefaultTextStyle.merge(
+      style: const TextStyle(
+        fontSize: 21,
+        color: Colors.white,
+        shadows: [
+          Shadow(color: Color(0xFF5A3A1E), offset: Offset(0, 1.5)),
+          Shadow(color: Color(0xFF5A3A1E), offset: Offset(1.2, 0)),
+          Shadow(color: Color(0xFF5A3A1E), offset: Offset(-1.2, 0)),
+          Shadow(color: Color(0xFF5A3A1E), offset: Offset(0, -1.2)),
+        ],
+      ),
+      textAlign: TextAlign.center,
+      child: child,
+    );
+    if (art.available) {
+      final sz =
+          Art.frameSize(art.path.split('/').last.split('.').first) ??
+          const Size(384, 100);
+      final w = height * sz.width / sz.height;
+      return SizedBox(
+        width: w,
+        height: height,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                art.path,
+                fit: BoxFit.fill,
+                filterQuality: FilterQuality.medium,
               ),
             ),
+            Positioned(
+              left: w * 0.16,
+              right: w * 0.16,
+              top: height * 0.18,
+              bottom: height * 0.22,
+              child: FittedBox(fit: BoxFit.scaleDown, child: text),
+            ),
+          ],
+        ),
+      );
+    }
+    // 띠 그림이 오기 전: 단색 둥근 띠 (두꺼운 갈색 테두리 + 위쪽 광택)
+    final base = gold ? const Color(0xFFF2B33D) : const Color(0xFF7CC04A);
+    final top = gold ? const Color(0xFFFFD873) : const Color(0xFFA4DB72);
+    return Container(
+      height: height,
+      constraints: const BoxConstraints(minWidth: 200),
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(height / 2),
+        border: Border.all(color: const Color(0xFF5A3A1E), width: 3),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [top, base],
+          stops: const [0.45, 0.46],
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x33000000),
+            blurRadius: 6,
+            offset: Offset(0, 3),
           ),
         ],
       ),
+      alignment: Alignment.center,
+      child: FittedBox(fit: BoxFit.scaleDown, child: text),
     );
   }
 }
