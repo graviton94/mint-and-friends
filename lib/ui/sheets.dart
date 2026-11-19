@@ -88,7 +88,7 @@ class _UpgradeRow extends StatelessWidget {
                       style: const TextStyle(fontSize: 17),
                     ),
                     const SizedBox(height: 2),
-                    Text(
+                    IconText(
                       maxed
                           ? upgradeDescribe(t, lv)
                           : '${upgradeDescribe(t, lv)} → ${upgradeDescribe(t, lv + 1)}',
@@ -304,7 +304,7 @@ class _FriendCard extends StatelessWidget {
                     ],
                   ),
                   FittedBox(
-                    child: Text(
+                    child: IconText(
                       aff == 0 ? tr('book.noEffect') : buffText(def, aff),
                       style: const TextStyle(
                         fontSize: 12,

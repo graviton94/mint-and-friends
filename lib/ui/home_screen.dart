@@ -727,7 +727,7 @@ class _HomeScreenState extends State<HomeScreen> {
         game: game,
         area: _viewArea,
         radius: 19,
-        focusY: 0.85,
+        focusY: 1.0, // 넘치는 높이는 하늘에서 자른다 (땅 위 장식 자리가 잘리지 않게)
         markerScale: 0.95,
         onSlotTap: _onSlotTap,
         onVisitorTap: _onVisitorTap,

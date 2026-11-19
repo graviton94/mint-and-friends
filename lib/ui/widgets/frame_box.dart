@@ -83,21 +83,7 @@ class GameDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (title != null)
-              FrameBox(
-                frame: 'ribbon',
-                fallback: const BoxDecoration(),
-                corner: 20,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 8,
-                ),
-                child: DefaultTextStyle.merge(
-                  style: const TextStyle(fontSize: 22),
-                  textAlign: TextAlign.center,
-                  child: title!,
-                ),
-              ),
+            if (title != null) _Ribbon(child: title!),
             if (content != null) ...[
               const SizedBox(height: 12),
               Flexible(child: SingleChildScrollView(child: content!)),
@@ -236,10 +222,23 @@ class _NineSlicePainter extends BoxPainter {
       offset.dy + size.height,
     ];
     final paint = Paint()..filterQuality = FilterQuality.medium;
+    // 이음새(얇은 선) 방지: 조각끼리 맞닿는 쪽은 원본을 0.5px 안에서 읽고(옆 조각 색이 번지지 않게),
+    // 그리는 칸은 이웃 쪽으로 0.75px 겹친다(반올림 틈이 비지 않게).
+    const inset = 0.5, overlap = 0.75;
     for (var i = 0; i < 3; i++) {
       for (var j = 0; j < 3; j++) {
-        final src = Rect.fromLTRB(sx[j], sy[i], sx[j + 1], sy[i + 1]);
-        final dst = Rect.fromLTRB(dx[j], dy[i], dx[j + 1], dy[i + 1]);
+        final src = Rect.fromLTRB(
+          sx[j] + (j > 0 ? inset : 0),
+          sy[i] + (i > 0 ? inset : 0),
+          sx[j + 1] - (j < 2 ? inset : 0),
+          sy[i + 1] - (i < 2 ? inset : 0),
+        );
+        final dst = Rect.fromLTRB(
+          dx[j] - (j > 0 ? overlap : 0),
+          dy[i] - (i > 0 ? overlap : 0),
+          dx[j + 1] + (j < 2 ? overlap : 0),
+          dy[i + 1] + (i < 2 ? overlap : 0),
+        );
         if (src.isEmpty || dst.isEmpty) continue;
         canvas.drawImageRect(img, src, dst, paint);
       }
@@ -250,5 +249,51 @@ class _NineSlicePainter extends BoxPainter {
   void dispose() {
     if (_listener != null) _stream?.removeListener(_listener!);
     super.dispose();
+  }
+}
+
+/// 대화상자 제목 리본: 리본 그림을 비율 그대로 그리고, 글자는 띠 부분(아래 꼬리 제외)에만 놓는다.
+class _Ribbon extends StatelessWidget {
+  const _Ribbon({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final art = Art.frame('ribbon');
+    final text = DefaultTextStyle.merge(
+      style: const TextStyle(fontSize: 22, color: Color(0xFF2F3B1F)),
+      textAlign: TextAlign.center,
+      child: child,
+    );
+    if (!art.available) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: text,
+      );
+    }
+    return AspectRatio(
+      aspectRatio: 384 / 174,
+      child: LayoutBuilder(
+        builder: (context, c) => Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                art.path,
+                fit: BoxFit.fill,
+                filterQuality: FilterQuality.medium,
+              ),
+            ),
+            // 띠: 그림 높이의 30% ~ 66% (아래 꼬리 제외), 좌우 끝 18% 안쪽
+            Positioned(
+              left: c.maxWidth * 0.18,
+              right: c.maxWidth * 0.18,
+              top: c.maxHeight * 0.30,
+              height: c.maxHeight * 0.36,
+              child: FittedBox(fit: BoxFit.scaleDown, child: text),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
