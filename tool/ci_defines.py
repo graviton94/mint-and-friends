@@ -26,7 +26,7 @@ if g:
         if web:
             print(f"--dart-define=GOOGLE_WEB_CLIENT_ID={web}")
         print(f"Google sign-in: web client {'found' if web else 'MISSING'}, Android clients {sum(o.get('client_type') == 1 for o in oauth)}", file=sys.stderr)
-k = os.environ.get("KAKAO") or ""
+k = (os.environ.get("KAKAO") or "").strip()
 print(f"Kakao: {'set' if k else 'missing'}", file=sys.stderr)
 if k:
     print(f"--dart-define=KAKAO_NATIVE_APP_KEY={k}")

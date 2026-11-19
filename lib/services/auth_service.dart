@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart' show AppLifecycleListener;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart' as kakao;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,10 +15,12 @@ import 'app_config.dart';
 enum LoginProvider { guest, google, kakao }
 
 class AuthException implements Exception {
-  final String code; // 'cancelled' | 'already_linked' | 'failed'
-  AuthException(this.code);
+  final String code; // 'cancelled' | 'already_linked' | 'failed' | 'timeout'
+  /// 어느 단계에서 무엇이 실패했는지 (화면에 작게 보여 준다: 예 "kakao token KOE101").
+  final String detail;
+  AuthException(this.code, [this.detail = '']);
   @override
-  String toString() => 'AuthException($code)';
+  String toString() => 'AuthException($code $detail)';
 }
 
 /// 로그인 담당.
@@ -88,20 +91,73 @@ class AuthService extends ChangeNotifier {
       return await body();
     } on AuthException {
       rethrow;
+    } on TimeoutException {
+      throw AuthException('timeout');
     } catch (e) {
       debugPrint('auth error: $e');
-      throw AuthException('failed');
+      throw AuthException('failed', _reason(e));
     } finally {
       busy = false;
       notifyListeners();
     }
   }
 
+  /// 실패 사유를 짧게: 어느 쪽이 거절했고 코드가 무엇인지 (myhomes 와 같은 방식).
+  static String _reason(Object e) => switch (e) {
+    FirebaseFunctionsException() => 'server ${e.code}',
+    FirebaseAuthException() => 'auth ${e.code}',
+    kakao.KakaoAuthException() => 'kakao ${e.error.name}',
+    kakao.KakaoApiException() => 'kakao api ${e.code.name}',
+    kakao.KakaoClientException() => 'kakao ${e.reason.name}',
+    PlatformException() => '${e.code}${e.message == null ? '' : ': ${e.message}'}',
+    _ => e.runtimeType.toString(),
+  };
+
+  /// 외부 앱 · 브라우저에 다녀오는 단계: 돌아왔는데 결과가 오지 않으면 무한 대기하지 않는다.
+  /// 앱이 다시 앞으로 온 뒤 [grace] 안에 결과가 없으면 'cancelled'.
+  Future<T> _awayStep<T>(Future<T> Function() step, {Duration grace = const Duration(seconds: 6)}) {
+    final done = Completer<T>();
+    var wentAway = false;
+    Timer? graceTimer;
+    late final AppLifecycleListener listener;
+    listener = AppLifecycleListener(
+      onHide: () => wentAway = true,
+      onResume: () {
+        if (!wentAway || done.isCompleted) return;
+        graceTimer?.cancel();
+        graceTimer = Timer(grace, () {
+          if (!done.isCompleted) done.completeError(AuthException('cancelled'));
+        });
+      },
+    );
+    step().then((v) {
+      if (!done.isCompleted) done.complete(v);
+    }, onError: (Object e, StackTrace st) {
+      if (!done.isCompleted) done.completeError(e, st);
+    });
+    return done.future.timeout(const Duration(minutes: 3)).whenComplete(() {
+      graceTimer?.cancel();
+      listener.dispose();
+    });
+  }
+
   Future<void> signInGuest() => _run(() async {
     if (firebaseEnabled && Firebase.apps.isNotEmpty) {
       if (FirebaseAuth.instance.currentUser == null) {
-        await FirebaseAuth.instance.signInAnonymously();
+        try {
+          await FirebaseAuth.instance.signInAnonymously().timeout(
+            const Duration(seconds: 12),
+          );
+          return;
+        } catch (e) {
+          // 오프라인 등: 기기 전용 게스트로라도 바로 시작한다 (나중에 설정에서 연결).
+          debugPrint('anonymous sign-in failed, local guest: $e');
+        }
+      } else {
+        return;
       }
+      _localGuest = true;
+      (await SharedPreferences.getInstance()).setBool(_localGuestKey, true);
     } else {
       _localGuest = true;
       (await SharedPreferences.getInstance()).setBool(_localGuestKey, true);
@@ -113,7 +169,7 @@ class AuthService extends ChangeNotifier {
     if (!googleEnabled) throw AuthException('failed');
     final GoogleSignInAccount account;
     try {
-      account = await GoogleSignIn.instance.authenticate();
+      account = await _awayStep(GoogleSignIn.instance.authenticate);
     } on GoogleSignInException catch (e) {
       throw AuthException(
         e.code == GoogleSignInExceptionCode.canceled ? 'cancelled' : 'failed',
@@ -143,13 +199,19 @@ class AuthService extends ChangeNotifier {
     if (!kakaoEnabled) throw AuthException('failed');
     final accessToken = await _kakaoToken();
     final fn = FirebaseFunctions.instanceFor(region: AppConfig.functionsRegion)
-        .httpsCallable('login');
+        .httpsCallable(
+          'login',
+          options: HttpsCallableOptions(timeout: const Duration(seconds: 25)),
+        );
     final res = await fn.call<Map<String, dynamic>>({
       'provider': 'kakao',
       'token': accessToken,
     });
-    final customToken = res.data['token'] as String;
-    await FirebaseAuth.instance.signInWithCustomToken(customToken);
+    final customToken = res.data['token'];
+    if (customToken is! String) throw AuthException('failed', 'no custom token');
+    await FirebaseAuth.instance
+        .signInWithCustomToken(customToken)
+        .timeout(const Duration(seconds: 20));
   });
 
   /// 카카오톡 앱 로그인 → 안 되면 카카오계정(웹) 로그인. 사용자가 물러나면 'cancelled'.
@@ -158,7 +220,7 @@ class AuthService extends ChangeNotifier {
       final api = kakao.UserApi.instance;
       if (await kakao.isKakaoTalkInstalled()) {
         try {
-          return (await api.loginWithKakaoTalk()).accessToken;
+          return (await _awayStep(api.loginWithKakaoTalk)).accessToken;
         } catch (e) {
           // 카카오톡 안에서 취소: 멈춘다. 그 밖(카카오톡에 계정 미연결 등): 웹 로그인으로.
           if (e is PlatformException && e.code == 'CANCELED') {
@@ -170,7 +232,7 @@ class AuthService extends ChangeNotifier {
           }
         }
       }
-      return (await api.loginWithKakaoAccount()).accessToken;
+      return (await _awayStep(api.loginWithKakaoAccount)).accessToken;
     } on kakao.KakaoClientException catch (e) {
       if (e.reason == kakao.ClientErrorCause.cancelled) {
         throw AuthException('cancelled');

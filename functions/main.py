@@ -18,6 +18,9 @@ REGION = 'us-central1'
 
 # 우리 카카오 앱의 숫자 ID (카카오 디벨로퍼스 → 앱 → 앱 ID). functions/.env 로 들어온다.
 KAKAO_APP_ID = (os.environ.get('KAKAO_APP_ID') or '').strip()
+if KAKAO_APP_ID and not KAKAO_APP_ID.isdigit():
+    print('KAKAO_APP_ID is not numeric: ignoring it')
+    KAKAO_APP_ID = ''
 
 _PROFILE_URLS = {'kakao': 'https://kapi.kakao.com/v2/user/me'}
 

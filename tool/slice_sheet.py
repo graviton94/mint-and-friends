@@ -7,7 +7,7 @@
 
 처리:
   1) 흰 배경 제거: 가장자리에서 이어진 밝은 영역만 투명하게 한다 (물체 안의 흰색은 보존).
-  2) 그리드 칸으로 나눈 뒤 칸마다 내용물 경계로 자르고,
+  2) 그림 덩어리를 찾아 중심이 속한 칸에 배정하고 덩어리 경계로 자른 뒤 (격자선에 걸친 부분도 보존),
   3) 정사각형 캔버스(기본 512px) 가운데 아래 정렬 + 6% 여백으로 맞춘다.
 배경(1칸, 투명 처리 없음)은 --keep-bg 로 크기만 맞춘다.
 """
@@ -84,8 +84,44 @@ def drop_edge_fragments(cell: Image.Image, keep_ratio: float = 0.3) -> Image.Ima
     return cell
 
 
-def fit_square(cell: Image.Image, size: int, margin: float = 0.06) -> Image.Image:
-    cell = drop_edge_fragments(cell)
+def cells_by_blobs(img: Image.Image, cols: int, rows: int) -> list:
+    """투명 배경 시트를 그림 덩어리 단위로 나눈다 (격자선에 걸친 발·꼬리가 잘리지 않게).
+
+    시트 전체에서 이어진 덩어리를 찾고, 덩어리 중심이 속한 칸에 배정한다.
+    칸마다 배정된 덩어리만 남긴 이미지를 덩어리 경계로 잘라 돌려준다 (행 우선 순서)."""
+    import numpy as np
+    from scipy import ndimage
+
+    a = np.asarray(img.convert("RGBA"))
+    mask = a[:, :, 3] > 8
+    lab, n = ndimage.label(mask, structure=np.ones((3, 3), bool))
+    cw, ch = img.width / cols, img.height / rows
+    idx = np.arange(1, n + 1)
+    areas = ndimage.sum(mask, lab, idx)
+    cents = ndimage.center_of_mass(mask, lab, idx)
+    owner = np.zeros(n + 1, int) - 1
+    for k, (area, (cy, cx)) in enumerate(zip(areas, cents), start=1):
+        if area < 12:
+            continue
+        c = min(cols - 1, int(cx // cw)); r = min(rows - 1, int(cy // ch))
+        owner[k] = r * cols + c
+    out = []
+    for cell in range(cols * rows):
+        keep = owner[lab] == cell
+        if not keep.any():
+            out.append(Image.new("RGBA", (1, 1), (0, 0, 0, 0)))
+            continue
+        ys, xs = np.nonzero(keep)
+        y0, y1, x0, x1 = ys.min(), ys.max() + 1, xs.min(), xs.max() + 1
+        piece = a[y0:y1, x0:x1].copy()
+        piece[~keep[y0:y1, x0:x1]] = 0
+        out.append(Image.fromarray(piece, "RGBA"))
+    return out
+
+
+def fit_square(cell: Image.Image, size: int, margin: float = 0.06, clean: bool = True) -> Image.Image:
+    if clean:
+        cell = drop_edge_fragments(cell)
     box = cell.getbbox()
     out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     if not box:
@@ -115,11 +151,9 @@ def main():
         print("saved", a.outputs[0])
         return
     img = remove_white_bg(src)
-    cw, ch = img.width / a.cols, img.height / a.rows
-    for i, out in enumerate(a.outputs):
-        r, c = divmod(i, a.cols)
-        cell = img.crop((round(c * cw), round(r * ch), round((c + 1) * cw), round((r + 1) * ch)))
-        fit_square(cell, a.size).save(out, **_kw(out))
+    cells = cells_by_blobs(img, a.cols, a.rows)
+    for out, cell in zip(a.outputs, cells):
+        fit_square(cell, a.size, clean=False).save(out, **_kw(out))
         print("saved", out)
 
 

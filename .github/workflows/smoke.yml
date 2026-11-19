@@ -46,7 +46,7 @@ jobs:
           KAKAO: ${{ secrets.KAKAO_NATIVE_APP_KEY }}
         run: |
           python3 tool/ci_defines.py > "$RUNNER_TEMP/app.defines"
-          if [ -n "$KAKAO" ]; then echo "HF_KAKAO_NATIVE_APP_KEY=$KAKAO" >> "$GITHUB_ENV"; fi
+          K=$(printf %s "$KAKAO" | tr -d '[:space:]'); if [ -n "$K" ]; then echo "HF_KAKAO_NATIVE_APP_KEY=$K" >> "$GITHUB_ENV"; fi
 
       - name: Build release APK (x86_64)
         env:

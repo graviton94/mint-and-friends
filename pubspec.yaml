@@ -45,6 +45,7 @@ dependencies:
   google_sign_in: ^7.2.0
   kakao_flutter_sdk_user: ^2.1.0
   package_info_plus: ^10.2.2
+  audioplayers: ^6.8.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -70,6 +71,7 @@ flutter:
     - assets/art/ui/
     - assets/art/icons/
     - assets/art/frames/
+    - assets/audio/
   fonts:
     - family: Jua
       fonts:

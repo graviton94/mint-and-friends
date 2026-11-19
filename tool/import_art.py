@@ -13,7 +13,7 @@ import sys
 from PIL import Image
 
 sys.path.insert(0, os.path.dirname(__file__))
-from slice_sheet import fit_square, remove_white_bg  # noqa: E402
+from slice_sheet import cells_by_blobs, fit_square, remove_white_bg  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MIPMAPS = {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}
@@ -53,12 +53,10 @@ def import_sheet(sid, src, spec):
     if spec.get("frame"):
         return import_frames(clear, spec)
     cols, rows, size = spec["cols"], spec["rows"], spec["size"]
-    cw, ch = clear.width / cols, clear.height / rows
+    cells = cells_by_blobs(clear, cols, rows)
     done = []
-    for i, f in enumerate(spec["files"]):
-        r, c = divmod(i, cols)
-        cell = clear.crop((round(c * cw), round(r * ch), round((c + 1) * cw), round((r + 1) * ch)))
-        save(fit_square(cell, size), f)
+    for f, cell in zip(spec["files"], cells):
+        save(fit_square(cell, size, clean=False), f)
         done.append(f)
     return done
 
