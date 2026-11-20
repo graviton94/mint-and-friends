@@ -1158,7 +1158,7 @@ class _VersionTapState extends State<_VersionTap> {
         ScaffoldMessenger.maybeOf(context)?.showSnackBar(
           SnackBar(
             content: Text(
-              DevLog.instance.on ? '개발자 모드 켜짐: 성장 로그 기록 시작' : '개발자 모드 꺼짐',
+              DevLog.instance.on ? '개발자 모드 켜짐: 성장 로그 보기 가능' : '개발자 모드 꺼짐',
             ),
           ),
         );

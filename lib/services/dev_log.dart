@@ -3,9 +3,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../game/game_state.dart';
 
-/// 개발자 전용 성장 로그. 설정의 버전 글자를 7번 누르면 켜진다 (일반 플레이어에게는 보이지 않음).
-/// 켜져 있으면 세션 시작 · 5분마다 · 레벨업 · 구역 완성 · 앱을 내릴 때 한 줄씩 기록하고,
-/// 설정의 '성장 로그'에서 복사해 Claude 에게 붙여 넣으면 밸런스 분석에 쓴다.
+/// 성장 로그. 기록은 항상 (기기 안에만, 최근 600줄) 하고,
+/// 보기 · 복사는 개발자 모드(설정의 버전 글자 7번)에서만 보인다.
+/// 세션 시작 · 5분마다 · 레벨업 · 구역 완성 · 앱을 내릴 때 한 줄씩 남는다.
 class DevLog extends ChangeNotifier {
   DevLog._();
   static final DevLog instance = DevLog._();
@@ -40,7 +40,6 @@ class DevLog extends ChangeNotifier {
 
   /// 한 줄 기록. [event]: start · tick · level · area · pause.
   void record(GameState g, String event) {
-    if (!on) return;
     final now = DateTime.now();
     if (event == 'start') {
       _session++;
@@ -84,7 +83,6 @@ class DevLog extends ChangeNotifier {
 
   /// 주기 기록 (게임 루프에서 자주 불러도 5분에 한 번만 남는다).
   void maybeTick(GameState g) {
-    if (!on) return;
     final now = DateTime.now();
     if (now.difference(_lastAuto) < every) return;
     _lastAuto = now;
