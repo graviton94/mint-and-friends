@@ -671,5 +671,6 @@
   "style.4": "봄",
   "style.5": "여름",
   "style.6": "가을",
-  "style.seasonSet": "{season} 세트 {n}종 한 번에 [[diamond]]{cost}"
+  "style.seasonSet": "{season} 세트 {n}종 한 번에 [[diamond]]{cost}",
+  "outfit.using": "입는 중"
 }

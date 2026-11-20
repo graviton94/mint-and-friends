@@ -414,18 +414,22 @@ Future<void> showOutfitSheet(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _OutfitCard(game: game, def: def, outfit: null),
-            ),
-            for (final o in Art.outfitsFor(def))
-              Expanded(
-                child: _OutfitCard(game: game, def: def, outfit: o),
-              ),
-          ],
-        ),
-        const SizedBox(height: 8),
+        // 옷이 늘어나면 3개씩 줄을 나눈다 (카드가 작아지지 않게)
+        for (final r in _rowsOf3<OutfitDef?>([
+          null,
+          ...Art.outfitsFor(def),
+        ])) ...[
+          Row(
+            children: [
+              for (final o in r)
+                Expanded(
+                  child: _OutfitCard(game: game, def: def, outfit: o),
+                ),
+              for (var k = r.length; k < 3; k++) const Spacer(),
+            ],
+          ),
+          const SizedBox(height: 8),
+        ],
         IconText(
           tr('outfit.note'),
           textAlign: TextAlign.center,
@@ -435,6 +439,10 @@ Future<void> showOutfitSheet(
     ),
   ),
 );
+
+List<List<T>> _rowsOf3<T>(List<T> xs) => [
+  for (var i = 0; i < xs.length; i += 3) xs.sublist(i, min(i + 3, xs.length)),
+];
 
 class _OutfitCard extends StatelessWidget {
   const _OutfitCard({
@@ -452,7 +460,7 @@ class _OutfitCard extends StatelessWidget {
     final current = game.outfitOf(def.id) == id;
     final owned = id == null || game.ownsOutfit(def.id, id);
     final label = owned
-        ? (current ? tr('style.using') : tr('outfit.wear'))
+        ? (current ? tr('outfit.using') : tr('outfit.wear'))
         : outfit!.limited
         ? tr('outfit.limited')
         : '[[diamond]] ${outfit!.gems}';

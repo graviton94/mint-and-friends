@@ -670,5 +670,6 @@
   "style.4": "春",
   "style.5": "夏",
   "style.6": "秋",
-  "style.seasonSet": "{season}セット{n}種まとめて[[diamond]]{cost}"
+  "style.seasonSet": "{season}セット{n}種まとめて[[diamond]]{cost}",
+  "outfit.using": "着ている"
 }
