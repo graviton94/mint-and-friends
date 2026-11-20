@@ -672,5 +672,8 @@
   "style.6": "秋",
   "style.seasonSet": "{season}セット{n}種まとめて[[diamond]]{cost}",
   "outfit.using": "着ている",
-  "outfit.offSeason": "{from}〜{to}月 販売"
+  "outfit.offSeason": "{from}〜{to}月 販売",
+  "toast.seasonSet": "{area}の{season}セット完成! 季節の風景がついて庭の魅力+{n}%",
+  "book.seasons": "季節コレクション",
+  "book.seasonsNote": "エリアの季節飾り8種を集めると季節の風景がつき、庭の魅力+{n}%"
 }

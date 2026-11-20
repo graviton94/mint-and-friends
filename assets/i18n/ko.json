@@ -673,5 +673,8 @@
   "style.6": "가을",
   "style.seasonSet": "{season} 세트 {n}종 한 번에 [[diamond]]{cost}",
   "outfit.using": "입는 중",
-  "outfit.offSeason": "{from}~{to}월 판매"
+  "outfit.offSeason": "{from}~{to}월 판매",
+  "toast.seasonSet": "{area} {season} 세트 완성! 계절 풍경이 켜지고 정원 매력 +{n}%",
+  "book.seasons": "계절 컬렉션",
+  "book.seasonsNote": "한 구역의 계절 장식 8종을 모으면 그 계절 풍경이 켜지고 정원 매력 +{n}%"
 }

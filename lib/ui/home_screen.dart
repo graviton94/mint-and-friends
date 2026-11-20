@@ -140,6 +140,16 @@ class _HomeScreenState extends State<HomeScreen> {
             'name': friendName(friendId),
           }),
         );
+      case SeasonSetEvent(:final area, :final style):
+        sfx(Sfx.levelup);
+        _toast(
+          tr('toast.seasonSet', {
+            'area': areaName(Garden.areaAt(area)),
+            'season': tr('style.$style'),
+            'n': (Garden.seasonSetBonus * 100).round(),
+          }),
+        );
+        setState(() => _viewArea = area);
       case AreaCompletedEvent(:final area):
         _toast(tr('toast.areaDone', {'name': areaName(Garden.areaAt(area))}));
         // 첫 구역 완성 직후: 새싹 정원 패키지 (한 번만)

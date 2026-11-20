@@ -733,6 +733,17 @@ class Garden {
   };
   static bool isSeasonStyle(int s) => seasonStyles.containsKey(s);
 
+  /// 시즌 디자인 → 계절 번호 (0 봄 · 1 여름 · 2 가을 · 3 겨울).
+  static int seasonIndexOf(int style) => switch (style) {
+    4 => 0,
+    5 => 1,
+    6 => 2,
+    _ => 3,
+  };
+
+  /// 계절 세트(한 구역 8종) 완성마다 정원 매력 보너스.
+  static const double seasonSetBonus = 0.05;
+
   /// 지금 달의 시즌 디자인 (그 시즌에만 살 수 있고, 산 것은 계속 쓴다).
   static int seasonStyleFor(int month) => switch (month) {
     12 || 1 || 2 => 3,

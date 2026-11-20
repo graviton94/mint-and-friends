@@ -177,6 +177,13 @@ class BubbleEvent extends GameEvent {
 /// 에너지가 바닥나 바구니를 못 눌렀다 (바닥날 때마다 한 번).
 class EnergyEmptyEvent extends GameEvent {}
 
+/// 계절 세트(한 구역 8종)를 다 모았다.
+class SeasonSetEvent extends GameEvent {
+  final int area;
+  final int style;
+  SeasonSetEvent(this.area, this.style);
+}
+
 /// 보상형 광고를 끝까지 봤다.
 class AdRewardEvent extends GameEvent {
   final String kind;
@@ -403,7 +410,40 @@ class GameState extends ChangeNotifier {
   double get gardenMultiplier =>
       1 +
       decorCount * GameConfig.decorIncomeBonus +
-      currentArea * GameConfig.areaIncomeBonus;
+      currentArea * GameConfig.areaIncomeBonus +
+      completedSeasonSets * Garden.seasonSetBonus;
+
+  /// 이 구역의 이 시즌 장식 8종을 모두 가졌는지 (계절 세트 완성).
+  bool seasonSetComplete(int area, int style) =>
+      [for (var i = 0; i < Garden.slotsPerArea; i++) i]
+          .every((i) => ownedStyles.contains('$area:$i:$style'));
+
+  int seasonSetOwned(int area, int style) => [
+    for (var i = 0; i < Garden.slotsPerArea; i++)
+      if (ownedStyles.contains('$area:$i:$style')) i,
+  ].length;
+
+  int get completedSeasonSets {
+    var n = 0;
+    for (var a = 0; a < Garden.areas.length; a++) {
+      for (final st in Garden.seasonStyles.keys) {
+        if (seasonSetComplete(a, st)) n++;
+      }
+    }
+    return n;
+  }
+
+  /// 구역에 켜진 계절 풍경: 완성한 세트를 8자리 모두 입혀 두었을 때 그 시즌 (아니면 null).
+  int? landscapeOf(int area) {
+    if (area > currentArea) return null;
+    for (final st in Garden.seasonStyles.keys) {
+      if (!seasonSetComplete(area, st)) continue;
+      final all = [for (var i = 0; i < Garden.slotsPerArea; i++) i]
+          .every((i) => isPlaced(area, i) && styleOf(area, i) == st);
+      if (all) return st;
+    }
+    return null;
+  }
 
   /// 방치 수익 배율 (수익 강화 · 친구 버프). 정원 매력은 부탁 코인에만.
   double get _incomeMult =>
@@ -1255,6 +1295,9 @@ class GameState extends ChangeNotifier {
       }
       ownedStyles.add('$area:$slot:$style');
       _bump(Stat.stylesBought);
+      if (Garden.isSeasonStyle(style) && seasonSetComplete(area, style)) {
+        _events.add(SeasonSetEvent(area, style));
+      }
     }
     if (style == 0) {
       decorStyle.remove('$area:$slot');
@@ -1282,6 +1325,7 @@ class GameState extends ChangeNotifier {
     }
     _bump(Stat.stylesBought);
     _trace('seasonSet', '$area,$s');
+    _events.add(SeasonSetEvent(area, s));
     notifyListeners();
     return StyleResult.ok;
   }

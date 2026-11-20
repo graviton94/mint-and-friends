@@ -552,6 +552,61 @@ Future<void> showCollectionSheet(
           ],
         ),
         const SizedBox(height: 14),
+        // 계절 컬렉션: 구역 × 계절 시즌 장식 모은 수 (8종 완성 = 계절 풍경 + 정원 매력)
+        if (Garden.seasonStyles.keys.any(
+          (st) => Art.decorStyle(Garden.areaAt(0).decor[0], st).available,
+        )) ...[
+          IconText(tr('book.seasons'), style: const TextStyle(fontSize: 18)),
+          const SizedBox(height: 2),
+          IconText(
+            tr('book.seasonsNote', {
+              'n': (Garden.seasonSetBonus * 100).round(),
+            }),
+            style: const TextStyle(fontSize: 13, color: Colors.black54),
+          ),
+          const SizedBox(height: 6),
+          for (var a = 0; a <= game.currentArea && a < Garden.areas.length; a++)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  ArtImage(Art.areaIcon(Garden.areaAt(a)), size: 26),
+                  const SizedBox(width: 6),
+                  for (final st in Garden.seasonStyles.keys)
+                    Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        decoration: BoxDecoration(
+                          color: game.seasonSetComplete(a, st)
+                              ? const Color(0xFFFFF0B8)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: game.seasonSetComplete(a, st)
+                                ? const Color(0xFFE0A21B)
+                                : const Color(0xFFE2D3B5),
+                            width: 1.5,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: IconText(
+                            game.seasonSetComplete(a, st)
+                                ? '[[check]]${tr('style.$st')}'
+                                : '${tr('style.$st')} ${game.seasonSetOwned(a, st)}/${Garden.slotsPerArea}',
+                            iconScale: 1.0,
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          const SizedBox(height: 10),
+        ],
         for (final chain in Chain.values.where(Chains.ready)) ...[
           Text(chainName(chain), style: const TextStyle(fontSize: 18)),
           const SizedBox(height: 6),

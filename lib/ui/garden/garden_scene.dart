@@ -415,15 +415,26 @@ class _GardenSceneState extends State<GardenScene>
                         ),
                       ),
                     ),
-                    // 정원 효과 (새싹 정원 패키지): 계절마다 꽃잎 · 반딧불 · 낙엽 · 눈
-                    if (game.effectOn != null)
+                    // 정원 효과: 계절 세트 풍경(그 구역, 진하게)이 우선, 아니면 새싹 정원 패키지의 옅은 계절 효과
+                    if (game.landscapeOf(widget.area) != null ||
+                        game.effectOn != null)
                       Positioned.fill(
                         child: IgnorePointer(
                           child: CustomPaint(
-                            painter: _SeasonPainter(
-                              t: _t,
-                              month: game.now.month,
-                            ),
+                            painter: switch (game.landscapeOf(widget.area)) {
+                              final st? => _SeasonPainter(
+                                t: _t,
+                                season: Garden.seasonIndexOf(st),
+                                intense: true,
+                                night: Color(area.sky).computeLuminance() < 0.2,
+                              ),
+                              null => _SeasonPainter(
+                                t: _t,
+                                season: _SeasonPainter.seasonOfMonth(
+                                  game.now.month,
+                                ),
+                              ),
+                            },
                           ),
                         ),
                       ),
@@ -1219,45 +1230,64 @@ class _BubblePainter extends CustomPainter {
       o.fill != fill || o.line != line || o.tailX != tailX || o.glow != glow;
 }
 
-/// 계절 정원 효과: 3~5월 꽃잎, 6~8월 반딧불, 9~11월 낙엽, 12~2월 눈.
+/// 계절 정원 효과. [season] 0 봄 · 1 여름 · 2 가을 · 3 겨울.
+/// 기본(새싹 정원 패키지): 옅은 입자. [intense](계절 세트 완성 풍경): 입자 2배 + 색조 + 계절 연출.
 class _SeasonPainter extends CustomPainter {
-  _SeasonPainter({required this.t, required this.month});
+  _SeasonPainter({
+    required this.t,
+    required this.season,
+    this.intense = false,
+    this.night = false,
+  });
   final double t;
-  final int month;
+  final int season;
+  final bool intense;
+  final bool night;
 
-  static const int _n = 26;
+  static int seasonOfMonth(int m) => switch (m) {
+    3 || 4 || 5 => 0,
+    6 || 7 || 8 => 1,
+    9 || 10 || 11 => 2,
+    _ => 3,
+  };
 
   @override
   void paint(Canvas canvas, Size size) {
-    final season = switch (month) {
-      3 || 4 || 5 => 0,
-      6 || 7 || 8 => 1,
-      9 || 10 || 11 => 2,
-      _ => 3,
-    };
     final w = size.width, h = size.height;
     final unit = w / 60;
-    for (var i = 0; i < _n; i++) {
+    if (intense) _backdrop(canvas, size, unit);
+    final n = intense ? 60 : 26;
+    for (var i = 0; i < n; i++) {
       // 입자마다 고정된 씨앗 값 (매 프레임 같은 궤적)
       final a = (i * 0.618034) % 1.0;
       final b = (i * 0.414214 + 0.3) % 1.0;
       final speed = 0.04 + 0.05 * b;
+      if (season == 1 && (night || !intense)) {
+        _firefly(canvas, i, a, b, w, h, unit);
+        continue;
+      }
       if (season == 1) {
-        // 반딧불: 제자리에서 둥실 · 깜빡
-        final x = (a + 0.04 * sin(t * 0.7 + i)) * w;
-        final y = (0.35 + 0.6 * b + 0.03 * sin(t * 0.9 + i * 2)) * h;
-        final glow = 0.5 + 0.5 * sin(t * 2.2 + i * 1.7);
-        canvas.drawCircle(
-          Offset(x, y),
-          unit * 0.9,
-          Paint()
-            ..color = const Color(0xFFFFF59D).withValues(alpha: 0.35 * glow)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+        // 여름 낮: 반짝이 (제자리에서 깜빡)
+        final x = (a + 0.02 * sin(t * 0.5 + i)) * w;
+        final y = (0.4 + 0.58 * b) * h;
+        final tw = (0.5 + 0.5 * sin(t * 3 + i * 2.3)).clamp(0.0, 1.0);
+        final r = unit * 0.5 * tw;
+        final paint = Paint()..color = Colors.white.withValues(alpha: 0.9 * tw);
+        canvas.drawRect(
+          Rect.fromCenter(
+            center: Offset(x, y),
+            width: r * 0.35,
+            height: r * 2.2,
+          ),
+          paint,
         );
-        canvas.drawCircle(
-          Offset(x, y),
-          unit * 0.28,
-          Paint()..color = const Color(0xFFFFFDE7).withValues(alpha: glow),
+        canvas.drawRect(
+          Rect.fromCenter(
+            center: Offset(x, y),
+            width: r * 2.2,
+            height: r * 0.35,
+          ),
+          paint,
         );
         continue;
       }
@@ -1288,11 +1318,15 @@ class _SeasonPainter extends CustomPainter {
             path,
             Paint()
               ..color =
-                  (i.isEven ? const Color(0xFFE8823A) : const Color(0xFFD9543A))
-                      .withValues(alpha: 0.9),
+                  (i % 3 == 0
+                          ? const Color(0xFFF2C14E)
+                          : i.isEven
+                          ? const Color(0xFFE8823A)
+                          : const Color(0xFFD9543A))
+                      .withValues(alpha: 0.92),
           );
         default: // 눈 (밝은 배경에서도 보이게 옅은 테두리)
-          final r = unit * (0.45 + 0.3 * b);
+          final r = unit * (0.45 + 0.3 * b) * (intense ? 1.2 : 1);
           canvas.drawCircle(
             Offset.zero,
             r + 1,
@@ -1306,8 +1340,113 @@ class _SeasonPainter extends CustomPainter {
       }
       canvas.restore();
     }
+    if (intense && season == 0) _butterflies(canvas, w, h, unit);
+  }
+
+  void _firefly(
+    Canvas canvas,
+    int i,
+    double a,
+    double b,
+    double w,
+    double h,
+    double unit,
+  ) {
+    final x = (a + 0.04 * sin(t * 0.7 + i)) * w;
+    final y = (0.35 + 0.6 * b + 0.03 * sin(t * 0.9 + i * 2)) * h;
+    final glow = 0.5 + 0.5 * sin(t * 2.2 + i * 1.7);
+    canvas.drawCircle(
+      Offset(x, y),
+      unit * 0.9,
+      Paint()
+        ..color = const Color(0xFFFFF59D).withValues(alpha: 0.35 * glow)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+    canvas.drawCircle(
+      Offset(x, y),
+      unit * 0.28,
+      Paint()..color = const Color(0xFFFFFDE7).withValues(alpha: glow),
+    );
+  }
+
+  /// 세트 풍경의 색조 · 빛 (하늘 쪽을 진하게, 땅은 밝게).
+  void _backdrop(Canvas canvas, Size size, double unit) {
+    final rect = Offset.zero & size;
+    final (top, bottom) = switch (season) {
+      0 => (const Color(0x30FFB0C8), const Color(0x08FFE0EC)),
+      1 => (const Color(0x30FFF0A0), const Color(0x00FFFFFF)),
+      2 => (const Color(0x40FF9A50), const Color(0x10D8642E)),
+      _ => (const Color(0x504A64B4), const Color(0x00FFFFFF)),
+    };
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [top, bottom],
+          stops: const [0, 0.55],
+        ).createShader(rect),
+    );
+    if (season == 1 && !night) {
+      // 여름 햇살 줄기 (오른쪽 위에서 비스듬히, 천천히 숨쉬듯)
+      final o = Offset(size.width * 0.88, -size.height * 0.05);
+      final k = 0.75 + 0.25 * sin(t * 0.6);
+      final ray = Paint()
+        ..color = const Color(0xFFFFFAD2).withValues(alpha: 0.22 * k)
+        ..strokeWidth = unit * 2.4
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
+      for (var j = 0; j < 5; j++) {
+        canvas.drawLine(
+          o,
+          Offset(o.dx - size.width * (0.35 + j * 0.15), size.height),
+          ray,
+        );
+      }
+    }
+    if (season == 3) {
+      // 겨울: 땅에 쌓인 눈
+      final snow = Paint()..color = Colors.white.withValues(alpha: 0.7);
+      for (var j = 0; j < 9; j++) {
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: Offset(size.width * (j / 8), size.height * 0.99),
+            width: size.width * 0.18,
+            height: size.height * 0.05,
+          ),
+          snow,
+        );
+      }
+    }
+  }
+
+  void _butterflies(Canvas canvas, double w, double h, double unit) {
+    final fill = Paint()..color = const Color(0xFFFFE07A);
+    final line = Paint()
+      ..color = const Color(0xFF7A5230)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    for (var i = 0; i < 5; i++) {
+      final ph = t * 0.35 + i * 1.3;
+      final x = (0.15 + 0.7 * (0.5 + 0.5 * sin(ph))) * w;
+      final y = (0.35 + 0.35 * (0.5 + 0.5 * sin(ph * 1.7 + i))) * h;
+      final flap = 0.35 + 0.65 * (0.5 + 0.5 * sin(t * 14 + i)).abs();
+      for (final sgn in [-1.0, 1.0]) {
+        final r = Rect.fromCenter(
+          center: Offset(x + sgn * unit * 0.55 * flap, y),
+          width: unit * 1.1 * flap,
+          height: unit * 1.3,
+        );
+        canvas.drawOval(r, fill);
+        canvas.drawOval(r, line);
+      }
+    }
   }
 
   @override
-  bool shouldRepaint(_SeasonPainter o) => o.t != t || o.month != month;
+  bool shouldRepaint(_SeasonPainter o) =>
+      o.t != t ||
+      o.season != season ||
+      o.intense != intense ||
+      o.night != night;
 }

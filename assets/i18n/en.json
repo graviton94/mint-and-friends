@@ -672,5 +672,8 @@
   "style.6": "Autumn",
   "style.seasonSet": "{season} set of {n} [[diamond]]{cost}",
   "outfit.using": "Wearing",
-  "outfit.offSeason": "On sale {from}–{to}"
+  "outfit.offSeason": "On sale {from}–{to}",
+  "toast.seasonSet": "{area} {season} set complete! Seasonal scenery on, garden charm +{n}%",
+  "book.seasons": "Seasonal collection",
+  "book.seasonsNote": "Collect all 8 seasonal pieces of an area for its seasonal scenery and +{n}% garden charm"
 }

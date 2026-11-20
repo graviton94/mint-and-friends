@@ -456,4 +456,25 @@ void main() {
     expect(g.setStyle(0, 0, 0), StyleResult.ok);
     expect(g.setStyle(0, 0, 3), StyleResult.ok); // 지난 시즌 것도 산 것은 무료로
   });
+
+  test('계절 세트: 8종을 모으면 완성 이벤트 · 정원 매력 +5%, 8자리 모두 입히면 풍경이 켜진다', () async {
+    final g = make(); // 1월 = 겨울
+    g.placed = {0, 1, 2, 3, 4, 5, 6, 7};
+    g.gems = 1000;
+    final events = <GameEvent>[];
+    g.events.listen(events.add);
+    final m0 = g.gardenMultiplier;
+    expect(g.landscapeOf(0), isNull);
+    final slots = List.generate(Garden.slotsPerArea, (i) => i);
+    expect(g.buySeasonSet(0, slots), StyleResult.ok);
+    expect(g.seasonSetComplete(0, 3), isTrue);
+    expect(g.completedSeasonSets, 1);
+    expect(g.gardenMultiplier, closeTo(m0 + Garden.seasonSetBonus, 1e-9));
+    expect(g.landscapeOf(0), 3);
+    g.setStyle(0, 2, 0); // 하나를 기본으로 바꾸면 풍경은 꺼지고 보너스는 남는다
+    expect(g.landscapeOf(0), isNull);
+    expect(g.completedSeasonSets, 1);
+    await Future<void>.delayed(Duration.zero);
+    expect(events.whereType<SeasonSetEvent>().length, 1);
+  });
 }
