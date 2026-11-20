@@ -601,23 +601,6 @@
       "assets/art/decor/chimney_cottage_c.webp"
     ]
   },
-  "outfit_picnic_idle": {
-    "cols": 5,
-    "rows": 2,
-    "size": 512,
-    "files": [
-      "assets/art/friends/bori_picnic_idle.webp",
-      "assets/art/friends/dubu_picnic_idle.webp",
-      "assets/art/friends/kwak_picnic_idle.webp",
-      "assets/art/friends/nabi_picnic_idle.webp",
-      "assets/art/friends/dotori_picnic_idle.webp",
-      "assets/art/friends/mochi_picnic_idle.webp",
-      "assets/art/friends/danpung_picnic_idle.webp",
-      "assets/art/friends/kongtteok_picnic_idle.webp",
-      "assets/art/friends/bogeul_picnic_idle.webp",
-      "assets/art/friends/pposong_picnic_idle.webp"
-    ]
-  },
   "ui_icons6": {
     "cols": 2,
     "rows": 1,
