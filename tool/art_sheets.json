@@ -1157,5 +1157,95 @@
       "assets/art/decor/snow_lantern_winter.webp",
       "assets/art/decor/chimney_cottage_winter.webp"
     ]
+  },
+  "decor_yard_spring": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/big_tree_spring.webp",
+      "assets/art/decor/bench_spring.webp",
+      "assets/art/decor/mailbox_spring.webp",
+      "assets/art/decor/veggie_patch_spring.webp",
+      "assets/art/decor/lantern_spring.webp",
+      "assets/art/decor/bird_feeder_spring.webp",
+      "assets/art/decor/hut_spring.webp",
+      "assets/art/decor/fountain_spring.webp"
+    ]
+  },
+  "decor_pond_spring": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/stepping_stones_spring.webp",
+      "assets/art/decor/water_lily_spring.webp",
+      "assets/art/decor/fishing_spot_spring.webp",
+      "assets/art/decor/rowboat_spring.webp",
+      "assets/art/decor/reeds_spring.webp",
+      "assets/art/decor/log_chair_spring.webp",
+      "assets/art/decor/tent_spring.webp",
+      "assets/art/decor/wooden_bridge_spring.webp"
+    ]
+  },
+  "decor_greenhouse_spring": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/glasshouse_spring.webp",
+      "assets/art/decor/cactus_spring.webp",
+      "assets/art/decor/mushroom_bed_spring.webp",
+      "assets/art/decor/watering_can_spring.webp",
+      "assets/art/decor/sunflower_field_spring.webp",
+      "assets/art/decor/tea_table_spring.webp",
+      "assets/art/decor/bamboo_spring.webp",
+      "assets/art/decor/wind_chime_spring.webp"
+    ]
+  },
+  "decor_starry_spring": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/telescope_spring.webp",
+      "assets/art/decor/camp_tent_spring.webp",
+      "assets/art/decor/campfire_spring.webp",
+      "assets/art/decor/ferris_wheel_spring.webp",
+      "assets/art/decor/carousel_spring.webp",
+      "assets/art/decor/moon_statue_spring.webp",
+      "assets/art/decor/little_castle_spring.webp",
+      "assets/art/decor/fireworks_spring.webp"
+    ]
+  },
+  "decor_seaside_spring": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/beach_hut_spring.webp",
+      "assets/art/decor/parasol_spring.webp",
+      "assets/art/decor/sandcastle_spring.webp",
+      "assets/art/decor/lighthouse_spring.webp",
+      "assets/art/decor/deck_chair_spring.webp",
+      "assets/art/decor/shell_fountain_spring.webp",
+      "assets/art/decor/surf_rack_spring.webp",
+      "assets/art/decor/seagull_post_spring.webp"
+    ]
+  },
+  "decor_snow_village_spring": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/snowman_spring.webp",
+      "assets/art/decor/igloo_spring.webp",
+      "assets/art/decor/sled_spring.webp",
+      "assets/art/decor/winter_tree_spring.webp",
+      "assets/art/decor/cocoa_stand_spring.webp",
+      "assets/art/decor/ice_rink_spring.webp",
+      "assets/art/decor/snow_lantern_spring.webp",
+      "assets/art/decor/chimney_cottage_spring.webp"
+    ]
   }
 }
