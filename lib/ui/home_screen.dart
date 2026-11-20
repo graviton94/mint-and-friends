@@ -364,9 +364,16 @@ class _HomeScreenState extends State<HomeScreen> {
       if (game.friends.contains(f.id)) f,
   ].any((f) => Art.outfitsFor(f).isNotEmpty);
 
+  /// 안내가 줄줄이 이어지지 않게: 하나 본 뒤 1분은 쉰다.
+  DateTime _tipRestUntil = DateTime(2000);
+
   Future<void> _doneTip() async {
     if (_tips.isEmpty) return;
     final id = _tips.removeAt(0);
+    _tipRestUntil = DateTime.now().add(const Duration(minutes: 1));
+    Future.delayed(const Duration(minutes: 1, seconds: 1), () {
+      if (mounted) setState(() {});
+    });
     setState(() {});
     final p = await SharedPreferences.getInstance();
     (_tipsSeen ??= {...?p.getStringList(_tipsPref)}).add(id);
@@ -396,6 +403,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget? get _featureTip {
     if (_tut != _tutDone || _tips.isEmpty || _levelDialogOpen) return null;
+    if (DateTime.now().isBefore(_tipRestUntil)) return null;
     final id = _tips.first;
     final r = _rectOf(_tipTarget(id));
     // 바구니 넘기기는 손장갑이 옆으로 밀어 보인다
