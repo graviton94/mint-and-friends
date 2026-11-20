@@ -1017,5 +1017,55 @@
       "assets/art/friends/dotori_autumn_sleep.webp",
       "assets/art/friends/dotori_autumn_wave.webp"
     ]
+  },
+  "outfit_autumn_mochi": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/mochi_autumn_idle.webp",
+      "assets/art/friends/mochi_autumn_happy.webp",
+      "assets/art/friends/mochi_autumn_sleep.webp",
+      "assets/art/friends/mochi_autumn_wave.webp"
+    ]
+  },
+  "outfit_autumn_danpung": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/danpung_autumn_idle.webp",
+      "assets/art/friends/danpung_autumn_happy.webp",
+      "assets/art/friends/danpung_autumn_sleep.webp",
+      "assets/art/friends/danpung_autumn_wave.webp"
+    ]
+  },
+  "outfit_autumn_kongtteok": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/kongtteok_autumn_idle.webp",
+      "assets/art/friends/kongtteok_autumn_happy.webp",
+      "assets/art/friends/kongtteok_autumn_sleep.webp",
+      "assets/art/friends/kongtteok_autumn_wave.webp"
+    ]
+  },
+  "outfit_autumn_bogeul": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/bogeul_autumn_idle.webp",
+      "assets/art/friends/bogeul_autumn_happy.webp",
+      "assets/art/friends/bogeul_autumn_sleep.webp",
+      "assets/art/friends/bogeul_autumn_wave.webp"
+    ]
+  },
+  "outfit_autumn_pposong": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/pposong_autumn_idle.webp",
+      "assets/art/friends/pposong_autumn_happy.webp",
+      "assets/art/friends/pposong_autumn_sleep.webp",
+      "assets/art/friends/pposong_autumn_wave.webp"
+    ]
   }
 }
