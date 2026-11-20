@@ -129,7 +129,12 @@ class _OrderCard extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      ArtImage(Art.icon('refresh'), size: 16),
+                      ArtImage(
+                        Art.icon('swap').available
+                            ? Art.icon('swap')
+                            : Art.icon('refresh'),
+                        size: 16,
+                      ),
                       if (!adFree) ArtImage(Art.icon('ad'), size: 14),
                     ],
                   ),
