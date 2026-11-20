@@ -154,7 +154,7 @@ class _BoardViewState extends State<BoardView> {
             onTapUp: (d) => _onTap(cellAt(d.localPosition)),
             onPanStart: (d) {
               final i = cellAt(d.localPosition);
-              if (i == null || !game.isCellOpen(i)) return;
+              if (i == null || !game.canTake(i)) return;
               final it = game.board[i];
               if (it == null || it.isBubble) return;
               widget.onSelect(i);
@@ -231,7 +231,10 @@ class _BoardViewState extends State<BoardView> {
         !target.isBubble &&
         target.level == dragItem.level &&
         target.chain == dragItem.chain;
-    final base = (i ~/ GameConfig.cols + i % GameConfig.cols).isEven
+    final vault = GameConfig.isVault(i);
+    final base = vault
+        ? const Color(0xFFE6E0F5) // 보관 칸: 연보라
+        : (i ~/ GameConfig.cols + i % GameConfig.cols).isEven
         ? Palette.cell
         : Palette.cellAlt;
     return Padding(
@@ -240,18 +243,21 @@ class _BoardViewState extends State<BoardView> {
         duration: const Duration(milliseconds: 120),
         decoration: BoxDecoration(
           color: !open
-              ? const Color(0xFFD9CFB8)
+              ? (vault ? const Color(0xFFD6CFE6) : const Color(0xFFD9CFB8))
               : highlight
               ? Palette.accent.withValues(alpha: hover == i ? 0.75 : 0.35)
               : base,
           borderRadius: BorderRadius.circular(cell * 0.2),
         ),
-        child: open
+        child: open || target != null
             ? null
             : Center(
                 child: Opacity(
                   opacity: 0.55,
-                  child: ArtImage(Art.lock, size: cell * 0.36),
+                  child: ArtImage(
+                    vault ? Art.icon('diamond') : Art.lock,
+                    size: cell * 0.36,
+                  ),
                 ),
               ),
       ),
@@ -293,7 +299,7 @@ class _BoardViewState extends State<BoardView> {
 
   void _onTap(int? i) {
     if (i == null) return widget.onSelect(null);
-    if (!game.isCellOpen(i)) return widget.onLockedTap(i);
+    if (!game.canTake(i)) return widget.onLockedTap(i);
     final it = game.board[i];
     if (it == null) return widget.onSelect(null);
     if (it.isBubble) return widget.onBubbleTap(i);

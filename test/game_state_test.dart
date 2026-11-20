@@ -231,7 +231,7 @@ void main() {
       g.grantBoost();
     }
     expect(g.incomePerSec, closeTo(base * 2, 1e-9));
-    expect(g.boostRemaining, GameConfig.boostMax);
+    expect(g.boostRemaining, Boosts.max);
   });
 
   test('오프라인 보상: 최소 시간, 상한 시간, 시간이 길수록 감쇄', () {

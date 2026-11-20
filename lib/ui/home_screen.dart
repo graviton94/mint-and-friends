@@ -109,9 +109,18 @@ class _HomeScreenState extends State<HomeScreen> {
       ):
         sfx(Sfx.deliver);
         _tutorialEvent(e);
+        final done = game.quotaActive && game.starOrdersLeft(friendId) == 0;
         _toast(
-          tr('toast.thanks', {'emoji': friendToken(friendId), 'stars': stars}) +
-              (affectionUp ? tr('toast.affectionUp') : ''),
+          (stars > 0
+                  ? tr('toast.thanks', {
+                      'emoji': friendToken(friendId),
+                      'stars': stars,
+                    })
+                  : tr('toast.thanksCoins', {'emoji': friendToken(friendId)})) +
+              (affectionUp ? tr('toast.affectionUp') : '') +
+              (done && stars > 0
+                  ? tr('toast.quotaDone', {'name': friendName(friendId)})
+                  : ''),
         );
       case DecorPlacedEvent(:final area, :final slot):
         sfx(Sfx.place);
@@ -611,9 +620,96 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _watchBoost() async {
     if (!_gate(Feature.boost)) return;
-    if (await _rewardedCapped(AdKind.boost)) {
-      game.grantBoost();
-      _toast(tr('toast.boost', {'time': fmtDuration(game.boostRemaining)}));
+    sfx(Sfx.open);
+    await showBoostSheet(
+      context,
+      game,
+      watchAd: _rewardedCapped,
+      adFree: adFree,
+    );
+  }
+
+  /// 친구의 오늘 별 부탁이 끝났을 때: 광고로 +2.
+  Future<void> _quotaDialog(String friendId) async {
+    final f = Friends.byId(friendId);
+    final watch = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => GameDialog(
+        title: IconText(
+          tr('quota.title', {'name': friendName(friendId)}),
+          textAlign: TextAlign.center,
+        ),
+        content: PopupHero(
+          art: ArtImage(Art.friend(f), size: 84),
+          big: '[[star]]0 / ${game.starOrderLimit(friendId)}',
+          note: tr('quota.note', {'n': OrderQuota.perAd}),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: IconText(
+              tr('quota.later'),
+              style: const TextStyle(fontSize: 17),
+            ),
+          ),
+          _DialogAdButton(
+            label: tr('quota.watch', {'n': OrderQuota.perAd}),
+            sub: tr('energy.left', {'n': game.adsLeft(AdKind.quota)}),
+            adFree: adFree,
+            onTap: () => Navigator.pop(ctx, true),
+          ),
+        ],
+      ),
+    );
+    if (watch == true && await _rewardedCapped(AdKind.quota)) {
+      game.grantQuotaAd(friendId);
+      sfx(Sfx.coin);
+    }
+  }
+
+  /// 맨 아랫줄 보관 칸: 다이아로 영구 해금 (정원 패스는 2칸 바로).
+  Future<void> _vaultDialog(int cell) async {
+    final cost = game.vaultCostNext;
+    final enough = game.gems >= cost;
+    final passCell = GameConfig.passVault.contains(cell);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => GameDialog(
+        title: IconText(tr('vault.title'), textAlign: TextAlign.center),
+        content: PopupHero(
+          art: ArtImage(Art.icon('storage'), size: 76),
+          big: '[[diamond]]$cost',
+          note: tr(passCell ? 'vault.notePass' : 'vault.note'),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: IconText(
+              tr('common.cancel'),
+              style: const TextStyle(fontSize: 17),
+            ),
+          ),
+          FilledButton(
+            style: framedButton(
+              FilledButton.styleFrom(minimumSize: const Size(120, 48)),
+              'button_green',
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: IconText(
+              enough ? tr('cell.open') : tr('vault.needGems'),
+              style: const TextStyle(fontSize: 18),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    if (game.buyVault(cell)) {
+      sfx(Sfx.unlock);
+    } else {
+      _openShop();
     }
   }
 
@@ -625,8 +721,15 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// 부탁 바꾸기: 하루 3번 무료, 그다음은 광고.
   Future<void> _refreshOrder(int i) async {
-    if (await _rewardedCapped(AdKind.refresh)) game.refreshOrder(i);
+    if (game.freeRerollsLeft > 0) {
+      game.refreshOrder(i);
+      sfx(Sfx.open);
+      _toast(tr('toast.rerollFree', {'n': game.freeRerollsLeft}));
+    } else if (await _rewardedCapped(AdKind.refresh)) {
+      game.refreshOrder(i);
+    }
   }
 
   void _onSlotTap(int slot) {
@@ -647,6 +750,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _onLockedCell(int cell) async {
+    if (GameConfig.isVault(cell)) return _vaultDialog(cell);
     if (game.level < game.nextCellLevel) {
       _toast(tr('cell.needLevel', {'n': game.nextCellLevel}));
       return;
@@ -1017,6 +1121,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: OrdersBar(
                                 game: game,
                                 onRefresh: _refreshOrder,
+                                onQuota: _quotaDialog,
                                 adFree: adFree,
                               ),
                             ),
@@ -1093,28 +1198,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     plus: true,
                     onTap: _openShop,
                   ),
-                  if (game.boostActive) ...[
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
+                  for (final k in BoostKind.values)
+                    if (game.boosted(k)) ...[
+                      const SizedBox(width: 6),
+                      _BoostChip(
+                        icon: boostIcon(k),
+                        time: _shortLeft(game.boostLeft(k)),
                       ),
-                      decoration: BoxDecoration(
-                        color: Palette.ad,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: IconText(
-                        tr('hud.boost', {
-                          'time': fmtDuration(game.boostRemaining),
-                        }),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ],
+                    ],
                 ],
               ),
             ),
@@ -1537,19 +1628,18 @@ class _HomeScreenState extends State<HomeScreen> {
               title: tr('ctrl.boost'),
               value: !boostOpen
                   ? null
-                  : game.boostActive
-                  ? fmtDuration(game.boostRemaining)
+                  : game.anyBoost
+                  ? tr('ctrl.boost.on', {
+                      'n': BoostKind.values.where(game.boosted).length,
+                    })
                   : tr('ctrl.boost.duration'),
-              active: game.boostActive,
+              active: game.anyBoost,
               lockedLevel: boostOpen
                   ? null
                   : Leveling.unlockLevel[Feature.boost],
               left: boostOpen ? game.adsLeft(AdKind.boost) : null,
               adFree: adFree,
-              onTap:
-                  !boostOpen || (game.canAddBoost && widget.ads.rewardedReady)
-                  ? _watchBoost
-                  : null,
+              onTap: _watchBoost,
             ),
           ),
           const SizedBox(width: 10),
@@ -1916,6 +2006,31 @@ class _AdButton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 위쪽 줄용 짧은 남은 시간: 1분 이상은 '12분', 그 밑은 '40초'.
+String _shortLeft(Duration d) => d.inMinutes >= 1
+    ? tr('boost.minutes', {'n': d.inMinutes + (d.inSeconds % 60 > 0 ? 1 : 0)})
+    : tr('boost.seconds', {'n': d.inSeconds});
+
+/// 위쪽 줄의 켜진 부스트 (아이콘 + 남은 시간).
+class _BoostChip extends StatelessWidget {
+  const _BoostChip({required this.icon, required this.time});
+  final String icon;
+  final String time;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(3, 2, 8, 2),
+    decoration: BoxDecoration(
+      color: Palette.ad,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: IconText(
+      '[[$icon]]$time',
+      style: const TextStyle(color: Colors.white, fontSize: 13),
+    ),
+  );
 }
 
 class _DialogAdButton extends StatelessWidget {

@@ -147,7 +147,7 @@ Free to play with optional in-app purchases (diamonds, ad removal) and rewarded 
 
 ## Play Console 출시 체크리스트 (사용자)
 1. **인앱 상품 (관리형, 소모성):** `gems_60` ₩1,200 · `gems_330` ₩5,900 · `gems_700` ₩12,000 · `gems_1800` ₩29,000 · `gems_3800` ₩59,000
-2. **구독:** `remove_ads_1m` 월 ₩4,900 (D-015)
+2. **구독:** `garden_pass_1m` 월 ₩5,900 (정원 패스, D-016)
 3. **앱 콘텐츠:** 개인정보처리방침 URL · 데이터 보안 · 계정 삭제 URL · 콘텐츠 등급 · 타깃 연령 · 광고 포함 · 정부 앱 아님 · 금융 기능 없음
 4. **스토어 등록정보:** 위 문구 + 아이콘 `docs/store/icon_512.png` + 그래픽 이미지 `docs/store/feature_1024x500.png`
    + 휴대전화 스크린샷 6장씩 `docs/store/screenshots/{ko,en,ja}/1~6.jpg` (1080×1920, 각 언어 등록정보에 같은 번호 순서로)

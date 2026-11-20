@@ -56,7 +56,7 @@ sideload 키가 아직 없으면 App 은 디버그 키로 서명하고 경고만
 ## 5. AdMob, 구독
 
 - `AndroidManifest.xml` 의 AdMob `APPLICATION_ID`, `lib/services/ad_ids.dart` 의 `_prod*` 3개를 실제 값으로 교체합니다 (지금은 테스트 ID).
-- Play Console → 수익 창출 → 구독: 상품 ID `remove_ads_1m`, 1개월 자동 갱신. 첫 AAB 를 비공개 테스트 트랙에 올린 뒤 만들 수 있습니다.
+- Play Console → 수익 창출 → 구독: 상품 ID `garden_pass_1m`, 1개월 자동 갱신. 첫 AAB 를 비공개 테스트 트랙에 올린 뒤 만들 수 있습니다.
 
 ## 데이터 구조
 

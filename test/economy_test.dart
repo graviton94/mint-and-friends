@@ -288,4 +288,93 @@ void main() {
     expect(r.coins, greaterThan(0));
     expect(g.claimableAchievements, 0);
   });
+
+  test('친구별 하루 별 부탁 한도: 4번 뒤엔 코인만, 광고 +2, 다음 날 초기화, 첫 구역은 한도 없음', () {
+    final g = make();
+    final o = g.orders[0];
+    expect(g.quotaActive, isFalse);
+    expect(g.starOrdersLeft(o.friendId), greaterThan(10));
+    g.currentArea = 1;
+    expect(g.starOrdersLeft(o.friendId), OrderQuota.perFriend);
+    for (var k = 0; k < OrderQuota.perFriend; k++) {
+      g.orders[0] = Order(900 + k, o.friendId, Chain.flower, 3, 1);
+      g.board[7] = Item(800 + k, Chain.flower, 3);
+      final before = g.stars;
+      expect(g.deliver(0), isTrue);
+      expect(g.stars, greaterThan(before));
+    }
+    expect(g.starOrdersLeft(o.friendId), 0);
+    g.orders[0] = Order(950, o.friendId, Chain.flower, 3, 1);
+    g.board[7] = Item(850, Chain.flower, 3);
+    final stars = g.stars, coins = g.coins;
+    expect(g.deliver(0), isTrue);
+    expect(g.stars, stars);
+    expect(g.coins, greaterThan(coins));
+    g.grantQuotaAd(o.friendId);
+    expect(g.starOrdersLeft(o.friendId), OrderQuota.perAd);
+    g.adFree = true;
+    expect(g.starOrdersLeft(o.friendId), OrderQuota.perAd + OrderQuota.pass);
+    now = now.add(const Duration(days: 1));
+    expect(
+      g.starOrdersLeft(o.friendId),
+      OrderQuota.perFriend + OrderQuota.pass,
+    );
+    final g2 = make()..loadJson(g.toJson());
+    expect(g2.starOrdersUsed, g.starOrdersUsed);
+  });
+
+  test('부탁 바꾸기: 하루 3번 무료', () {
+    final g = make();
+    for (var k = 0; k < OrderQuota.freeRerolls; k++) {
+      g.refreshOrder(0);
+    }
+    expect(g.freeRerollsLeft, 0);
+    now = now.add(const Duration(days: 1));
+    expect(g.freeRerollsLeft, OrderQuota.freeRerolls);
+  });
+
+  test('부스트: 무한 에너지는 에너지를 안 쓰고, 다이아로 사면 시간이 쌓이고 60분을 넘지 않는다', () {
+    final g = make();
+    g.gems = 500;
+    expect(g.buyBoost(BoostKind.energy), isTrue);
+    final e = g.energy;
+    g.tapSpawner();
+    expect(g.energy, e);
+    expect(g.buyBoost(BoostKind.energy), isTrue);
+    expect(g.boostLeft(BoostKind.energy), const Duration(minutes: 30));
+    expect(g.buyBoost(BoostKind.energy), isTrue);
+    expect(g.buyBoost(BoostKind.energy), isTrue);
+    expect(g.boostLeft(BoostKind.energy), Boosts.max);
+    expect(g.buyBoost(BoostKind.energy), isFalse);
+    final l = g.luckyChance;
+    g.grantBoostAd(BoostKind.lucky);
+    expect(g.luckyChance, closeTo(l + Boosts.luckyBonus, 1e-9));
+    final g2 = make()..loadJson(g.toJson());
+    expect(g2.boostLeft(BoostKind.energy), Boosts.max);
+  });
+
+  test('보관 칸: 다이아로 영구 해금, 패스는 2칸, 패스가 끝나도 아이템은 꺼낼 수 있다', () {
+    final g = make();
+    expect(g.isCellOpen(30), isFalse);
+    expect(g.canBuyCell(30), isFalse);
+    g.gems = 100;
+    expect(g.buyVault(33), isTrue);
+    expect(g.gems, 70);
+    expect(g.isCellOpen(33), isTrue);
+    expect(g.vaultCostNext, 60);
+    g.adFree = true;
+    expect(g.isCellOpen(30), isTrue);
+    g.board[30] = Item(700, Chain.flower, 4);
+    g.adFree = false;
+    expect(g.isCellOpen(30), isFalse);
+    expect(g.vaultHeld(30), isTrue);
+    final empty = [
+      for (final c in GameConfig.startCells)
+        if (g.board[c] == null) c,
+    ].first;
+    expect(g.move(30, empty), MoveResult.moved);
+    expect(g.board[30], isNull);
+    final g2 = make()..loadJson(g.toJson());
+    expect(g2.vaultOwned, {33});
+  });
 }

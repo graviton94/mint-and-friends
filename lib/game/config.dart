@@ -8,8 +8,16 @@ import 'tuning.dart';
 /// 이모지는 아트가 들어오기 전까지 쓰는 임시 그림이다 (ArtRegistry 참고).
 class GameConfig {
   static const int cols = 6;
-  static const int rows = 5;
+  static const int rows = 6;
   static const int cellCount = cols * rows;
+
+  /// 위 5줄(30칸)은 코인으로 여는 칸, 맨 아랫줄 6칸은 보관 칸 (다이아로 영구 해금 · 정원 패스는 2칸).
+  static const int coinCells = 30;
+  static bool isVault(int i) => i >= coinCells && i < cellCount;
+  static const List<int> passVault = [30, 31];
+
+  /// 보관 칸 다이아 가격: 이미 가진 칸 수에 따라 30 · 60 · 90 · …
+  static int vaultCost(int owned) => 30 * (owned + 1);
 
   /// 처음부터 열려 있는 칸: 가운데 4x3.
   static final Set<int> startCells = {
@@ -70,8 +78,6 @@ class GameConfig {
   }
 
   /// 보상형 광고: 코인 2배 (부탁 · 방치 수익 모두) 1회당 시간, 최대 누적.
-  static const Duration boostPerAd = Duration(minutes: 15);
-  static const Duration boostMax = Duration(minutes: 60);
 
   /// 보상형 광고: 코인 주머니 = 20 + 8 × 레벨, 쿨다운.
   static double coinBagOf(int playerLevel) => 20.0 + 8 * playerLevel;
@@ -113,9 +119,10 @@ class GameConfig {
   /// 보상형 광고 종류별 하루 횟수 상한.
   static const Map<AdKind, int> adDailyCap = {
     AdKind.energy: 5,
-    AdKind.boost: 4,
+    AdKind.boost: 6,
     AdKind.coinBag: 5,
-    AdKind.refresh: 3,
+    AdKind.refresh: 5,
+    AdKind.quota: 6,
   };
 
   /// 장식 1개 / 구역 완성 시 정원 매력도 (코인 배율) 증가.
@@ -124,7 +131,51 @@ class GameConfig {
 }
 
 /// 하루 횟수 제한이 있는 보상형 광고 종류 (오프라인 2배·손님·비눗방울은 제한 없음).
-enum AdKind { energy, boost, coinBag, refresh }
+enum AdKind { energy, boost, coinBag, refresh, quota }
+
+/// 시간제 부스트. coins = 코인 2배 (예전 '부스트'), energy = 바구니 에너지 무료, lucky = 행운 바구니.
+enum BoostKind { coins, energy, lucky }
+
+class Boosts {
+  /// 광고 1번으로 얻는 시간.
+  static const Map<BoostKind, Duration> perAd = {
+    BoostKind.coins: Duration(minutes: 15),
+    BoostKind.energy: Duration(minutes: 3),
+    BoostKind.lucky: Duration(minutes: 5),
+  };
+
+  /// 다이아로 사는 시간 · 가격.
+  static const Map<BoostKind, Duration> perGems = {
+    BoostKind.coins: Duration(minutes: 30),
+    BoostKind.energy: Duration(minutes: 15),
+    BoostKind.lucky: Duration(minutes: 20),
+  };
+  static const Map<BoostKind, int> gemCost = {
+    BoostKind.coins: 20,
+    BoostKind.energy: 40,
+    BoostKind.lucky: 25,
+  };
+
+  /// 쌓을 수 있는 최대 남은 시간.
+  static const Duration max = Duration(minutes: 60);
+
+  /// 행운 바구니: 한 단계 높게 나올 확률 추가.
+  static const double luckyBonus = 0.20;
+}
+
+/// 친구 부탁 하루 한도: 친구마다 하루 [perFriend] 번까지 별을 준다.
+/// 한도가 끝나도 부탁은 계속 나오고 코인 · 경험치만 준다. 첫 구역을 끝낼 때까지는 한도 없음.
+class OrderQuota {
+  static const int perFriend = 4;
+  static const int perAd = 2;
+  static const int pass = 2;
+
+  /// 부탁 바꾸기: 하루 무료 횟수 (그다음은 광고).
+  static const int freeRerolls = 3;
+
+  /// 정원 패스: 매일 다이아.
+  static const int passDailyGems = 10;
+}
 
 // ------------------------------------------------------------------ 레벨, 해금
 

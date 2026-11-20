@@ -33,7 +33,8 @@ class DevLog extends ChangeNotifier {
       'level,xp,area,placed,coins,stars,gems,energy,cells,friends,dCoins,dStars,dGems,dEnergy,orders,merges,spawns,energySpent,ads,gemsSpent,daysPlayed';
 
   /// 파일 맨 앞 설명 (내보낼 때 붙인다).
-  static const header = '''# mint&friends growth log v2
+  static const header =
+      '''# mint&friends growth log v2
 # time,session,type,...
 # snap/start/pause/level/area/manual: $snapCols
 # board: 30 cells row-major (f=flower s=snack t=tea d=stardust + level, '.' empty, '#' locked, '*' bubble)
@@ -202,7 +203,10 @@ class DevLog extends ChangeNotifier {
     lineCount = (await out.readAsLines()).length - header.split('\n').length;
     notifyListeners();
     await SharePlus.instance.share(
-      ShareParams(files: [XFile(out.path, mimeType: 'text/csv')], subject: out.uri.pathSegments.last),
+      ShareParams(
+        files: [XFile(out.path, mimeType: 'text/csv')],
+        subject: out.uri.pathSegments.last,
+      ),
     );
     return out.path;
   }

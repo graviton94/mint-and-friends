@@ -815,7 +815,11 @@ Future<void> showShopSheet(
           _ShopRow(
             icon: Art.icon('no_ads'),
             title: tr('shop.adFree'),
-            note: tr('shop.body'),
+            note: tr('shop.body', {
+              'gems': OrderQuota.passDailyGems,
+              'quota': OrderQuota.pass,
+              'cells': GameConfig.passVault.length,
+            }),
             button: billing.product == null
                 ? tr('shop.connecting')
                 : tr('shop.subscribe', {'price': billing.product!.price}),
@@ -830,6 +834,159 @@ Future<void> showShopSheet(
     ),
   ),
 );
+
+/// 부스트 아이콘 (HUD · 창 공용).
+String boostIcon(BoostKind k) => switch (k) {
+  BoostKind.coins => 'coinbag',
+  BoostKind.energy => 'energy_jar',
+  BoostKind.lucky => 'sparkle',
+};
+
+/// 시간제 부스트 3종: 광고로 짧게, 다이아로 길게. 남은 시간은 쌓인다 (최대 60분).
+Future<void> showBoostSheet(
+  BuildContext context,
+  GameState game, {
+  required Future<bool> Function(AdKind kind) watchAd,
+  required bool adFree,
+}) => showGameSheet(
+  context,
+  game,
+  () => SheetFrame(
+    title: tr('boost.title'),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(
+          child: IconText(
+            tr('shop.have', {'n': fmt(game.gems.toDouble())}),
+            style: const TextStyle(fontSize: 17),
+          ),
+        ),
+        const SizedBox(height: 10),
+        for (final k in BoostKind.values)
+          _BoostRow(game: game, kind: k, watchAd: watchAd, adFree: adFree),
+        IconText(
+          tr('boost.note', {'n': Boosts.max.inMinutes}),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 13, color: Colors.black54),
+        ),
+      ],
+    ),
+  ),
+);
+
+class _BoostRow extends StatelessWidget {
+  const _BoostRow({
+    required this.game,
+    required this.kind,
+    required this.watchAd,
+    required this.adFree,
+  });
+  final GameState game;
+  final BoostKind kind;
+  final Future<bool> Function(AdKind kind) watchAd;
+  final bool adFree;
+
+  @override
+  Widget build(BuildContext context) {
+    final on = game.boosted(kind);
+    final room = game.canAddBoostOf(kind);
+    final cost = Boosts.gemCost[kind]!;
+    final btn = FilledButton.styleFrom(
+      minimumSize: const Size(0, 40),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+    );
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+      decoration: BoxDecoration(
+        color: on ? const Color(0xFFFFF6D8) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: on ? Palette.accent : const Color(0xFFE2D3B5),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              ArtImage(Art.icon(boostIcon(kind)), size: 44),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    IconText(
+                      tr('boost.${kind.name}'),
+                      style: const TextStyle(fontSize: 17),
+                    ),
+                    IconText(
+                      tr('boost.${kind.name}.note'),
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        height: 1.35,
+                        color: Color(0xFF5E6B5E),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (on)
+                IconText(
+                  '[[timer]]${fmtDuration(game.boostLeft(kind))}',
+                  style: const TextStyle(fontSize: 15),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton(
+                  style: framedButton(btn, 'button_purple'),
+                  onPressed: room && game.canWatchAd(AdKind.boost)
+                      ? () async {
+                          if (await watchAd(AdKind.boost)) {
+                            game.grantBoostAd(kind);
+                            sfx(Sfx.coin);
+                          }
+                        }
+                      : null,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: IconText(
+                      '${adFree ? '' : '[[ad]] '}${tr('boost.minutes', {'n': Boosts.perAd[kind]!.inMinutes})}',
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton(
+                  style: framedButton(btn, 'button_green'),
+                  onPressed: room && game.gems >= cost
+                      ? () {
+                          if (game.buyBoost(kind)) sfx(Sfx.coin);
+                        }
+                      : null,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: IconText(
+                      '[[diamond]]$cost · ${tr('boost.minutes', {'n': Boosts.perGems[kind]!.inMinutes})}',
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _OfferRow extends StatelessWidget {
   const _OfferRow({required this.game, required this.index});
@@ -1226,7 +1383,10 @@ Future<void> _showDevLog(BuildContext context, GameState? game) =>
                   scrollDirection: Axis.horizontal,
                   child: Text(
                     log.recent.join('\n'),
-                    style: const TextStyle(fontSize: 10, fontFamily: 'monospace'),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontFamily: 'monospace',
+                    ),
                   ),
                 ),
               ),

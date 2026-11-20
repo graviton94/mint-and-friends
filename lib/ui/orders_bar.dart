@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../art/art.dart';
 import '../game/config.dart';
+import '../game/format.dart';
 import '../game/game_state.dart';
 import '../i18n/l10n.dart';
 import 'theme.dart';
@@ -14,10 +15,12 @@ class OrdersBar extends StatelessWidget {
     super.key,
     required this.game,
     required this.onRefresh,
+    required this.onQuota,
     required this.adFree,
   });
   final GameState game;
   final void Function(int index) onRefresh;
+  final void Function(String friendId) onQuota;
   final bool adFree;
 
   @override
@@ -31,6 +34,7 @@ class OrdersBar extends StatelessWidget {
               game: game,
               index: i,
               onRefresh: () => onRefresh(i),
+              onQuota: () => onQuota(game.orders[i].friendId),
               adFree: adFree,
             ),
           ),
@@ -45,11 +49,13 @@ class _OrderCard extends StatelessWidget {
     required this.game,
     required this.index,
     required this.onRefresh,
+    required this.onQuota,
     required this.adFree,
   });
   final GameState game;
   final int index;
   final VoidCallback onRefresh;
+  final VoidCallback onQuota;
   final bool adFree;
 
   @override
@@ -70,7 +76,45 @@ class _OrderCard extends StatelessWidget {
     );
   }
 
+  /// 친구 얼굴 + (한도가 걸린 뒤) 오늘 남은 별 부탁 수.
+  Widget _avatar(Order o) {
+    final friend = Friends.byId(o.friendId);
+    final face = ArtImage(Art.friend(friend), size: 28);
+    if (!game.quotaActive) return face;
+    final left = game.starOrdersLeft(o.friendId);
+    return SizedBox(
+      width: 30,
+      height: 34,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.topCenter,
+        children: [
+          face,
+          Positioned(
+            bottom: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: left > 0 ? Palette.primary : Colors.black38,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '$left/${game.starOrderLimit(o.friendId)}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 9,
+                  height: 1.3,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _card(BuildContext context, Order o, FriendDef friend, bool ready) {
+    final stars = game.orderGivesStars(o);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       height: 62,
@@ -89,7 +133,7 @@ class _OrderCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          ArtImage(Art.friend(friend), size: 28),
+          _avatar(o),
           const SizedBox(width: 2),
           Expanded(
             child: Column(
@@ -109,7 +153,11 @@ class _OrderCard extends StatelessWidget {
                 ),
                 FittedBox(
                   child: IconText(
-                    ready ? tr('order.deliver') : '[[star]]${o.stars}',
+                    ready
+                        ? tr('order.deliver')
+                        : stars
+                        ? '[[star]]${o.stars}'
+                        : '[[coin]]${fmt(game.orderCoins(o))}',
                     style: TextStyle(
                       fontSize: 13,
                       color: ready ? const Color(0xFFB0640A) : Palette.text,
@@ -119,7 +167,24 @@ class _OrderCard extends StatelessWidget {
               ],
             ),
           ),
-          if (!ready)
+          if (!ready && !stars)
+            Tooltip(
+              message: tr('order.quotaMore'),
+              child: GestureDetector(
+                onTap: onQuota,
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ArtImage(Art.star, size: 16),
+                      if (!adFree) ArtImage(Art.icon('ad'), size: 14),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else if (!ready)
             Tooltip(
               message: tr('order.refresh'),
               child: GestureDetector(
@@ -135,7 +200,8 @@ class _OrderCard extends StatelessWidget {
                             : Art.icon('refresh'),
                         size: 16,
                       ),
-                      if (!adFree) ArtImage(Art.icon('ad'), size: 14),
+                      if (!adFree && game.freeRerollsLeft == 0)
+                        ArtImage(Art.icon('ad'), size: 14),
                     ],
                   ),
                 ),

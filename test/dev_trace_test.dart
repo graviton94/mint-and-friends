@@ -14,12 +14,19 @@ void main() {
     }
     expect(lines.where((l) => l.startsWith('spawn,')).length, 6);
     // 같은 아이템 둘을 찾아 합친다
-    final cells = [for (var i = 0; i < g.board.length; i++) if (g.board[i] != null) i];
+    final cells = [
+      for (var i = 0; i < g.board.length; i++)
+        if (g.board[i] != null) i,
+    ];
     outer:
     for (final a in cells) {
       for (final b in cells) {
         final x = g.board[a], y = g.board[b];
-        if (a != b && x != null && y != null && x.chain == y.chain && x.level == y.level) {
+        if (a != b &&
+            x != null &&
+            y != null &&
+            x.chain == y.chain &&
+            x.level == y.level) {
           g.move(a, b);
           break outer;
         }

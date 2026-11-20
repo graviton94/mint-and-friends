@@ -18,5 +18,5 @@ class AdIds {
   static String get rewarded => kReleaseMode ? _prodRewarded : _testRewarded;
 }
 
-/// Play Console 에 등록할 구독 상품 ID.
-const String kRemoveAdsProductId = 'remove_ads_1m';
+/// Play Console 에 등록할 구독 상품 ID (정원 패스: 광고 제거 · 매일 다이아 · 별 부탁 +2 · 보관 칸 2).
+const String kRemoveAdsProductId = 'garden_pass_1m';

@@ -248,7 +248,18 @@ class GameState extends ChangeNotifier {
   final Map<String, int> deliveries = {};
   List<Order> orders = [];
 
-  DateTime? boostUntil;
+  /// 시간제 부스트가 끝나는 시각.
+  final Map<BoostKind, DateTime> boosts = {};
+
+  /// 친구 부탁 하루 한도 (친구 id → 오늘 별 받은 횟수 / 광고로 늘린 횟수), 오늘 부탁 바꾸기 횟수.
+  final Map<String, int> starOrdersUsed = {};
+  final Map<String, int> starOrdersBonus = {};
+  String _quotaDay = '';
+  int rerollsToday = 0;
+
+  /// 다이아로 영구 해금한 보관 칸 (맨 아랫줄).
+  Set<int> vaultOwned = {};
+  String _passDay = '';
   DateTime? coinBagReadyAt;
   late DateTime lastSeen;
   late DateTime nextVisitorAt;
@@ -358,7 +369,8 @@ class GameState extends ChangeNotifier {
   double get luckyChance =>
       GameConfig.luckySpawnChance +
       Upgrades.qualityChance(lv(UpgradeType.spawnLevel)) +
-      buff(FriendBuff.lucky);
+      buff(FriendBuff.lucky) +
+      (boosted(BoostKind.lucky) ? Boosts.luckyBonus : 0);
   Duration get offlineCap => Upgrades.offlineCap(lv(UpgradeType.offlineCap));
 
   bool isPlaced(int area, int slot) =>
@@ -380,9 +392,16 @@ class GameState extends ChangeNotifier {
       Upgrades.incomeMultiplier(lv(UpgradeType.income)) *
       (1 + buff(FriendBuff.income));
 
-  bool get boostActive => boostUntil != null && boostUntil!.isAfter(now);
-  Duration get boostRemaining =>
-      boostActive ? boostUntil!.difference(now) : Duration.zero;
+  bool boosted(BoostKind k) => boosts[k]?.isAfter(now) ?? false;
+  Duration boostLeft(BoostKind k) =>
+      boosted(k) ? boosts[k]!.difference(now) : Duration.zero;
+  bool canAddBoostOf(BoostKind k) =>
+      boostLeft(k) < Boosts.max - const Duration(minutes: 1);
+
+  /// 코인 2배 부스트 (예전 이름 유지).
+  bool get boostActive => boosted(BoostKind.coins);
+  Duration get boostRemaining => boostLeft(BoostKind.coins);
+  bool get anyBoost => BoostKind.values.any(boosted);
 
   bool get coinBagReady =>
       coinBagReadyAt == null || !coinBagReadyAt!.isAfter(now);
@@ -426,10 +445,35 @@ class GameState extends ChangeNotifier {
       canWatchAd(AdKind.energy) &&
       energy < GameConfig.energyAdBelow;
 
-  bool isCellOpen(int i) => unlockedCells.contains(i);
+  bool isCellOpen(int i) =>
+      unlockedCells.contains(i) ||
+      (GameConfig.isVault(i) &&
+          (vaultOwned.contains(i) ||
+              (adFree && GameConfig.passVault.contains(i))));
+
+  /// 집어 들 수 있는 칸: 열린 칸 + 패스가 끝나 잠긴 보관 칸에 남은 아이템 (꺼내기만 가능).
+  bool canTake(int i) =>
+      isCellOpen(i) || (GameConfig.isVault(i) && board[i] != null);
+
+  /// 패스가 끝나 잠겼지만 아이템이 남아 있는 보관 칸.
+  bool vaultHeld(int i) => !isCellOpen(i) && canTake(i);
+
+  int get vaultCostNext => GameConfig.vaultCost(vaultOwned.length);
+
+  /// 보관 칸 다이아로 영구 해금.
+  bool buyVault(int i) {
+    if (!GameConfig.isVault(i) || vaultOwned.contains(i)) return false;
+    final cost = vaultCostNext;
+    if (!_spendGems(cost)) return false;
+    vaultOwned.add(i);
+    _trace('vault', '$i,$cost');
+    notifyListeners();
+    return true;
+  }
+
   int? get _emptyCell {
     for (var i = 0; i < board.length; i++) {
-      if (board[i] == null && unlockedCells.contains(i)) return i;
+      if (board[i] == null && isCellOpen(i)) return i;
     }
     return null;
   }
@@ -476,9 +520,77 @@ class GameState extends ChangeNotifier {
 
   // ---------------------------------------------------------------- 진행
 
+  /// 오늘 별 부탁이 남은 친구를 먼저 고른다 (다 썼으면 아무나).
+  String _pickFriend(List<String> pool) {
+    final left = [
+      for (final f in pool)
+        if (starOrdersLeft(f) > 0) f,
+    ];
+    final from = left.isEmpty ? pool : left;
+    return from[_rng.nextInt(from.length)];
+  }
+
+  // ---------------------------------------------------------------- 부탁 하루 한도
+
+  void _rollQuotaDay() {
+    final k = _dayKey(now);
+    if (k == _quotaDay) return;
+    _quotaDay = k;
+    starOrdersUsed.clear();
+    starOrdersBonus.clear();
+    rerollsToday = 0;
+  }
+
+  /// 첫 구역을 끝낸 뒤부터 한도가 걸린다.
+  bool get quotaActive => currentArea >= 1;
+  int starOrderLimit(String friendId) {
+    _rollQuotaDay();
+    return OrderQuota.perFriend +
+        (starOrdersBonus[friendId] ?? 0) +
+        (adFree ? OrderQuota.pass : 0);
+  }
+
+  int starOrdersLeft(String friendId) => quotaActive
+      ? max(0, starOrderLimit(friendId) - (starOrdersUsed[friendId] ?? 0))
+      : 99;
+  bool orderGivesStars(Order o) => starOrdersLeft(o.friendId) > 0;
+
+  /// 광고를 보고 그 친구의 오늘 별 부탁 +2.
+  void grantQuotaAd(String friendId) {
+    _rollQuotaDay();
+    starOrdersBonus[friendId] =
+        (starOrdersBonus[friendId] ?? 0) + OrderQuota.perAd;
+    _trace('quota', '$friendId,+${OrderQuota.perAd}');
+    notifyListeners();
+  }
+
+  int get freeRerollsLeft {
+    _rollQuotaDay();
+    return max(0, OrderQuota.freeRerolls - rerollsToday);
+  }
+
+  /// 정원 패스: 하루 한 번 다이아 쪽지.
+  void _passDaily() {
+    if (!adFree) return;
+    final k = _dayKey(now);
+    if (k == _passDay) return;
+    _passDay = k;
+    addMail(
+      Mail(
+        id: 'pass-$k',
+        kind: MailKind.notice,
+        from: 'team',
+        titleKey: 'mail.passDaily',
+        reward: const Reward(gems: OrderQuota.passDailyGems),
+        at: now,
+      ),
+    );
+  }
+
   void tick(double dt) {
     if (dt <= 0) return;
     _rollPlayDay();
+    _passDaily();
     _maybeFriendGift();
     _earn(incomePerSec * dt);
     _regenEnergy(dt);
@@ -545,7 +657,8 @@ class GameState extends ChangeNotifier {
   /// 바구니 탭: 에너지 1로 즉시 하나 생성. 결과를 돌려준다.
   TapResult tapSpawner() {
     if (boardFull) return TapResult.boardFull;
-    if (energy < GameConfig.energyPerTap) {
+    final free = boosted(BoostKind.energy);
+    if (!free && energy < GameConfig.energyPerTap) {
       if (!_emptyReported) {
         _emptyReported = true;
         _events.add(EnergyEmptyEvent());
@@ -553,9 +666,11 @@ class GameState extends ChangeNotifier {
       return TapResult.noEnergy;
     }
     _emptyReported = false;
-    energy -= GameConfig.energyPerTap;
     _bump(Stat.spawns);
-    _bump(Stat.energySpent, GameConfig.energyPerTap);
+    if (!free) {
+      energy -= GameConfig.energyPerTap;
+      _bump(Stat.energySpent, GameConfig.energyPerTap);
+    }
     _spawnOne();
     notifyListeners();
     return TapResult.spawned;
@@ -633,7 +748,7 @@ class GameState extends ChangeNotifier {
         to >= board.length) {
       return MoveResult.none;
     }
-    if (!isCellOpen(from) || !isCellOpen(to)) return MoveResult.none;
+    if (!canTake(from) || !isCellOpen(to)) return MoveResult.none;
     final a = board[from];
     final b = board[to];
     if (a == null || a.isBubble || (b != null && b.isBubble))
@@ -744,13 +859,15 @@ class GameState extends ChangeNotifier {
   // ---------------------------------------------------------------- 칸 해금, 판매
 
   int get cellsPurchased => unlockedCells.length - GameConfig.startCells.length;
-  int get lockedCellCount => GameConfig.cellCount - unlockedCells.length;
+  int get lockedCellCount =>
+      GameConfig.coinCells -
+      unlockedCells.where((c) => c < GameConfig.coinCells).length;
   double get nextCellCost => cellCost(cellsPurchased);
   int get nextCellLevel => Leveling.cellLevel(cellsPurchased);
 
   bool canBuyCell(int cell) =>
       cell >= 0 &&
-      cell < GameConfig.cellCount &&
+      cell < GameConfig.coinCells &&
       !isCellOpen(cell) &&
       level >= nextCellLevel &&
       coins >= nextCellCost;
@@ -891,14 +1008,14 @@ class GameState extends ChangeNotifier {
       _lastRescue = now;
       return Order(
         _nextId++,
-        pool[_rng.nextInt(pool.length)],
+        _pickFriend(pool),
         stuck.chain,
         stuck.level,
         Garden.orderStars(stuck.level),
       );
     }
     for (var attempt = 0; ; attempt++) {
-      final friendId = pool[_rng.nextInt(pool.length)];
+      final friendId = _pickFriend(pool);
       final chain = preferChain ?? chains[_rng.nextInt(chains.length)];
       // 피할 것이 많아 고를 게 없으면 단계 폭을 조금씩 넓힌다 (±1 → ±2 → ±3)
       final spread = 1.0 + min(1, attempt ~/ 15);
@@ -942,10 +1059,14 @@ class GameState extends ChangeNotifier {
     if (!canDeliver(orderIndex)) return false;
     final o = orders[orderIndex];
     board[_findItem(o.chain, o.level)] = null;
-    var gained = o.stars;
+    final withStars = orderGivesStars(o);
+    var gained = withStars ? o.stars : 0;
     // 단풍(별 보너스): 가끔 별을 반만큼 더
-    if (_rng.nextDouble() < buff(FriendBuff.starBonus)) {
+    if (withStars && _rng.nextDouble() < buff(FriendBuff.starBonus)) {
       gained += max(1, o.stars ~/ 2);
+    }
+    if (withStars && quotaActive) {
+      starOrdersUsed[o.friendId] = (starOrdersUsed[o.friendId] ?? 0) + 1;
     }
     stars += gained;
     _bump(Stat.orders);
@@ -959,7 +1080,10 @@ class GameState extends ChangeNotifier {
     if (_recentOrders.length > 3) _recentOrders.removeAt(0);
     orders[orderIndex] = _placeholder;
     orders[orderIndex] = _newOrder();
-    _trace('order', '${o.friendId},${o.chain.name},${o.level},$gained,${c.round()}');
+    _trace(
+      'order',
+      '${o.friendId},${o.chain.name},${o.level},$gained,${c.round()}',
+    );
     _events.add(OrderDeliveredEvent(o.friendId, gained, c, up));
     _gainXp(Leveling.xpForOrder(o.level));
     notifyListeners();
@@ -971,11 +1095,16 @@ class GameState extends ChangeNotifier {
   /// 부탁 교체 (보상형 광고).
   void refreshOrder(int orderIndex) {
     if (orderIndex < 0 || orderIndex >= orders.length) return;
+    _rollQuotaDay();
+    rerollsToday++;
     final old = orders[orderIndex];
     orders[orderIndex] = _placeholder;
     orders[orderIndex] = _newOrder();
     final o = orders[orderIndex];
-    _trace('reroll', '${old.chain.name},${old.level}>${o.chain.name},${o.level}');
+    _trace(
+      'reroll',
+      '${old.chain.name},${old.level}>${o.chain.name},${o.level}',
+    );
     notifyListeners();
   }
 
@@ -1464,17 +1593,32 @@ class GameState extends ChangeNotifier {
 
   // ---------------------------------------------------------------- 광고 보상
 
-  void grantBoost() {
-    final start = boostActive ? boostUntil! : now;
-    var until = start.add(GameConfig.boostPerAd);
-    final cap = now.add(GameConfig.boostMax);
+  void _addBoost(BoostKind k, Duration d) {
+    final start = boosted(k) ? boosts[k]! : now;
+    var until = start.add(d);
+    final cap = now.add(Boosts.max);
     if (until.isAfter(cap)) until = cap;
-    boostUntil = until;
+    boosts[k] = until;
     notifyListeners();
   }
 
-  bool get canAddBoost =>
-      boostRemaining < GameConfig.boostMax - const Duration(minutes: 1);
+  /// 광고 보상 부스트.
+  void grantBoostAd(BoostKind k) {
+    _addBoost(k, Boosts.perAd[k]!);
+    _trace('boost', '${k.name},ad');
+  }
+
+  /// 다이아로 부스트.
+  bool buyBoost(BoostKind k) {
+    if (!canAddBoostOf(k)) return false;
+    if (!_spendGems(Boosts.gemCost[k]!)) return false;
+    _addBoost(k, Boosts.perGems[k]!);
+    _trace('boost', '${k.name},gems');
+    return true;
+  }
+
+  void grantBoost() => grantBoostAd(BoostKind.coins);
+  bool get canAddBoost => canAddBoostOf(BoostKind.coins);
 
   double get coinBagAmount => GameConfig.coinBagOf(level) * _coinMult;
 
@@ -1559,7 +1703,15 @@ class GameState extends ChangeNotifier {
       'friends': friends.toList(),
       'deliv': deliveries,
       'orders': [for (final o in orders) o.toJson()],
-      'boost': boostUntil?.millisecondsSinceEpoch,
+      'boost': boosts[BoostKind.coins]?.millisecondsSinceEpoch,
+      'boostE': boosts[BoostKind.energy]?.millisecondsSinceEpoch,
+      'boostL': boosts[BoostKind.lucky]?.millisecondsSinceEpoch,
+      'quotaDay': _quotaDay,
+      'quotaUsed': starOrdersUsed,
+      'quotaBonus': starOrdersBonus,
+      'rerolls': rerollsToday,
+      'vault': vaultOwned.toList()..sort(),
+      'passDay': _passDay,
       'bag': coinBagReadyAt?.millisecondsSinceEpoch,
       'seen': lastSeen.millisecondsSinceEpoch,
       'visitorNext': nextVisitorAt.millisecondsSinceEpoch,
@@ -1698,7 +1850,31 @@ class GameState extends ChangeNotifier {
       ];
     }
     _fillOrders();
-    boostUntil = ts('boost');
+    boosts.clear();
+    for (final (k, key) in [
+      (BoostKind.coins, 'boost'),
+      (BoostKind.energy, 'boostE'),
+      (BoostKind.lucky, 'boostL'),
+    ]) {
+      final t = ts(key);
+      if (t != null) boosts[k] = t;
+    }
+    _quotaDay = j['quotaDay'] as String? ?? '';
+    Map<String, int> ints(Object? m) => {
+      for (final e in ((m as Map?) ?? const {}).entries)
+        e.key as String: (e.value as num).toInt(),
+    };
+    starOrdersUsed
+      ..clear()
+      ..addAll(ints(j['quotaUsed']));
+    starOrdersBonus
+      ..clear()
+      ..addAll(ints(j['quotaBonus']));
+    rerollsToday = (j['rerolls'] as num?)?.toInt() ?? 0;
+    vaultOwned = {
+      for (final c in (j['vault'] as List? ?? [])) (c as num).toInt(),
+    };
+    _passDay = j['passDay'] as String? ?? '';
     coinBagReadyAt = ts('bag');
     lastSeen = ts('seen') ?? now;
     nextVisitorAt = ts('visitorNext') ?? now.add(GameConfig.visitorMinGap);
