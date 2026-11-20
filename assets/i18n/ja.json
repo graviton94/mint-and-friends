@@ -665,5 +665,10 @@
   "outfit.winter": "冬のおでかけ",
   "outfit.summer": "夏休み",
   "outfit.autumn": "秋のおさんぽ",
-  "outfit.limited": "パック限定"
+  "outfit.limited": "パック限定",
+  "style.3": "冬",
+  "style.4": "春",
+  "style.5": "夏",
+  "style.6": "秋",
+  "style.seasonSet": "{season}セット{n}種まとめて[[diamond]]{cost}"
 }

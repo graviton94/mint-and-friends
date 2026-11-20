@@ -665,5 +665,10 @@
   "outfit.winter": "Winter Outing",
   "outfit.summer": "Summer Holiday",
   "outfit.autumn": "Autumn Stroll",
-  "outfit.limited": "Pack exclusive"
+  "outfit.limited": "Pack exclusive",
+  "style.3": "Winter",
+  "style.4": "Spring",
+  "style.5": "Summer",
+  "style.6": "Autumn",
+  "style.seasonSet": "{season} set of {n} [[diamond]]{cost}"
 }

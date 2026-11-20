@@ -723,7 +723,27 @@ class Garden {
           .round();
 
   /// 장식 디자인 (바이블 D-005): 0 기본(별) · 1 고급(코인, 별값 × 120 ≈ 하루 수입 0.5~1일치) · 2 특별(다이아).
-  static const int styles = 3;
+  /// 디자인: 0 기본 · 1 고급(코인) · 2 특별(다이아) · 3~6 시즌(겨울 · 봄 · 여름 · 가을, 다이아).
+  static const int styles = 7;
+  static const Map<int, String> seasonStyles = {
+    3: 'winter',
+    4: 'spring',
+    5: 'summer',
+    6: 'autumn',
+  };
+  static bool isSeasonStyle(int s) => seasonStyles.containsKey(s);
+
+  /// 지금 달의 시즌 디자인 (그 시즌에만 살 수 있고, 산 것은 계속 쓴다).
+  static int seasonStyleFor(int month) => switch (month) {
+    12 || 1 || 2 => 3,
+    3 || 4 || 5 => 4,
+    6 || 7 || 8 => 5,
+    _ => 6,
+  };
+
+  /// 시즌 장식: 한 개 · 구역 8종 세트 (할인).
+  static const int seasonGems = 40;
+  static const int seasonSetGems = 250;
   static int styleCoins(int area, int slot) => decorCost(area, slot) * 120;
   static int styleGems(int area) => 25 + 5 * min(area, 11);
 

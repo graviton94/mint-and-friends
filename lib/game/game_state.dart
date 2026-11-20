@@ -1242,7 +1242,11 @@ class GameState extends ChangeNotifier {
       return StyleResult.notPlaced;
     }
     if (!ownsStyle(area, slot, style)) {
-      if (style == 1) {
+      if (Garden.isSeasonStyle(style)) {
+        // 시즌 디자인은 그 시즌에만 판다
+        if (style != seasonStyleNow) return StyleResult.notPlaced;
+        if (!_spendGems(Garden.seasonGems)) return StyleResult.noGems;
+      } else if (style == 1) {
         final c = Garden.styleCoins(area, slot);
         if (coins < c) return StyleResult.noCoins;
         coins -= c;
@@ -1257,6 +1261,27 @@ class GameState extends ChangeNotifier {
     } else {
       decorStyle['$area:$slot'] = style;
     }
+    notifyListeners();
+    return StyleResult.ok;
+  }
+
+  int get seasonStyleNow => Garden.seasonStyleFor(now.month);
+
+  /// 이 구역 시즌 세트를 다 가졌는지 ([slots] = 그림이 있는 자리들).
+  bool ownsSeasonSet(int area, Iterable<int> slots) =>
+      slots.every((i) => ownedStyles.contains('$area:$i:$seasonStyleNow'));
+
+  /// 구역 시즌 세트 (8종 한 번에, 할인). 놓은 장식에는 바로 입히고, 아직 안 놓은 자리는 놓은 뒤 무료로 고른다.
+  StyleResult buySeasonSet(int area, Iterable<int> slots) {
+    final s = seasonStyleNow;
+    if (ownsSeasonSet(area, slots)) return StyleResult.ok;
+    if (!_spendGems(Garden.seasonSetGems)) return StyleResult.noGems;
+    for (final i in slots) {
+      ownedStyles.add('$area:$i:$s');
+      if (isPlaced(area, i)) decorStyle['$area:$i'] = s;
+    }
+    _bump(Stat.stylesBought);
+    _trace('seasonSet', '$area,$s');
     notifyListeners();
     return StyleResult.ok;
   }

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../art/art.dart';
@@ -232,26 +234,78 @@ Future<void> showStyleSheet(
   int slot,
 ) => showGameSheet(context, game, () {
   final d = Garden.areaAt(area).decor[slot];
-  final styles = Art.decorStyles(d);
+  final season = game.seasonStyleNow;
+  // 시즌 디자인은 지금 시즌 것 + 이미 산 지난 시즌 것만
+  final styles = [
+    for (final s in Art.decorStyles(d))
+      if (!Garden.isSeasonStyle(s) ||
+          s == season ||
+          game.ownsStyle(area, slot, s))
+        s,
+  ];
+  // 이 구역에서 지금 시즌 그림이 있는 자리들 (세트 할인)
+  final setSlots = [
+    for (var i = 0; i < Garden.slotsPerArea; i++)
+      if (Art.decorStyle(Garden.areaAt(area).decor[i], season).available) i,
+  ];
+  final cols = styles.length <= 3 ? styles.length : 2;
+  final rows = <List<int>>[
+    for (var i = 0; i < styles.length; i += cols)
+      styles.sublist(i, min(i + cols, styles.length)),
+  ];
   return SheetFrame(
     title: tr('style.title', {'name': decorName(d)}),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            for (final st in styles)
-              Expanded(
-                child: _StyleCard(
-                  game: game,
-                  area: area,
-                  slot: slot,
-                  style: st,
+        for (final r in rows) ...[
+          Row(
+            children: [
+              for (final st in r)
+                Expanded(
+                  child: _StyleCard(
+                    game: game,
+                    area: area,
+                    slot: slot,
+                    style: st,
+                  ),
+                ),
+              for (var k = r.length; k < cols; k++) const Spacer(),
+            ],
+          ),
+          const SizedBox(height: 8),
+        ],
+        if (setSlots.length >= 2 && !game.ownsSeasonSet(area, setSlots))
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: FilledButton(
+              style: framedButton(
+                FilledButton.styleFrom(minimumSize: const Size(0, 46)),
+                'button_purple',
+              ),
+              onPressed: () {
+                if (game.buySeasonSet(area, setSlots) == StyleResult.ok) {
+                  sfx(Sfx.unlock);
+                } else {
+                  sfx(Sfx.error);
+                  ScaffoldMessenger.maybeOf(
+                    context,
+                  )?.showSnackBar(SnackBar(content: Text(tr('style.noGems'))));
+                }
+              },
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: IconText(
+                  tr('style.seasonSet', {
+                    'season': tr('style.$season'),
+                    'n': setSlots.length,
+                    'cost': Garden.seasonSetGems,
+                  }),
+                  style: const TextStyle(fontSize: 16),
                 ),
               ),
-          ],
-        ),
-        const SizedBox(height: 8),
+            ),
+          ),
         IconText(
           tr('style.note'),
           textAlign: TextAlign.center,
@@ -283,6 +337,8 @@ class _StyleCard extends StatelessWidget {
         ? (current ? tr('style.using') : tr('style.use'))
         : style == 1
         ? '[[coin]] ${fmtInt(Garden.styleCoins(area, slot))}'
+        : Garden.isSeasonStyle(style)
+        ? '[[diamond]] ${Garden.seasonGems}'
         : '[[diamond]] ${Garden.styleGems(area)}';
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),

@@ -428,4 +428,22 @@ void main() {
     final k = make()..loadJson(h.toJson());
     expect(k.coins, h.coins);
   });
+
+  test('시즌 장식: 지금 시즌 것만 다이아로 사고, 세트는 할인, 산 것은 시즌이 지나도 쓴다', () {
+    final g = make(); // 1월 = 겨울
+    g.placed = {0, 1};
+    g.gems = 1000;
+    expect(g.seasonStyleNow, 3);
+    expect(g.setStyle(0, 0, 4), StyleResult.notPlaced); // 봄은 지금 못 산다
+    expect(g.setStyle(0, 0, 3), StyleResult.ok);
+    expect(g.gems, 1000 - Garden.seasonGems);
+    final slots = List.generate(Garden.slotsPerArea, (i) => i);
+    expect(g.buySeasonSet(0, slots), StyleResult.ok);
+    expect(g.gems, 1000 - Garden.seasonGems - Garden.seasonSetGems);
+    expect(g.styleOf(0, 1), 3);
+    expect(g.ownsSeasonSet(0, slots), isTrue);
+    now = DateTime(2026, 4, 1);
+    expect(g.setStyle(0, 0, 0), StyleResult.ok);
+    expect(g.setStyle(0, 0, 3), StyleResult.ok); // 지난 시즌 것도 산 것은 무료로
+  });
 }

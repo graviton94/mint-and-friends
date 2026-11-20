@@ -666,5 +666,10 @@
   "outfit.winter": "겨울 나들이",
   "outfit.summer": "여름 휴가",
   "outfit.autumn": "가을 산책",
-  "outfit.limited": "패키지 한정"
+  "outfit.limited": "패키지 한정",
+  "style.3": "겨울",
+  "style.4": "봄",
+  "style.5": "여름",
+  "style.6": "가을",
+  "style.seasonSet": "{season} 세트 {n}종 한 번에 [[diamond]]{cost}"
 }

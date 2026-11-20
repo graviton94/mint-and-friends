@@ -122,7 +122,11 @@ class Art {
   }
 
   static ArtRef decorStyle(DecorDef d, int style) => ArtRef(
-    'assets/art/decor/${d.id}_${style == 1 ? 'b' : 'c'}.webp',
+    'assets/art/decor/${d.id}_${switch (style) {
+      1 => 'b',
+      2 => 'c',
+      _ => Garden.seasonStyles[style] ?? 'c',
+    }}.webp',
     d.emoji,
   );
 
