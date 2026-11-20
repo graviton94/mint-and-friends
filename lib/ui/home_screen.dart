@@ -1137,6 +1137,7 @@ class _HomeScreenState extends State<HomeScreen> {
             badge:
                 game.claimableAchievements > 0 ||
                     game.checkInReady ||
+                    game.freeOfferReady ||
                     widget.socialBadge()
                 ? -1
                 : 0,
@@ -1508,6 +1509,7 @@ class _HomeScreenState extends State<HomeScreen> {
           'shop',
           tr('menu.shop'),
           _openShop,
+          badge: game.freeOfferReady ? -1 : 0,
           fallback: Icons.storefront,
         ),
         MenuEntry(

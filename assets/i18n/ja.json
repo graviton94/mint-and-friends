@@ -606,5 +606,10 @@
   "ach.claimAll": "すべて受け取る（{n}）",
   "offline.hello.0": "また会えたね！",
   "offline.hello.1": "おかえり！",
-  "offline.hello.2": "こんにちは！"
+  "offline.hello.2": "こんにちは！",
+  "market.free": "今日の無料プレゼント",
+  "market.freeTag": "無料",
+  "market.take": "もらう",
+  "market.helper": "{name}のお願いまであと1段階",
+  "market.boardFull": "盤面がいっぱい"
 }

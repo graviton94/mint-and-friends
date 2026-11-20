@@ -606,5 +606,10 @@
   "ach.claimAll": "Claim all ({n})",
   "offline.hello.0": "Nice to see you!",
   "offline.hello.1": "Welcome back!",
-  "offline.hello.2": "Hello!"
+  "offline.hello.2": "Hello!",
+  "market.free": "Today's free gift",
+  "market.freeTag": "Free",
+  "market.take": "Take",
+  "market.helper": "One step from {name}'s request",
+  "market.boardFull": "Board full"
 }

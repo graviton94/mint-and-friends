@@ -840,22 +840,34 @@ class _OfferRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final o = game.offers[index];
+    final full = !o.sold && game.boardFull;
+    final need = o.kind == 2
+        ? game.orders
+              .where((x) => x.chain == o.chain && x.level == o.level + 1)
+              .firstOrNull
+        : null;
     return _ShopRow(
       icon: Art.item(o.chain, o.level),
       title: itemName(Chains.item(o.chain, o.level)),
-      note: tr('market.level', {'n': o.level}),
-      button: o.sold ? tr('market.sold') : '[[coin]] ${fmtInt(o.price)}',
-      enabled: !o.sold && game.coins >= o.price,
+      note: switch (o.kind) {
+        1 => tr('market.free'),
+        2 when need != null => tr('market.helper', {
+          'name': friendName(need.friendId),
+        }),
+        _ => tr('market.level', {'n': o.level}),
+      },
+      tag: o.kind == 1 ? tr('market.freeTag') : null,
+      // 판이 가득하면 버튼에 이유를 바로 보여 준다 (누르면 아무 일도 안 일어나는 것처럼 보이지 않게)
+      button: o.sold
+          ? tr('market.sold')
+          : full
+          ? tr('market.boardFull')
+          : o.price == 0
+          ? tr('market.take')
+          : '[[coin]] ${fmtInt(o.price)}',
+      enabled: !o.sold && !full && game.coins >= o.price,
       onTap: () {
-        switch (game.buyOffer(index)) {
-          case BuyResult.ok:
-            sfx(Sfx.coin);
-          case BuyResult.noSpace:
-            ScaffoldMessenger.maybeOf(context)
-                ?.showSnackBar(SnackBar(content: Text(tr('toast.boardFull'))));
-          default:
-            break;
-        }
+        if (game.buyOffer(index) == BuyResult.ok) sfx(Sfx.coin);
       },
     );
   }

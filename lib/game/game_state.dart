@@ -72,19 +72,30 @@ class ShopOffer {
   final int level;
   final int price;
   bool sold;
-  ShopOffer(this.chain, this.level, this.price, {this.sold = false});
+
+  /// 0 보통 · 1 오늘의 무료 선물 · 2 부탁 도우미(지금 부탁의 한 단계 아래).
+  final int kind;
+  ShopOffer(
+    this.chain,
+    this.level,
+    this.price, {
+    this.sold = false,
+    this.kind = 0,
+  });
 
   Map<String, dynamic> toJson() => {
     'c': chain.index,
     'l': level,
     'p': price,
     if (sold) 's': true,
+    if (kind != 0) 'k': kind,
   };
   static ShopOffer fromJson(Map<String, dynamic> j) => ShopOffer(
     Chain.values[(j['c'] as num).toInt()],
     (j['l'] as num).toInt(),
     (j['p'] as num).toInt(),
     sold: j['s'] == true,
+    kind: (j['k'] as num?)?.toInt() ?? 0,
   );
 }
 
@@ -1178,23 +1189,39 @@ class GameState extends ChangeNotifier {
 
   bool get dailyShopOpen => level >= DailyShop.unlockLevel;
 
+  /// 오늘의 시장: ① 무료 선물 하나 ② 부탁 도우미(지금 부탁 아이템의 한 단계 아래) ③④ 부탁 단계 근처 아이템.
+  /// 낮은 단계만 팔던 때는 바구니 탭보다 나을 게 없어서, 진행에 실제로 도움이 되는 것을 판다.
   List<ShopOffer> get offers {
     final k = _dayKey(now);
     if (k != _offersDay) {
       _offersDay = k;
       final chains = availableChains;
-      final top = min(4, max(2, level ~/ 3 + 1));
-      _offers = [
-        for (var i = 0; i < DailyShop.slots; i++)
-          () {
-            final c = chains[_rng.nextInt(chains.length)];
-            final l = 1 + _rng.nextInt(top);
-            return ShopOffer(c, l, DailyShop.price(l, level));
-          }(),
-      ]..sort((a, b) => a.level.compareTo(b.level));
+      Chain pick() => chains[_rng.nextInt(chains.length)];
+      final center = Leveling.orderLevelCenter(level).round();
+      int price(int l) => DailyShop.price(l, level);
+      final list = <ShopOffer>[
+        ShopOffer(pick(), min(3, 1 + level ~/ 6) + 1, 0, kind: 1),
+      ];
+      final pending = [
+        for (final o in orders)
+          if (!canDeliver(orders.indexOf(o)) && o.level >= 3) o,
+      ];
+      if (pending.isNotEmpty) {
+        final o = pending[_rng.nextInt(pending.length)];
+        list.add(ShopOffer(o.chain, o.level - 1, price(o.level - 1), kind: 2));
+      }
+      while (list.length < DailyShop.slots) {
+        final l = max(2, center - 2 + _rng.nextInt(2));
+        list.add(ShopOffer(pick(), l, price(l)));
+      }
+      _offers = list;
     }
     return _offers;
   }
+
+  /// 오늘의 무료 선물을 아직 안 받았다 (상점 빨간 점).
+  bool get freeOfferReady =>
+      dailyShopOpen && offers.any((o) => o.kind == 1 && !o.sold);
 
   BuyResult buyOffer(int i) {
     final o = offers[i];

@@ -138,13 +138,22 @@ void main() {
     g.level = 6;
     expect(g.dailyShopOpen, isTrue);
     expect(g.offers.length, DailyShop.slots);
+    expect(g.offers.first.kind, 1); // 첫 칸은 무료 선물
+    expect(g.offers.first.price, 0);
+    expect(g.freeOfferReady, isTrue);
     g.coins = 0;
-    expect(g.buyOffer(0), BuyResult.noCoins);
+    expect(g.buyOffer(g.offers.length - 1), BuyResult.noCoins);
     g.coins = 100000;
     final before = g.board.whereType<Item>().length;
     expect(g.buyOffer(0), BuyResult.ok);
     expect(g.board.whereType<Item>().length, before + 1);
     expect(g.buyOffer(0), BuyResult.sold);
+    expect(g.freeOfferReady, isFalse);
+    // 판이 가득하면 사지 못한다 (화면은 '판이 가득'을 보여 준다)
+    for (final c in g.unlockedCells) {
+      g.board[c] ??= Item(5000 + c, Chain.flower, 1);
+    }
+    expect(g.buyOffer(1), BuyResult.noSpace);
     final first = g.offers.map((o) => '${o.chain}${o.level}${o.sold}').join();
     now = now.add(const Duration(days: 1));
     expect(g.offers.every((o) => !o.sold), isTrue);

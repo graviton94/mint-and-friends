@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:material_ui/material_ui.dart';
 
@@ -34,16 +34,13 @@ class GardenScreen extends StatefulWidget {
 
 class _GardenScreenState extends State<GardenScreen> {
   late int _area = widget.area;
-  final _scroll = ScrollController();
   String? _note;
-  bool _centered = false;
   int _noteId = 0;
 
   GameState get game => widget.game;
 
   @override
   void dispose() {
-    _scroll.dispose();
     super.dispose();
   }
 
@@ -92,36 +89,68 @@ class _GardenScreenState extends State<GardenScreen> {
           final a = Garden.areaAt(_area);
           return Stack(
             children: [
-              // 씬: 화면 높이를 꽉 채운 3:2 캔버스, 옆으로 밀어 둘러본다
+              // 바탕: 같은 배경을 흐리게 꽉 채워 위아래 빈 곳을 자연스럽게 잇는다
               Positioned.fill(
-                child: LayoutBuilder(
-                  builder: (context, c) {
-                    final h = c.maxHeight;
-                    final w = max(c.maxWidth, h * GardenScene.aspect);
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (_scroll.hasClients && !_centered && w > c.maxWidth) {
-                        _centered = true;
-                        _scroll.jumpTo((w - c.maxWidth) / 2);
-                      }
-                    });
-                    return SingleChildScrollView(
-                      controller: _scroll,
-                      scrollDirection: Axis.horizontal,
-                      physics: const ClampingScrollPhysics(),
-                      child: SizedBox(
-                        width: w,
-                        height: h,
-                        child: GardenScene(
-                          game: game,
-                          area: _area,
-                          radius: 0,
-                          focusY: 1,
-                          onSlotTap: _onSlot,
-                          onVisitorTap: widget.onVisitorTap,
+                child: ImageFiltered(
+                  imageFilter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                  child: Image.asset(
+                    Art.areaBackground(a).path,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => ColoredBox(color: Color(a.sky)),
+                  ),
+                ),
+              ),
+              const Positioned.fill(
+                child: ColoredBox(color: Color(0x33FFFFFF)),
+              ),
+              // 씬: 가로 장면 전체를 화면 폭에 맞춰 (장식 8자리가 한눈에, 잘리지 않게).
+              // 두 손가락으로 2.5배까지 확대 · 드래그로 둘러보기.
+              Positioned.fill(
+                child: SafeArea(
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      top: 64,
+                      bottom: _area == game.currentArea ? _panelH : 16,
+                    ),
+                    child: Center(
+                      child: AspectRatio(
+                        aspectRatio: GardenScene.aspect,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 8),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                              color: const Color(0xFF7A5230),
+                              width: 3,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x40000000),
+                                blurRadius: 14,
+                                offset: Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(19),
+                            child: InteractiveViewer(
+                              minScale: 1,
+                              maxScale: 2.5,
+                              child: GardenScene(
+                                game: game,
+                                area: _area,
+                                radius: 0,
+                                focusY: 1,
+                                markerScale: 1.1,
+                                onSlotTap: _onSlot,
+                                onVisitorTap: widget.onVisitorTap,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
               // 위 HUD (씬 위에 뜬다)
@@ -215,8 +244,8 @@ class _GardenScreenState extends State<GardenScreen> {
                       // 아래 장식 줄 (지금 꾸미는 구역일 때)
                       if (_area == game.currentArea)
                         Container(
-                          height: 112,
-                          margin: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                          margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
                           decoration: FrameBox.decorationFor(
                             'panel',
                             BoxDecoration(
@@ -225,20 +254,53 @@ class _GardenScreenState extends State<GardenScreen> {
                             ),
                             corner: 18,
                           ),
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
-                            ),
-                            itemCount: a.decor.length,
-                            separatorBuilder: (_, _) =>
-                                const SizedBox(width: 8),
-                            itemBuilder: (context, i) => _DecorCard(
-                              game: game,
-                              slot: i,
-                              onTap: () => _onSlot(i),
-                            ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // 진행도: 막대 + n/8
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: LinearProgressIndicator(
+                                        value:
+                                            game.placed.length /
+                                            Garden.slotsPerArea,
+                                        minHeight: 10,
+                                        backgroundColor: const Color(
+                                          0xFFEDE3CC,
+                                        ),
+                                        color: const Color(0xFF7BC98F),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    '${game.placed.length}/${Garden.slotsPerArea}',
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              // 장식 8자리를 한 번에 (4칸 × 2줄)
+                              GridView.count(
+                                crossAxisCount: 4,
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                mainAxisSpacing: 8,
+                                crossAxisSpacing: 8,
+                                childAspectRatio: 0.82,
+                                children: [
+                                  for (var i = 0; i < a.decor.length; i++)
+                                    _DecorCard(
+                                      game: game,
+                                      slot: i,
+                                      onTap: () => _onSlot(i),
+                                    ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                     ],
@@ -284,6 +346,9 @@ class _GardenScreenState extends State<GardenScreen> {
   }
 }
 
+/// 아래 장식 판 높이 (씬이 그 위 공간에 맞춰 놓인다).
+const double _panelH = 300;
+
 class _DecorCard extends StatelessWidget {
   const _DecorCard({
     required this.game,
@@ -302,7 +367,7 @@ class _DecorCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 76,
+        width: double.infinity,
         decoration: BoxDecoration(
           color: placed
               ? const Color(0xFFE6F2DC)

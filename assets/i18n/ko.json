@@ -607,5 +607,10 @@
   "ach.claimAll": "모두 받기 ({n})",
   "offline.hello.0": "반가워요!",
   "offline.hello.1": "어서 와요!",
-  "offline.hello.2": "안녕하세요!"
+  "offline.hello.2": "안녕하세요!",
+  "market.free": "오늘의 무료 선물",
+  "market.freeTag": "무료",
+  "market.take": "받기",
+  "market.helper": "{name}의 부탁에 딱 한 단계 모자란 아이템",
+  "market.boardFull": "판이 가득"
 }
