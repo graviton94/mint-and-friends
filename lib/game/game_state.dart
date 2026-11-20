@@ -90,6 +90,8 @@ class ShopOffer {
 
 enum BuyResult { ok, noCoins, noSpace, sold }
 
+enum StyleResult { ok, noCoins, noGems, notPlaced }
+
 class _Sale {
   final int cell;
   final Item item;
@@ -223,6 +225,10 @@ class GameState extends ChangeNotifier {
 
   int currentArea = 0; // 지금 꾸미는 구역 (이전 구역은 모두 완성)
   Set<int> placed = {}; // 현재 구역에 설치한 장식 슬롯
+
+  /// 장식 디자인: 'area:slot' → 고른 디자인(0 기본 · 1 고급 · 2 특별), 산 디자인 'area:slot:v'.
+  Map<String, int> decorStyle = {};
+  Set<String> ownedStyles = {};
   Set<String> friends = {Friends.starter};
   final Map<String, int> deliveries = {};
   List<Order> orders = [];
@@ -947,9 +953,42 @@ class GameState extends ChangeNotifier {
       _bump(Stat.areas);
       _events.add(AreaCompletedEvent(area));
     }
-    _gainXp(Leveling.xpForDecor(cost));
+    _gainXp(Leveling.xpForDecor(area, slot));
     notifyListeners();
     return true;
+  }
+
+  // ---------------------------------------------------------------- 장식 디자인
+
+  int styleOf(int area, int slot) => decorStyle['$area:$slot'] ?? 0;
+
+  bool ownsStyle(int area, int slot, int style) => style == 0
+      ? isPlaced(area, slot)
+      : ownedStyles.contains('$area:$slot:$style');
+
+  /// 디자인 바꾸기: 이미 산 것은 무료, 아니면 고급은 코인 · 특별은 다이아로 사서 바로 놓는다.
+  StyleResult setStyle(int area, int slot, int style) {
+    if (!isPlaced(area, slot) || style < 0 || style >= Garden.styles) {
+      return StyleResult.notPlaced;
+    }
+    if (!ownsStyle(area, slot, style)) {
+      if (style == 1) {
+        final c = Garden.styleCoins(area, slot);
+        if (coins < c) return StyleResult.noCoins;
+        coins -= c;
+      } else {
+        if (!_spendGems(Garden.styleGems(area))) return StyleResult.noGems;
+      }
+      ownedStyles.add('$area:$slot:$style');
+      _bump(Stat.stylesBought);
+    }
+    if (style == 0) {
+      decorStyle.remove('$area:$slot');
+    } else {
+      decorStyle['$area:$slot'] = style;
+    }
+    notifyListeners();
+    return StyleResult.ok;
   }
 
   // ---------------------------------------------------------------- 친구, 손님
@@ -1363,6 +1402,8 @@ class GameState extends ChangeNotifier {
       'hi': {for (final e in highest.entries) e.key.name: e.value},
       'area': currentArea,
       'placed': placed.toList(),
+      if (decorStyle.isNotEmpty) 'styles': decorStyle,
+      if (ownedStyles.isNotEmpty) 'ownedStyles': ownedStyles.toList(),
       'friends': friends.toList(),
       'deliv': deliveries,
       'orders': [for (final o in orders) o.toJson()],
@@ -1454,6 +1495,10 @@ class GameState extends ChangeNotifier {
     }
     currentArea = (j['area'] as num?)?.toInt() ?? 0;
     placed = {for (final s in (j['placed'] as List? ?? [])) (s as num).toInt()};
+    decorStyle = ((j['styles'] as Map?) ?? {}).map(
+      (k, v) => MapEntry('$k', (v as num).toInt()),
+    );
+    ownedStyles = {for (final s in (j['ownedStyles'] as List? ?? [])) '$s'};
     friends = {
       Friends.starter,
       for (final f in (j['friends'] as List? ?? [])) f as String,

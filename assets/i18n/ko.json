@@ -502,5 +502,15 @@
   "menu.checkIn": "출석",
   "market.title": "오늘의 시장",
   "market.level": "Lv{n} · 매일 새로 들어와요",
-  "market.sold": "팔림"
+  "market.sold": "팔림",
+  "style.title": "{name} 디자인",
+  "style.0": "기본",
+  "style.1": "고급",
+  "style.2": "특별",
+  "style.use": "놓기",
+  "style.using": "놓는 중",
+  "style.change": "디자인",
+  "style.note": "한 번 산 디자인은 언제든 무료로 바꿔 놓을 수 있어요",
+  "style.noCoins": "코인이 부족해요",
+  "style.noGems": "다이아가 부족해요"
 }

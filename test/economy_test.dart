@@ -162,4 +162,32 @@ void main() {
     Tuning.apply('area_star_scale', 1);
     expect(Tuning.defaults.keys.toSet(), Tuning.keys.keys.toSet());
   });
+
+  test('장식 디자인: 놓은 자리만, 고급은 코인 · 특별은 다이아, 산 것은 무료로 바꾼다', () {
+    final g = make();
+    expect(g.setStyle(0, 0, 1), StyleResult.notPlaced);
+    g.stars = 1000;
+    expect(g.placeDecor(0), isTrue);
+    g.coins = 0;
+    expect(g.setStyle(0, 0, 1), StyleResult.noCoins);
+    g.coins = Garden.styleCoins(0, 0).toDouble();
+    expect(g.setStyle(0, 0, 1), StyleResult.ok);
+    expect(g.coins, 0);
+    expect(g.styleOf(0, 0), 1);
+    expect(g.setStyle(0, 0, 2), StyleResult.noGems);
+    g.gems = Garden.styleGems(0);
+    expect(g.setStyle(0, 0, 2), StyleResult.ok);
+    expect(g.gems, 0);
+    expect(g.setStyle(0, 0, 1), StyleResult.ok); // 이미 산 것: 무료
+    expect(g.setStyle(0, 0, 0), StyleResult.ok);
+    expect(g.styleOf(0, 0), 0);
+    final g2 = make();
+    expect(g2.loadJson(g.toJson()), isTrue);
+    expect(g2.ownsStyle(0, 0, 2), isTrue);
+  });
+
+  test('장식 경험치는 별 가격이 아니라 구역 · 자리 기준', () {
+    expect(Leveling.xpForDecor(0, 0), 2);
+    expect(Leveling.xpForDecor(3, 7), 20);
+  });
 }

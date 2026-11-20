@@ -10,6 +10,7 @@ import '../../i18n/names.dart';
 import '../../services/audio_service.dart';
 import '../theme.dart';
 import '../widgets/frame_box.dart';
+import '../sheets.dart' show showStyleSheet;
 import '../widgets/icon_text.dart';
 import 'garden_scene.dart';
 
@@ -56,6 +57,12 @@ class _GardenScreenState extends State<GardenScreen> {
 
   void _onSlot(int slot) {
     if (_area != game.currentArea) return;
+    final d = Garden.areaAt(game.currentArea).decor[slot];
+    if (game.isPlaced(game.currentArea, slot) &&
+        Art.decorStyles(d).length > 1) {
+      showStyleSheet(context, game, game.currentArea, slot);
+      return;
+    }
     if (game.areaLocked) {
       sfx(Sfx.error);
       _say(tr('toast.areaLocked', {'n': game.areaRequiredLevel}));
@@ -313,7 +320,10 @@ class _DecorCard extends StatelessWidget {
           children: [
             Opacity(
               opacity: placed || can ? 1 : 0.55,
-              child: ArtImage(Art.decor(d), size: 46),
+              child: ArtImage(
+                Art.decor(d, style: game.styleOf(game.currentArea, slot)),
+                size: 46,
+              ),
             ),
             const SizedBox(height: 2),
             FittedBox(

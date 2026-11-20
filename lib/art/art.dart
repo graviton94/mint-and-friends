@@ -70,8 +70,25 @@ class Art {
     Friends.visitorEmoji,
   );
 
-  static ArtRef decor(DecorDef d) =>
-      ArtRef('assets/art/decor/${d.id}.webp', d.emoji);
+  /// 장식 그림. style 1 = 고급(_b), 2 = 특별(_c). 그 그림이 아직 없으면 기본 그림.
+  static ArtRef decor(DecorDef d, {int style = 0}) {
+    final base = ArtRef('assets/art/decor/${d.id}.webp', d.emoji);
+    if (style == 0) return base;
+    final v = decorStyle(d, style);
+    return v.available ? v : base;
+  }
+
+  static ArtRef decorStyle(DecorDef d, int style) => ArtRef(
+    'assets/art/decor/${d.id}_${style == 1 ? 'b' : 'c'}.webp',
+    d.emoji,
+  );
+
+  /// 이 장식에 고를 수 있는 디자인 (그림이 들어온 것만).
+  static List<int> decorStyles(DecorDef d) => [
+    0,
+    for (var s = 1; s < Garden.styles; s++)
+      if (decorStyle(d, s).available) s,
+  ];
 
   static ArtRef areaBackground(AreaDef a) =>
       ArtRef('assets/art/areas/${a.id}_bg.webp', '');

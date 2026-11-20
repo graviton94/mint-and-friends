@@ -218,7 +218,9 @@ class Leveling {
   ];
   static int xpForOrder(int itemLevel) =>
       _orderXp[(itemLevel - 1).clamp(0, _orderXp.length - 1)];
-  static int xpForDecor(int cost) => cost;
+
+  /// 장식 경험치: 별 가격이 아니라 구역 · 자리 기준 (별이 에너지 비례로 커져도 레벨 속도는 그대로).
+  static int xpForDecor(int area, int slot) => (2 + slot ~/ 2) * (1 + area);
 
   /// 부탁 아이템 단계의 중심값: 플레이어 레벨 기준 (Lv1 ≈ 3, Lv10 = 5, Lv20 이상 7.5).
   static double orderLevelCenter(int playerLevel) =>
@@ -603,6 +605,11 @@ class Garden {
                   : _areaStars.last * pow(1.6, area - _areaStars.length + 1)) *
               Tuning.areaStarScale)
           .round();
+
+  /// 장식 디자인 (바이블 D-005): 0 기본(별) · 1 고급(코인, 별값 × 120 ≈ 하루 수입 0.5~1일치) · 2 특별(다이아).
+  static const int styles = 3;
+  static int styleCoins(int area, int slot) => decorCost(area, slot) * 120;
+  static int styleGems(int area) => 25 + 5 * min(area, 11);
 
   /// 부탁 1건의 별 보상: 에너지 10 이하(≤4단계) 1, 30 이하(5단계) 2, 그 이상 3.
   static int orderStars(int level) => level <= 3

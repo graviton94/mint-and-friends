@@ -501,5 +501,15 @@
   "menu.checkIn": "ログイン",
   "market.title": "今日のマーケット",
   "market.level": "Lv{n} · 毎日入れ替わります",
-  "market.sold": "売り切れ"
+  "market.sold": "売り切れ",
+  "style.title": "{name}のデザイン",
+  "style.0": "ベーシック",
+  "style.1": "デラックス",
+  "style.2": "スペシャル",
+  "style.use": "置く",
+  "style.using": "使用中",
+  "style.change": "デザイン",
+  "style.note": "一度買ったデザインはいつでも無料で入れ替えられます",
+  "style.noCoins": "コインが足りません",
+  "style.noGems": "ダイヤが足りません"
 }

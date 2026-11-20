@@ -501,5 +501,15 @@
   "menu.checkIn": "Check-in",
   "market.title": "Today's market",
   "market.level": "Lv{n} · New stock every day",
-  "market.sold": "Sold"
+  "market.sold": "Sold",
+  "style.title": "{name} designs",
+  "style.0": "Basic",
+  "style.1": "Deluxe",
+  "style.2": "Special",
+  "style.use": "Use",
+  "style.using": "In use",
+  "style.change": "Design",
+  "style.note": "Designs you own can be swapped any time for free",
+  "style.noCoins": "Not enough coins",
+  "style.noGems": "Not enough diamonds"
 }

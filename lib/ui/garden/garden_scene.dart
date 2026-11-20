@@ -438,7 +438,10 @@ class _GardenSceneState extends State<GardenScene>
             alignment: Alignment.bottomCenter,
             child: ch,
           ),
-          child: ArtImage(Art.decor(d), size: sz),
+          child: ArtImage(
+            Art.decor(d, style: game.styleOf(widget.area, i)),
+            size: sz,
+          ),
         );
       } else {
         continue;

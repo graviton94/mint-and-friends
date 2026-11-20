@@ -182,7 +182,10 @@ class _DecorRow extends StatelessWidget {
       color: placed ? const Color(0xFFE3F1DD) : Colors.white,
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: ListTile(
-        leading: ArtImage(Art.decor(d), size: 40),
+        leading: ArtImage(
+          Art.decor(d, style: game.styleOf(game.currentArea, slot)),
+          size: 40,
+        ),
         title: Text(decorName(d), style: const TextStyle(fontSize: 17)),
         subtitle: newFriend
             ? IconText(
@@ -193,7 +196,16 @@ class _DecorRow extends StatelessWidget {
               )
             : null,
         trailing: placed
-            ? IconText(tr('decor.done'), style: const TextStyle(fontSize: 15))
+            ? (Art.decorStyles(d).length > 1
+                  ? OutlinedButton(
+                      onPressed: () =>
+                          showStyleSheet(context, game, game.currentArea, slot),
+                      child: IconText(tr('style.change')),
+                    )
+                  : IconText(
+                      tr('decor.done'),
+                      style: const TextStyle(fontSize: 15),
+                    ))
             : FilledButton(
                 onPressed: game.canPlace(slot)
                     ? () => game.placeDecor(slot)
@@ -204,6 +216,128 @@ class _DecorRow extends StatelessWidget {
                       : '[[star]] ${game.decorCost(slot)}',
                 ),
               ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------- 장식 디자인
+
+/// 장식 디자인 고르기: 기본 · 고급(코인) · 특별(다이아). 산 디자인은 언제든 무료로 바꿔 놓는다.
+Future<void> showStyleSheet(
+  BuildContext context,
+  GameState game,
+  int area,
+  int slot,
+) => showGameSheet(context, game, () {
+  final d = Garden.areaAt(area).decor[slot];
+  final styles = Art.decorStyles(d);
+  return SheetFrame(
+    title: tr('style.title', {'name': decorName(d)}),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            for (final st in styles)
+              Expanded(
+                child: _StyleCard(
+                  game: game,
+                  area: area,
+                  slot: slot,
+                  style: st,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        IconText(
+          tr('style.note'),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 13, color: Colors.black54),
+        ),
+      ],
+    ),
+  );
+});
+
+class _StyleCard extends StatelessWidget {
+  const _StyleCard({
+    required this.game,
+    required this.area,
+    required this.slot,
+    required this.style,
+  });
+  final GameState game;
+  final int area;
+  final int slot;
+  final int style;
+
+  @override
+  Widget build(BuildContext context) {
+    final d = Garden.areaAt(area).decor[slot];
+    final current = game.styleOf(area, slot) == style;
+    final owned = game.ownsStyle(area, slot, style);
+    final label = owned
+        ? (current ? tr('style.using') : tr('style.use'))
+        : style == 1
+        ? '[[coin]] ${fmtInt(Garden.styleCoins(area, slot))}'
+        : '[[diamond]] ${Garden.styleGems(area)}';
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
+      decoration: BoxDecoration(
+        color: current ? const Color(0xFFE6F2DC) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: current ? Palette.accent : const Color(0xFFE2D3B5),
+          width: current ? 2.5 : 1.5,
+        ),
+      ),
+      child: Column(
+        children: [
+          Text(
+            tr('style.$style'),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF6B5638)),
+          ),
+          const SizedBox(height: 4),
+          ArtImage(
+            style == 0 ? Art.decor(d) : Art.decorStyle(d, style),
+            size: 72,
+          ),
+          const SizedBox(height: 6),
+          FilledButton(
+            style: framedButton(
+              FilledButton.styleFrom(
+                minimumSize: const Size(0, 40),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              current ? 'button_white' : 'button_green',
+            ),
+            onPressed: current
+                ? null
+                : () {
+                    switch (game.setStyle(area, slot, style)) {
+                      case StyleResult.ok:
+                        sfx(Sfx.unlock);
+                      case StyleResult.noCoins || StyleResult.noGems:
+                        sfx(Sfx.error);
+                        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              tr(style == 1 ? 'style.noCoins' : 'style.noGems'),
+                            ),
+                          ),
+                        );
+                      case StyleResult.notPlaced:
+                        break;
+                    }
+                  },
+            child: FittedBox(
+              child: IconText(label, style: const TextStyle(fontSize: 15)),
+            ),
+          ),
+        ],
       ),
     );
   }

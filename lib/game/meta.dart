@@ -28,6 +28,7 @@ enum Stat {
   energySpent,
   gemsSpent,
   shopBuys,
+  stylesBought,
 }
 
 // ------------------------------------------------------------------ 업적
