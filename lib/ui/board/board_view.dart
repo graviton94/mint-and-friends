@@ -161,7 +161,8 @@ class _BoardViewState extends State<BoardView> {
               if (i == null || !game.canTake(i)) return;
               final it = game.board[i];
               if (it == null || it.isBubble) return;
-              widget.onSelect(i);
+              // 끌기 시작하면 정보 카드는 닫는다 (카드는 아이템을 '눌렀을' 때만)
+              widget.onSelect(null);
               setState(() {
                 _dragFrom = i;
                 _dragPortal.show();
@@ -345,7 +346,7 @@ class _BoardViewState extends State<BoardView> {
     if (r == MoveResult.merged ||
         r == MoveResult.moved ||
         r == MoveResult.swapped) {
-      widget.onSelect(game.board[target] == null ? null : target);
+      widget.onSelect(null);
     } else if (r == MoveResult.maxMerged) {
       widget.onSelect(null);
     }

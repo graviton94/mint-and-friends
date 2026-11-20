@@ -642,5 +642,8 @@
   "order.wantsNote": "ボードで作ると[[star]]{stars}",
   "order.changeFree": "別のお願い (無料{n})",
   "order.change": "別のお願い",
-  "ctrl.boost.idle": "広告 · ダイヤ"
+  "ctrl.boost.idle": "広告 · ダイヤ",
+  "quota.allDone": "今日のお願いはおしまい! また明日",
+  "quota.allTitle": "今日のお願いはおしまい",
+  "quota.allNote": "広告を見ると{name}から\n星のお願いを{n}回もらえる"
 }

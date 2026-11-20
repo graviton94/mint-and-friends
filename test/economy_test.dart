@@ -289,7 +289,7 @@ void main() {
     expect(g.claimableAchievements, 0);
   });
 
-  test('친구별 하루 별 부탁 한도: 4번 뒤엔 코인만, 광고 +2, 다음 날 초기화, 첫 구역은 한도 없음', () {
+  test('친구별 하루 별 부탁 한도: 4번 뒤엔 그 친구 부탁 없음, 광고 +2, 다음 날 초기화, 첫 구역은 한도 없음', () {
     final g = make();
     final o = g.orders[0];
     expect(g.quotaActive, isFalse);
@@ -304,7 +304,11 @@ void main() {
       expect(g.stars, greaterThan(before));
     }
     expect(g.starOrdersLeft(o.friendId), 0);
-    g.orders[0] = Order(950, o.friendId, Chain.flower, 3, 1);
+    // 한도를 다 쓴 친구는 오늘 더 부탁하지 않는다
+    g.tick(1);
+    expect(g.orders.any((x) => x.friendId == o.friendId), isFalse);
+    // (예전 저장에 남은 부탁은 전달하면 코인만)
+    g.orders.insert(0, Order(950, o.friendId, Chain.flower, 3, 1));
     g.board[7] = Item(850, Chain.flower, 3);
     final stars = g.stars, coins = g.coins;
     expect(g.deliver(0), isTrue);

@@ -627,19 +627,35 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// 친구의 오늘 별 부탁이 끝났을 때: 광고로 +2.
-  Future<void> _quotaDialog(String friendId) async {
+  /// 오늘 부탁이 모두 끝났을 때: 가장 친한 친구가 광고를 보면 별 부탁 +2.
+  Future<void> _allDoneDialog() {
+    final pool = game.friends.toList()
+      ..sort(
+        (a, b) => (game.deliveries[b] ?? 0).compareTo(game.deliveries[a] ?? 0),
+      );
+    return _quotaDialog(pool.first, allDone: true);
+  }
+
+  Future<void> _quotaDialog(String friendId, {bool allDone = false}) async {
     final f = Friends.byId(friendId);
     final watch = await showDialog<bool>(
       context: context,
       builder: (ctx) => GameDialog(
         title: IconText(
-          tr('quota.title', {'name': friendName(friendId)}),
+          allDone
+              ? tr('quota.allTitle')
+              : tr('quota.title', {'name': friendName(friendId)}),
           textAlign: TextAlign.center,
         ),
         content: PopupHero(
           art: ArtImage(Art.friend(f), size: 84),
           big: '[[star]]0 / ${game.starOrderLimit(friendId)}',
-          note: tr('quota.note', {'n': OrderQuota.perAd}),
+          note: allDone
+              ? tr('quota.allNote', {
+                  'name': friendName(friendId),
+                  'n': OrderQuota.perAd,
+                })
+              : tr('quota.note', {'n': OrderQuota.perAd}),
         ),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
@@ -1252,6 +1268,34 @@ class _HomeScreenState extends State<HomeScreen> {
         orderTopInset: 50,
         overlay: [
           Positioned(left: 8, top: 8, child: _areaPill()),
+          // 오늘 부탁이 모두 끝: 내일 또 와요 (광고로 별 부탁 더 받기)
+          if (game.ordersDoneToday && _viewArea == game.currentArea)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 10,
+              child: Center(
+                child: GestureDetector(
+                  onTap: _allDoneDialog,
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(14, 8, 16, 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xF2FFFBF0),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: const Color(0xFF7A5230),
+                        width: 2,
+                      ),
+                    ),
+                    child: IconText(
+                      '${tr('quota.allDone')}  ${adFree ? '' : '[[ad]]'}[[star]]+${OrderQuota.perAd}',
+                      iconScale: 1.1,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           Positioned(
             right: 8,
             top: 8,

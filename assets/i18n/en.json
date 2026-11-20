@@ -642,5 +642,8 @@
   "order.wantsNote": "Make it on the board for [[star]]{stars}",
   "order.changeFree": "Other request ({n} free)",
   "order.change": "Other request",
-  "ctrl.boost.idle": "Ads · Diamonds"
+  "ctrl.boost.idle": "Ads · Diamonds",
+  "quota.allDone": "All requests done today! See you tomorrow",
+  "quota.allTitle": "All done for today",
+  "quota.allNote": "Watch an ad to get\n{n} more star requests from {name}"
 }

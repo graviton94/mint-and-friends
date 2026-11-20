@@ -34,7 +34,22 @@ void main() {
       expect(g.gems >= 0, isTrue, reason: '다이아 $r');
       expect(g.energy >= 0, isTrue, reason: '에너지 $r');
       expect(g.level >= 1 && g.xp >= 0, isTrue, reason: '레벨 $r');
-      expect(g.orders.length, GameConfig.orderSlots, reason: '부탁 수 $r');
+      // 부탁은 늘 3개, 단 첫 구역 뒤에는 오늘 별 부탁을 다 쓴 친구가 부탁하지 않아 줄 수 있다
+      expect(
+        g.orders.length == GameConfig.orderSlots ||
+            (g.quotaActive && g.orders.length < GameConfig.orderSlots),
+        isTrue,
+        reason: '부탁 수 $r',
+      );
+      for (final o in g.orders) {
+        expect(
+          !g.quotaActive ||
+              g.starOrdersLeft(o.friendId) > 0 ||
+              g.canDeliverOrder(o),
+          isTrue,
+          reason: '한도 끝난 친구 부탁 $r',
+        );
+      }
       for (var i = 0; i < g.board.length; i++) {
         final it = g.board[i];
         if (it == null) continue;

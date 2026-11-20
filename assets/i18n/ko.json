@@ -643,5 +643,8 @@
   "order.wantsNote": "판에서 만들어 오면 [[star]]{stars}",
   "order.changeFree": "다른 부탁 (무료 {n})",
   "order.change": "다른 부탁",
-  "ctrl.boost.idle": "광고 · 다이아"
+  "ctrl.boost.idle": "광고 · 다이아",
+  "quota.allDone": "오늘 부탁은 모두 끝! 내일 또 와요",
+  "quota.allTitle": "오늘 부탁은 모두 끝",
+  "quota.allNote": "광고를 보면 {name}에게서\n별 부탁 {n}번을 더 받아요"
 }

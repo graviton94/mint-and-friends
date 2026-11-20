@@ -380,7 +380,7 @@ void main() {
       if (cell < 0) break;
       g.board[cell] = Item(9000 + round, o.chain, o.level);
       expect(g.deliver(0), isTrue);
-      final n = g.orders[0];
+      final n = g.orders.last; // 새 부탁은 끝에 붙는다
       expect(n.chain == o.chain && n.level == o.level, isFalse);
       expect(
         g.board.any(

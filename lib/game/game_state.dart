@@ -595,6 +595,7 @@ class GameState extends ChangeNotifier {
     starOrdersBonus[friendId] =
         (starOrdersBonus[friendId] ?? 0) + OrderQuota.perAd;
     _trace('quota', '$friendId,+${OrderQuota.perAd}');
+    _fillOrders();
     notifyListeners();
   }
 
@@ -625,6 +626,8 @@ class GameState extends ChangeNotifier {
     if (dt <= 0) return;
     _rollPlayDay();
     _passDaily();
+    // 날이 바뀌어 한도가 다시 차거나 친구가 새로 오면 부탁을 채운다
+    _fillOrders();
     _maybeFriendGift();
     _earn(incomePerSec * dt);
     _regenEnergy(dt);
@@ -1005,11 +1008,34 @@ class GameState extends ChangeNotifier {
 
   // ---------------------------------------------------------------- 부탁
 
+  /// 오늘 부탁할 수 있는 친구: 첫 구역 뒤에는 오늘 별 부탁이 남은 친구만
+  /// (이미 들고 있는 부탁 수만큼 빼고). 별 부탁을 다 쓴 친구는 내일까지 부탁하지 않는다.
+  List<String> get _askers {
+    final pool = friends.toList()..sort();
+    if (!quotaActive) return pool;
+    return [
+      for (final f in pool)
+        if (starOrdersLeft(f) - orders.where((o) => o.friendId == f).length > 0)
+          f,
+    ];
+  }
+
+  /// 부탁을 채운다. 한도를 다 쓴 친구의 부탁은 거둬들이고, 부탁할 친구가 없으면 빈 채로 둔다.
   void _fillOrders() {
-    while (orders.length < GameConfig.orderSlots) {
+    if (quotaActive) {
+      orders.removeWhere(
+        (o) => !canDeliverOrder(o) && starOrdersLeft(o.friendId) <= 0,
+      );
+    }
+    while (orders.length < GameConfig.orderSlots && _askers.isNotEmpty) {
       orders.add(_newOrder());
     }
   }
+
+  bool canDeliverOrder(Order o) => _findItem(o.chain, o.level) >= 0;
+
+  /// 오늘 별 부탁이 모두 끝나 부탁이 하나도 없다 (정원에 '내일 또 와요' 표시).
+  bool get ordersDoneToday => quotaActive && orders.isEmpty;
 
   DateTime? _lastRescue;
 
@@ -1030,7 +1056,8 @@ class GameState extends ChangeNotifier {
   }
 
   Order _newOrder({Chain? preferChain}) {
-    final pool = friends.toList()..sort();
+    final askers = _askers;
+    final pool = askers.isEmpty ? (friends.toList()..sort()) : askers;
     final chains = availableChains;
     final center = Leveling.orderLevelCenter(level);
     // 구조 부탁: 막힌 고단계 아이템을 가끔(1/4, 10분에 한 번까지) 원한다. 별 · 코인은 에너지 비례라 공정하다.
@@ -1112,8 +1139,8 @@ class GameState extends ChangeNotifier {
     final up = affection(o.friendId) > before;
     _recentOrders.add('${o.chain.index}-${o.level}');
     if (_recentOrders.length > 3) _recentOrders.removeAt(0);
-    orders[orderIndex] = _placeholder;
-    orders[orderIndex] = _newOrder();
+    orders.removeAt(orderIndex);
+    _fillOrders();
     _trace(
       'order',
       '${o.friendId},${o.chain.name},${o.level},$gained,${c.round()}',
@@ -1131,10 +1158,9 @@ class GameState extends ChangeNotifier {
     if (orderIndex < 0 || orderIndex >= orders.length) return;
     _rollQuotaDay();
     rerollsToday++;
-    final old = orders[orderIndex];
-    orders[orderIndex] = _placeholder;
-    orders[orderIndex] = _newOrder();
-    final o = orders[orderIndex];
+    final old = orders.removeAt(orderIndex);
+    _fillOrders();
+    final o = orders.isEmpty ? old : orders.last;
     _trace(
       'reroll',
       '${old.chain.name},${old.level}>${o.chain.name},${o.level}',
