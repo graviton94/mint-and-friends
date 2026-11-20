@@ -84,7 +84,7 @@ class AchievementDef {
     energy: tier >= 1 ? 5 + 5 * min(tier, 6) : 0,
     stars: tier >= 2 ? (3 * pow(1.5, tier)).round() : 0,
     // 상위 단계는 다이아도 (장기 목표의 무게)
-    gems: tier >= 3 ? 5 * (tier - 2) : 0,
+    gems: tier >= 3 ? tier - 2 : 0,
   );
 }
 
