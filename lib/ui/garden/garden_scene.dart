@@ -34,7 +34,11 @@ class GardenScene extends StatefulWidget {
     this.radius = 20,
     this.focusY = 0.8,
     this.markerScale = 1,
+    this.showEmptySlots = true,
   });
+
+  /// 빈 장식 자리 표시 · 가격표 (친구 정원 구경처럼 보기 전용이면 끈다).
+  final bool showEmptySlots;
 
   final GameState game;
   final int area;
@@ -361,22 +365,24 @@ class _GardenSceneState extends State<GardenScene>
                       ),
                     ),
                     // 빈 장식 자리: 땅에 그린 표식이라 캐릭터 · 장식보다 아래 (캐릭터를 가리지 않는다)
-                    Positioned.fill(
-                      child: RepaintBoundary(
-                        child: IgnorePointer(
-                          child: Stack(children: _markerLayer(area, canvas)),
+                    if (widget.showEmptySlots)
+                      Positioned.fill(
+                        child: RepaintBoundary(
+                          child: IgnorePointer(
+                            child: Stack(children: _markerLayer(area, canvas)),
+                          ),
                         ),
                       ),
-                    ),
                     Positioned.fill(
                       child: RepaintBoundary(
                         child: Stack(children: _worldLayer(area, canvas)),
                       ),
                     ),
                     // 빈 자리 탭 영역: 보이지 않는 층 (표식을 눌렀는데 캐릭터가 가로채지 않게)
-                    Positioned.fill(
-                      child: Stack(children: _markerHits(area, canvas)),
-                    ),
+                    if (widget.showEmptySlots)
+                      Positioned.fill(
+                        child: Stack(children: _markerHits(area, canvas)),
+                      ),
                     Positioned.fill(
                       child: RepaintBoundary(
                         child: IgnorePointer(

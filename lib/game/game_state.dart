@@ -136,6 +136,15 @@ class BubbleEvent extends GameEvent {
   BubbleEvent(this.cell);
 }
 
+/// 에너지가 바닥나 바구니를 못 눌렀다 (바닥날 때마다 한 번).
+class EnergyEmptyEvent extends GameEvent {}
+
+/// 보상형 광고를 끝까지 봤다.
+class AdRewardEvent extends GameEvent {
+  final String kind;
+  AdRewardEvent(this.kind);
+}
+
 class SoldEvent extends GameEvent {
   final Item item;
   final double price;
@@ -455,7 +464,14 @@ class GameState extends ChangeNotifier {
   /// 바구니 탭: 에너지 1로 즉시 하나 생성. 결과를 돌려준다.
   TapResult tapSpawner() {
     if (boardFull) return TapResult.boardFull;
-    if (energy < GameConfig.energyPerTap) return TapResult.noEnergy;
+    if (energy < GameConfig.energyPerTap) {
+      if (!_emptyReported) {
+        _emptyReported = true;
+        _events.add(EnergyEmptyEvent());
+      }
+      return TapResult.noEnergy;
+    }
+    _emptyReported = false;
     energy -= GameConfig.energyPerTap;
     _bump(Stat.spawns);
     _bump(Stat.energySpent, GameConfig.energyPerTap);
@@ -488,7 +504,10 @@ class GameState extends ChangeNotifier {
 
   bool canWatchAd(AdKind kind) => adsLeft(kind) > 0;
 
+  bool _emptyReported = false;
+
   void recordAd(AdKind kind) {
+    _events.add(AdRewardEvent(kind.name));
     _rollAdDay();
     adsToday[kind] = (adsToday[kind] ?? 0) + 1;
     _bump(Stat.adsWatched);
@@ -743,10 +762,43 @@ class GameState extends ChangeNotifier {
     }
   }
 
+  DateTime? _lastRescue;
+
+  /// 판에서 부탁 범위보다 높아 쓸 데 없이 칸을 막는 아이템 (가장 높은 것).
+  Item? get stuckItem {
+    final top = Leveling.orderLevelCenter(level) + 2;
+    final chains = availableChains;
+    Item? best;
+    for (final it in board) {
+      if (it == null || it.isBubble || !chains.contains(it.chain)) continue;
+      if (it.level <= top || it.level >= GameConfig.maxLevel) continue;
+      if (orders.any((o) => o.chain == it.chain && o.level == it.level)) {
+        continue;
+      }
+      if (best == null || it.level > best.level) best = it;
+    }
+    return best;
+  }
+
   Order _newOrder({Chain? preferChain}) {
     final pool = friends.toList()..sort();
     final chains = availableChains;
     final center = Leveling.orderLevelCenter(level);
+    // 구조 부탁: 막힌 고단계 아이템을 가끔(1/4, 10분에 한 번까지) 원한다. 별 · 코인은 에너지 비례라 공정하다.
+    final stuck = preferChain == null ? stuckItem : null;
+    if (stuck != null &&
+        (_lastRescue == null ||
+            now.difference(_lastRescue!) >= GameConfig.rescueOrderGap) &&
+        _rng.nextDouble() < GameConfig.rescueOrderChance) {
+      _lastRescue = now;
+      return Order(
+        _nextId++,
+        pool[_rng.nextInt(pool.length)],
+        stuck.chain,
+        stuck.level,
+        Garden.orderStars(stuck.level),
+      );
+    }
     for (var attempt = 0; ; attempt++) {
       final friendId = pool[_rng.nextInt(pool.length)];
       final chain = preferChain ?? chains[_rng.nextInt(chains.length)];
@@ -793,7 +845,10 @@ class GameState extends ChangeNotifier {
     final o = orders[orderIndex];
     board[_findItem(o.chain, o.level)] = null;
     var gained = o.stars;
-    if (_rng.nextDouble() < buff(FriendBuff.starBonus)) gained += 1;
+    // 단풍(별 보너스): 가끔 별을 반만큼 더
+    if (_rng.nextDouble() < buff(FriendBuff.starBonus)) {
+      gained += max(1, o.stars ~/ 2);
+    }
     stars += gained;
     _bump(Stat.orders);
     _bump(Stat.orderStars, gained);
@@ -1026,7 +1081,7 @@ class GameState extends ChangeNotifier {
         ? Reward(energy: 5 + _rng.nextInt(3) * 5)
         : roll < 0.9
         ? Reward(coins: (20 + level * 5) * (1 + _rng.nextInt(2)))
-        : const Reward(stars: 1);
+        : Reward(stars: 4 + level);
     addMail(
       Mail(
         id: 'fg-${t.millisecondsSinceEpoch}',
@@ -1139,6 +1194,9 @@ class GameState extends ChangeNotifier {
 
   static const int saveVersion = 3;
 
+  /// 경제 규칙 판. 2 = 부탁 별이 에너지에 비례.
+  static const int econVersion = 2;
+
   /// 진행도 비교용 점수 (클라우드와 로컬 중 어느 쪽이 더 진행됐는지).
   double get progressScore =>
       level * 1e6 + decorCount * 1e3 + log(lifetimeCoins + 1);
@@ -1149,6 +1207,7 @@ class GameState extends ChangeNotifier {
       'v': saveVersion,
       'coins': coins,
       'stars': stars,
+      'econ': econVersion,
       'life': lifetimeCoins,
       'level': level,
       'xp': xp,
@@ -1190,12 +1249,15 @@ class GameState extends ChangeNotifier {
 
   bool loadJson(Map<String, dynamic> j) {
     if (j['v'] != saveVersion) return false;
+    // 경제 2판(별이 에너지에 비례)으로 옮기기: 남은 별은 4배, 부탁의 별은 다시 계산
+    final econ = (j['econ'] as num?)?.toInt() ?? 1;
     DateTime? ts(String k) => j[k] == null
         ? null
         : DateTime.fromMillisecondsSinceEpoch((j[k] as num).toInt());
 
     coins = (j['coins'] as num).toDouble();
     stars = (j['stars'] as num?)?.toInt() ?? 0;
+    if (econ < econVersion) stars *= 4;
     lifetimeCoins = (j['life'] as num?)?.toDouble() ?? coins;
     level = (j['level'] as num?)?.toInt() ?? 1;
     xp = (j['xp'] as num?)?.toInt() ?? 0;
@@ -1258,6 +1320,12 @@ class GameState extends ChangeNotifier {
       for (final o in (j['orders'] as List? ?? []))
         Order.fromJson((o as Map).cast<String, dynamic>()),
     ];
+    if (econ < econVersion) {
+      orders = [
+        for (final o in orders)
+          Order(o.id, o.friendId, o.chain, o.level, Garden.orderStars(o.level)),
+      ];
+    }
     _fillOrders();
     boostUntil = ts('boost');
     coinBagReadyAt = ts('bag');

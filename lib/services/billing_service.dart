@@ -5,6 +5,7 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'ad_ids.dart';
+import 'analytics_service.dart';
 
 /// 광고제거 1개월 구독.
 /// 앱 시작 시 restorePurchases 로 활성 구독을 다시 받아 확인한다.
@@ -49,6 +50,10 @@ class BillingService extends ChangeNotifier {
       if (p.productID != kRemoveAdsProductId) continue;
       switch (p.status) {
         case PurchaseStatus.purchased:
+          Analytics.instance.purchase(p.productID);
+          _seenActiveThisSession = true;
+          await _setAdFree(true);
+          break;
         case PurchaseStatus.restored:
           _seenActiveThisSession = true;
           await _setAdFree(true);

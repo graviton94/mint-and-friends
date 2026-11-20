@@ -89,7 +89,11 @@ class GameConfig {
   static double visitorCoinsOf(int playerLevel) =>
       10.0 + 3 * playerLevel; // 그냥 받기
   static const double visitorAdMultiplier = 3; // 광고 보고 받기
-  static const int visitorAdStars = 1;
+  static const int visitorAdStars = 5;
+
+  /// 구조 부탁(판에 막힌 고단계 아이템을 원하는 부탁) 확률과 최소 간격.
+  static const double rescueOrderChance = 0.25;
+  static const Duration rescueOrderGap = Duration(minutes: 10);
 
   // ---- 에너지 (장르: 상한 100 · 2분에 1. 캐주얼 3~4회 접속에 맞춰 2분 30초로 조금 느리게)
   static const int energyCap = 100;
@@ -585,8 +589,18 @@ class Garden {
   }
 
   /// 장식 별 비용: 구역 안에서 2 → 5, 구역마다 (1 + 구역) 배. 앞마당 28, 연못 56, 온실 84 …
-  static int decorCost(int area, int slot) => (2 + slot ~/ 2) * (1 + area);
+  static int decorCost(int area, int slot) =>
+      max(1, (areaStars(area) * (2 + slot ~/ 2) / 28).round());
+
+  /// 구역 하나를 다 꾸미는 데 드는 별 (하루 에너지 약 480 → 별 약 120 기준).
+  /// 1구역 첫 15~20분, 2구역 1~2일차, 3구역 4~5일차, 4구역 10일차, 5구역 20일차, 6구역 한 달.
+  static const List<int> _areaStars = [24, 160, 480, 1150, 2350, 4200];
+  static int areaStars(int area) => area < _areaStars.length
+      ? _areaStars[area]
+      : (_areaStars.last * pow(1.6, area - _areaStars.length + 1)).round();
 
   /// 부탁 1건의 별 보상: 에너지 10 이하(≤4단계) 1, 30 이하(5단계) 2, 그 이상 3.
-  static int orderStars(int level) => level <= 4 ? 1 : (level == 5 ? 2 : 3);
+  static int orderStars(int level) => level <= 3
+      ? 1
+      : (pow(2, level - 1) / 4 * (1 + 0.05 * (level - 3))).round();
 }

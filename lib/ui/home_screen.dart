@@ -21,6 +21,7 @@ import 'orders_bar.dart';
 import 'sheets.dart';
 import 'theme.dart';
 import 'tutorial.dart';
+import '../services/analytics_service.dart';
 import 'widgets/icon_text.dart';
 import 'widgets/frame_box.dart';
 
@@ -143,6 +144,8 @@ class _HomeScreenState extends State<HomeScreen> {
       case MergedEvent(:final level):
         sfx(level >= 6 ? Sfx.mergeBig : Sfx.merge);
         _tutorialEvent(e);
+      case EnergyEmptyEvent() || AdRewardEvent():
+        break; // 지표용 (Analytics)
     }
   }
 
@@ -618,6 +621,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _setTutorial(int step) async {
+    if (step == 1) Analytics.instance.tutorialBegin();
+    if (step == _tutDone && _tut != _tutDone) {
+      Analytics.instance.tutorialComplete();
+    }
     setState(() => _tut = step);
     (await SharedPreferences.getInstance()).setInt(_tutPref, step);
   }

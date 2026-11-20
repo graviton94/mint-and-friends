@@ -605,6 +605,7 @@ Future<void> showVisitSheet(
                 game: visit,
                 area: area,
                 radius: 16,
+                showEmptySlots: false,
                 onSlotTap: (_) {},
                 onVisitorTap: () {},
               ),

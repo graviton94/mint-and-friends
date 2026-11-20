@@ -71,7 +71,7 @@ class AchievementDef {
   Reward rewardFor(int tier) => Reward(
     coins: (50 * pow(1.8, tier)).round(),
     energy: tier >= 1 ? 5 + 5 * min(tier, 6) : 0,
-    stars: tier >= 2 ? 1 + tier ~/ 3 : 0,
+    stars: tier >= 2 ? (3 * pow(1.5, tier)).round() : 0,
   );
 }
 

@@ -23,6 +23,7 @@ import 'ui/social_ui.dart';
 import 'ui/theme.dart';
 import 'ui/widgets/icon_text.dart';
 import 'ui/widgets/frame_box.dart';
+import 'services/analytics_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -127,6 +128,7 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
 
   /// 중요한 순간(레벨업, 장식, 구역 완성)에는 바로 클라우드에 올린다.
   void _bindGame() {
+    Analytics.instance.attach(game);
     _gameSub?.cancel();
     _gameSub = game.events.listen((e) {
       if (e is LevelUpEvent ||

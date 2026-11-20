@@ -31,7 +31,7 @@ void sim() {
   final milestones = <int, String>{};
   final areas = <int, String>{};
   var lastArea = 0, sold = 0, ads = 0;
-  var orderCoins = 0.0, achCoins = 0, mailCoins = 0;
+  var orderCoins = 0.0, achCoins = 0, mailCoins = 0, achStars = 0, mailStars = 0;
   // 인플레이션 기록: 하루 단위 수입 · 지출 · 잔고 · 다음 지출처 가격
   final daily = <String>[];
   var dayStartEarned = 0.0, dayStartCoins = 0.0;
@@ -94,10 +94,16 @@ void sim() {
         // 업적 · 쪽지 보상은 생기는 대로 받는다
         for (final d in Achievements.all) {
           while (g.achievementClaimable(d)) {
-            achCoins += g.claimAchievement(d)!.coins;
+            final r = g.claimAchievement(d)!;
+            achCoins += r.coins;
+            achStars += r.stars;
           }
         }
-        if (g.unreadMail > 0) mailCoins += g.claimAllMail().coins;
+        if (g.unreadMail > 0) {
+          final r = g.claimAllMail();
+          mailCoins += r.coins;
+          mailStars += r.stars;
+        }
         for (var i = 0; i < g.orders.length; i++) {
           final o = g.orders[i];
           final c = g.orderCoins(o);
@@ -176,6 +182,7 @@ void sim() {
   print(
     '업적 코인 $achCoins  쪽지 코인 $mailCoins  (업적 ${Achievements.all.fold(0, (a, d) => a + g.achievementClaimedTiers(d))}/${Achievements.totalGoals} 단계)',
   );
+  print('별 출처: 부탁 ${g.stat(Stat.orderStars)}  업적 $achStars  쪽지 $mailStars');
   print('=== 코인 출처 (45일 합계) ===');
   print(
     '부탁 ${orderCoins.round()}  방치(접속 중+오프라인) ${(g.lifetimeCoins - orderCoins).round()} (기타 보상 포함)',
