@@ -602,5 +602,11 @@
   "start.tip.2": "閉じている間も\n盤面のアイテムがコインを集めます",
   "start.tip.3": "毎日ログインすると\nダイヤがもらえます",
   "start.tip.4": "盤面がいっぱいなら\n倉庫に預けましょう",
-  "start.tip.5": "飾りを置くと\n新しい仲間が遊びに来ます"
+  "start.tip.5": "飾りを置くと\n新しい仲間が遊びに来ます",
+  "offline.hello.0": "おかえり！",
+  "offline.hello.1": "会いたかった！",
+  "offline.hello.2": "まってたよ！",
+  "offline.hello.3": "ようこそ！",
+  "offline.hello.4": "やっほー！",
+  "offline.hello.5": "こんにちは！"
 }

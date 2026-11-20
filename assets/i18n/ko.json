@@ -603,5 +603,11 @@
   "start.tip.2": "꺼 둔 동안에도\n판 위 아이템이 코인을 모아요",
   "start.tip.3": "매일 출석하면\n다이아를 받을 수 있어요",
   "start.tip.4": "판이 가득 차면\n보관함에 맡겨 두세요",
-  "start.tip.5": "장식을 놓으면\n새 친구가 놀러 와요"
+  "start.tip.5": "장식을 놓으면\n새 친구가 놀러 와요",
+  "offline.hello.0": "반가워요!",
+  "offline.hello.1": "보고 싶었어요!",
+  "offline.hello.2": "왔구나!",
+  "offline.hello.3": "어서 와요!",
+  "offline.hello.4": "기다렸어요!",
+  "offline.hello.5": "안녕하세요!"
 }

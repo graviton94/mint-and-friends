@@ -602,5 +602,11 @@
   "start.tip.2": "Items on your board earn coins\neven while you're away",
   "start.tip.3": "Check in every day\nto earn diamonds",
   "start.tip.4": "Board full?\nKeep items in storage",
-  "start.tip.5": "Placing decorations\nbrings new friends"
+  "start.tip.5": "Placing decorations\nbrings new friends",
+  "offline.hello.0": "Hi again!",
+  "offline.hello.1": "Missed you!",
+  "offline.hello.2": "You're back!",
+  "offline.hello.3": "Welcome!",
+  "offline.hello.4": "Yay, hello!",
+  "offline.hello.5": "Hello!"
 }

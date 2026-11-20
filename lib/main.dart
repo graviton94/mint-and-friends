@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:async';
 
 import 'package:flutter/services.dart';
@@ -260,7 +261,10 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
       barrierDismissible: false,
       builder: (ctx) => GameDialog(
         banner: 'gold',
-        title: IconText(tr('offline.title'), textAlign: TextAlign.center),
+        title: IconText(
+          tr('offline.hello.${Random().nextInt(6)}'),
+          textAlign: TextAlign.center,
+        ),
         content: PopupHero(
           art: ArtImage(Art.icon('moon'), size: 76),
           big: '[[coin]]${fmt(reward.coins)}',

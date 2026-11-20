@@ -156,8 +156,12 @@ class _GardenSceneState extends State<GardenScene>
 
     _lifeTimer -= dt;
     if (_lifeTimer <= 0) {
-      _lifeTimer = 6 + _rng.nextDouble() * 8;
-      _randomLife();
+      // 친구가 많아도 시끄럽지 않게: 15~30초에 한 번, 누가 말하는 중이면 건너뛴다
+      _lifeTimer = 15 + _rng.nextDouble() * 15;
+      final talking = _walkers.values.any(
+        (w) => w.speechLeft > 0 || w.replyTo != null,
+      );
+      if (!talking) _randomLife();
     }
     for (final e in _walkers.entries) {
       final w = e.value;
@@ -271,9 +275,9 @@ class _GardenSceneState extends State<GardenScene>
       }
       return;
     }
-    if (r < 0.35) {
+    if (r < 0.25) {
       _speak(a, _lineFor(a));
-    } else if (r < 0.6 && ids.length >= 2) {
+    } else if (r < 0.4 && ids.length >= 2) {
       // 가장 가까운 친구에게 말 걸기 → 상대가 잠시 뒤 대답
       final wa = _walkers[a]!;
       final b =
@@ -293,7 +297,7 @@ class _GardenSceneState extends State<GardenScene>
       _speak(a, tr('line.chatA.${_rng.nextInt(3)}', {'name': friendName(b)}));
       wb.replyTo = a;
       wb.replyIn = 1.3;
-    } else if (r < 0.8 && widget.area == game.currentArea) {
+    } else if (r < 0.6 && widget.area == game.currentArea) {
       // 놓인 장식 하나를 구경하러 간다
       final area = Garden.areaAt(widget.area);
       final placed = [
@@ -452,7 +456,9 @@ class _GardenSceneState extends State<GardenScene>
       layers.add((
         // 정렬 기준 = 바닥에 닿는 높이 (그림 아래 여백 6% 반영)
         y: p.dy + sz * 0.44,
+        // 고정 키: 친구가 앞뒤로 지나가 그리는 순서가 바뀌어도 장식이 새로 '퐁' 튀어나오지 않게
         child: Positioned(
+          key: ValueKey('decor-${widget.area}-$i'),
           left: p.dx - sz * 0.6,
           top: p.dy - sz * 0.6,
           width: sz * 1.2,
@@ -491,6 +497,7 @@ class _GardenSceneState extends State<GardenScene>
       layers.add((
         y: p.dy + sz * 0.04, // 발 위치
         child: Positioned(
+          key: ValueKey('friend-${e.key}'),
           left: p.dx - sz * 0.6,
           top: p.dy - sz + bob + jump,
           width: sz * 1.2,
@@ -544,6 +551,7 @@ class _GardenSceneState extends State<GardenScene>
       layers.add((
         y: p.dy, // 발 위치
         child: Positioned(
+          key: const ValueKey('visitor'),
           left: p.dx - sz,
           top: p.dy - sz * 1.6 - bounce,
           width: sz * 2,

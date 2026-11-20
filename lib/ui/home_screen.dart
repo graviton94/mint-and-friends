@@ -315,30 +315,79 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _queueFeatureTips(List<Feature> fs) =>
       _queueTips([for (final f in fs) f.name]);
 
+  /// 안내 순서 (게임 진행 순서): 줄은 늘 이 순서로 정렬한다.
+  static const List<String> _tipOrder = [
+    'energyAd',
+    'upgrades',
+    'gems',
+    'boost',
+    'snack',
+    'checkIn',
+    'coinBag',
+    'market',
+    'storage',
+    'friends',
+    'autoMerge',
+    'visitor',
+    'offlineCap',
+    'design',
+    'spawnLevel',
+    'basket',
+    'wardrobe',
+  ];
+
+  Future<Set<String>> _seenTips() async => _tipsSeen ??= {
+    ...?(await SharedPreferences.getInstance()).getStringList(_tipsPref),
+  };
+
   Future<void> _queueTips(List<String> ids) async {
-    final seen = _tipsSeen ??= {
-      ...?(await SharedPreferences.getInstance()).getStringList(_tipsPref),
-    };
+    final seen = await _seenTips();
     final add = [
       for (final id in ids)
         if (!seen.contains(id) && !_tips.contains(id)) id,
     ];
     if (add.isEmpty || !mounted) return;
-    setState(() => _tips.addAll(add));
+    setState(() {
+      _tips.addAll(add);
+      int rank(String id) {
+        final i = _tipOrder.indexOf(id);
+        return i < 0 ? 999 : i;
+      }
+
+      _tips.sort((x, y) => rank(x).compareTo(rank(y)));
+    });
   }
 
-  /// 게임이 바뀔 때마다: 조건이 맞은 새 기능 안내를 줄에 넣는다 (한 번 본 것은 다시 안 나온다).
+  /// 지금 조건이 맞는 안내들.
+  List<String> get _tipsNow => [
+    for (final f in Feature.values)
+      if (game.isUnlocked(f)) f.name,
+    if (game.level >= 2) 'gems',
+    if (game.level >= 3) 'checkIn',
+    if (game.dailyShopOpen) 'market',
+    if (game.openBaskets.length > 1) 'basket',
+    if (_hasDesignChoice) 'design',
+    if (_hasWardrobe) 'wardrobe',
+    if (widget.openFriends != null && game.level >= 5) 'friends',
+  ];
+
+  /// 처음 한 번: 이미 쓸 수 있던 기능은 '본 것'으로 친다.
+  /// 안내는 기능이 **새로 열리는 순간**에만 나온다 (껐다 켤 때마다 예전 기능을 하나씩 소개하지 않게).
+  Future<void> _baselineTips() async {
+    final p = await SharedPreferences.getInstance();
+    if (p.getBool('feature_tips_base_v2') ?? false) return;
+    final seen = await _seenTips();
+    if (_tut == _tutDone) seen.addAll(_tipsNow);
+    await p.setStringList(_tipsPref, seen.toList());
+    await p.setBool('feature_tips_base_v2', true);
+  }
+
+  bool _tipsReady = false;
+
+  /// 게임이 바뀔 때마다: 방금 조건이 맞은 새 기능 안내를 줄에 넣는다 (한 번 본 것은 다시 안 나온다).
   void _checkNewTips() {
-    if (_tut != _tutDone) return;
-    final want = <String>[
-      if (game.level >= 2) 'gems',
-      if (game.level >= 3) 'checkIn',
-      if (game.dailyShopOpen) 'market',
-      if (game.openBaskets.length > 1) 'basket',
-      if (_hasDesignChoice) 'design',
-      if (_hasWardrobe) 'wardrobe',
-      if (widget.openFriends != null && game.level >= 5) 'friends',
-    ];
+    if (_tut != _tutDone || !_tipsReady) return;
+    final want = _tipsNow;
     final seen = _tipsSeen;
     if (seen != null &&
         want.every((w) => seen.contains(w) || _tips.contains(w))) {
@@ -364,14 +413,16 @@ class _HomeScreenState extends State<HomeScreen> {
       if (game.friends.contains(f.id)) f,
   ].any((f) => Art.outfitsFor(f).isNotEmpty);
 
-  /// 안내가 줄줄이 이어지지 않게: 하나 본 뒤 1분은 쉰다.
-  DateTime _tipRestUntil = DateTime(2000);
+  /// 화면이 막 돌아온 직후(다른 화면 · 창을 닫은 뒤)에는 잠깐 기다렸다가 안내한다.
+  DateTime _quietUntil = DateTime(2000);
+  bool _wasCurrent = true;
 
   Future<void> _doneTip() async {
     if (_tips.isEmpty) return;
     final id = _tips.removeAt(0);
-    _tipRestUntil = DateTime.now().add(const Duration(minutes: 1));
-    Future.delayed(const Duration(minutes: 1, seconds: 1), () {
+    // 다음 안내는 조금 쉬었다가 (연달아 뜨지 않게)
+    _quietUntil = DateTime.now().add(const Duration(seconds: 4));
+    Future.delayed(const Duration(seconds: 4, milliseconds: 100), () {
       if (mounted) setState(() {});
     });
     setState(() {});
@@ -403,7 +454,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget? get _featureTip {
     if (_tut != _tutDone || _tips.isEmpty || _levelDialogOpen) return null;
-    if (DateTime.now().isBefore(_tipRestUntil)) return null;
+    // 홈 화면이 맨 앞일 때만 (정원 · 시트 · 창이 열려 있으면 기다린다)
+    final current = ModalRoute.of(context)?.isCurrent ?? true;
+    if (current && !_wasCurrent) {
+      _quietUntil = DateTime.now().add(const Duration(milliseconds: 1500));
+      Future.delayed(const Duration(milliseconds: 1600), () {
+        if (mounted) setState(() {});
+      });
+    }
+    _wasCurrent = current;
+    if (!current || DateTime.now().isBefore(_quietUntil)) return null;
     final id = _tips.first;
     final r = _rectOf(_tipTarget(id));
     // 바구니 넘기기는 손장갑이 옆으로 밀어 보인다
@@ -755,6 +815,10 @@ class _HomeScreenState extends State<HomeScreen> {
     if (step == 0 && (game.level >= 3 || game.totalMerges > 20))
       step = _tutDone;
     if (mounted) setState(() => _tut = step);
+    await _baselineTips();
+    _tipsReady = true;
+    _quietUntil = DateTime.now().add(const Duration(seconds: 3));
+    _checkNewTips();
     // 하루 첫 접속: 튜토리얼이 끝난 플레이어에게 출석판을 띄운다
     if (step == _tutDone && game.level >= 2 && game.checkInReady) {
       Future.delayed(const Duration(milliseconds: 1200), () {
