@@ -190,7 +190,12 @@ void main() {
         }
         if (g.gems >= 60) {
           final f = g.friends.first;
-          if (g.wearOutfit(f, 'picnic') == StyleResult.ok) used.add('outfit');
+          for (final o in Outfits.all) {
+            if (g.wearOutfit(f, o.id) == StyleResult.ok) {
+              used.add('outfit');
+              break;
+            }
+          }
         }
         if (h == sessions.last && g.stat(Stat.orders) == dayOrders) stuckDays++;
         check('$day일 $h시');

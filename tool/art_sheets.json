@@ -967,5 +967,55 @@
       "assets/art/friends/pposong_summer_sleep.webp",
       "assets/art/friends/pposong_summer_wave.webp"
     ]
+  },
+  "outfit_autumn_bori": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/bori_autumn_idle.webp",
+      "assets/art/friends/bori_autumn_happy.webp",
+      "assets/art/friends/bori_autumn_sleep.webp",
+      "assets/art/friends/bori_autumn_wave.webp"
+    ]
+  },
+  "outfit_autumn_dubu": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/dubu_autumn_idle.webp",
+      "assets/art/friends/dubu_autumn_happy.webp",
+      "assets/art/friends/dubu_autumn_sleep.webp",
+      "assets/art/friends/dubu_autumn_wave.webp"
+    ]
+  },
+  "outfit_autumn_kwak": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/kwak_autumn_idle.webp",
+      "assets/art/friends/kwak_autumn_happy.webp",
+      "assets/art/friends/kwak_autumn_sleep.webp",
+      "assets/art/friends/kwak_autumn_wave.webp"
+    ]
+  },
+  "outfit_autumn_nabi": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/nabi_autumn_idle.webp",
+      "assets/art/friends/nabi_autumn_happy.webp",
+      "assets/art/friends/nabi_autumn_sleep.webp",
+      "assets/art/friends/nabi_autumn_wave.webp"
+    ]
+  },
+  "outfit_autumn_dotori": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/dotori_autumn_idle.webp",
+      "assets/art/friends/dotori_autumn_happy.webp",
+      "assets/art/friends/dotori_autumn_sleep.webp",
+      "assets/art/friends/dotori_autumn_wave.webp"
+    ]
   }
 }

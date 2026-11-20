@@ -1300,6 +1300,8 @@ class GameState extends ChangeNotifier {
       if (o == null) return StyleResult.notPlaced;
       if (!ownsOutfit(friendId, outfit)) {
         if (o.limited) return StyleResult.notPlaced; // 한정 의상은 패키지로만
+        if (!o.onSaleIn(now.month))
+          return StyleResult.notPlaced; // 계절 의상은 그 계절에만
         if (!_spendGems(o.gems)) return StyleResult.noGems;
         ownedOutfits.add('$friendId:$outfit');
         _bump(Stat.stylesBought);

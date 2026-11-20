@@ -671,5 +671,6 @@
   "style.5": "Summer",
   "style.6": "Autumn",
   "style.seasonSet": "{season} set of {n} [[diamond]]{cost}",
-  "outfit.using": "Wearing"
+  "outfit.using": "Wearing",
+  "outfit.offSeason": "On sale {from}–{to}"
 }

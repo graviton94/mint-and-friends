@@ -829,18 +829,22 @@ class OutfitDef {
 
   /// 다이아 가격. 음수 = 판매하지 않는 한정 의상 (패키지로만).
   final int gems;
-  const OutfitDef(this.id, this.gems);
+
+  /// 파는 달 (계절 의상은 그 계절 3개월만, null = 늘). 산 옷은 계절이 지나도 입는다.
+  final List<int>? months;
+  const OutfitDef(this.id, this.gems, {this.months});
   String get key => 'outfit.$id';
   bool get limited => gems < 0;
+  bool onSaleIn(int month) => months == null || months!.contains(month);
 }
 
 class Outfits {
   /// 그림이 들어온 의상만 옷장에 보인다 (Art.outfitsFor).
   static const List<OutfitDef> all = [
-    OutfitDef('picnic', 60),
-    OutfitDef('winter', 60),
-    OutfitDef('summer', 60),
-    OutfitDef('autumn', 60),
+    OutfitDef('picnic', 60, months: [3, 4, 5]), // 봄
+    OutfitDef('summer', 60, months: [6, 7, 8]),
+    OutfitDef('autumn', 60, months: [9, 10, 11]),
+    OutfitDef('winter', 60, months: [12, 1, 2]),
     OutfitDef('starlight', -1),
   ];
   static OutfitDef? byId(String id) => all.where((o) => o.id == id).firstOrNull;

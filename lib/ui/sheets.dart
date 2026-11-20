@@ -463,6 +463,11 @@ class _OutfitCard extends StatelessWidget {
         ? (current ? tr('outfit.using') : tr('outfit.wear'))
         : outfit!.limited
         ? tr('outfit.limited')
+        : !outfit!.onSaleIn(game.now.month)
+        ? tr('outfit.offSeason', {
+            'from': outfit!.months!.first,
+            'to': outfit!.months!.last,
+          })
         : '[[diamond]] ${outfit!.gems}';
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -492,7 +497,10 @@ class _OutfitCard extends StatelessWidget {
               ),
               current ? 'button_white' : 'button_green',
             ),
-            onPressed: current || (!owned && outfit!.limited)
+            onPressed:
+                current ||
+                    (!owned &&
+                        (outfit!.limited || !outfit!.onSaleIn(game.now.month)))
                 ? null
                 : () {
                     final r = game.wearOutfit(def.id, id);
