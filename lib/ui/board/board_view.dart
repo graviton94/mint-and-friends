@@ -26,6 +26,7 @@ class BoardView extends StatefulWidget {
     required this.selected,
     required this.onSelect,
     required this.onLockedTap,
+    this.floating,
     required this.onBubbleTap,
   });
 
@@ -33,6 +34,9 @@ class BoardView extends StatefulWidget {
   final int? selected;
   final void Function(int? cell) onSelect;
   final void Function(int cell) onLockedTap;
+
+  /// 판 위에 띄우는 정보 카드 (선택한 아이템 등). 선택 칸이 아래쪽이면 위에, 위쪽이면 아래에 뜬다.
+  final Widget? floating;
   final void Function(int cell) onBubbleTap;
 
   @override
@@ -204,6 +208,9 @@ class _BoardViewState extends State<BoardView> {
                       ),
                     ),
                   ),
+                  // L3 정보 카드
+                  if (widget.floating != null)
+                    _floatingAt(widget.floating!, cell, pad),
                   // L2 이펙트
                   for (final b in _bursts)
                     at(
@@ -218,6 +225,29 @@ class _BoardViewState extends State<BoardView> {
           );
         },
       ),
+    );
+  }
+
+  Widget _floatingAt(Widget child, double cell, double pad) {
+    final sel = widget.selected;
+    const h = 52.0;
+    if (sel == null) {
+      return Positioned(
+        left: 8,
+        right: 8,
+        bottom: pad + 4,
+        child: Center(child: child),
+      );
+    }
+    final row = sel ~/ GameConfig.cols;
+    final above = row >= GameConfig.rows ~/ 2;
+    final y = above ? pad + row * cell - h - 2 : pad + (row + 1) * cell + 2;
+    return Positioned(
+      left: 6,
+      right: 6,
+      top: y,
+      height: h,
+      child: Center(child: child),
     );
   }
 
