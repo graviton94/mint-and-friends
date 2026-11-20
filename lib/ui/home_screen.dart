@@ -18,7 +18,6 @@ import 'board/board_view.dart';
 import 'garden/garden_scene.dart';
 import 'garden/garden_screen.dart';
 import 'meta_ui.dart';
-import 'orders_bar.dart';
 import 'sheets.dart';
 import 'theme.dart';
 import 'tutorial.dart';
@@ -194,14 +193,16 @@ class _HomeScreenState extends State<HomeScreen> {
               tr('levelUp.reward', {'coins': fmt(e.coins), 'energy': e.energy}),
               style: const TextStyle(fontSize: 20),
             ),
-            if (e.unlocked.isNotEmpty) ...[
+            if (e.unlocked.any((f) => f != Feature.storage)) ...[
               const SizedBox(height: 14),
               IconText(
                 tr('levelUp.unlocked'),
                 style: const TextStyle(fontSize: 15, color: Colors.black54),
               ),
               const SizedBox(height: 6),
-              for (final f in e.unlocked) ...[
+              for (final f in e.unlocked.where(
+                (f) => f != Feature.storage,
+              )) ...[
                 // 실제 화면의 그 버튼 모양 그대로 보여 준다
                 IgnorePointer(child: _featurePreview(f)),
                 const SizedBox(height: 6),
@@ -268,7 +269,6 @@ class _HomeScreenState extends State<HomeScreen> {
           icon: 'coinbag',
           label: '[[coin]]${fmt(game.coinBagAmount)}',
           ad: true,
-          left: adFree ? null : GameConfig.adDailyCap[AdKind.coinBag],
           onTap: () {},
         ),
       ),
@@ -285,7 +285,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () {},
         ),
       ),
-      Feature.storage => _GardenTool(icon: 'storage', onTap: () {}),
+      Feature.storage => const SizedBox.shrink(),
       Feature.snack => Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -318,8 +318,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<String> _tips = [];
   Set<String>? _tipsSeen;
 
-  Future<void> _queueFeatureTips(List<Feature> fs) =>
-      _queueTips([for (final f in fs) f.name]);
+  // 보관함은 판 맨 아랫줄 보관 칸으로 합쳐져 안내하지 않는다 (D-017)
+  Future<void> _queueFeatureTips(List<Feature> fs) => _queueTips([
+    for (final f in fs)
+      if (f != Feature.storage) f.name,
+  ]);
 
   /// 안내 순서 (게임 진행 순서): 줄은 늘 이 순서로 정렬한다.
   static const List<String> _tipOrder = [
@@ -331,7 +334,6 @@ class _HomeScreenState extends State<HomeScreen> {
     'checkIn',
     'coinBag',
     'market',
-    'storage',
     'friends',
     'autoMerge',
     'visitor',
@@ -440,15 +442,13 @@ class _HomeScreenState extends State<HomeScreen> {
   GlobalKey _tipTarget(String id) => switch (id) {
     'energyAd' => _kSpawner,
     'boost' => _kBoost,
-    'coinBag' => _kCoinBag,
     'snack' || 'basket' => _kSpawner,
-    'storage' => _kStorage,
     'visitor' => _kGarden,
     'gems' || 'market' => _kGems,
     'checkIn' || 'friends' => _kMenu,
     'design' => _kDecor,
-    'wardrobe' => _kBook,
-    _ => _kUpgrade,
+    'coinBag' when game.coinBagReady => _kCoinBag,
+    _ => _kMenu,
   };
 
   String _tipTitle(String id) {
@@ -895,13 +895,11 @@ class _HomeScreenState extends State<HomeScreen> {
   final _kDecor = GlobalKey();
   final _kGarden = GlobalKey();
   final _kBoost = GlobalKey();
-  final _kUpgrade = GlobalKey();
-  final _kStorage = GlobalKey();
   final _kCoinBag = GlobalKey();
   final _kStack = GlobalKey();
   final _kGems = GlobalKey();
   final _kMenu = GlobalKey();
-  final _kBook = GlobalKey();
+  final _kGifts = GlobalKey();
 
   // ---------------------------------------------------------------- 튜토리얼
   // 0 인사 → 1 바구니 3번 → 2 합치기 → 3 부탁 → 4 꾸미기 → 5 정원 · 방치 수익 → 끝(99)
@@ -1022,12 +1020,6 @@ class _HomeScreenState extends State<HomeScreen> {
       3 => CoachOverlay(
         text: tr('tut.orders'),
         hole: _rectOf(_kOrders),
-        pointAt: _rectOf(_kOrders) == null
-            ? null
-            : Offset(
-                _rectOf(_kOrders)!.left + _rectOf(_kOrders)!.width / 6,
-                _rectOf(_kOrders)!.center.dy,
-              ),
         action: true,
         buttonLabel: tr('tut.next'),
         onNext: next,
@@ -1050,20 +1042,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // 고정 높이 (dp). 남는 높이는 모두 정원 창이 가진다.
   static const double _hudH = 56;
-  static const double _ordersH = 66;
-  static const double _controlsH = 72;
-
-  /// 상태 표시줄 높이 (정원이 그 뒤까지 깔린다).
-  double _topInset = 0;
+  static const double _controlsH = 76;
 
   @override
   Widget build(BuildContext context) {
     final extra = widget.extraListenable;
-    // 정원이 상태 표시줄 뒤까지 깔리므로 아이콘은 어둡게
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.dark.copyWith(
-        statusBarColor: Colors.transparent,
-      ),
+      value: SystemUiOverlayStyle.dark,
       child: Scaffold(
         body: Container(
           decoration: const BoxDecoration(
@@ -1073,109 +1058,97 @@ class _HomeScreenState extends State<HomeScreen> {
               end: Alignment.bottomCenter,
             ),
           ),
-          child: ListenableBuilder(
-            listenable: Listenable.merge([
-              game,
-              widget.ads,
-              widget.billing,
-              L10n.instance,
-              ?extra,
-            ]),
-            builder: (context, _) {
-              final sel = _selected;
-              if (sel != null &&
-                  (game.board[sel] == null || game.board[sel]!.isBubble))
-                _selected = null;
-              if (_viewArea > game.currentArea) _viewArea = game.currentArea;
-              final pad = MediaQuery.paddingOf(context);
-              return LayoutBuilder(
-                builder: (context, c) {
-                  // 정원은 화면 맨 위부터 원래 비율(1.5:1)까지 크게, 재화 줄은 그 위에 겹친다.
-                  // 판은 폭에 맞추고, 높이가 모자라면 정원 → 판 순서로 줄인다.
-                  final w = c.maxWidth;
-                  final h = c.maxHeight - pad.bottom;
-                  const gap = 8.0;
-                  final rest = _ordersH + _controlsH + gap * 3;
-                  // 칸은 최대 58dp: 큰 폰에선 남는 높이를 정원이 갖는다
-                  final boardIdeal = min(w - 20, 58.0 * GameConfig.cols + 10);
-                  final natural = pad.top + w / 1.5;
-                  final minGarden = pad.top + _hudH + 100;
-                  final gardenH = (h - rest - boardIdeal).clamp(
-                    minGarden,
-                    max(minGarden, natural),
-                  );
-                  final boardW = min(
-                    boardIdeal,
-                    (h - rest - gardenH) * GameConfig.cols / GameConfig.rows,
-                  );
-                  _topInset = pad.top;
-                  return Stack(
-                    key: _kStack,
-                    children: [
-                      Column(
-                        children: [
-                          SizedBox(
-                            height: gardenH.toDouble(),
-                            child: _gardenWindow(pad.top),
-                          ),
-                          const SizedBox(height: gap),
-                          SizedBox(
-                            key: _kOrders,
-                            height: _ordersH,
-                            child: Padding(
+          child: SafeArea(
+            child: ListenableBuilder(
+              listenable: Listenable.merge([
+                game,
+                widget.ads,
+                widget.billing,
+                L10n.instance,
+                ?extra,
+              ]),
+              builder: (context, _) {
+                final sel = _selected;
+                if (sel != null &&
+                    (game.board[sel] == null || game.board[sel]!.isBubble))
+                  _selected = null;
+                if (_viewArea > game.currentArea) _viewArea = game.currentArea;
+                return LayoutBuilder(
+                  builder: (context, c) {
+                    // 정원 창은 배경 비율(1.5:1) 그대로가 목표, 판은 폭에 맞춘다 (칸 최대 58dp).
+                    // 높이가 모자라면 정원 → 판 순서로 줄인다.
+                    final w = c.maxWidth;
+                    final h = c.maxHeight;
+                    const gap = 8.0;
+                    const fixed = _hudH + _controlsH + gap * 3;
+                    final boardIdeal = min(w - 20, 58.0 * GameConfig.cols + 10);
+                    final natural = (w - 20) / GardenScene.aspect;
+                    final gardenH = (h - fixed - boardIdeal)
+                        .clamp(min(120.0, natural), natural)
+                        .toDouble();
+                    final boardW = min(
+                      boardIdeal,
+                      (h - fixed - gardenH) * GameConfig.cols / GameConfig.rows,
+                    );
+                    return Stack(
+                      key: _kStack,
+                      children: [
+                        Column(
+                          children: [
+                            SizedBox(height: _hudH, child: _topBar()),
+                            Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 10,
                               ),
-                              child: OrdersBar(
-                                game: game,
-                                onRefresh: _refreshOrder,
-                                onQuota: _quotaDialog,
-                                adFree: adFree,
+                              child: SizedBox(
+                                key: _kOrders,
+                                height: gardenH,
+                                child: _gardenWindow(),
                               ),
                             ),
-                          ),
-                          Expanded(
-                            child: Center(
-                              child: SizedBox(
-                                key: _kBoard,
-                                width: boardW,
-                                child: BoardView(
-                                  game: game,
-                                  selected: _selected,
-                                  onSelect: (c) =>
-                                      setState(() => _selected = c),
-                                  onLockedTap: _onLockedCell,
-                                  onBubbleTap: _onBubble,
-                                  floating: _floatingInfo(),
+                            Expanded(
+                              child: Center(
+                                child: SizedBox(
+                                  key: _kBoard,
+                                  width: boardW,
+                                  child: BoardView(
+                                    game: game,
+                                    selected: _selected,
+                                    onSelect: (c) =>
+                                        setState(() => _selected = c),
+                                    onLockedTap: _onLockedCell,
+                                    onBubbleTap: _onBubble,
+                                    floating: _floatingInfo(),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          SizedBox(height: _controlsH, child: _controls()),
-                          SizedBox(height: gap + pad.bottom),
-                        ],
-                      ),
-                      // 알림: 모든 것 위 (HUD 바로 아래). 터치는 통과.
-                      Positioned(
-                        left: 16,
-                        right: 16,
-                        top: _topInset + _hudH + 6,
-                        child: IgnorePointer(
-                          child: Column(
-                            children: [
-                              for (final t in _toasts)
-                                _ToastView(key: ValueKey(t.id), text: t.text),
-                            ],
+                            SizedBox(height: _controlsH, child: _controls()),
+                            const SizedBox(height: gap),
+                          ],
+                        ),
+                        // 알림: 모든 것 위 (HUD 바로 아래). 터치는 통과.
+                        Positioned(
+                          left: 16,
+                          right: 16,
+                          top: _hudH + 6,
+                          child: IgnorePointer(
+                            child: Column(
+                              children: [
+                                for (final t in _toasts)
+                                  _ToastView(key: ValueKey(t.id), text: t.text),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      ?_tutorial,
-                      ?_featureTip,
-                    ],
-                  );
-                },
-              );
-            },
+                        ?_tutorial,
+                        ?_featureTip,
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -1204,34 +1177,32 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 6),
                   _Pill(icon: Art.star, text: fmt(game.stars.toDouble())),
                   const SizedBox(width: 6),
-                  _Pill(
-                    key: _kGems,
-                    icon: Art.icon('diamond'),
-                    text: fmt(game.gems.toDouble()),
-                    plus: true,
-                    onTap: _openShop,
-                  ),
-                  for (final k in BoostKind.values)
-                    if (game.boosted(k)) ...[
-                      const SizedBox(width: 6),
-                      _BoostChip(
-                        icon: boostIcon(k),
-                        time: _shortLeft(game.boostLeft(k)),
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      _Pill(
+                        key: _kGems,
+                        icon: Art.icon('diamond'),
+                        text: fmt(game.gems.toDouble()),
+                        plus: true,
+                        onTap: _openShop,
                       ),
+                      // 상점에 오늘의 무료 선물이 있으면
+                      if (game.freeOfferReady)
+                        const Positioned(right: -3, top: -3, child: RedDot()),
                     ],
+                  ),
                 ],
               ),
             ),
           ),
           const SizedBox(width: 6),
-          // 쪽지 (안 읽은 수) · 메뉴 (업적 · 친구 · 광고 제거 · 설정)
+          // 선물함 (쪽지 · 출석 · 업적: 받을 것 수) · 메뉴 (강화 · 도감 · 친구 · 상점 · 설정)
           _IconButton(
-            icon: 'letter',
-            badge: game.unreadMail,
-            onTap: () {
-              sfx(Sfx.open);
-              showMailSheet(context, game);
-            },
+            key: _kGifts,
+            icon: 'gift',
+            badge: _giftCount,
+            onTap: _openGifts,
           ),
           const SizedBox(width: 6),
           _IconButton(
@@ -1239,8 +1210,8 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: 'menu',
             fallback: Icons.menu_rounded,
             badge:
-                game.claimableAchievements > 0 ||
-                    game.checkInReady ||
+                Upgrades.all.any((u) => game.canBuyUpgrade(u.type)) ||
+                    game.hasNewDiscovery ||
                     game.freeOfferReady ||
                     widget.socialBadge()
                 ? -1
@@ -1253,14 +1224,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   /// 정원 창: 씬만 담는다 (메뉴 버튼은 아래 도구줄로 옮겨 장식 · 친구를 가리지 않는다).
-  /// 화면 맨 위 정원: 상태 표시줄 뒤까지 깔리고, 재화 줄 · 구역 이름 · 도구 버튼이 겹쳐 있다.
-  Widget _gardenWindow(double top) {
+  /// 정원 창: 배경 비율 그대로, 친구 머리 위에 부탁 말풍선. 구역 이름 · 크게 보기 · 코인 주머니가 겹쳐 있다.
+  Widget _gardenWindow() {
+    final bagOpen = game.isUnlocked(Feature.coinBag);
     return Container(
       key: _kGarden,
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(26)),
-        border: Border(bottom: BorderSide(color: Color(0xFF7A5230), width: 3)),
-        boxShadow: [
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFF7A5230), width: 3),
+        boxShadow: const [
           BoxShadow(
             color: Color(0x33000000),
             blurRadius: 8,
@@ -1268,106 +1240,123 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
-        child: GardenScene(
-          game: game,
-          area: _viewArea,
-          radius: 0,
-          focusY: 1.0, // 넘치는 높이는 하늘에서 자른다 (땅 위 장식 자리가 잘리지 않게)
-          markerScale: 0.95,
-          onSlotTap: _onSlotTap,
-          onVisitorTap: _onVisitorTap,
-          overlay: [
-            // 재화 줄: 하늘 위에 살짝 어둡게 깔아 읽기 쉽게
+      child: GardenScene(
+        game: game,
+        area: _viewArea,
+        radius: 19,
+        focusY: 1.0,
+        markerScale: 1.1,
+        onSlotTap: _onSlotTap,
+        onVisitorTap: _onVisitorTap,
+        onOrderTap: _viewArea == game.currentArea ? _onOrderTap : null,
+        orderTopInset: 50,
+        overlay: [
+          Positioned(left: 8, top: 8, child: _areaPill()),
+          Positioned(
+            right: 8,
+            top: 8,
+            child: _RoundButton(
+              label: 'expand',
+              icon: Icons.open_in_full_rounded,
+              onTap: _openGarden,
+            ),
+          ),
+          // 코인 주머니: 받을 수 있을 때만 크게 보기 옆에 떨어져 있다
+          if (bagOpen && game.coinBagReady)
             Positioned(
-              left: 0,
-              right: 0,
+              right: 52,
+              top: 6,
+              child: _GardenTool(
+                key: _kCoinBag,
+                icon: 'coinbag',
+                ad: !adFree,
+                onTap: _watchCoinBag,
+              ),
+            ),
+          if (_viewArea > 0)
+            Positioned(
+              left: 6,
               top: 0,
-              height: top + _hudH + 10,
-              child: const IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Color(0x55FFFFFF), Color(0x00FFFFFF)],
-                    ),
-                  ),
+              bottom: 0,
+              child: Center(
+                child: _RoundButton(
+                  label: 'arrow_left',
+                  onTap: () => setState(() => _viewArea--),
                 ),
               ),
             ),
+          if (_viewArea < game.currentArea)
             Positioned(
-              left: 0,
-              right: 0,
-              top: top,
-              height: _hudH,
-              child: _topBar(),
-            ),
-            // 구역 이름 · 진행도 (누르면 크게 보기)
-            Positioned(left: 10, top: top + _hudH + 2, child: _areaPill()),
-            // 도감 · 보관함 · 크게 보기
-            Positioned(
-              right: 10,
-              top: top + _hudH + 2,
-              child: Row(
-                children: [
-                  _GardenTool(
-                    key: _kBook,
-                    icon: 'book',
-                    badge: game.hasNewDiscovery,
-                    onTap: () {
-                      sfx(Sfx.open);
-                      game.markBookSeen();
-                      showCollectionSheet(context, game);
-                    },
-                  ),
-                  const SizedBox(width: 6),
-                  _GardenTool(
-                    key: _kStorage,
-                    icon: game.storageOpen ? 'storage' : 'lock',
-                    onTap: () {
-                      if (_gate(Feature.storage)) _openStorage();
-                    },
-                  ),
-                  const SizedBox(width: 6),
-                  _RoundButton(
-                    label: 'expand',
-                    icon: Icons.open_in_full_rounded,
-                    onTap: _openGarden,
-                  ),
-                ],
-              ),
-            ),
-            // 구역 이동 (이전 구역 보기)
-            if (_viewArea > 0)
-              Positioned(
-                left: 6,
-                top: top + _hudH,
-                bottom: 0,
-                child: Center(
-                  child: _RoundButton(
-                    label: 'arrow_left',
-                    onTap: () => setState(() => _viewArea--),
-                  ),
+              right: 6,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: _RoundButton(
+                  label: 'arrow_right',
+                  onTap: () => setState(() => _viewArea++),
                 ),
               ),
-            if (_viewArea < game.currentArea)
-              Positioned(
-                right: 6,
-                top: top + _hudH,
-                bottom: 0,
-                child: Center(
-                  child: _RoundButton(
-                    label: 'arrow_right',
-                    onTap: () => setState(() => _viewArea++),
-                  ),
-                ),
-              ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
+  }
+
+  /// 아직 준비 안 된 부탁: 무엇이 필요한지 + 다른 부탁으로 바꾸기 (하루 3번 무료, 그다음 광고).
+  Future<void> _orderInfo(int i) async {
+    final o = game.orders[i];
+    final change = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => GameDialog(
+        title: IconText(
+          tr('order.wants', {'name': friendName(o.friendId)}),
+          textAlign: TextAlign.center,
+        ),
+        content: PopupHero(
+          art: ArtImage(Art.item(o.chain, o.level), size: 76),
+          big: '${itemName(Chains.item(o.chain, o.level))} Lv${o.level}',
+          note: tr('order.wantsNote', {'stars': o.stars}),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: IconText(
+              game.freeRerollsLeft > 0
+                  ? tr('order.changeFree', {'n': game.freeRerollsLeft})
+                  : '${adFree ? '' : '[[ad]] '}${tr('order.change')}',
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+          FilledButton(
+            style: framedButton(
+              FilledButton.styleFrom(minimumSize: const Size(110, 46)),
+              'button_green',
+            ),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: IconText(
+              tr('common.ok'),
+              style: const TextStyle(fontSize: 17),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (change == true) await _refreshOrder(i);
+  }
+
+  /// 정원의 부탁 말풍선을 눌렀을 때: 전달 · 별 부탁 더 받기 · 무엇이 필요한지 안내.
+  void _onOrderTap(int i) {
+    if (i >= game.orders.length) return;
+    final o = game.orders[i];
+    if (game.canDeliver(i)) {
+      game.deliver(i);
+    } else if (!game.orderGivesStars(o)) {
+      _quotaDialog(o.friendId);
+    } else {
+      sfx(Sfx.tap);
+      _orderInfo(i);
+    }
   }
 
   /// 정원 창 왼쪽 위: 구역 이름 · 장식 수 · 진행 막대.
@@ -1380,7 +1369,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: _openGarden,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(6, 4, 10, 5),
+        padding: const EdgeInsets.fromLTRB(8, 6, 14, 7),
         decoration: BoxDecoration(
           color: const Color(0xEEFFF8E8),
           borderRadius: BorderRadius.circular(14),
@@ -1427,7 +1416,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final idx = _selected;
     final sel = idx == null ? null : game.board[idx];
     Widget card(Widget child) => Container(
-      padding: const EdgeInsets.fromLTRB(10, 6, 8, 6),
+      padding: const EdgeInsets.fromLTRB(14, 8, 12, 8),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBF0),
         borderRadius: BorderRadius.circular(16),
@@ -1462,30 +1451,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            if (game.storageOpen) ...[
-              FilledButton(
-                style: plainButton(
-                  FilledButton.styleFrom(
-                    backgroundColor: Palette.primary,
-                    minimumSize: const Size(40, 36),
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                  ),
-                ),
-                onPressed: () {
-                  if (game.store(idx)) {
-                    setState(() => _selected = null);
-                  } else {
-                    _toast(tr('storage.full'));
-                    _openStorage();
-                  }
-                },
-                child: IconText(
-                  tr('board.store'),
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ),
-              const SizedBox(width: 6),
-            ],
+
             FilledButton(
               style: plainButton(
                 FilledButton.styleFrom(
@@ -1542,26 +1508,25 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openMenu() {
+  int get _giftCount =>
+      game.unreadMail +
+      game.claimableAchievements +
+      (game.checkInReady ? 1 : 0);
+
+  /// 선물함: 매일 받는 보상 (쪽지 · 출석 · 업적).
+  void _openGifts() {
     sfx(Sfx.open);
     showMenuSheet(
       context,
-      Listenable.merge([game, widget.billing, ?widget.extraListenable]),
+      game,
+      title: tr('menu.gifts'),
       () => [
         MenuEntry(
-          'trophy',
-          tr('menu.achievements'),
-          () => showAchievementsSheet(context, game),
-          badge: game.claimableAchievements,
+          'letter',
+          tr('menu.mail'),
+          () => showMailSheet(context, game),
+          badge: game.unreadMail,
         ),
-        if (widget.openFriends != null)
-          MenuEntry(
-            'friends',
-            tr('menu.friends'),
-            () => widget.openFriends!(context),
-            badge: widget.socialBadge() ? -1 : 0,
-            fallback: Icons.people_alt_rounded,
-          ),
         MenuEntry(
           'calendar',
           tr('menu.checkIn'),
@@ -1570,11 +1535,41 @@ class _HomeScreenState extends State<HomeScreen> {
           fallback: Icons.event_available_rounded,
         ),
         MenuEntry(
-          'letter',
-          tr('menu.mail'),
-          () => showMailSheet(context, game),
-          badge: game.unreadMail,
+          'trophy',
+          tr('menu.achievements'),
+          () => showAchievementsSheet(context, game),
+          badge: game.claimableAchievements,
         ),
+      ],
+    );
+  }
+
+  void _openMenu() {
+    sfx(Sfx.open);
+    showMenuSheet(
+      context,
+      Listenable.merge([game, widget.billing, ?widget.extraListenable]),
+      () => [
+        MenuEntry(
+          game.isUnlocked(Feature.upgrades) ? 'upgrade' : 'lock',
+          tr('menu.upgrade'),
+          () {
+            if (_gate(Feature.upgrades)) showUpgradesSheet(context, game);
+          },
+          badge: Upgrades.all.any((u) => game.canBuyUpgrade(u.type)) ? -1 : 0,
+        ),
+        MenuEntry('book', tr('menu.book'), () {
+          game.markBookSeen();
+          showCollectionSheet(context, game);
+        }, badge: game.hasNewDiscovery ? -1 : 0),
+        if (widget.openFriends != null)
+          MenuEntry(
+            'friends',
+            tr('menu.friends'),
+            () => widget.openFriends!(context),
+            badge: widget.socialBadge() ? -1 : 0,
+            fallback: Icons.people_alt_rounded,
+          ),
         MenuEntry(
           'shop',
           tr('menu.shop'),
@@ -1591,50 +1586,45 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _openStorage() => showStorageSheet(context, game, onMessage: _toast);
-
-  /// 아래 줄: 부스트 · 꾸미기 · [바구니] · 강화 · 코인 주머니.
+  /// 아래 줄: 꾸미기 · [바구니] · 부스트 (엄지로 누르는 세 가지).
   Widget _controls() {
     final boostOpen = game.isUnlocked(Feature.boost);
-    final bagOpen = game.isUnlocked(Feature.coinBag);
     final canDecorate = List.generate(
       Garden.slotsPerArea,
       game.canPlace,
     ).any((x) => x);
-    final upOpen = game.isUnlocked(Feature.upgrades);
+    final nextCost = [
+      for (var i = 0; i < Garden.slotsPerArea; i++)
+        if (!game.placed.contains(i)) game.decorCost(i),
+    ].fold<int?>(null, (a, b) => a == null || b < a ? b : a);
+    final activeBoosts = BoostKind.values.where(game.boosted).toList();
+    String boostLine() {
+      if (!boostOpen)
+        return tr('common.lockedLevel', {
+          'n': Leveling.unlockLevel[Feature.boost],
+        });
+      if (activeBoosts.isEmpty) return tr('ctrl.boost.idle');
+      final k = activeBoosts.reduce(
+        (a, b) => game.boostLeft(a) >= game.boostLeft(b) ? a : b,
+      );
+      final more = activeBoosts.length > 1
+          ? ' +${activeBoosts.length - 1}'
+          : '';
+      return '${tr('boost.${k.name}')} ${_shortLeft(game.boostLeft(k))}$more';
+    }
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Expanded(
-            child: _BarTile(
-              key: _kBoost,
-              icon: Art.icon('boost').available ? 'boost' : 'coinbag',
-              label: !boostOpen
-                  ? tr('ctrl.boost')
-                  : game.anyBoost
-                  ? _shortLeft(
-                      BoostKind.values
-                          .where(game.boosted)
-                          .map(game.boostLeft)
-                          .reduce((a, b) => a > b ? a : b),
-                    )
-                  : tr('ctrl.boost'),
-              ad: true,
-              active: game.anyBoost,
-              lockedLevel: boostOpen
-                  ? null
-                  : Leveling.unlockLevel[Feature.boost],
-              onTap: _watchBoost,
-            ),
-          ),
-          const SizedBox(width: 6),
           Expanded(
             child: _BarTile(
               key: _kDecor,
               icon: 'decorate',
               label: tr('menu.decorate'),
+              sub: nextCost == null
+                  ? '[[check]]'
+                  : '[[star]]${game.stars} / $nextCost',
               badge: canDecorate,
               onTap: () {
                 sfx(Sfx.open);
@@ -1643,50 +1633,24 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 10),
           _Spawner(
             key: _kSpawner,
             game: game,
             onTap: _onSpawnerTap,
             onLongPress: _energyDialog,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 10),
           Expanded(
             child: _BarTile(
-              key: _kUpgrade,
-              icon: 'upgrade',
-              label: tr('menu.upgrade'),
-              badge: Upgrades.all.any((u) => game.canBuyUpgrade(u.type)),
-              lockedLevel: upOpen
-                  ? null
-                  : Leveling.unlockLevel[Feature.upgrades],
-              onTap: () {
-                if (_gate(Feature.upgrades)) {
-                  sfx(Sfx.open);
-                  showUpgradesSheet(context, game);
-                }
-              },
-            ),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: _BarTile(
-              key: _kCoinBag,
-              icon: 'coinbag',
-              label: !bagOpen
-                  ? tr('ctrl.coinBag')
-                  : game.coinBagReady
-                  ? '[[coin]]${fmt(game.coinBagAmount)}'
-                  : _shortLeft(game.coinBagCooldownLeft),
+              key: _kBoost,
+              icon: Art.icon('boost').available ? 'boost' : 'coinbag',
+              label: tr('ctrl.boost'),
+              sub: boostLine(),
               ad: true,
-              waiting: bagOpen && !game.coinBagReady,
-              lockedLevel: bagOpen
-                  ? null
-                  : Leveling.unlockLevel[Feature.coinBag],
-              left: bagOpen && !adFree ? game.adsLeft(AdKind.coinBag) : null,
-              onTap: !bagOpen || (game.coinBagReady && widget.ads.rewardedReady)
-                  ? _watchCoinBag
-                  : null,
+              active: activeBoosts.isNotEmpty,
+              locked: !boostOpen,
+              onTap: _watchBoost,
             ),
           ),
         ],
@@ -1883,33 +1847,30 @@ String _shortLeft(Duration d) => d.inMinutes >= 1
     ? tr('boost.minutes', {'n': d.inMinutes + (d.inSeconds % 60 > 0 ? 1 : 0)})
     : tr('boost.seconds', {'n': d.inSeconds});
 
-/// 아래 줄 타일: 아이콘 + 짧은 이름 (광고 타일은 보라, 도구는 크림색).
+/// 아래 줄 넓은 버튼: 아이콘 + 이름 + 한 줄 정보 (광고 · 부스트는 보라, 도구는 크림색).
 class _BarTile extends StatelessWidget {
   const _BarTile({
     super.key,
     required this.icon,
     required this.label,
     required this.onTap,
+    this.sub,
     this.ad = false,
     this.active = false,
-    this.waiting = false,
     this.badge = false,
-    this.lockedLevel,
-    this.left,
+    this.locked = false,
   });
   final String icon;
   final String label;
+  final String? sub;
   final VoidCallback? onTap;
   final bool ad;
   final bool active;
-  final bool waiting;
   final bool badge;
-  final int? lockedLevel;
-  final int? left;
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
-    final locked = lockedLevel != null;
     final colors = locked
         ? const [Color(0xFFE2DBCB), Color(0xFFCFC6B3)]
         : active
@@ -1918,6 +1879,7 @@ class _BarTile extends StatelessWidget {
         ? const [Color(0xFFC9A5F2), Color(0xFF9C6ADE)]
         : const [Color(0xFFFFFBF0), Color(0xFFF3E6C8)];
     final light = ad && !locked && !active;
+    final ink = light ? Colors.white : const Color(0xFF4A3A22);
     return GestureDetector(
       onTap: onTap == null
           ? null
@@ -1936,8 +1898,8 @@ class _BarTile extends StatelessWidget {
                 end: Alignment.bottomCenter,
                 colors: colors,
               ),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF5A3A1E), width: 2),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFF5A3A1E), width: 2.5),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x33000000),
@@ -1946,25 +1908,46 @@ class _BarTile extends StatelessWidget {
                 ),
               ],
             ),
-            padding: const EdgeInsets.fromLTRB(3, 3, 3, 4),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            padding: const EdgeInsets.fromLTRB(10, 8, 14, 8),
+            child: Row(
               children: [
                 Opacity(
-                  opacity: locked || waiting ? 0.55 : 1,
-                  child: ArtImage(Art.icon(icon), size: 32),
+                  opacity: locked ? 0.55 : 1,
+                  child: ArtImage(Art.icon(icon), size: 36),
                 ),
-                const SizedBox(height: 1),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: IconText(
-                    locked ? '[[lock]]Lv.$lockedLevel' : label,
-                    iconScale: 1.0,
-                    style: TextStyle(
-                      fontSize: 13,
-                      height: 1.1,
-                      color: light ? Colors.white : const Color(0xFF4A3A22),
-                    ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 16,
+                            height: 1.15,
+                            color: ink,
+                          ),
+                        ),
+                      ),
+                      if (sub != null)
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: IconText(
+                            sub!,
+                            iconScale: 1.0,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              height: 1.15,
+                              color: ink.withValues(alpha: 0.85),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],
@@ -1972,47 +1955,23 @@ class _BarTile extends StatelessWidget {
           ),
           if (badge && !locked)
             const Positioned(right: -4, top: -4, child: RedDot()),
-          if (!locked && left != null)
-            Positioned(
-              right: -4,
-              top: -8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: const Color(0xFF5A3A1E),
-                    width: 1.5,
-                  ),
-                ),
-                child: IconText(
-                  '[[ad]]$left',
-                  iconScale: 1.0,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF4A3A22),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
 }
 
-/// 정원 위 작은 둥근 도구 버튼 (도감 · 보관함).
+/// 정원 위 작은 둥근 버튼 (코인 주머니 등). [ad] 면 광고 표시.
 class _GardenTool extends StatelessWidget {
   const _GardenTool({
     super.key,
     required this.icon,
     required this.onTap,
-    this.badge = false,
+    this.ad = false,
   });
   final String icon;
   final VoidCallback onTap;
-  final bool badge;
+  final bool ad;
 
   @override
   Widget build(BuildContext context) => GestureDetector(
@@ -2039,30 +1998,15 @@ class _GardenTool extends StatelessWidget {
               ),
             ],
           ),
-          child: ArtImage(Art.icon(icon), size: 24),
+          child: ArtImage(Art.icon(icon), size: 26),
         ),
-        if (badge) const Positioned(right: -3, top: -3, child: RedDot()),
+        if (ad)
+          Positioned(
+            right: -4,
+            top: -4,
+            child: ArtImage(Art.icon('ad'), size: 18),
+          ),
       ],
-    ),
-  );
-}
-
-/// 위쪽 줄의 켜진 부스트 (아이콘 + 남은 시간).
-class _BoostChip extends StatelessWidget {
-  const _BoostChip({required this.icon, required this.time});
-  final String icon;
-  final String time;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.fromLTRB(3, 2, 8, 2),
-    decoration: BoxDecoration(
-      color: Palette.ad,
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: IconText(
-      '[[$icon]]$time',
-      style: const TextStyle(color: Colors.white, fontSize: 13),
     ),
   );
 }
@@ -2166,7 +2110,7 @@ class _Pill extends StatelessWidget {
       onTap: onTap,
       child: Container(
         height: 40,
-        padding: const EdgeInsets.fromLTRB(4, 2, 8, 2),
+        padding: const EdgeInsets.fromLTRB(5, 3, 12, 3),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.95),
           borderRadius: BorderRadius.circular(20),
@@ -2297,7 +2241,7 @@ class _ToastView extends StatelessWidget {
       ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
         decoration: FrameBox.decorationFor(
           'toast',
           BoxDecoration(

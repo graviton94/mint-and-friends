@@ -35,7 +35,15 @@ class GardenScene extends StatefulWidget {
     this.focusY = 0.8,
     this.markerScale = 1,
     this.showEmptySlots = true,
+    this.onOrderTap,
+    this.orderTopInset = 0,
   });
+
+  /// 부탁 말풍선이 올라가지 않을 위쪽 띠 (창 위에 겹친 버튼 · 이름표 자리).
+  final double orderTopInset;
+
+  /// 부탁 말풍선을 친구 머리 위에 띄운다 (홈 화면). 누르면 그 부탁 번호로 부른다.
+  final void Function(int index)? onOrderTap;
 
   /// 빈 장식 자리 표시 · 가격표 (친구 정원 구경처럼 보기 전용이면 끈다).
   final bool showEmptySlots;
@@ -407,6 +415,16 @@ class _GardenSceneState extends State<GardenScene>
                         ),
                       ),
                     ),
+                    if (widget.onOrderTap != null)
+                      Positioned.fill(
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: _orderLayer(
+                            canvas,
+                            Rect.fromLTWH(-left, -top, c.maxWidth, c.maxHeight),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -432,7 +450,7 @@ class _GardenSceneState extends State<GardenScene>
     for (var i = 0; i < area.decor.length; i++) {
       final d = area.decor[i];
       final p = px(d.x, d.y);
-      final sz = unit * 0.21;
+      final sz = unit * 0.18;
       Widget child;
       if (game.isPlaced(widget.area, i)) {
         child = TweenAnimationBuilder<double>(
@@ -472,7 +490,7 @@ class _GardenSceneState extends State<GardenScene>
       final f = Friends.byId(e.key);
       final wk = e.value;
       final p = px(wk.pos.dx, wk.pos.dy);
-      final sz = unit * 0.17;
+      final sz = unit * 0.15;
       final walking = wk.pauseLeft <= 0 && wk.happyLeft <= 0;
       final inWater = area.water.any((w) => w.contains(wk.pos.dx, wk.pos.dy));
       // 물속에서는 통통 뛰지 않고 살랑살랑 떠 있는다
@@ -546,7 +564,7 @@ class _GardenSceneState extends State<GardenScene>
 
     if (game.visitorVisible) {
       final p = px(_visitorX, Garden.areaAt(widget.area).walk.first.y1 - 0.04);
-      final sz = unit * 0.17;
+      final sz = unit * 0.15;
       final bounce = sin(_t * 6).abs() * sz * 0.1;
       layers.add((
         y: p.dy, // 발 위치
@@ -597,7 +615,7 @@ class _GardenSceneState extends State<GardenScene>
   ({Offset c, double w}) _slotGeom(AreaDef area, int i, Size s) {
     final unit = min(s.width, s.height * 1.6);
     final d = area.decor[i];
-    final sz = unit * 0.21;
+    final sz = unit * 0.18;
     // 장식 그림의 바닥 (월드 정렬 기준과 같은 높이)
     final w = sz * 0.95 * widget.markerScale;
     // 캔버스 아래 끝에 걸린 자리는 표가 잘리지 않게 안쪽으로 올린다
@@ -671,6 +689,93 @@ class _GardenSceneState extends State<GardenScene>
     ];
   }
 
+  // ---------------------------------------------------------------- 부탁 말풍선
+
+  List<Widget> _orderLayer(Size s, Rect visible) {
+    final unit = min(s.width, s.height * 1.6);
+    final sz = unit * 0.15;
+    final bw = max(66.0, unit * 0.19);
+    final bh = bw * 0.6;
+    // 1) 친구 머리 위 자리
+    final items = <({int i, double fx, double cx, double top})>[];
+    for (var i = 0; i < game.orders.length; i++) {
+      final wk = _walkers[game.orders[i].friendId];
+      if (wk == null) continue;
+      final p = Offset(wk.pos.dx * s.width, wk.pos.dy * s.height);
+      items.add((
+        i: i,
+        fx: p.dx,
+        cx: p.dx,
+        top: (p.dy - sz - bh - 2).clamp(
+          visible.top + widget.orderTopInset + 2,
+          visible.bottom - bh,
+        ),
+      ));
+    }
+    // 2) 겹치면 옆으로 비킨다 (같은 높이대끼리), 화면 밖이면 안으로
+    items.sort((a, b) => a.cx.compareTo(b.cx));
+    final lo = visible.left + bw / 2 + 2, hi = visible.right - bw / 2 - 2;
+    final cx = [for (final it in items) it.cx.clamp(lo, hi).toDouble()];
+    final top = [for (final it in items) it.top.toDouble()];
+    for (var k = 1; k < cx.length; k++) {
+      for (var j = 0; j < k; j++) {
+        if ((top[k] - top[j]).abs() < bh + 4 &&
+            (cx[k] - cx[j]).abs() < bw + 4) {
+          cx[k] = cx[j] + bw + 4;
+        }
+      }
+    }
+    for (var k = cx.length - 1; k >= 0; k--) {
+      if (cx[k] > hi) cx[k] = hi;
+      if (k + 1 < cx.length &&
+          (top[k + 1] - top[k]).abs() < bh + 4 &&
+          cx[k + 1] - cx[k] < bw + 4) {
+        cx[k] = cx[k + 1] - bw - 4;
+      }
+    }
+    // 그래도 폭이 모자라 겹치면 위로 쌓는다
+    for (var k = 1; k < cx.length; k++) {
+      for (var j = 0; j < k; j++) {
+        if ((top[k] - top[j]).abs() < bh + 4 &&
+            (cx[k] - cx[j]).abs() < bw + 4) {
+          top[k] = max(visible.top + widget.orderTopInset + 2, top[j] - bh - 6);
+        }
+      }
+    }
+    final out = <Widget>[];
+    for (var k = 0; k < items.length; k++) {
+      final i = items[k].i;
+      final o = game.orders[i];
+      final ready = game.canDeliver(i);
+      final stars = game.orderGivesStars(o);
+      out.add(
+        Positioned(
+          key: ValueKey('order-$i'),
+          left: cx[k] - bw / 2,
+          top: top[k],
+          width: bw,
+          height: bh * 1.22,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => widget.onOrderTap!(i),
+            child: _OrderBubble(
+              item: Art.item(o.chain, o.level),
+              label: ready
+                  ? tr('order.deliverShort')
+                  : stars
+                  ? '[[star]]${o.stars}'
+                  : '[[coin]]${fmt(game.orderCoins(o))}',
+              ready: ready,
+              dim: !stars && !ready,
+              tailX: (items[k].fx - (cx[k] - bw / 2)) / bw,
+            ),
+          ),
+        ),
+      );
+    }
+    return out;
+  }
+
   // ---------------------------------------------------------------- L3 이펙트
 
   /// [visible] = 캔버스 좌표로 본 실제 화면에 보이는 영역 (창이 캔버스 일부만 보여 줄 때 말풍선이 잘리지 않게).
@@ -680,6 +785,8 @@ class _GardenSceneState extends State<GardenScene>
     for (final e in _walkers.entries) {
       final wk = e.value;
       if (wk.speechLeft <= 0) continue;
+      // 홈 화면 정원 창(부탁 말풍선이 뜨는 곳)에서는 잡담 말풍선을 띄우지 않는다 (크게 보기에서만)
+      if (widget.onOrderTap != null) continue;
       final p = Offset(wk.pos.dx * s.width, wk.pos.dy * s.height);
       out.add(
         Positioned(
@@ -856,7 +963,7 @@ class _Bubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
     decoration: FrameBox.decorationFor(
       'speech',
       BoxDecoration(
@@ -936,8 +1043,8 @@ class _CostTag extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: size * 0.25,
-        vertical: size * 0.08,
+        horizontal: size * 0.4,
+        vertical: size * 0.14,
       ),
       decoration: BoxDecoration(
         color: affordable
@@ -962,4 +1069,140 @@ class _CostTag extends StatelessWidget {
             ),
     );
   }
+}
+
+/// 부탁 말풍선: 아이템 + 별(또는 전달!). 꼬리는 말풍선과 한 몸으로 그린다.
+class _OrderBubble extends StatelessWidget {
+  const _OrderBubble({
+    required this.item,
+    required this.label,
+    required this.ready,
+    required this.dim,
+    required this.tailX,
+  });
+  final ArtRef item;
+  final String label;
+  final bool ready;
+  final bool dim;
+  final double tailX;
+
+  @override
+  Widget build(BuildContext context) {
+    final fill = ready
+        ? const Color(0xFFFFF0B8)
+        : dim
+        ? const Color(0xFFEDE7DA)
+        : const Color(0xFFFFFBF0);
+    final line = ready ? const Color(0xFFE0A21B) : const Color(0xFF7A5230);
+    return CustomPaint(
+      painter: _BubblePainter(
+        fill: fill,
+        line: line,
+        tailX: tailX.clamp(0.18, 0.82),
+        glow: ready,
+      ),
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final h = c.maxHeight / 1.22;
+          return Padding(
+            padding: EdgeInsets.fromLTRB(
+              h * 0.16,
+              h * 0.1,
+              h * 0.3,
+              h * 0.1 + c.maxHeight - h,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ArtImage(item, size: h * 0.74),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: IconText(
+                      label,
+                      iconScale: 1.0,
+                      style: TextStyle(
+                        fontSize: h * 0.44,
+                        height: 1,
+                        color: ready
+                            ? const Color(0xFFB0640A)
+                            : dim
+                            ? const Color(0xFF7A6A52)
+                            : const Color(0xFF4A3A22),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _BubblePainter extends CustomPainter {
+  _BubblePainter({
+    required this.fill,
+    required this.line,
+    required this.tailX,
+    required this.glow,
+  });
+  final Color fill;
+  final Color line;
+  final double tailX;
+  final bool glow;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final h = size.height / 1.22;
+    final r = h * 0.42;
+    final body = RRect.fromLTRBR(
+      1.5,
+      1.5,
+      size.width - 1.5,
+      h,
+      Radius.circular(r),
+    );
+    final tx = size.width * tailX;
+    final tw = h * 0.22;
+    final tail = Path()
+      ..moveTo(tx - tw, h - 1)
+      ..quadraticBezierTo(tx - tw * 0.2, h + tw * 0.4, tx, size.height - 1.5)
+      ..quadraticBezierTo(tx + tw * 0.2, h + tw * 0.4, tx + tw, h - 1)
+      ..close();
+    final shape = Path.combine(
+      PathOperation.union,
+      Path()..addRRect(body),
+      tail,
+    );
+    if (glow) {
+      canvas.drawPath(
+        shape,
+        Paint()
+          ..color = const Color(0x99FFD54A)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 7
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+      );
+    }
+    canvas.drawPath(
+      shape.shift(const Offset(0, 2)),
+      Paint()..color = const Color(0x33000000),
+    );
+    canvas.drawPath(shape, Paint()..color = fill);
+    canvas.drawPath(
+      shape,
+      Paint()
+        ..color = line
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..strokeJoin = StrokeJoin.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_BubblePainter o) =>
+      o.fill != fill || o.line != line || o.tailX != tailX || o.glow != glow;
 }

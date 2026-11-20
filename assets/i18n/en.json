@@ -249,7 +249,7 @@
   "tut.hello": "Hi! I'm Mint.\nLet's merge things and build a garden with our friends!",
   "tut.spawner": "Tap the [[basket]] basket below.\nIt uses [[energy]]{n} to drop a seed. Try it three times!",
   "tut.merge": "Drag two matching items onto each other\nto merge them into the next one!",
-  "tut.orders": "These are your friends' requests.\nA card glows when the item is on the board. Tap it to deliver and earn [[star]] stars!",
+  "tut.orders": "Speech bubbles over friends are requests\nTap the bubble to give the item",
   "tut.decor": "Spend [[star]] stars to decorate the garden.\nDecorations bring new friends!",
   "tut.garden": "Items on the board earn [[coin]] coins by themselves.\nTap the garden to see it up close. Let's go!",
   "tut.next": "Next",
@@ -635,5 +635,12 @@
   "vault.notePass": "Free with the Garden Pass\nor open forever with diamonds",
   "vault.needGems": "Get diamonds",
   "mail.passDaily": "Garden Pass daily diamonds",
-  "boost.seconds": "{n}s"
+  "boost.seconds": "{n}s",
+  "menu.gifts": "Gifts",
+  "order.deliverShort": "Give!",
+  "order.wants": "{name}'s request",
+  "order.wantsNote": "Make it on the board for [[star]]{stars}",
+  "order.changeFree": "Other request ({n} free)",
+  "order.change": "Other request",
+  "ctrl.boost.idle": "Ads · Diamonds"
 }

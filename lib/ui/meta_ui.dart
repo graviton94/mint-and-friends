@@ -316,12 +316,13 @@ class MenuEntry {
 Future<void> showMenuSheet(
   BuildContext context,
   Listenable listen,
-  List<MenuEntry> Function() entries,
-) => showGameSheet(
+  List<MenuEntry> Function() entries, {
+  String? title,
+}) => showGameSheet(
   context,
   listen,
   () => SheetFrame(
-    title: tr('menu.title'),
+    title: title ?? tr('menu.title'),
     child: GridView.count(
       crossAxisCount: 3,
       shrinkWrap: true,

@@ -522,12 +522,46 @@ class GameState extends ChangeNotifier {
 
   /// 오늘 별 부탁이 남은 친구를 먼저 고른다 (다 썼으면 아무나).
   String _pickFriend(List<String> pool) {
-    final left = [
+    // 지금 다른 부탁을 들고 있지 않은 친구 먼저 (정원에서 한 친구 머리 위에 말풍선이 겹치지 않게)
+    final busy = {for (final o in orders) o.friendId};
+    final free = [
       for (final f in pool)
+        if (!busy.contains(f)) f,
+    ];
+    final base = free.isEmpty ? pool : free;
+    final left = [
+      for (final f in base)
         if (starOrdersLeft(f) > 0) f,
     ];
-    final from = left.isEmpty ? pool : left;
+    final from = left.isEmpty ? base : left;
     return from[_rng.nextInt(from.length)];
+  }
+
+  /// 보관함 창은 없어지고 판 맨 아랫줄 보관 칸으로 합쳐졌다 (D-017).
+  /// 보관함에 있던 아이템은 판 빈칸으로 꺼내고, 코인으로 산 보관함 칸 수만큼 보관 칸을 무료로 연다.
+  void _migrateStorage() {
+    final bought = storage.length - Storage.startSlots;
+    if (bought > 0) {
+      var n = bought;
+      for (final c in [32, 33, 34, 35, 30, 31]) {
+        if (n <= 0) break;
+        if (vaultOwned.add(c)) n--;
+      }
+    }
+    final keep = <Item?>[];
+    for (final it in storage) {
+      if (it == null) continue;
+      final cell = _emptyCell;
+      if (cell == null) {
+        keep.add(it); // 판이 가득하면 다음에 다시
+      } else {
+        board[cell] = it;
+      }
+    }
+    storage = [
+      ...keep,
+      ...List<Item?>.filled(max(0, Storage.startSlots - keep.length), null),
+    ];
   }
 
   // ---------------------------------------------------------------- 부탁 하루 한도
@@ -1875,6 +1909,7 @@ class GameState extends ChangeNotifier {
       for (final c in (j['vault'] as List? ?? [])) (c as num).toInt(),
     };
     _passDay = j['passDay'] as String? ?? '';
+    _migrateStorage();
     coinBagReadyAt = ts('bag');
     lastSeen = ts('seen') ?? now;
     nextVisitorAt = ts('visitorNext') ?? now.add(GameConfig.visitorMinGap);

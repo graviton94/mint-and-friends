@@ -54,7 +54,7 @@ void main() {
     expect(g.store(cell), isTrue);
   });
 
-  test('보관함은 저장 후 불러와도 유지된다', () {
+  test('예전 보관함은 불러올 때 판으로 꺼내고, 산 칸 수만큼 보관 칸을 무료로 연다 (D-017)', () {
     final g = fresh();
     g.coins = 1e9;
     g.buyStorageSlot();
@@ -62,8 +62,12 @@ void main() {
     final it = g.board[cell]!;
     g.store(cell);
     final h = GameState()..load(g.encode());
-    expect(h.storage.length, Storage.startSlots + 1);
-    expect(h.storage[0]!.chain, it.chain);
-    expect(h.storage[0]!.level, it.level);
+    expect(h.storageUsed, 0);
+    expect(h.storage.length, Storage.startSlots);
+    expect(h.vaultOwned.length, 1);
+    expect(
+      h.board.any((x) => x != null && x.id == it.id && x.level == it.level),
+      isTrue,
+    );
   });
 }

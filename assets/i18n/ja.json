@@ -249,7 +249,7 @@
   "tut.hello": "こんにちは! わたしはミント。\nアイテムを合体させて、みんなでお庭を作ろう!",
   "tut.spawner": "下の[[basket]]かごをタップしてね。\n[[energy]]{n}でタネがひとつ出るよ。3回やってみよう!",
   "tut.merge": "同じ絵を2つドラッグして重ねると\n次のアイテムに合体するよ!",
-  "tut.orders": "友だちのお願いだよ。\nアイテムが盤面にあるとカードが光るよ。タップで届けて[[star]]星をもらおう!",
+  "tut.orders": "友だちの頭の上のふきだしがお願いです\nアイテムができたらふきだしをタップ",
   "tut.decor": "集めた[[star]]星でお庭を飾れるよ。\n飾ると新しい友だちが遊びに来るよ!",
   "tut.garden": "盤面のアイテムは置いておくだけで[[coin]]コインを稼ぐよ。\nお庭をタップすると大きく見られるよ。さあ始めよう!",
   "tut.next": "次へ",
@@ -635,5 +635,12 @@
   "vault.notePass": "ガーデンパスならすぐ使える\nダイヤで開けるとずっと使える",
   "vault.needGems": "ダイヤを買う",
   "mail.passDaily": "ガーデンパス 今日のダイヤ",
-  "boost.seconds": "{n}秒"
+  "boost.seconds": "{n}秒",
+  "menu.gifts": "プレゼント",
+  "order.deliverShort": "渡す!",
+  "order.wants": "{name}のお願い",
+  "order.wantsNote": "ボードで作ると[[star]]{stars}",
+  "order.changeFree": "別のお願い (無料{n})",
+  "order.change": "別のお願い",
+  "ctrl.boost.idle": "広告 · ダイヤ"
 }
