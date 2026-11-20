@@ -477,7 +477,13 @@ class Friends {
     FriendDef('mochi', '🐼', FriendBuff.income, 0.05),
     FriendDef('danpung', '🦊', FriendBuff.starBonus, 0.03),
     FriendDef('kongtteok', '🐹', FriendBuff.autoMerge, 0.04),
+    // 5 · 6구역 친구 (그림이 들어오면 그 구역과 함께 열린다)
+    FriendDef('bogeul', '🦦', FriendBuff.orderCoins, 0.08),
+    FriendDef('pposong', '🐧', FriendBuff.energyRegen, 0.03),
   ];
+
+  /// 처음부터 있던 친구 (그림 걱정 없이 도감에 보인다).
+  static const int coreCount = 8;
 
   static FriendDef byId(String id) => all.firstWhere((f) => f.id == id);
 
@@ -594,12 +600,45 @@ class Garden {
       DecorDef('little_castle', '🏰', 0.66, 0.80, bringsFriend: 'kongtteok'),
       DecorDef('fireworks', '🎆', 0.90, 0.88),
     ]),
+    // 5 · 6구역: 배경 · 장식 · 친구 그림이 모두 들어와야 열린다 (그 전에는 1~4구역 순환)
+    AreaDef('seaside', '🏖️', 0xFFBDE8F5, 0xFFF3E3B8, [
+      DecorDef('beach_hut', '🛖', 0.12, 0.44),
+      DecorDef('parasol', '⛱️', 0.36, 0.42),
+      DecorDef('lighthouse', '🗼', 0.86, 0.40),
+      DecorDef('sandcastle', '🏰', 0.58, 0.58, bringsFriend: 'bogeul'),
+      DecorDef('deck_chair', '🪑', 0.12, 0.80),
+      DecorDef('shell_fountain', '🐚', 0.36, 0.74),
+      DecorDef('surf_rack', '🏄', 0.88, 0.66),
+      DecorDef('seagull_post', '🪵', 0.66, 0.90),
+    ]),
+    AreaDef('snow_village', '❄️', 0xFFDDE9F5, 0xFFF4F7FA, [
+      DecorDef('chimney_cottage', '🏠', 0.12, 0.42),
+      DecorDef('winter_tree', '🎄', 0.36, 0.44),
+      DecorDef('snowman', '⛄', 0.62, 0.46),
+      DecorDef('igloo', '🛖', 0.88, 0.50),
+      DecorDef('sled', '🛷', 0.16, 0.78),
+      DecorDef('cocoa_stand', '☕', 0.42, 0.72),
+      DecorDef('ice_rink', '⛸️', 0.68, 0.80, bringsFriend: 'pposong'),
+      DecorDef('snow_lantern', '🏮', 0.90, 0.90),
+    ]),
+  ];
+
+  static const int coreAreas = 4;
+
+  /// 구역 그림이 준비됐는지 (Art.init 이 바꿔 낀다). 기본: 1~4구역만.
+  static bool Function(AreaDef a) ready = (a) => areas.indexOf(a) < coreAreas;
+
+  /// 지금 열 수 있는 구역들 (순환은 이 목록 기준).
+  static List<AreaDef> get live => [
+    for (final a in areas)
+      if (ready(a)) a,
   ];
 
   /// 정해진 구역 이후로는 순환하며 무한 진행 (새 친구 없음).
   static AreaDef areaAt(int index) {
-    final base = areas[index % areas.length];
-    if (index < areas.length) return base;
+    final list = live;
+    final base = list[index % list.length];
+    if (index < list.length) return base;
     final decor = [
       for (final d in base.decor) DecorDef(d.id, d.emoji, d.x, d.y),
     ];
@@ -609,7 +648,7 @@ class Garden {
       base.sky,
       base.ground,
       decor,
-      round: index ~/ areas.length + 1,
+      round: index ~/ list.length + 1,
       walk: base.walk,
       water: base.water,
     );

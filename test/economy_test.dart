@@ -218,4 +218,19 @@ void main() {
     expect(g.coins, greaterThan(c0)); // 최고 단계 합치기 = 코인 보상
     expect(g.board[cells[1]], isNull);
   });
+
+  test('5 · 6구역: 그림이 없으면 1~4구역 순환, 그림이 들어오면 바닷가 · 눈꽃 마을이 열린다', () {
+    expect(Garden.live.length, Garden.coreAreas);
+    expect(Garden.areaAt(4).id, 'yard');
+    final keep = Garden.ready;
+    Garden.ready = (_) => true;
+    addTearDown(() => Garden.ready = keep);
+    expect(Garden.areaAt(4).id, 'seaside');
+    expect(Garden.areaAt(5).id, 'snow_village');
+    expect(Garden.areaAt(6).id, 'yard');
+    expect(
+      Garden.areaAt(4).decor.any((d) => d.bringsFriend == 'bogeul'),
+      isTrue,
+    );
+  });
 }

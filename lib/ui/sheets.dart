@@ -366,7 +366,9 @@ Future<void> showCollectionSheet(
           mainAxisSpacing: 8,
           crossAxisSpacing: 8,
           children: [
-            for (final f in Friends.all) _FriendCard(game: game, def: f),
+            for (final (i, f) in Friends.all.indexed)
+              if (i < Friends.coreCount || Art.friend(f).available)
+                _FriendCard(game: game, def: f),
           ],
         ),
         const SizedBox(height: 14),

@@ -41,6 +41,16 @@ class Art {
     } catch (_) {
       _available = {};
     }
+    // 새 구역은 배경 · 장식 · 데려오는 친구 그림이 모두 들어와야 연다
+    Garden.ready = (a) =>
+        Garden.areas.indexOf(a) < Garden.coreAreas ||
+        (areaBackground(a).available &&
+            a.decor.every((d) => decor(d).available) &&
+            a.decor.every(
+              (d) =>
+                  d.bringsFriend == null ||
+                  friend(Friends.byId(d.bringsFriend!)).available,
+            ));
     // 새 체인은 단계 그림이 모두 들어와야 연다 (꽃 · 간식은 언제나)
     Chains.ready = (c) =>
         c == Chain.flower ||
