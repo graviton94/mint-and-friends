@@ -264,8 +264,11 @@ class _GardenSceneState extends State<GardenScene>
       w.pauseLeft = 10 + _rng.nextDouble() * 8;
       w.pose = 'sleep';
       w.poseLeft = w.pauseLeft;
-      w.say = 'Zzz…';
-      w.speechLeft = 2.5;
+      // 졸기 그림에 Zzz 가 그려져 있으면 말풍선은 띄우지 않는다
+      if (Art.friendPose(Friends.byId(a), 'sleep') == null) {
+        w.say = 'Zzz…';
+        w.speechLeft = 2.5;
+      }
       return;
     }
     if (r < 0.35) {

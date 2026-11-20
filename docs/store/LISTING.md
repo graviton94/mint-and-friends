@@ -147,9 +147,9 @@ Free to play with optional in-app purchases (diamonds, ad removal) and rewarded 
 
 ## Play Console 출시 체크리스트 (사용자)
 1. **인앱 상품 (관리형, 소모성):** `gems_60` ₩1,200 · `gems_330` ₩5,900 · `gems_700` ₩12,000 · `gems_1800` ₩29,000 · `gems_3800` ₩59,000
-2. **구독:** `remove_ads_1m` — 가격은 D-015 결정 후
+2. **구독:** `remove_ads_1m` 월 ₩4,900 (D-015)
 3. **앱 콘텐츠:** 개인정보처리방침 URL · 데이터 보안 · 계정 삭제 URL · 콘텐츠 등급 · 타깃 연령 · 광고 포함 · 정부 앱 아님 · 금융 기능 없음
 4. **스토어 등록정보:** 위 문구 + 아이콘(512) + 그래픽 이미지(1024×500) + 휴대전화 스크린샷 4~8장 (출시 전 제작)
 5. **테스트 트랙:** 비공개 테스트 12명 이상 · 14일 (개인 개발자 계정 정책) → 프로덕션
 6. **Firebase:** 원격 구성에 `Tuning.defaults` 8개 키 등록(값 그대로) — 이후 콘솔에서 조정
-7. **GitHub Pages:** graviton94.github.io 저장소의 `ccr-dfef2a86-bm7r83` 브랜치를 main 에 병합해 개인정보처리방침을 게시
+7. **GitHub Pages:** 개인정보처리방침 게시 완료
