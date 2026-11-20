@@ -492,5 +492,14 @@
   "energy.gems": "[[energy]]+{n} · [[diamond]] {cost}",
   "bubble.title": "[[bubble]] シャボン玉",
   "bubble.note": "アイテムは盤面に残ります",
-  "bubble.ad": "広告を見て取り出す"
+  "bubble.ad": "広告を見て取り出す",
+  "checkIn.title": "[[calendar]] ログインギフト",
+  "checkIn.note": "毎日来るとプレゼント。休んだ日があっても続きから受け取れます",
+  "checkIn.day": "{n}日目",
+  "checkIn.claim": "今日のプレゼントを受け取る",
+  "checkIn.done": "また明日ね",
+  "menu.checkIn": "ログイン",
+  "market.title": "今日のマーケット",
+  "market.level": "Lv{n} · 毎日入れ替わります",
+  "market.sold": "売り切れ"
 }

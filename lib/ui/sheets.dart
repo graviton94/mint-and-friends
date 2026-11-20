@@ -524,6 +524,12 @@ Future<void> showShopSheet(
           ),
         ),
         const SizedBox(height: 12),
+        if (game.dailyShopOpen) ...[
+          _ShopHeader(tr('market.title')),
+          for (var i = 0; i < game.offers.length; i++)
+            _OfferRow(game: game, index: i),
+          const SizedBox(height: 12),
+        ],
         _ShopHeader(tr('shop.gems')),
         for (var i = 0; i < Gems.packs.length; i++)
           _GemPackRow(billing: billing, pack: Gems.packs[i], index: i),
@@ -575,6 +581,35 @@ Future<void> showShopSheet(
     ),
   ),
 );
+
+class _OfferRow extends StatelessWidget {
+  const _OfferRow({required this.game, required this.index});
+  final GameState game;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final o = game.offers[index];
+    return _ShopRow(
+      icon: Art.item(o.chain, o.level),
+      title: itemName(Chains.item(o.chain, o.level)),
+      note: tr('market.level', {'n': o.level}),
+      button: o.sold ? tr('market.sold') : '[[coin]] ${fmtInt(o.price)}',
+      enabled: !o.sold && game.coins >= o.price,
+      onTap: () {
+        switch (game.buyOffer(index)) {
+          case BuyResult.ok:
+            sfx(Sfx.coin);
+          case BuyResult.noSpace:
+            ScaffoldMessenger.maybeOf(context)
+                ?.showSnackBar(SnackBar(content: Text(tr('toast.boardFull'))));
+          default:
+            break;
+        }
+      },
+    );
+  }
+}
 
 class _ShopHeader extends StatelessWidget {
   const _ShopHeader(this.text);

@@ -492,5 +492,14 @@
   "energy.gems": "[[energy]]+{n} · [[diamond]] {cost}",
   "bubble.title": "[[bubble]] Bubble",
   "bubble.note": "The item stays on your board",
-  "bubble.ad": "Watch an ad"
+  "bubble.ad": "Watch an ad",
+  "checkIn.title": "[[calendar]] Daily gifts",
+  "checkIn.note": "Drop by every day for a gift. Missed a day? You just keep going",
+  "checkIn.day": "Day {n}",
+  "checkIn.claim": "Claim today's gift",
+  "checkIn.done": "See you tomorrow",
+  "menu.checkIn": "Check-in",
+  "market.title": "Today's market",
+  "market.level": "Lv{n} · New stock every day",
+  "market.sold": "Sold"
 }

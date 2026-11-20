@@ -24,6 +24,7 @@ import 'ui/theme.dart';
 import 'ui/widgets/icon_text.dart';
 import 'ui/widgets/frame_box.dart';
 import 'services/analytics_service.dart';
+import 'services/remote_tuning.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +35,11 @@ Future<void> main() async {
 
   final auth = AuthService();
   await auth.init();
+  // 경제 변수 원격 조정 (오래 걸리면 기본값으로 시작)
+  await RemoteTuning.load().timeout(
+    const Duration(seconds: 3),
+    onTimeout: () {},
+  );
   await AudioService.instance.init();
 
   final save = SaveService(prefs);

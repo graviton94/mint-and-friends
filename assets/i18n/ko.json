@@ -493,5 +493,14 @@
   "energy.gems": "[[energy]]+{n} · [[diamond]] {cost}",
   "bubble.title": "[[bubble]] 비눗방울",
   "bubble.note": "꺼내면 판에 그대로 남아요",
-  "bubble.ad": "광고 보고 꺼내기"
+  "bubble.ad": "광고 보고 꺼내기",
+  "checkIn.title": "[[calendar]] 출석 선물",
+  "checkIn.note": "매일 들르면 선물을 받아요. 빠진 날이 있어도 이어서 받아요",
+  "checkIn.day": "{n}일째",
+  "checkIn.claim": "오늘 선물 받기",
+  "checkIn.done": "내일 또 만나요",
+  "menu.checkIn": "출석",
+  "market.title": "오늘의 시장",
+  "market.level": "Lv{n} · 매일 새로 들어와요",
+  "market.sold": "팔림"
 }

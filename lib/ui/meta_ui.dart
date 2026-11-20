@@ -357,3 +357,111 @@ Future<void> showMenuSheet(
 
 // 레벨 등 표시용 (사용하지 않으면 지워도 됨)
 int get achievementGoalCount => Achievements.totalGoals;
+
+// ---------------------------------------------------------------- 출석
+
+/// 7일 출석판: 받은 날 · 오늘 · 남은 날. 빠진 날이 있어도 이어서 받는다.
+Future<void> showCheckInSheet(BuildContext context, GameState game) =>
+    showGameSheet(
+      context,
+      game,
+      () => SheetFrame(
+        title: tr('checkIn.title'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            IconText(
+              tr('checkIn.note'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: Colors.black54),
+            ),
+            const SizedBox(height: 12),
+            LayoutBuilder(
+              builder: (context, c) {
+                final w = (c.maxWidth - 3 * 8) / 4;
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: [
+                    for (var d = 0; d < CheckIn.days; d++)
+                      SizedBox(
+                        width: d == CheckIn.days - 1 ? w * 2 + 8 : w,
+                        child: _CheckInTile(game: game, day: d),
+                      ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 14),
+            FilledButton(
+              style: framedButton(
+                FilledButton.styleFrom(minimumSize: const Size(160, 52)),
+                'button_green',
+              ),
+              onPressed: game.checkInReady
+                  ? () {
+                      sfx(Sfx.coin);
+                      game.claimCheckIn();
+                    }
+                  : null,
+              child: IconText(
+                game.checkInReady ? tr('checkIn.claim') : tr('checkIn.done'),
+                style: const TextStyle(fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+class _CheckInTile extends StatelessWidget {
+  const _CheckInTile({required this.game, required this.day});
+  final GameState game;
+  final int day;
+
+  @override
+  Widget build(BuildContext context) {
+    final next = game.checkInToday; // 다음에 받을 칸
+    // 오늘 7일째를 받아 한 바퀴를 돌았으면(next 0) 오늘은 모두 받은 것으로 보인다
+    final claimed = game.checkInReady ? day < next : (next == 0 || day < next);
+    final isToday = game.checkInReady && day == next;
+    final r = game.checkInReward(day);
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      decoration: BoxDecoration(
+        color: isToday
+            ? const Color(0xFFFFF3C4)
+            : claimed
+            ? const Color(0xFFE6F2E0)
+            : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isToday ? const Color(0xFFE0A100) : const Color(0xFFE2D3B5),
+          width: isToday ? 2.5 : 1.5,
+        ),
+      ),
+      child: Column(
+        children: [
+          Text(
+            tr('checkIn.day', {'n': day + 1}),
+            style: const TextStyle(fontSize: 13, color: Color(0xFF6B5638)),
+          ),
+          const SizedBox(height: 4),
+          Opacity(
+            opacity: claimed ? 0.45 : 1,
+            child: IconText(
+              rewardText(r),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15),
+            ),
+          ),
+          if (claimed)
+            ArtImage(Art.icon('check'), size: 18)
+          else
+            const SizedBox(height: 18),
+        ],
+      ),
+    );
+  }
+}

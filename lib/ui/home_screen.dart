@@ -21,6 +21,7 @@ import 'orders_bar.dart';
 import 'sheets.dart';
 import 'theme.dart';
 import 'tutorial.dart';
+import '../game/tuning.dart';
 import '../services/analytics_service.dart';
 import 'widgets/icon_text.dart';
 import 'widgets/frame_box.dart';
@@ -439,7 +440,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               if (canAd)
                 _DialogAdButton(
-                  label: tr('energy.watch', {'n': GameConfig.energyAdAmount}),
+                  label: tr('energy.watch', {'n': Tuning.energyAdAmount}),
                   sub: tr('energy.left', {'n': game.adsLeft(AdKind.energy)}),
                   adFree: adFree,
                   onTap: () => Navigator.pop(ctx, true),
@@ -687,6 +688,12 @@ class _HomeScreenState extends State<HomeScreen> {
     if (step == 0 && (game.level >= 3 || game.totalMerges > 20))
       step = _tutDone;
     if (mounted) setState(() => _tut = step);
+    // 하루 첫 접속: 튜토리얼이 끝난 플레이어에게 출석판을 띄운다
+    if (step == _tutDone && game.level >= 2 && game.checkInReady) {
+      Future.delayed(const Duration(milliseconds: 1200), () {
+        if (mounted && game.checkInReady) showCheckInSheet(context, game);
+      });
+    }
     // 레이아웃이 끝난 뒤 위치를 다시 잰다
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() {});
@@ -1006,7 +1013,10 @@ class _HomeScreenState extends State<HomeScreen> {
           _IconButton(
             icon: 'menu',
             fallback: Icons.menu_rounded,
-            badge: game.claimableAchievements > 0 || widget.socialBadge()
+            badge:
+                game.claimableAchievements > 0 ||
+                    game.checkInReady ||
+                    widget.socialBadge()
                 ? -1
                 : 0,
             onTap: _openMenu,
@@ -1359,6 +1369,13 @@ class _HomeScreenState extends State<HomeScreen> {
             badge: widget.socialBadge() ? -1 : 0,
             fallback: Icons.people_alt_rounded,
           ),
+        MenuEntry(
+          'calendar',
+          tr('menu.checkIn'),
+          () => showCheckInSheet(context, game),
+          badge: game.checkInReady ? -1 : 0,
+          fallback: Icons.event_available_rounded,
+        ),
         MenuEntry(
           'letter',
           tr('menu.mail'),

@@ -1,5 +1,8 @@
 import 'dart:math';
 
+import 'meta.dart' show Reward;
+import 'tuning.dart';
+
 /// 밸런스와 콘텐츠 상수. 숫자 튜닝은 대부분 이 파일에서 한다.
 /// 화면에 보이는 이름·문구는 여기 두지 않는다. id 를 키로 assets/i18n/*.json 에서 찾는다.
 /// 이모지는 아트가 들어오기 전까지 쓰는 임시 그림이다 (ArtRegistry 참고).
@@ -91,8 +94,7 @@ class GameConfig {
   static const double visitorAdMultiplier = 3; // 광고 보고 받기
   static const int visitorAdStars = 5;
 
-  /// 구조 부탁(판에 막힌 고단계 아이템을 원하는 부탁) 확률과 최소 간격.
-  static const double rescueOrderChance = 0.25;
+  /// 구조 부탁(판에 막힌 고단계 아이템을 원하는 부탁) 최소 간격. 확률은 Tuning.rescueChance.
   static const Duration rescueOrderGap = Duration(minutes: 10);
 
   // ---- 에너지 (장르: 상한 100 · 2분에 1. 캐주얼 3~4회 접속에 맞춰 2분 30초로 조금 느리게)
@@ -402,7 +404,7 @@ class Upgrades {
   /// 에너지 1 회복 간격(초). 아이템은 바구니 탭(에너지 1)으로만 나온다 (머지 장르 표준:
   /// Merge Mansion · Travel Town 모두 생산은 에너지, 방치 요소는 수익·자동 합치기).
   static double energyRegenSeconds(int lv) =>
-      max(90.0, GameConfig.energyRegenSeconds * pow(0.98, lv).toDouble());
+      max(60.0, Tuning.energyRegenSeconds * pow(0.98, lv).toDouble());
 
   /// 방치 수익 배율: 단계마다 +5% (최대 20단계 = ×2). 크게 키우면 방치 수익이 부탁 수입을 압도한다.
   static double incomeMultiplier(int lv) => 1 + 0.05 * lv;
@@ -595,9 +597,12 @@ class Garden {
   /// 구역 하나를 다 꾸미는 데 드는 별 (하루 에너지 약 480 → 별 약 120 기준).
   /// 1구역 첫 15~20분, 2구역 1~2일차, 3구역 4~5일차, 4구역 10일차, 5구역 20일차, 6구역 한 달.
   static const List<int> _areaStars = [24, 160, 480, 1150, 2350, 4200];
-  static int areaStars(int area) => area < _areaStars.length
-      ? _areaStars[area]
-      : (_areaStars.last * pow(1.6, area - _areaStars.length + 1)).round();
+  static int areaStars(int area) =>
+      ((area < _areaStars.length
+                  ? _areaStars[area]
+                  : _areaStars.last * pow(1.6, area - _areaStars.length + 1)) *
+              Tuning.areaStarScale)
+          .round();
 
   /// 부탁 1건의 별 보상: 에너지 10 이하(≤4단계) 1, 30 이하(5단계) 2, 그 이상 3.
   static int orderStars(int level) => level <= 3
@@ -635,8 +640,39 @@ class Gems {
 
   /// 에너지 충전: 하루 안에 다시 살수록 비싸진다 (40 → 60 → 80 … 최대 120).
   static const int refillEnergy = 100;
-  static int refillCost(int boughtToday) => min(120, 40 + 20 * boughtToday);
+  static int refillCost(int boughtToday) => min(
+    Tuning.refillMax,
+    Tuning.refillBase + Tuning.refillStep * boughtToday,
+  );
 
   /// 비눗방울 바로 열기: 남은 20초마다 1개, 최소 2개.
   static int bubbleCost(Duration left) => max(2, (left.inSeconds / 20).ceil());
+}
+
+// ------------------------------------------------------------------ 출석 · 오늘의 시장
+
+/// 7일 출석: 빠진 날이 있어도 처음으로 돌아가지 않고 이어서 받는다 (힐링 장르 관례).
+/// 한 주 무료 다이아 35개 = 하루 5개 (바이블 §6.1 목표 5~10).
+class CheckIn {
+  static const int days = 7;
+  static Reward reward(int day, int level) => switch (day) {
+    0 => const Reward(energy: 20),
+    1 => Reward(coins: 40 + 20 * level),
+    2 => const Reward(gems: 5),
+    3 => const Reward(energy: 40),
+    4 => Reward(coins: 2 * (40 + 20 * level)),
+    5 => const Reward(gems: 10),
+    _ => const Reward(gems: 20, energy: 50),
+  };
+}
+
+/// 오늘의 시장: 하루 4칸, 낮은 단계 아이템을 코인으로 (후반 코인 소모처 · 외부 보고서 채택).
+class DailyShop {
+  static const int unlockLevel = 4;
+  static const int slots = 4;
+
+  /// 가격: 아이템 에너지값 × (10 + 2·레벨) — 레벨이 오를수록 코인 가치 하락을 따라간다.
+  static int price(int itemLevel, int playerLevel) =>
+      (pow(2, itemLevel - 1) * (Tuning.marketPriceBase + 2 * playerLevel))
+          .round();
 }

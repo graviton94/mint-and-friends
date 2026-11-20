@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 
 import 'config.dart';
+import 'tuning.dart';
 import 'meta.dart';
 
 export 'meta.dart';
@@ -64,6 +65,30 @@ class Order {
     j['s'] as int,
   );
 }
+
+/// 오늘의 시장 한 칸.
+class ShopOffer {
+  final Chain chain;
+  final int level;
+  final int price;
+  bool sold;
+  ShopOffer(this.chain, this.level, this.price, {this.sold = false});
+
+  Map<String, dynamic> toJson() => {
+    'c': chain.index,
+    'l': level,
+    'p': price,
+    if (sold) 's': true,
+  };
+  static ShopOffer fromJson(Map<String, dynamic> j) => ShopOffer(
+    Chain.values[(j['c'] as num).toInt()],
+    (j['l'] as num).toInt(),
+    (j['p'] as num).toInt(),
+    sold: j['s'] == true,
+  );
+}
+
+enum BuyResult { ok, noCoins, noSpace, sold }
 
 class _Sale {
   final int cell;
@@ -222,6 +247,14 @@ class GameState extends ChangeNotifier {
   final Map<String, int> achClaimed = {};
   List<Mail> mail = [];
   DateTime? nextFriendGiftAt;
+
+  /// 7일 출석: 이번 주기에서 받은 날 수(0~6) · 마지막으로 받은 날.
+  int checkInCount = 0;
+  String _checkInDay = '';
+
+  /// 오늘의 시장 (날이 바뀌면 새로 차린다).
+  List<ShopOffer> _offers = [];
+  String _offersDay = '';
 
   /// 다이아 (하드 통화) · 오늘 다이아로 에너지를 산 횟수.
   int gems = 0;
@@ -486,7 +519,7 @@ class GameState extends ChangeNotifier {
   }
 
   void grantEnergyAd() {
-    energy += GameConfig.energyAdAmount; // 상한을 넘어도 된다 (Travel Town 방식)
+    energy += Tuning.energyAdAmount; // 상한을 넘어도 된다 (Travel Town 방식)
     notifyListeners();
   }
 
@@ -795,7 +828,7 @@ class GameState extends ChangeNotifier {
     if (stuck != null &&
         (_lastRescue == null ||
             now.difference(_lastRescue!) >= GameConfig.rescueOrderGap) &&
-        _rng.nextDouble() < GameConfig.rescueOrderChance) {
+        _rng.nextDouble() < Tuning.rescueChance) {
       _lastRescue = now;
       return Order(
         _nextId++,
@@ -1007,6 +1040,58 @@ class GameState extends ChangeNotifier {
     energy += r.energy; // 상한을 넘어도 된다
     stars += r.stars;
     gems += r.gems;
+  }
+
+  // ---------------------------------------------------------------- 출석
+
+  bool get checkInReady => _checkInDay != _dayKey(now);
+  int get checkInToday => checkInCount % CheckIn.days;
+  Reward checkInReward(int day) => CheckIn.reward(day, level);
+
+  Reward? claimCheckIn() {
+    if (!checkInReady) return null;
+    final r = checkInReward(checkInToday);
+    _checkInDay = _dayKey(now);
+    checkInCount = (checkInCount + 1) % CheckIn.days;
+    _applyReward(r);
+    notifyListeners();
+    return r;
+  }
+
+  // ---------------------------------------------------------------- 오늘의 시장
+
+  bool get dailyShopOpen => level >= DailyShop.unlockLevel;
+
+  List<ShopOffer> get offers {
+    final k = _dayKey(now);
+    if (k != _offersDay) {
+      _offersDay = k;
+      final chains = availableChains;
+      final top = min(4, max(2, level ~/ 3 + 1));
+      _offers = [
+        for (var i = 0; i < DailyShop.slots; i++)
+          () {
+            final c = chains[_rng.nextInt(chains.length)];
+            final l = 1 + _rng.nextInt(top);
+            return ShopOffer(c, l, DailyShop.price(l, level));
+          }(),
+      ]..sort((a, b) => a.level.compareTo(b.level));
+    }
+    return _offers;
+  }
+
+  BuyResult buyOffer(int i) {
+    final o = offers[i];
+    if (o.sold) return BuyResult.sold;
+    if (coins < o.price) return BuyResult.noCoins;
+    final cell = _emptyCell;
+    if (cell == null) return BuyResult.noSpace;
+    coins -= o.price;
+    o.sold = true;
+    board[cell] = Item(_nextId++, o.chain, o.level);
+    _bump(Stat.shopBuys);
+    notifyListeners();
+    return BuyResult.ok;
   }
 
   // ---------------------------------------------------------------- 다이아
@@ -1257,6 +1342,10 @@ class GameState extends ChangeNotifier {
       'coins': coins,
       'stars': stars,
       'gems': gems,
+      'checkIn': checkInCount,
+      'checkInDay': _checkInDay,
+      'offers': [for (final o in _offers) o.toJson()],
+      'offersDay': _offersDay,
       'gemRefills': _gemRefillsToday,
       'econ': econVersion,
       'life': lifetimeCoins,
@@ -1310,6 +1399,13 @@ class GameState extends ChangeNotifier {
     stars = (j['stars'] as num?)?.toInt() ?? 0;
     if (econ < econVersion) stars *= 4;
     gems = (j['gems'] as num?)?.toInt() ?? 0;
+    checkInCount = (j['checkIn'] as num?)?.toInt() ?? 0;
+    _checkInDay = j['checkInDay'] as String? ?? '';
+    _offers = [
+      for (final o in (j['offers'] as List? ?? []))
+        ShopOffer.fromJson((o as Map).cast<String, dynamic>()),
+    ];
+    _offersDay = j['offersDay'] as String? ?? '';
     _gemRefillsToday = (j['gemRefills'] as num?)?.toInt() ?? 0;
     lifetimeCoins = (j['life'] as num?)?.toDouble() ?? coins;
     level = (j['level'] as num?)?.toInt() ?? 1;

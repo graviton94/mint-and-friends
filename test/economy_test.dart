@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mint_and_friends/game/config.dart';
 import 'package:mint_and_friends/game/game_state.dart';
+import 'package:mint_and_friends/game/tuning.dart';
 
 void main() {
   late DateTime now;
@@ -108,5 +109,57 @@ void main() {
     final g2 = make();
     expect(g2.loadJson(g.toJson()), isTrue);
     expect(g2.gems, 330);
+  });
+
+  test('출석: 하루 한 번, 7일 한 바퀴, 빠진 날이 있어도 이어서', () {
+    final g = make();
+    expect(g.checkInReady, isTrue);
+    final e0 = g.energy;
+    expect(g.claimCheckIn()!.energy, 20);
+    expect(g.energy, e0 + 20);
+    expect(g.claimCheckIn(), isNull);
+    now = now.add(const Duration(days: 3)); // 이틀 빠짐
+    expect(g.checkInToday, 1);
+    expect(g.claimCheckIn()!.coins, greaterThan(0));
+    var gems = 0;
+    for (var d = 2; d < CheckIn.days; d++) {
+      now = now.add(const Duration(days: 1));
+      gems += g.claimCheckIn()!.gems;
+    }
+    expect(gems, 35); // 한 주 무료 다이아 = 하루 5개
+    expect(g.checkInToday, 0);
+    final g2 = make();
+    expect(g2.loadJson(g.toJson()), isTrue);
+    expect(g2.checkInReady, isFalse);
+  });
+
+  test('오늘의 시장: Lv4부터, 하루 4칸, 한 번씩, 판에 놓인다, 다음 날 새로', () {
+    final g = make();
+    g.level = 6;
+    expect(g.dailyShopOpen, isTrue);
+    expect(g.offers.length, DailyShop.slots);
+    g.coins = 0;
+    expect(g.buyOffer(0), BuyResult.noCoins);
+    g.coins = 100000;
+    final before = g.board.whereType<Item>().length;
+    expect(g.buyOffer(0), BuyResult.ok);
+    expect(g.board.whereType<Item>().length, before + 1);
+    expect(g.buyOffer(0), BuyResult.sold);
+    final first = g.offers.map((o) => '${o.chain}${o.level}${o.sold}').join();
+    now = now.add(const Duration(days: 1));
+    expect(g.offers.every((o) => !o.sold), isTrue);
+    expect(first, isNotEmpty);
+  });
+
+  test('원격 조정: 범위 안 값만 적용되고 실제 계산에 반영된다', () {
+    expect(Tuning.apply('refill_base', 1000), isFalse);
+    expect(Tuning.apply('unknown', 1), isFalse);
+    expect(Tuning.apply('refill_base', 50), isTrue);
+    expect(Gems.refillCost(0), 50);
+    expect(Tuning.apply('area_star_scale', 2), isTrue);
+    expect(Garden.areaStars(0), 48);
+    Tuning.apply('refill_base', 40);
+    Tuning.apply('area_star_scale', 1);
+    expect(Tuning.defaults.keys.toSet(), Tuning.keys.keys.toSet());
   });
 }
