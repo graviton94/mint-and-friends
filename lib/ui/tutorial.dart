@@ -231,6 +231,7 @@ class _Bubble extends StatelessWidget {
               children: [
                 IconText(
                   text,
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 16,
                     height: 1.4,
@@ -240,6 +241,7 @@ class _Bubble extends StatelessWidget {
                 if (buttonLabel != null || onSkip != null) ...[
                   const SizedBox(height: 8),
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       if (onSkip != null)
                         TextButton(
@@ -252,7 +254,7 @@ class _Bubble extends StatelessWidget {
                             ),
                           ),
                         ),
-                      const Spacer(),
+                      if (onSkip != null) const Spacer(),
                       if (buttonLabel != null)
                         FilledButton(
                           style: framedButton(

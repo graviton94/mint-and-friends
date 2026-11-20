@@ -428,7 +428,8 @@ class _CheckInTile extends StatelessWidget {
     final isToday = game.checkInReady && day == next;
     final r = game.checkInReward(day);
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      height: 96,
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
       decoration: BoxDecoration(
         color: isToday
             ? const Color(0xFFFFF3C4)
@@ -442,6 +443,7 @@ class _CheckInTile extends StatelessWidget {
         ),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             tr('checkIn.day', {'n': day + 1}),
@@ -456,10 +458,10 @@ class _CheckInTile extends StatelessWidget {
               style: const TextStyle(fontSize: 15),
             ),
           ),
-          if (claimed)
-            ArtImage(Art.icon('check'), size: 18)
-          else
-            const SizedBox(height: 18),
+          if (claimed) ...[
+            const SizedBox(height: 2),
+            ArtImage(Art.icon('check'), size: 18),
+          ],
         ],
       ),
     );

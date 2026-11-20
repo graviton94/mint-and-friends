@@ -381,7 +381,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   GlobalKey _tipTarget(String id) => switch (id) {
-    'energyAd' => _kEnergy,
+    'energyAd' => _kSpawner,
     'boost' => _kBoost,
     'coinBag' => _kCoinBag,
     'snack' || 'basket' => _kSpawner,
@@ -733,7 +733,6 @@ class _HomeScreenState extends State<HomeScreen> {
   final _kDecor = GlobalKey();
   final _kGarden = GlobalKey();
   final _kBoost = GlobalKey();
-  final _kEnergy = GlobalKey();
   final _kUpgrade = GlobalKey();
   final _kStorage = GlobalKey();
   final _kCoinBag = GlobalKey();
@@ -1028,18 +1027,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     text: fmt(game.gems.toDouble()),
                     plus: true,
                     onTap: _openShop,
-                  ),
-                  const SizedBox(width: 6),
-                  _Pill(
-                    key: _kEnergy,
-                    icon: Art.icon('energy'),
-                    text: '${game.energy}/${GameConfig.energyCap}',
-                    warn: game.energy == 0,
-                    plus: true,
-                    sub: game.energy >= GameConfig.energyCap
-                        ? null
-                        : fmtDuration(game.energyNextIn),
-                    onTap: _energyDialog,
                   ),
                   if (game.boostActive) ...[
                     const SizedBox(width: 6),
@@ -1499,7 +1486,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(width: 10),
-          _Spawner(key: _kSpawner, game: game, onTap: _onSpawnerTap),
+          _Spawner(
+            key: _kSpawner,
+            game: game,
+            onTap: _onSpawnerTap,
+            onLongPress: _energyDialog,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: _AdButton(
@@ -1603,9 +1595,17 @@ class _XpRingPainter extends CustomPainter {
 }
 
 class _Spawner extends StatelessWidget {
-  const _Spawner({super.key, required this.game, required this.onTap});
+  const _Spawner({
+    super.key,
+    required this.game,
+    required this.onTap,
+    this.onLongPress,
+  });
   final GameState game;
   final VoidCallback onTap;
+
+  /// 길게 누르면 에너지 창 (상단 에너지 칸을 없애고 바구니로 옮김).
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -1624,6 +1624,7 @@ class _Spawner extends StatelessWidget {
         : Art.icon(Chains.basketIcon[game.basket]);
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       onHorizontalDragEnd: (d) {
         final v = d.primaryVelocity ?? 0;
         if (v.abs() > 120) swipe(v < 0 ? 1 : -1);
@@ -1996,14 +1997,12 @@ class _Pill extends StatelessWidget {
     required this.text,
     this.sub,
     this.plus = false,
-    this.warn = false,
     this.onTap,
   });
   final ArtRef icon;
   final String text;
   final String? sub;
   final bool plus;
-  final bool warn;
   final VoidCallback? onTap;
 
   @override
@@ -2032,7 +2031,7 @@ class _Pill extends StatelessWidget {
                   style: TextStyle(
                     fontSize: sub == null ? 19 : 17,
                     height: 1.05,
-                    color: warn ? const Color(0xFFB0640A) : Palette.text,
+                    color: Palette.text,
                   ),
                 ),
                 if (sub != null)
