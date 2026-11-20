@@ -645,5 +645,6 @@
   "ctrl.boost.idle": "広告 · ダイヤ",
   "quota.allDone": "今日のお願いはおしまい! また明日",
   "quota.allTitle": "今日のお願いはおしまい",
-  "quota.allNote": "広告を見ると{name}から\n星のお願いを{n}回もらえる"
+  "quota.allNote": "広告を見ると{name}から\n星のお願いを{n}回もらえる",
+  "shop.bonusX": "{n}倍おトク"
 }

@@ -742,18 +742,20 @@ class GemPack {
   final int krw;
   const GemPack(this.id, this.gems, this.krw);
 
-  /// 가장 작은 팩 대비 보너스 % (한 줌 60개 / ₩1,200 기준).
-  int get bonusPct => (gems / (krw * 60 / 1200) * 100 - 100).round();
+  /// 가장 작은 팩(100개 / ₩1,900) 대비 가치 배율 · 보너스 %.
+  double get valueX => gems / (krw * 100 / 1900);
+  int get bonusPct => (valueX * 100 - 100).round();
 }
 
 /// 바이블 §6: 무료 다이아는 하루 평균 5~10개, 에너지 100 = 다이아 40 (Travel Town 기준).
 class Gems {
   static const List<GemPack> packs = [
-    GemPack('gems_60', 60, 1200),
-    GemPack('gems_330', 330, 5900),
-    GemPack('gems_700', 700, 12000),
-    GemPack('gems_1800', 1800, 29000),
-    GemPack('gems_3800', 3800, 59000),
+    // 캐주얼 장르는 고가 팩을 거의 사지 않으므로, 위 단계로 갈수록 파격적으로 싸게 (가치 1 → 1.4 → 2 → 3 → 3.4배)
+    GemPack('gems_100', 100, 1900),
+    GemPack('gems_430', 430, 5900),
+    GemPack('gems_2000', 2000, 19000),
+    GemPack('gems_6000', 6000, 38000),
+    GemPack('gems_14000', 14000, 79000),
   ];
 
   static GemPack? pack(String id) => packs.where((p) => p.id == id).firstOrNull;

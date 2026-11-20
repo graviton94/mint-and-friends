@@ -1060,7 +1060,13 @@ class _GemPackRow extends StatelessWidget {
       icon: Art.icon('dia_${index + 1}'),
       title: tr('shop.pack.$index'),
       note: '[[diamond]] ${fmtInt(pack.gems)}',
-      tag: pack.bonusPct > 0 ? tr('shop.bonus', {'n': pack.bonusPct}) : null,
+      tag: pack.valueX >= 1.95
+          ? tr('shop.bonusX', {
+              'n': pack.valueX.toStringAsFixed(pack.valueX < 3.05 ? 0 : 1),
+            })
+          : pack.bonusPct > 0
+          ? tr('shop.bonus', {'n': pack.bonusPct})
+          : null,
       button: price,
       enabled: d != null && !billing.purchasing,
       onTap: () => billing.buyGems(pack),

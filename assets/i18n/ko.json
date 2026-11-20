@@ -646,5 +646,6 @@
   "ctrl.boost.idle": "광고 · 다이아",
   "quota.allDone": "오늘 부탁은 모두 끝! 내일 또 와요",
   "quota.allTitle": "오늘 부탁은 모두 끝",
-  "quota.allNote": "광고를 보면 {name}에게서\n별 부탁 {n}번을 더 받아요"
+  "quota.allNote": "광고를 보면 {name}에게서\n별 부탁 {n}번을 더 받아요",
+  "shop.bonusX": "{n}배 가치"
 }

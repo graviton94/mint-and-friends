@@ -645,5 +645,6 @@
   "ctrl.boost.idle": "Ads · Diamonds",
   "quota.allDone": "All requests done today! See you tomorrow",
   "quota.allTitle": "All done for today",
-  "quota.allNote": "Watch an ad to get\n{n} more star requests from {name}"
+  "quota.allNote": "Watch an ad to get\n{n} more star requests from {name}",
+  "shop.bonusX": "{n}x value"
 }
