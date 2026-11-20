@@ -1067,5 +1067,95 @@
       "assets/art/friends/pposong_autumn_sleep.webp",
       "assets/art/friends/pposong_autumn_wave.webp"
     ]
+  },
+  "decor_yard_winter": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/big_tree_winter.webp",
+      "assets/art/decor/bench_winter.webp",
+      "assets/art/decor/mailbox_winter.webp",
+      "assets/art/decor/veggie_patch_winter.webp",
+      "assets/art/decor/lantern_winter.webp",
+      "assets/art/decor/bird_feeder_winter.webp",
+      "assets/art/decor/hut_winter.webp",
+      "assets/art/decor/fountain_winter.webp"
+    ]
+  },
+  "decor_pond_winter": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/stepping_stones_winter.webp",
+      "assets/art/decor/water_lily_winter.webp",
+      "assets/art/decor/fishing_spot_winter.webp",
+      "assets/art/decor/rowboat_winter.webp",
+      "assets/art/decor/reeds_winter.webp",
+      "assets/art/decor/log_chair_winter.webp",
+      "assets/art/decor/tent_winter.webp",
+      "assets/art/decor/wooden_bridge_winter.webp"
+    ]
+  },
+  "decor_greenhouse_winter": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/glasshouse_winter.webp",
+      "assets/art/decor/cactus_winter.webp",
+      "assets/art/decor/mushroom_bed_winter.webp",
+      "assets/art/decor/watering_can_winter.webp",
+      "assets/art/decor/sunflower_field_winter.webp",
+      "assets/art/decor/tea_table_winter.webp",
+      "assets/art/decor/bamboo_winter.webp",
+      "assets/art/decor/wind_chime_winter.webp"
+    ]
+  },
+  "decor_starry_winter": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/telescope_winter.webp",
+      "assets/art/decor/camp_tent_winter.webp",
+      "assets/art/decor/campfire_winter.webp",
+      "assets/art/decor/ferris_wheel_winter.webp",
+      "assets/art/decor/carousel_winter.webp",
+      "assets/art/decor/moon_statue_winter.webp",
+      "assets/art/decor/little_castle_winter.webp",
+      "assets/art/decor/fireworks_winter.webp"
+    ]
+  },
+  "decor_seaside_winter": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/beach_hut_winter.webp",
+      "assets/art/decor/parasol_winter.webp",
+      "assets/art/decor/sandcastle_winter.webp",
+      "assets/art/decor/lighthouse_winter.webp",
+      "assets/art/decor/deck_chair_winter.webp",
+      "assets/art/decor/shell_fountain_winter.webp",
+      "assets/art/decor/surf_rack_winter.webp",
+      "assets/art/decor/seagull_post_winter.webp"
+    ]
+  },
+  "decor_snow_village_winter": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/snowman_winter.webp",
+      "assets/art/decor/igloo_winter.webp",
+      "assets/art/decor/sled_winter.webp",
+      "assets/art/decor/winter_tree_winter.webp",
+      "assets/art/decor/cocoa_stand_winter.webp",
+      "assets/art/decor/ice_rink_winter.webp",
+      "assets/art/decor/snow_lantern_winter.webp",
+      "assets/art/decor/chimney_cottage_winter.webp"
+    ]
   }
 }
