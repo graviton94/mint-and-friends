@@ -134,7 +134,7 @@ class TitleLogo extends StatelessWidget {
                 null,
               ),
             ),
-            Text(name, style: s(null, const Color(0xFF7BC98F))),
+            Text(name, style: s(null, const Color(0xFFFFE07A))),
           ],
         ),
       ),
