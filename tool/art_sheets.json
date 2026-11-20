@@ -757,5 +757,65 @@
     "files": [
       "assets/art/title/fg.webp"
     ]
+  },
+  "outfit_starlight_bori": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/bori_starlight_idle.webp",
+      "assets/art/friends/bori_starlight_happy.webp",
+      "assets/art/friends/bori_starlight_sleep.webp",
+      "assets/art/friends/bori_starlight_wave.webp"
+    ]
+  },
+  "outfit_winter_bori": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/bori_winter_idle.webp",
+      "assets/art/friends/bori_winter_happy.webp",
+      "assets/art/friends/bori_winter_sleep.webp",
+      "assets/art/friends/bori_winter_wave.webp"
+    ]
+  },
+  "outfit_winter_dubu": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/dubu_winter_idle.webp",
+      "assets/art/friends/dubu_winter_happy.webp",
+      "assets/art/friends/dubu_winter_sleep.webp",
+      "assets/art/friends/dubu_winter_wave.webp"
+    ]
+  },
+  "outfit_winter_kwak": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/kwak_winter_idle.webp",
+      "assets/art/friends/kwak_winter_happy.webp",
+      "assets/art/friends/kwak_winter_sleep.webp",
+      "assets/art/friends/kwak_winter_wave.webp"
+    ]
+  },
+  "outfit_winter_nabi": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/nabi_winter_idle.webp",
+      "assets/art/friends/nabi_winter_happy.webp",
+      "assets/art/friends/nabi_winter_sleep.webp",
+      "assets/art/friends/nabi_winter_wave.webp"
+    ]
+  },
+  "outfit_winter_dotori": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/dotori_winter_idle.webp",
+      "assets/art/friends/dotori_winter_happy.webp",
+      "assets/art/friends/dotori_winter_sleep.webp",
+      "assets/art/friends/dotori_winter_wave.webp"
+    ]
   }
 }
