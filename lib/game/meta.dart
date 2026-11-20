@@ -26,6 +26,7 @@ enum Stat {
   giftsSent,
   coinsEarned,
   energySpent,
+  gemsSpent,
 }
 
 // ------------------------------------------------------------------ 업적
@@ -35,14 +36,21 @@ class Reward {
   final int coins;
   final int energy;
   final int stars;
-  const Reward({this.coins = 0, this.energy = 0, this.stars = 0});
+  final int gems;
+  const Reward({
+    this.coins = 0,
+    this.energy = 0,
+    this.stars = 0,
+    this.gems = 0,
+  });
 
-  bool get isEmpty => coins == 0 && energy == 0 && stars == 0;
+  bool get isEmpty => coins == 0 && energy == 0 && stars == 0 && gems == 0;
 
   Map<String, dynamic> toJson() => {
     if (coins > 0) 'c': coins,
     if (energy > 0) 'e': energy,
     if (stars > 0) 's': stars,
+    if (gems > 0) 'g': gems,
   };
 
   static Reward fromJson(Map<String, dynamic>? j) => j == null
@@ -51,6 +59,7 @@ class Reward {
           coins: (j['c'] as num?)?.toInt() ?? 0,
           energy: (j['e'] as num?)?.toInt() ?? 0,
           stars: (j['s'] as num?)?.toInt() ?? 0,
+          gems: (j['g'] as num?)?.toInt() ?? 0,
         );
 }
 
@@ -72,6 +81,8 @@ class AchievementDef {
     coins: (50 * pow(1.8, tier)).round(),
     energy: tier >= 1 ? 5 + 5 * min(tier, 6) : 0,
     stars: tier >= 2 ? (3 * pow(1.5, tier)).round() : 0,
+    // 상위 단계는 다이아도 (장기 목표의 무게)
+    gems: tier >= 3 ? 5 * (tier - 2) : 0,
   );
 }
 

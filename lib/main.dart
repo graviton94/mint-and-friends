@@ -117,6 +117,12 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     _bindGame();
     WidgetsBinding.instance.addObserver(this);
     widget.billing.addListener(() => game.adFree = widget.billing.adFree);
+    // 다이아 결제 → 지금 게임에 넣고 바로 저장 (계정 전환 뒤에도 현재 game 을 쓴다)
+    widget.billing.onGems = (n) {
+      game.grantGems(n);
+      save.saveLocal(game);
+      save.upload(game);
+    };
     auth.addListener(_onAuthChanged);
     _start();
     AudioService.instance.startMusic();

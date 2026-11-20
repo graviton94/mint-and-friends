@@ -222,6 +222,10 @@ class GameState extends ChangeNotifier {
   final Map<String, int> achClaimed = {};
   List<Mail> mail = [];
   DateTime? nextFriendGiftAt;
+
+  /// 다이아 (하드 통화) · 오늘 다이아로 에너지를 산 횟수.
+  int gems = 0;
+  int _gemRefillsToday = 0;
   String _playDay = '';
   bool _welcomeSent = false;
 
@@ -379,6 +383,7 @@ class GameState extends ChangeNotifier {
       final c = Leveling.levelUpCoins(level);
       _earn(c);
       stars += Leveling.levelUpStars;
+      gems += Gems.levelUp;
       final gotEnergy = Leveling.levelUpEnergy(level, energy);
       energy += gotEnergy;
       final opened = Leveling.unlockedAt(level);
@@ -494,6 +499,7 @@ class GameState extends ChangeNotifier {
     if (k != _adsDay) {
       _adsDay = k;
       adsToday.clear();
+      _gemRefillsToday = 0;
     }
   }
 
@@ -1000,6 +1006,49 @@ class GameState extends ChangeNotifier {
     if (r.coins > 0) _earn(r.coins.toDouble());
     energy += r.energy; // 상한을 넘어도 된다
     stars += r.stars;
+    gems += r.gems;
+  }
+
+  // ---------------------------------------------------------------- 다이아
+
+  /// 결제 · 보상으로 받은 다이아.
+  void grantGems(int n) {
+    if (n <= 0) return;
+    gems += n;
+    notifyListeners();
+  }
+
+  bool _spendGems(int n) {
+    if (gems < n) return false;
+    gems -= n;
+    _bump(Stat.gemsSpent, n);
+    return true;
+  }
+
+  int get refillCost => Gems.refillCost(_gemRefillsToday);
+
+  /// 다이아로 에너지 100 충전 (상한을 넘어도 된다).
+  bool buyEnergyRefill() {
+    _rollAdDay();
+    if (!_spendGems(refillCost)) return false;
+    _gemRefillsToday++;
+    energy += Gems.refillEnergy;
+    notifyListeners();
+    return true;
+  }
+
+  int bubbleGemCost(int cell) {
+    final it = board[cell];
+    final until = it?.bubbleUntil;
+    if (until == null) return 0;
+    final left = until.difference(now);
+    return Gems.bubbleCost(left.isNegative ? Duration.zero : left);
+  }
+
+  bool popBubbleWithGems(int cell) {
+    final cost = bubbleGemCost(cell);
+    if (cost <= 0 || !_spendGems(cost)) return false;
+    return popBubble(cell);
   }
 
   // ---------------------------------------------------------------- 쪽지
@@ -1207,6 +1256,8 @@ class GameState extends ChangeNotifier {
       'v': saveVersion,
       'coins': coins,
       'stars': stars,
+      'gems': gems,
+      'gemRefills': _gemRefillsToday,
       'econ': econVersion,
       'life': lifetimeCoins,
       'level': level,
@@ -1258,6 +1309,8 @@ class GameState extends ChangeNotifier {
     coins = (j['coins'] as num).toDouble();
     stars = (j['stars'] as num?)?.toInt() ?? 0;
     if (econ < econVersion) stars *= 4;
+    gems = (j['gems'] as num?)?.toInt() ?? 0;
+    _gemRefillsToday = (j['gemRefills'] as num?)?.toInt() ?? 0;
     lifetimeCoins = (j['life'] as num?)?.toDouble() ?? coins;
     level = (j['level'] as num?)?.toInt() ?? 1;
     xp = (j['xp'] as num?)?.toInt() ?? 0;

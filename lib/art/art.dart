@@ -117,6 +117,18 @@ class Art {
     'friends': '',
     'visit': '',
     'notice': '',
+    'diamond': '',
+    'dia_1': '',
+    'dia_2': '',
+    'dia_3': '',
+    'dia_4': '',
+    'dia_5': '',
+    'shop': '',
+    'calendar': '',
+    'swap': '',
+    'tea_basket': '',
+    'star_jar': '',
+    'outfit': '',
   };
 
   /// 이미 받은 UI 그림(assets/art/ui)으로 그리는 아이콘.
@@ -202,6 +214,15 @@ class ArtImage extends StatelessWidget {
         filterQuality: FilterQuality.medium,
       );
     } else if (ref.emoji.isEmpty) {
+      // 다이아 그림이 오기 전: 코드로 그린 민트 보석
+      if (ref.path.contains('/icons/diamond') ||
+          ref.path.contains('/icons/dia_')) {
+        return SizedBox(
+          width: size,
+          height: size,
+          child: CustomPaint(painter: _GemPainter()),
+        );
+      }
       return SizedBox(width: size, height: size);
     } else {
       child = SizedBox(
@@ -217,4 +238,51 @@ class ArtImage extends StatelessWidget {
     }
     return flipX ? Transform.flip(flipX: true, child: child) : child;
   }
+}
+
+/// 다이아 임시 그림: 외곽선 있는 민트빛 보석 (게임 그림체와 같은 갈색 외곽선).
+class _GemPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width, h = size.height;
+    final top = h * 0.2, mid = h * 0.42, bottom = h * 0.88;
+    final outline = Path()
+      ..moveTo(w * 0.28, top)
+      ..lineTo(w * 0.72, top)
+      ..lineTo(w * 0.9, mid)
+      ..lineTo(w * 0.5, bottom)
+      ..lineTo(w * 0.1, mid)
+      ..close();
+    canvas.drawPath(outline, Paint()..color = const Color(0xFF7FE0D0));
+    final upper = Path()
+      ..moveTo(w * 0.28, top)
+      ..lineTo(w * 0.72, top)
+      ..lineTo(w * 0.9, mid)
+      ..lineTo(w * 0.1, mid)
+      ..close();
+    canvas.drawPath(upper, Paint()..color = const Color(0xFFB8F2E8));
+    final shine = Path()
+      ..moveTo(w * 0.32, top + h * 0.04)
+      ..lineTo(w * 0.46, top + h * 0.04)
+      ..lineTo(w * 0.38, mid - h * 0.03)
+      ..lineTo(w * 0.2, mid - h * 0.03)
+      ..close();
+    canvas.drawPath(shine, Paint()..color = const Color(0xCCFFFFFF));
+    final stroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = max(1.5, w * 0.06)
+      ..strokeJoin = StrokeJoin.round
+      ..color = const Color(0xFF5A3A1E);
+    canvas.drawPath(outline, stroke);
+    canvas.drawLine(
+      Offset(w * 0.1, mid),
+      Offset(w * 0.9, mid),
+      stroke..strokeWidth = max(1.0, w * 0.035),
+    );
+    canvas.drawLine(Offset(w * 0.5, bottom), Offset(w * 0.36, mid), stroke);
+    canvas.drawLine(Offset(w * 0.5, bottom), Offset(w * 0.64, mid), stroke);
+  }
+
+  @override
+  bool shouldRepaint(_GemPainter oldDelegate) => false;
 }

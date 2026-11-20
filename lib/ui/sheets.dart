@@ -504,45 +504,212 @@ class _StorageBuySlot extends StatelessWidget {
 
 // ---------------------------------------------------------------- 상점
 
-Future<void> showShopSheet(BuildContext context, BillingService billing) =>
-    showGameSheet(
-      context,
-      billing,
-      () => SheetFrame(
-        title: tr('shop.title'),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            IconText(
-              tr('shop.body'),
-              style: const TextStyle(fontSize: 16, height: 1.6),
-            ),
-            const SizedBox(height: 16),
-            if (billing.adFree)
-              IconText(
-                tr('shop.active'),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 18),
-              )
-            else
-              FilledButton(
-                onPressed: billing.product == null || billing.purchasing
-                    ? null
-                    : billing.buyRemoveAds,
-                child: IconText(
-                  billing.product == null
-                      ? tr('shop.connecting')
-                      : tr('shop.subscribe', {'price': billing.product!.price}),
-                ),
-              ),
-            TextButton(
-              onPressed: billing.restore,
-              child: IconText(tr('shop.restore')),
-            ),
-          ],
+/// 상점: 다이아 팩 · 다이아로 에너지 충전 · 광고 제거(월 구독).
+Future<void> showShopSheet(
+  BuildContext context,
+  BillingService billing,
+  GameState game,
+) => showGameSheet(
+  context,
+  Listenable.merge([billing, game]),
+  () => SheetFrame(
+    title: tr('shop.title'),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(
+          child: IconText(
+            tr('shop.have', {'n': fmt(game.gems.toDouble())}),
+            style: const TextStyle(fontSize: 18),
+          ),
         ),
+        const SizedBox(height: 12),
+        _ShopHeader(tr('shop.gems')),
+        for (var i = 0; i < Gems.packs.length; i++)
+          _GemPackRow(billing: billing, pack: Gems.packs[i], index: i),
+        if (!billing.available || billing.gemProducts.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, bottom: 8),
+            child: IconText(
+              tr('shop.storeSoon'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13, color: Colors.black54),
+            ),
+          ),
+        const SizedBox(height: 12),
+        _ShopHeader(tr('shop.withGems')),
+        _ShopRow(
+          icon: Art.icon('energy_jar'),
+          title: tr('shop.refill', {'n': Gems.refillEnergy}),
+          note: tr('shop.refillNote'),
+          button: '[[diamond]] ${game.refillCost}',
+          enabled: game.gems >= game.refillCost,
+          onTap: () {
+            if (game.buyEnergyRefill()) sfx(Sfx.coin);
+          },
+        ),
+        const SizedBox(height: 12),
+        _ShopHeader(tr('shop.adFreeTitle')),
+        if (billing.adFree)
+          IconText(
+            tr('shop.active'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 17),
+          )
+        else
+          _ShopRow(
+            icon: Art.icon('no_ads'),
+            title: tr('shop.adFree'),
+            note: tr('shop.body'),
+            button: billing.product == null
+                ? tr('shop.connecting')
+                : tr('shop.subscribe', {'price': billing.product!.price}),
+            enabled: billing.product != null && !billing.purchasing,
+            onTap: billing.buyRemoveAds,
+          ),
+        TextButton(
+          onPressed: billing.restore,
+          child: IconText(tr('shop.restore')),
+        ),
+      ],
+    ),
+  ),
+);
+
+class _ShopHeader extends StatelessWidget {
+  const _ShopHeader(this.text);
+  final String text;
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 6, left: 2),
+    child: IconText(
+      text,
+      style: const TextStyle(fontSize: 15, color: Color(0xFF6B5638)),
+    ),
+  );
+}
+
+class _GemPackRow extends StatelessWidget {
+  const _GemPackRow({
+    required this.billing,
+    required this.pack,
+    required this.index,
+  });
+  final BillingService billing;
+  final GemPack pack;
+  final int index;
+
+  @override
+  Widget build(BuildContext context) {
+    final d = billing.gemProducts[pack.id];
+    final price = d?.price ?? '₩${fmtInt(pack.krw)}';
+    return _ShopRow(
+      icon: Art.icon('dia_${index + 1}'),
+      title: tr('shop.pack.$index'),
+      note: '[[diamond]] ${fmtInt(pack.gems)}',
+      tag: pack.bonusPct > 0 ? tr('shop.bonus', {'n': pack.bonusPct}) : null,
+      button: price,
+      enabled: d != null && !billing.purchasing,
+      onTap: () => billing.buyGems(pack),
+    );
+  }
+}
+
+class _ShopRow extends StatelessWidget {
+  const _ShopRow({
+    required this.icon,
+    required this.title,
+    required this.button,
+    required this.enabled,
+    required this.onTap,
+    this.note,
+    this.tag,
+  });
+  final ArtRef icon;
+  final String title;
+  final String? note;
+  final String? tag;
+  final String button;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2D3B5), width: 1.5),
+      ),
+      child: Row(
+        children: [
+          ArtImage(icon, size: 46),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(
+                      child: IconText(
+                        title,
+                        style: const TextStyle(fontSize: 17),
+                      ),
+                    ),
+                    if (tag != null) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFE08A),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          tag!,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF7A4B00),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (note != null)
+                  IconText(
+                    note!,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      height: 1.4,
+                      color: Color(0xFF5E6B5E),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton(
+            style: framedButton(
+              FilledButton.styleFrom(
+                minimumSize: const Size(92, 42),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+              'button_green',
+            ),
+            onPressed: enabled ? onTap : null,
+            child: IconText(button, style: const TextStyle(fontSize: 15)),
+          ),
+        ],
       ),
     );
+  }
+}
 
 // ---------------------------------------------------------------- 설정
 

@@ -16,7 +16,8 @@ import 'widgets/icon_text.dart';
 String rewardText(Reward r) => [
   if (r.coins > 0) '[[coin]]${fmt(r.coins.toDouble())}',
   if (r.energy > 0) '[[energy]]${r.energy}',
-  if (r.stars > 0) '[[star]]${r.stars}',
+  if (r.stars > 0) '[[star]]${fmt(r.stars.toDouble())}',
+  if (r.gems > 0) '[[diamond]]${r.gems}',
 ].join(' ');
 
 // ---------------------------------------------------------------- 업적

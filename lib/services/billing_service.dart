@@ -4,10 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../game/config.dart';
 import 'ad_ids.dart';
 import 'analytics_service.dart';
 
-/// 광고제거 1개월 구독.
+/// 광고제거 1개월 구독 + 다이아 팩(소모형).
 /// 앱 시작 시 restorePurchases 로 활성 구독을 다시 받아 확인한다.
 /// (MVP: 클라이언트 검증. 매출이 붙으면 서버 영수증 검증 추가 권장)
 class BillingService extends ChangeNotifier {
@@ -22,6 +23,12 @@ class BillingService extends ChangeNotifier {
   ProductDetails? product;
   bool _seenActiveThisSession = false;
 
+  /// 다이아 팩 상품 (스토어에 등록된 것만).
+  final Map<String, ProductDetails> gemProducts = {};
+
+  /// 다이아 결제가 끝나면 게임에 다이아를 넣는다 (main 이 연결).
+  void Function(int gems)? onGems;
+
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     adFree = prefs.getBool(_cacheKey) ?? false; // 오프라인 대비 캐시
@@ -32,8 +39,17 @@ class BillingService extends ChangeNotifier {
 
     _sub = _iap.purchaseStream.listen(_onPurchases, onError: (_) {});
 
-    final resp = await _iap.queryProductDetails({kRemoveAdsProductId});
-    if (resp.productDetails.isNotEmpty) product = resp.productDetails.first;
+    final resp = await _iap.queryProductDetails({
+      kRemoveAdsProductId,
+      for (final p in Gems.packs) p.id,
+    });
+    for (final d in resp.productDetails) {
+      if (d.id == kRemoveAdsProductId) {
+        product = d;
+      } else {
+        gemProducts[d.id] = d;
+      }
+    }
     notifyListeners();
 
     await _iap.restorePurchases();
@@ -47,6 +63,16 @@ class BillingService extends ChangeNotifier {
 
   Future<void> _onPurchases(List<PurchaseDetails> list) async {
     for (final p in list) {
+      final pack = Gems.pack(p.productID);
+      if (pack != null) {
+        // 소모형: 결제 완료 시 한 번만 지급 (autoConsume 이 소비 처리)
+        if (p.status == PurchaseStatus.purchased) {
+          Analytics.instance.purchase(p.productID);
+          onGems?.call(pack.gems);
+        }
+        if (p.pendingCompletePurchase) await _iap.completePurchase(p);
+        continue;
+      }
       if (p.productID != kRemoveAdsProductId) continue;
       switch (p.status) {
         case PurchaseStatus.purchased:
@@ -86,6 +112,19 @@ class BillingService extends ChangeNotifier {
       await _iap.buyNonConsumable(
         purchaseParam: PurchaseParam(productDetails: p),
       );
+    } catch (_) {
+      purchasing = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> buyGems(GemPack pack) async {
+    final d = gemProducts[pack.id];
+    if (d == null || purchasing) return;
+    purchasing = true;
+    notifyListeners();
+    try {
+      await _iap.buyConsumable(purchaseParam: PurchaseParam(productDetails: d));
     } catch (_) {
       purchasing = false;
       notifyListeners();

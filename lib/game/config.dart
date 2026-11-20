@@ -604,3 +604,39 @@ class Garden {
       ? 1
       : (pow(2, level - 1) / 4 * (1 + 0.05 * (level - 3))).round();
 }
+
+// ------------------------------------------------------------------ 다이아 (하드 통화)
+
+/// 다이아 팩 (Play 인앱 상품, 소모형). 가격은 스토어 값이 우선, krw 는 스토어 연결 전 표시용.
+class GemPack {
+  final String id;
+  final int gems;
+  final int krw;
+  const GemPack(this.id, this.gems, this.krw);
+
+  /// 가장 작은 팩 대비 보너스 % (한 줌 60개 / ₩1,200 기준).
+  int get bonusPct => (gems / (krw * 60 / 1200) * 100 - 100).round();
+}
+
+/// 바이블 §6: 무료 다이아는 하루 평균 5~10개, 에너지 100 = 다이아 40 (Travel Town 기준).
+class Gems {
+  static const List<GemPack> packs = [
+    GemPack('gems_60', 60, 1200),
+    GemPack('gems_330', 330, 5900),
+    GemPack('gems_700', 700, 12000),
+    GemPack('gems_1800', 1800, 29000),
+    GemPack('gems_3800', 3800, 59000),
+  ];
+
+  static GemPack? pack(String id) => packs.where((p) => p.id == id).firstOrNull;
+
+  /// 레벨업마다 무료 다이아.
+  static const int levelUp = 3;
+
+  /// 에너지 충전: 하루 안에 다시 살수록 비싸진다 (40 → 60 → 80 … 최대 120).
+  static const int refillEnergy = 100;
+  static int refillCost(int boughtToday) => min(120, 40 + 20 * boughtToday);
+
+  /// 비눗방울 바로 열기: 남은 20초마다 1개, 최소 2개.
+  static int bubbleCost(Duration left) => max(2, (left.inSeconds / 20).ceil());
+}

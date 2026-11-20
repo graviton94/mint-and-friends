@@ -396,7 +396,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _energyDialog() async {
     final canAd = game.energyAdAvailable;
-    final watch = await showDialog<bool>(
+    final watch = await showDialog<Object>(
       context: context,
       builder: (ctx) => ListenableBuilder(
         listenable: game,
@@ -444,14 +444,43 @@ class _HomeScreenState extends State<HomeScreen> {
                   adFree: adFree,
                   onTap: () => Navigator.pop(ctx, true),
                 ),
+              if (!full)
+                FilledButton(
+                  style: framedButton(
+                    FilledButton.styleFrom(minimumSize: const Size(120, 48)),
+                    'button_green',
+                  ),
+                  onPressed: () => Navigator.pop(ctx, 'gems'),
+                  child: IconText(
+                    tr('energy.gems', {
+                      'n': Gems.refillEnergy,
+                      'cost': game.refillCost,
+                    }),
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
             ],
           );
         },
       ),
     );
+    if (watch == 'gems') {
+      if (game.buyEnergyRefill()) {
+        sfx(Sfx.coin);
+      } else {
+        _toast(tr('shop.notEnough'));
+        _openShop();
+      }
+      return;
+    }
     if (watch == true && await _rewardedCapped(AdKind.energy)) {
       game.grantEnergyAd();
     }
+  }
+
+  void _openShop() {
+    sfx(Sfx.open);
+    showShopSheet(context, widget.billing, game);
   }
 
   Future<void> _watchBoost() async {
@@ -534,7 +563,51 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _onBubble(int cell) async {
-    if (await _rewarded()) game.popBubble(cell);
+    final cost = game.bubbleGemCost(cell);
+    final pick = await showDialog<String>(
+      context: context,
+      builder: (ctx) => GameDialog(
+        title: IconText(tr('bubble.title'), textAlign: TextAlign.center),
+        content: PopupHero(
+          art: ArtImage(Art.bubble, size: 84),
+          big: game.board[cell] == null
+              ? ''
+              : itemName(
+                  Chains.item(game.board[cell]!.chain, game.board[cell]!.level),
+                ),
+          note: tr('bubble.note'),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          _DialogAdButton(
+            label: tr('bubble.ad'),
+            adFree: adFree,
+            onTap: () => Navigator.pop(ctx, 'ad'),
+          ),
+          FilledButton(
+            style: framedButton(
+              FilledButton.styleFrom(minimumSize: const Size(110, 48)),
+              'button_green',
+            ),
+            onPressed: () => Navigator.pop(ctx, 'gems'),
+            child: IconText(
+              '[[diamond]] $cost',
+              style: const TextStyle(fontSize: 17),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (pick == 'ad') {
+      if (await _rewarded()) game.popBubble(cell);
+    } else if (pick == 'gems') {
+      if (game.popBubbleWithGems(cell)) {
+        sfx(Sfx.unlock);
+      } else {
+        _toast(tr('shop.notEnough'));
+        _openShop();
+      }
+    }
   }
 
   Future<void> _onVisitorTap() async {
@@ -873,7 +946,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     sub: tr('hud.perHour', {'v': fmt(game.incomePerHour)}),
                   ),
                   const SizedBox(width: 6),
-                  _Pill(icon: Art.star, text: '${game.stars}'),
+                  _Pill(icon: Art.star, text: fmt(game.stars.toDouble())),
+                  const SizedBox(width: 6),
+                  _Pill(
+                    icon: Art.icon('diamond'),
+                    text: fmt(game.gems.toDouble()),
+                    plus: true,
+                    onTap: _openShop,
+                  ),
                   const SizedBox(width: 6),
                   _Pill(
                     key: _kEnergy,
@@ -1285,12 +1365,12 @@ class _HomeScreenState extends State<HomeScreen> {
           () => showMailSheet(context, game),
           badge: game.unreadMail,
         ),
-        if (!adFree)
-          MenuEntry(
-            'no_ads',
-            tr('menu.removeAds'),
-            () => showShopSheet(context, widget.billing),
-          ),
+        MenuEntry(
+          'shop',
+          tr('menu.shop'),
+          _openShop,
+          fallback: Icons.storefront,
+        ),
         MenuEntry(
           'settings',
           tr('menu.settings'),

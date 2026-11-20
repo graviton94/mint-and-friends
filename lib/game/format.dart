@@ -30,3 +30,14 @@ String _unit(int tier) {
   final b = String.fromCharCode(97 + i % 26);
   return '$a$b';
 }
+
+/// 천 단위 쉼표 정수 (가격 · 다이아 개수).
+String fmtInt(int v) {
+  final s = v.abs().toString();
+  final b = StringBuffer(v < 0 ? '-' : '');
+  for (var i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
+    b.write(s[i]);
+  }
+  return b.toString();
+}
