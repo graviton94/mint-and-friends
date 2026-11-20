@@ -867,5 +867,105 @@
       "assets/art/friends/pposong_winter_sleep.webp",
       "assets/art/friends/pposong_winter_wave.webp"
     ]
+  },
+  "outfit_summer_bori": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/bori_summer_idle.webp",
+      "assets/art/friends/bori_summer_happy.webp",
+      "assets/art/friends/bori_summer_sleep.webp",
+      "assets/art/friends/bori_summer_wave.webp"
+    ]
+  },
+  "outfit_summer_dubu": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/dubu_summer_idle.webp",
+      "assets/art/friends/dubu_summer_happy.webp",
+      "assets/art/friends/dubu_summer_sleep.webp",
+      "assets/art/friends/dubu_summer_wave.webp"
+    ]
+  },
+  "outfit_summer_kwak": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/kwak_summer_idle.webp",
+      "assets/art/friends/kwak_summer_happy.webp",
+      "assets/art/friends/kwak_summer_sleep.webp",
+      "assets/art/friends/kwak_summer_wave.webp"
+    ]
+  },
+  "outfit_summer_nabi": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/nabi_summer_idle.webp",
+      "assets/art/friends/nabi_summer_happy.webp",
+      "assets/art/friends/nabi_summer_sleep.webp",
+      "assets/art/friends/nabi_summer_wave.webp"
+    ]
+  },
+  "outfit_summer_dotori": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/dotori_summer_idle.webp",
+      "assets/art/friends/dotori_summer_happy.webp",
+      "assets/art/friends/dotori_summer_sleep.webp",
+      "assets/art/friends/dotori_summer_wave.webp"
+    ]
+  },
+  "outfit_summer_mochi": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/mochi_summer_idle.webp",
+      "assets/art/friends/mochi_summer_happy.webp",
+      "assets/art/friends/mochi_summer_sleep.webp",
+      "assets/art/friends/mochi_summer_wave.webp"
+    ]
+  },
+  "outfit_summer_danpung": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/danpung_summer_idle.webp",
+      "assets/art/friends/danpung_summer_happy.webp",
+      "assets/art/friends/danpung_summer_sleep.webp",
+      "assets/art/friends/danpung_summer_wave.webp"
+    ]
+  },
+  "outfit_summer_kongtteok": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/kongtteok_summer_idle.webp",
+      "assets/art/friends/kongtteok_summer_happy.webp",
+      "assets/art/friends/kongtteok_summer_sleep.webp",
+      "assets/art/friends/kongtteok_summer_wave.webp"
+    ]
+  },
+  "outfit_summer_bogeul": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/bogeul_summer_idle.webp",
+      "assets/art/friends/bogeul_summer_happy.webp",
+      "assets/art/friends/bogeul_summer_sleep.webp",
+      "assets/art/friends/bogeul_summer_wave.webp"
+    ]
+  },
+  "outfit_summer_pposong": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/pposong_summer_idle.webp",
+      "assets/art/friends/pposong_summer_happy.webp",
+      "assets/art/friends/pposong_summer_sleep.webp",
+      "assets/art/friends/pposong_summer_wave.webp"
+    ]
   }
 }
