@@ -60,6 +60,13 @@ class IconText extends StatelessWidget {
     final runes = s.runes.toList();
     for (var i = 0; i < runes.length; i++) {
       final c = runes[i];
+      // " · " 로 묶인 말(레벨업 · 출석 · 업적)은 가운뎃점 앞뒤에서 줄을 바꾸지 않는다
+      if (c == 0x20 &&
+          ((i + 1 < runes.length && runes[i + 1] == 0xB7) ||
+              (i > 0 && runes[i - 1] == 0xB7))) {
+        b.write('\u00A0');
+        continue;
+      }
       b.writeCharCode(c);
       if (i + 1 < runes.length) {
         final n = runes[i + 1];

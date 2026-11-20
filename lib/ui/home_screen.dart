@@ -409,7 +409,8 @@ class _HomeScreenState extends State<HomeScreen> {
     // 바구니 넘기기는 손장갑이 옆으로 밀어 보인다
     final swipe = id == 'basket' && r != null;
     return CoachOverlay(
-      text: '${_tipTitle(id)}\n${tr('tip.$id')}',
+      title: _tipTitle(id),
+      text: tr('tip.$id'),
       hole: r,
       pointAt: swipe ? r.center + const Offset(24, 0) : r?.center,
       dragTo: swipe ? r.center - const Offset(24, 0) : null,

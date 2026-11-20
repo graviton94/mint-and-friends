@@ -18,6 +18,7 @@ class CoachOverlay extends StatefulWidget {
   const CoachOverlay({
     super.key,
     required this.text,
+    this.title,
     this.hole,
     this.action = false,
     this.buttonLabel,
@@ -33,6 +34,9 @@ class CoachOverlay extends StatefulWidget {
   final Offset? dragTo;
 
   final String text;
+
+  /// 굵은 제목 줄 (새 기능 안내). 없으면 본문만.
+  final String? title;
   final Rect? hole;
   final bool action;
   final String? buttonLabel;
@@ -140,6 +144,7 @@ class _CoachOverlayState extends State<CoachOverlay>
         // 말풍선 위치
         final below = hole == null || hole.center.dy < size.height * 0.5;
         final bubble = _Bubble(
+          title: widget.title,
           text: widget.text,
           buttonLabel: widget.buttonLabel,
           onNext: widget.onNext,
@@ -191,91 +196,115 @@ class _CoachOverlayState extends State<CoachOverlay>
 class _Bubble extends StatelessWidget {
   const _Bubble({
     required this.text,
+    this.title,
     this.buttonLabel,
     this.onNext,
     this.onSkip,
     this.skipLabel,
   });
   final String text;
+  final String? title;
   final String? buttonLabel;
   final VoidCallback? onNext;
   final VoidCallback? onSkip;
   final String? skipLabel;
 
+  /// 문장마다 줄을 바꾼다 ("요. " → 줄바꿈). 이미 줄바꿈이 있으면 그대로.
+  static String _lines(String s) => s.contains('\n')
+      ? s
+      : s.replaceAllMapped(RegExp(r'([.!?])\s+'), (m) => '${m[1]}\n');
+
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         // 안내 캐릭터: 민트 (첫 친구)
         ArtImage(Art.friend(Friends.byId(Friends.starter)), size: 84),
         const SizedBox(width: 4),
-        Expanded(
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFFBF0),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFF7A5230), width: 3),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x44000000),
-                  blurRadius: 10,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                IconText(
-                  text,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    height: 1.4,
-                    color: Palette.text,
-                  ),
-                ),
-                if (buttonLabel != null || onSkip != null) ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (onSkip != null)
-                        TextButton(
-                          onPressed: onSkip,
-                          child: Text(
-                            skipLabel ?? '',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Colors.black45,
-                            ),
-                          ),
-                        ),
-                      if (onSkip != null) const Spacer(),
-                      if (buttonLabel != null)
-                        FilledButton(
-                          style: framedButton(
-                            FilledButton.styleFrom(
-                              minimumSize: const Size(80, 38),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                            ),
-                            'button_green',
-                          ),
-                          onPressed: onNext,
-                          child: Text(
-                            buttonLabel!,
-                            style: const TextStyle(fontSize: 15),
-                          ),
-                        ),
-                    ],
+        // 말풍선은 내용만큼만 (너무 넓으면 빈 곳이 많아 보인다)
+        Flexible(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 270),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBF0),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFF7A5230), width: 3),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x44000000),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
                   ),
                 ],
-              ],
+              ),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (title != null) ...[
+                    IconText(
+                      title!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Palette.text,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                  ],
+                  IconText(
+                    _lines(text),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      height: 1.45,
+                      color: Palette.text,
+                    ),
+                  ),
+                  if (buttonLabel != null || onSkip != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        if (onSkip != null)
+                          TextButton(
+                            onPressed: onSkip,
+                            child: Text(
+                              skipLabel ?? '',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.black45,
+                              ),
+                            ),
+                          ),
+                        if (onSkip != null) const Spacer(),
+                        if (buttonLabel != null)
+                          FilledButton(
+                            style: framedButton(
+                              FilledButton.styleFrom(
+                                minimumSize: const Size(80, 38),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                              ),
+                              'button_green',
+                            ),
+                            onPressed: onNext,
+                            child: Text(
+                              buttonLabel!,
+                              style: const TextStyle(fontSize: 15),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
             ),
           ),
         ),
