@@ -817,5 +817,55 @@
       "assets/art/friends/dotori_winter_sleep.webp",
       "assets/art/friends/dotori_winter_wave.webp"
     ]
+  },
+  "outfit_winter_mochi": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/mochi_winter_idle.webp",
+      "assets/art/friends/mochi_winter_happy.webp",
+      "assets/art/friends/mochi_winter_sleep.webp",
+      "assets/art/friends/mochi_winter_wave.webp"
+    ]
+  },
+  "outfit_winter_danpung": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/danpung_winter_idle.webp",
+      "assets/art/friends/danpung_winter_happy.webp",
+      "assets/art/friends/danpung_winter_sleep.webp",
+      "assets/art/friends/danpung_winter_wave.webp"
+    ]
+  },
+  "outfit_winter_kongtteok": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/kongtteok_winter_idle.webp",
+      "assets/art/friends/kongtteok_winter_happy.webp",
+      "assets/art/friends/kongtteok_winter_sleep.webp",
+      "assets/art/friends/kongtteok_winter_wave.webp"
+    ]
+  },
+  "outfit_winter_bogeul": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/bogeul_winter_idle.webp",
+      "assets/art/friends/bogeul_winter_happy.webp",
+      "assets/art/friends/bogeul_winter_sleep.webp",
+      "assets/art/friends/bogeul_winter_wave.webp"
+    ]
+  },
+  "outfit_winter_pposong": {
+    "cols": 4,
+    "rows": 1,
+    "files": [
+      "assets/art/friends/pposong_winter_idle.webp",
+      "assets/art/friends/pposong_winter_happy.webp",
+      "assets/art/friends/pposong_winter_sleep.webp",
+      "assets/art/friends/pposong_winter_wave.webp"
+    ]
   }
 }
