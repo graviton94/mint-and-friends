@@ -452,10 +452,14 @@ class _CheckInTile extends StatelessWidget {
           const SizedBox(height: 4),
           Opacity(
             opacity: claimed ? 0.45 : 1,
-            child: IconText(
-              rewardText(r),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15),
+            // 보상은 한 줄로: 길면 칸 너비에 맞춰 줄인다 (칸 높이는 모두 같게)
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: IconText(
+                rewardText(r),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 15),
+              ),
             ),
           ),
           if (claimed) ...[

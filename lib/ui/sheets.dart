@@ -467,7 +467,7 @@ Future<void> showCollectionSheet(
           crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          childAspectRatio: 2.0,
+          childAspectRatio: 1.7,
           mainAxisSpacing: 8,
           crossAxisSpacing: 8,
           children: [
@@ -934,16 +934,14 @@ class _ShopRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                // 제목과 보너스 표시는 자리가 모자라면 다음 줄로
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 2,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    Flexible(
-                      child: IconText(
-                        title,
-                        style: const TextStyle(fontSize: 17),
-                      ),
-                    ),
+                    IconText(title, style: const TextStyle(fontSize: 17)),
                     if (tag != null) ...[
-                      const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 6,
@@ -977,16 +975,22 @@ class _ShopRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          FilledButton(
-            style: framedButton(
-              FilledButton.styleFrom(
-                minimumSize: const Size(92, 42),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 124),
+            child: FilledButton(
+              style: framedButton(
+                FilledButton.styleFrom(
+                  minimumSize: const Size(92, 42),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+                'button_green',
               ),
-              'button_green',
+              onPressed: enabled ? onTap : null,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: IconText(button, style: const TextStyle(fontSize: 15)),
+              ),
             ),
-            onPressed: enabled ? onTap : null,
-            child: IconText(button, style: const TextStyle(fontSize: 15)),
           ),
         ],
       ),

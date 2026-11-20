@@ -1661,15 +1661,20 @@ class _Spawner extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ArtImage(icon, size: 26),
-                  IconText(
-                    full ? tr('spawner.full') : '[[energy]]${game.energy}',
-                    style: const TextStyle(fontSize: 11),
-                  ),
-                ],
+              padding: const EdgeInsets.all(5),
+              // 글꼴 · 숫자 길이와 상관없이 원 안에 들어가게 줄여 맞춤
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ArtImage(icon, size: 26),
+                    IconText(
+                      full ? tr('spawner.full') : '[[energy]]${game.energy}',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                  ],
+                ),
               ),
             ),
             if (open.length > 1)

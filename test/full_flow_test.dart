@@ -181,7 +181,6 @@ void main() {
         check('$day일 $h시');
       }
     }
-    // ignore: avoid_print
     gLevel = (g.level - 1) * Gems.levelUp;
     print(
       '다이아(${g.stat(Stat.daysPlayed)}일): 업적 $gAch 출석 $gCheck 쪽지 $gMail 레벨업 $gLevel 사용 ${g.stat(Stat.gemsSpent)}',

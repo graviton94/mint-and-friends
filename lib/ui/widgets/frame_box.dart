@@ -260,9 +260,16 @@ class _NineSlicePainter extends BoxPainter {
     if (img == null) {
       if (_stream == null) {
         _stream = AssetImage(d.path).resolve(config);
-        _listener = ImageStreamListener((info, _) {
+        _listener = ImageStreamListener((info, sync) {
           _cache[d.path] = info.image;
-          onChanged?.call();
+          // 이미 캐시된 그림은 그리는 도중에 바로 알려 오므로, 다시 그리기는 다음 프레임으로 미룬다
+          if (sync) {
+            WidgetsBinding.instance.addPostFrameCallback(
+              (_) => onChanged?.call(),
+            );
+          } else {
+            onChanged?.call();
+          }
         });
         _stream!.addListener(_listener!);
       }
