@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:material_ui/material_ui.dart';
 
 import '../../art/art.dart';
@@ -1230,6 +1232,57 @@ class _BubblePainter extends CustomPainter {
       o.fill != fill || o.line != line || o.tailX != tailX || o.glow != glow;
 }
 
+/// 정원 효과 입자 그림 (assets/art/fx). 없으면 코드로 그린 도형을 쓴다.
+class FxSprites {
+  static final Map<String, ui.Image> _img = {};
+  static Future<void>? _loading;
+
+  static Future<void> load() => _loading ??= () async {
+    for (final id in const [
+      'cherry_petal',
+      'butterfly_open',
+      'butterfly_closed',
+      'maple_leaf',
+      'ginkgo_leaf',
+      'snowflake',
+      'sun_sparkle',
+      'firefly',
+    ]) {
+      try {
+        final data = await rootBundle.load('assets/art/fx/$id.webp');
+        final codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+        _img[id] = (await codec.getNextFrame()).image;
+      } catch (_) {}
+    }
+  }();
+
+  /// 그림을 [c] 중심, 한 변 [size] 로 그린다. 그림이 없으면 false.
+  static bool draw(
+    Canvas canvas,
+    String id,
+    Offset c,
+    double size, {
+    double opacity = 1,
+    double rot = 0,
+  }) {
+    final im = _img[id];
+    if (im == null) return false;
+    canvas.save();
+    canvas.translate(c.dx, c.dy);
+    if (rot != 0) canvas.rotate(rot);
+    canvas.drawImageRect(
+      im,
+      Rect.fromLTWH(0, 0, im.width.toDouble(), im.height.toDouble()),
+      Rect.fromCenter(center: Offset.zero, width: size, height: size),
+      Paint()
+        ..filterQuality = FilterQuality.medium
+        ..color = Color.fromRGBO(255, 255, 255, opacity.clamp(0.0, 1.0)),
+    );
+    canvas.restore();
+    return true;
+  }
+}
+
 /// 계절 정원 효과. [season] 0 봄 · 1 여름 · 2 가을 · 3 겨울.
 /// 기본(새싹 정원 패키지): 옅은 입자. [intense](계절 세트 완성 풍경): 입자 2배 + 색조 + 계절 연출.
 class _SeasonPainter extends CustomPainter {
@@ -1272,6 +1325,15 @@ class _SeasonPainter extends CustomPainter {
         final y = (0.4 + 0.58 * b) * h;
         final tw = (0.5 + 0.5 * sin(t * 3 + i * 2.3)).clamp(0.0, 1.0);
         final r = unit * 0.5 * tw;
+        if (FxSprites.draw(
+          canvas,
+          'sun_sparkle',
+          Offset(x, y),
+          unit * 1.6 * tw,
+          opacity: tw,
+        )) {
+          continue;
+        }
         final paint = Paint()..color = Colors.white.withValues(alpha: 0.9 * tw);
         canvas.drawRect(
           Rect.fromCenter(
@@ -1296,6 +1358,25 @@ class _SeasonPainter extends CustomPainter {
       final x = ((b + 0.15 * sin(t * 0.8 + i)) % 1.0) * w;
       final y = (p * 1.1 - 0.05) * h;
       final rot = t * (0.8 + b) + i;
+      final sprite = switch (season) {
+        0 => 'cherry_petal',
+        2 => i % 3 == 0 ? 'ginkgo_leaf' : 'maple_leaf',
+        _ => 'snowflake',
+      };
+      final sz = switch (season) {
+        0 => unit * 1.6,
+        2 => unit * 2.0,
+        _ => unit * (0.9 + 0.6 * b) * (intense ? 1.2 : 1),
+      };
+      if (FxSprites.draw(
+        canvas,
+        sprite,
+        Offset(x, y),
+        sz,
+        rot: season == 3 ? 0 : rot,
+      )) {
+        continue;
+      }
       canvas.save();
       canvas.translate(x, y);
       canvas.rotate(rot);
@@ -1355,6 +1436,15 @@ class _SeasonPainter extends CustomPainter {
     final x = (a + 0.04 * sin(t * 0.7 + i)) * w;
     final y = (0.35 + 0.6 * b + 0.03 * sin(t * 0.9 + i * 2)) * h;
     final glow = 0.5 + 0.5 * sin(t * 2.2 + i * 1.7);
+    if (FxSprites.draw(
+      canvas,
+      'firefly',
+      Offset(x, y),
+      unit * 2.2,
+      opacity: glow,
+    )) {
+      return;
+    }
     canvas.drawCircle(
       Offset(x, y),
       unit * 0.9,
@@ -1431,6 +1521,14 @@ class _SeasonPainter extends CustomPainter {
       final x = (0.15 + 0.7 * (0.5 + 0.5 * sin(ph))) * w;
       final y = (0.35 + 0.35 * (0.5 + 0.5 * sin(ph * 1.7 + i))) * h;
       final flap = 0.35 + 0.65 * (0.5 + 0.5 * sin(t * 14 + i)).abs();
+      if (FxSprites.draw(
+        canvas,
+        sin(t * 14 + i) > 0 ? 'butterfly_open' : 'butterfly_closed',
+        Offset(x, y),
+        unit * 2.0,
+      )) {
+        continue;
+      }
       for (final sgn in [-1.0, 1.0]) {
         final r = Rect.fromCenter(
           center: Offset(x + sgn * unit * 0.55 * flap, y),

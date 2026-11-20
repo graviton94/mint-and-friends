@@ -1337,5 +1337,95 @@
       "assets/art/decor/snow_lantern_summer.webp",
       "assets/art/decor/chimney_cottage_summer.webp"
     ]
+  },
+  "decor_yard_autumn": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/big_tree_autumn.webp",
+      "assets/art/decor/bench_autumn.webp",
+      "assets/art/decor/mailbox_autumn.webp",
+      "assets/art/decor/veggie_patch_autumn.webp",
+      "assets/art/decor/lantern_autumn.webp",
+      "assets/art/decor/bird_feeder_autumn.webp",
+      "assets/art/decor/hut_autumn.webp",
+      "assets/art/decor/fountain_autumn.webp"
+    ]
+  },
+  "decor_pond_autumn": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/stepping_stones_autumn.webp",
+      "assets/art/decor/water_lily_autumn.webp",
+      "assets/art/decor/fishing_spot_autumn.webp",
+      "assets/art/decor/rowboat_autumn.webp",
+      "assets/art/decor/reeds_autumn.webp",
+      "assets/art/decor/log_chair_autumn.webp",
+      "assets/art/decor/tent_autumn.webp",
+      "assets/art/decor/wooden_bridge_autumn.webp"
+    ]
+  },
+  "decor_greenhouse_autumn": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/glasshouse_autumn.webp",
+      "assets/art/decor/cactus_autumn.webp",
+      "assets/art/decor/mushroom_bed_autumn.webp",
+      "assets/art/decor/watering_can_autumn.webp",
+      "assets/art/decor/sunflower_field_autumn.webp",
+      "assets/art/decor/tea_table_autumn.webp",
+      "assets/art/decor/bamboo_autumn.webp",
+      "assets/art/decor/wind_chime_autumn.webp"
+    ]
+  },
+  "decor_starry_autumn": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/telescope_autumn.webp",
+      "assets/art/decor/camp_tent_autumn.webp",
+      "assets/art/decor/campfire_autumn.webp",
+      "assets/art/decor/ferris_wheel_autumn.webp",
+      "assets/art/decor/carousel_autumn.webp",
+      "assets/art/decor/moon_statue_autumn.webp",
+      "assets/art/decor/little_castle_autumn.webp",
+      "assets/art/decor/fireworks_autumn.webp"
+    ]
+  },
+  "decor_seaside_autumn": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/beach_hut_autumn.webp",
+      "assets/art/decor/parasol_autumn.webp",
+      "assets/art/decor/sandcastle_autumn.webp",
+      "assets/art/decor/lighthouse_autumn.webp",
+      "assets/art/decor/deck_chair_autumn.webp",
+      "assets/art/decor/shell_fountain_autumn.webp",
+      "assets/art/decor/surf_rack_autumn.webp",
+      "assets/art/decor/seagull_post_autumn.webp"
+    ]
+  },
+  "decor_snow_village_autumn": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/snowman_autumn.webp",
+      "assets/art/decor/igloo_autumn.webp",
+      "assets/art/decor/sled_autumn.webp",
+      "assets/art/decor/winter_tree_autumn.webp",
+      "assets/art/decor/cocoa_stand_autumn.webp",
+      "assets/art/decor/ice_rink_autumn.webp",
+      "assets/art/decor/snow_lantern_autumn.webp",
+      "assets/art/decor/chimney_cottage_autumn.webp"
+    ]
   }
 }

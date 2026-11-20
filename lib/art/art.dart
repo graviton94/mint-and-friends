@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -5,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../game/config.dart';
+import '../ui/garden/garden_scene.dart' show FxSprites;
 
 /// 아트 리소스 등록부.
 ///
@@ -17,6 +19,7 @@ class Art {
 
   /// 앱 시작 시 한 번 호출. 번들에 들어 있는 아트 파일 목록을 읽는다.
   static Future<void> init() async {
+    unawaited(FxSprites.load());
     try {
       final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
       try {
