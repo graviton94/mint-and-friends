@@ -47,6 +47,15 @@
 Firebase 콘솔 → Remote Config → 아래 8개 키를 지금 값 그대로 추가 후 게시 (이후 여기서 조정):
 `energy_regen_seconds` 150 · `energy_ad_amount` 20 · `refill_base` 60 · `refill_step` 30 · `refill_max` 150 · `rescue_chance` 0.25 · `market_price_base` 10 · `area_star_scale` 1.0
 
+## 6-1. Play 앱 서명 키 등록 (첫 AAB 업로드 직후 꼭)
+Play 에 올린 앱은 Google 이 **앱 서명 키**로 다시 서명한다. 이 키의 지문을 Firebase · 카카오에 넣지 않으면
+**Play 에서 받은 앱에서만 구글 · 카카오 로그인이 실패**한다 (사이드로드 APK 는 업로드 키라 문제없음).
+1. Play Console → 설정 → **앱 무결성** → 앱 서명 → "앱 서명 키 인증서"의 **SHA-1 · SHA-256** 복사
+2. Firebase 콘솔 → 프로젝트 설정 → Android 앱 → **디지털 지문 추가** → SHA-1 · SHA-256 둘 다
+   → 새 `google-services.json` 은 받지 않아도 됨 (지문은 서버 쪽 설정)
+3. 카카오: SHA-1 을 Claude 에게 주면 **키 해시**(Base64)로 바꿔 줌 → Kakao Developers → 내 애플리케이션 → 플랫폼 → Android → 키 해시 추가
+   (직접 바꾸려면: `echo <SHA1 콜론 포함> | xxd -r -p | openssl base64`)
+
 ## 7. 비공개 테스트 트랙
 1. 테스트 → **비공개 테스트** → 트랙 만들기 → 테스터: 이메일 목록(Google 그룹 가능)
 2. 새 버전 만들기 → AAB 업로드 → 출시 노트(아래) → 검토 제출
