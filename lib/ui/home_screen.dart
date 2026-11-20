@@ -1342,30 +1342,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: _watchCoinBag,
               ),
             ),
-          if (_viewArea > 0)
-            Positioned(
-              left: 6,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: _RoundButton(
-                  label: 'arrow_left',
-                  onTap: () => setState(() => _viewArea--),
-                ),
-              ),
-            ),
-          if (_viewArea < game.currentArea)
-            Positioned(
-              right: 6,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: _RoundButton(
-                  label: 'arrow_right',
-                  onTap: () => setState(() => _viewArea++),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -1447,6 +1423,15 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // 지난 구역 보기 (말풍선을 가리지 않게 이름표 안에)
+            if (game.currentArea > 0) ...[
+              _PillArrow(
+                left: true,
+                enabled: _viewArea > 0,
+                onTap: () => setState(() => _viewArea--),
+              ),
+              const SizedBox(width: 4),
+            ],
             ArtImage(Art.areaIcon(a), size: 24),
             const SizedBox(width: 5),
             Column(
@@ -1474,6 +1459,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ],
             ),
+            if (game.currentArea > 0) ...[
+              const SizedBox(width: 6),
+              _PillArrow(
+                left: false,
+                enabled: _viewArea < game.currentArea,
+                onTap: () => setState(() => _viewArea++),
+              ),
+            ],
           ],
         ),
       ),
@@ -2031,6 +2024,33 @@ class _BarTile extends StatelessWidget {
 }
 
 /// 정원 위 작은 둥근 버튼 (코인 주머니 등). [ad] 면 광고 표시.
+/// 구역 이름표 안의 작은 화살표.
+class _PillArrow extends StatelessWidget {
+  const _PillArrow({
+    required this.left,
+    required this.enabled,
+    required this.onTap,
+  });
+  final bool left;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onTap: enabled
+        ? () {
+            sfx(Sfx.tap);
+            onTap();
+          }
+        : null,
+    child: Opacity(
+      opacity: enabled ? 1 : 0.3,
+      child: ArtImage(Art.icon(left ? 'arrow_left' : 'arrow_right'), size: 22),
+    ),
+  );
+}
+
 class _GardenTool extends StatelessWidget {
   const _GardenTool({
     super.key,

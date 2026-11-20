@@ -38,6 +38,16 @@ void main() {
       );
     }
     g.grantBoost();
+    // 새 기능이 모두 켜진 상태: 부스트 3종 · 보관 부스트 · 패키지 타이머 · 시즌 장식 · 의상
+    g.grantBoostAd(BoostKind.energy);
+    g.grantBoostAd(BoostKind.lucky);
+    g.boostTokens[BoostKind.coins] = 60;
+    g.showStarterOffer();
+    g.decorStyle['2:0'] = 3;
+    g.ownedStyles.add('2:0:3');
+    g.ownedOutfits.add('dubu:winter');
+    g.effects.add(Starter.effect);
+    g.effectOn = Starter.effect;
     return g;
   }
 
@@ -50,6 +60,12 @@ void main() {
         'achievements': (c, g, b) => showAchievementsSheet(c, g),
         'mail': (c, g, b) => showMailSheet(c, g),
         'checkIn': (c, g, b) => showCheckInSheet(c, g),
+        'boost': (c, g, b) =>
+            showBoostSheet(c, g, watchAd: (_) async => true, adFree: false),
+        'style': (c, g, b) => showStyleSheet(c, g, 2, 0),
+        'outfit': (c, g, b) => showOutfitSheet(c, g, Friends.byId('dubu')),
+        'starter': (c, g, b) => showStarterSheet(c, b, g),
+        'storage': (c, g, b) => showStorageSheet(c, g, onMessage: (_) {}),
       };
 
   for (final lang in ['ko', 'en', 'ja']) {

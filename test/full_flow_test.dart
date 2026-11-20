@@ -152,9 +152,7 @@ void main() {
               }
             }
             if (low >= 0) {
-              if (g.storageOpen && g.store(low)) {
-                used.add('store');
-              } else if (g.sell(low) != null) {
+              if (g.sell(low) != null) {
                 used.add('sell');
               }
             }
@@ -197,6 +195,22 @@ void main() {
             }
           }
         }
+        // 새 기능: 부탁이 다 끝나면 광고로 +2, 다이아 부스트 · 보관 칸 · 시즌 장식
+        if (g.ordersDoneToday) {
+          g.grantQuotaAd(g.friends.first);
+          used.add('quotaAd');
+        }
+        if (g.gems > 60 && rng.nextDouble() < 0.03) {
+          if (g.buyBoost(BoostKind.lucky)) used.add('boost');
+        }
+        if (g.gems > 70 && g.vaultOwned.length < 2) {
+          if (g.buyVault(32 + g.vaultOwned.length)) used.add('vault');
+        }
+        if (g.gems > 90 && g.currentArea > 0 && g.isPlaced(0, 0)) {
+          if (g.setStyle(0, 0, g.seasonStyleNow) == StyleResult.ok) {
+            used.add('season');
+          }
+        }
         if (h == sessions.last && g.stat(Stat.orders) == dayOrders) stuckDays++;
         check('$day일 $h시');
       }
@@ -221,6 +235,9 @@ void main() {
       'market',
       'styleCoins',
       'outfit',
+      'boost',
+      'vault',
+      'season',
     ]) {
       expect(used, contains(f), reason: '$f 기능이 한 번도 쓰이지 않음');
     }
