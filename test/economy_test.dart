@@ -190,4 +190,32 @@ void main() {
     expect(Leveling.xpForDecor(0, 0), 2);
     expect(Leveling.xpForDecor(3, 7), 20);
   });
+
+  test('바구니: 그림 · 구역이 준비되면 찻잎 바구니가 열리고, 찻잎은 10단계가 끝', () {
+    final g = make();
+    expect(g.openBaskets, [0]); // 테스트에는 새 체인 그림이 없다
+    final keep = Chains.ready;
+    Chains.ready = (_) => true;
+    addTearDown(() => Chains.ready = keep);
+    expect(g.basketOpen(1), isFalse); // 아직 온실 구역 전
+    g.currentArea = 2;
+    expect(g.openBaskets, [0, 1]);
+    g.selectBasket(1);
+    g.tapSpawner();
+    final made = g.board.whereType<Item>().toList();
+    expect(made.single.chain, Chain.tea);
+    expect(g.availableChains, contains(Chain.tea));
+    expect(Chains.maxLevel(Chain.tea), 10);
+    expect(Chains.item(Chain.tea, 15).level, 10);
+    final cells = g.unlockedCells.toList()..sort();
+    for (final c in cells) {
+      g.board[c] = null;
+    }
+    g.board[cells[0]] = Item(901, Chain.tea, 10);
+    g.board[cells[1]] = Item(902, Chain.tea, 10);
+    final c0 = g.coins;
+    g.move(cells[0], cells[1]);
+    expect(g.coins, greaterThan(c0)); // 최고 단계 합치기 = 코인 보상
+    expect(g.board[cells[1]], isNull);
+  });
 }

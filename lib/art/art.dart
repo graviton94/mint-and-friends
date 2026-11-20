@@ -41,6 +41,12 @@ class Art {
     } catch (_) {
       _available = {};
     }
+    // 새 체인은 단계 그림이 모두 들어와야 연다 (꽃 · 간식은 언제나)
+    Chains.ready = (c) =>
+        c == Chain.flower ||
+        c == Chain.snack ||
+        [for (var l = 1; l <= Chains.maxLevel(c); l++) item(c, l)]
+            .every((r) => r.available);
   }
 
   static bool has(String path) => _available.contains(path);

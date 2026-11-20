@@ -257,7 +257,7 @@ class Storage {
 
 // ------------------------------------------------------------------ 아이템
 
-enum Chain { flower, snack }
+enum Chain { flower, snack, tea, stardust }
 
 class ItemDef {
   final Chain chain;
@@ -305,12 +305,32 @@ class Chains {
       '🎂',
       '🍱',
     ],
+    // 새 체인은 그림이 들어와야 열린다 (이모지 대체 없음)
+    Chain.tea: ['', '', '', '', '', '', '', '', '', ''],
+    Chain.stardust: ['', '', '', '', '', '', '', '', '', ''],
   };
 
+  /// 체인별 최고 단계: 꽃 · 간식 15, 구역 체인(찻잎 · 별가루) 10 (바이블 §5.1).
+  static int maxLevel(Chain c) =>
+      c == Chain.tea || c == Chain.stardust ? 10 : GameConfig.maxLevel;
+
   static ItemDef item(Chain c, int level) {
-    final l = level.clamp(1, GameConfig.maxLevel);
+    final l = level.clamp(1, maxLevel(c));
     return ItemDef(c, l, _emoji[c]![l - 1]);
   }
+
+  /// 체인 그림이 준비됐는지 (Art.init 이 바꿔 낀다). 기본: 꽃 · 간식만.
+  static bool Function(Chain c) ready = (c) =>
+      c == Chain.flower || c == Chain.snack;
+
+  /// 바구니: 0 정원 바구니(꽃 · 간식), 1 찻잎 바구니(온실 구역부터), 2 별가루 병(별빛 언덕부터).
+  static const List<List<Chain>> baskets = [
+    [Chain.flower, Chain.snack],
+    [Chain.tea],
+    [Chain.stardust],
+  ];
+  static const List<int> basketArea = [0, 2, 3];
+  static const List<String> basketIcon = ['basket', 'tea_basket', 'star_jar'];
 }
 
 // ------------------------------------------------------------------ 강화
@@ -400,8 +420,11 @@ class Upgrades {
 
   /// 종류별 생산력 강화 (꽃 · 간식): 그 종류 아이템의 방치 수익 +20% / 단계.
   static double chainPower(int lv) => 1 + 0.2 * lv;
-  static UpgradeType powerOf(Chain c) =>
-      c == Chain.flower ? UpgradeType.flowerPower : UpgradeType.snackPower;
+
+  /// 찻잎은 꽃 생산력, 별가루는 간식 생산력을 따른다.
+  static UpgradeType powerOf(Chain c) => c == Chain.flower || c == Chain.tea
+      ? UpgradeType.flowerPower
+      : UpgradeType.snackPower;
 
   /// 에너지 1 회복 간격(초). 아이템은 바구니 탭(에너지 1)으로만 나온다 (머지 장르 표준:
   /// Merge Mansion · Travel Town 모두 생산은 에너지, 방치 요소는 수익·자동 합치기).

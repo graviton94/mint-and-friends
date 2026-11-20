@@ -370,14 +370,14 @@ Future<void> showCollectionSheet(
           ],
         ),
         const SizedBox(height: 14),
-        for (final chain in Chain.values) ...[
+        for (final chain in Chain.values.where(Chains.ready)) ...[
           Text(chainName(chain), style: const TextStyle(fontSize: 18)),
           const SizedBox(height: 6),
           Wrap(
             spacing: 6,
             runSpacing: 6,
             children: [
-              for (var lv = 1; lv <= GameConfig.maxLevel; lv++)
+              for (var lv = 1; lv <= Chains.maxLevel(chain); lv++)
                 _ItemChip(
                   chain: chain,
                   level: lv,

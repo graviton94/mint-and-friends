@@ -34,7 +34,7 @@ void main() {
   test('모든 콘텐츠 id 에 문구가 있다', () {
     final keys = <String>[
       for (final c in Chain.values)
-        for (var l = 1; l <= GameConfig.maxLevel; l++) Chains.item(c, l).key,
+        for (var l = 1; l <= Chains.maxLevel(c); l++) Chains.item(c, l).key,
       for (final f in Friends.all) ...[
         f.key('name'),
         f.key('species'),

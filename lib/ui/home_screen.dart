@@ -1540,13 +1540,30 @@ class _Spawner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final full = game.boardFull;
+    final open = game.openBaskets;
+    // 바구니가 여러 개면 좌우로 넘겨 바꾼다 (찻잎 바구니 · 별가루 병)
+    void swipe(int dir) {
+      if (open.length < 2) return;
+      final i = open.indexOf(game.basket);
+      game.selectBasket(open[(i + dir + open.length) % open.length]);
+      sfx(Sfx.tap);
+    }
+
+    final icon = game.basket == 0
+        ? Art.basket
+        : Art.icon(Chains.basketIcon[game.basket]);
     return GestureDetector(
       onTap: onTap,
+      onHorizontalDragEnd: (d) {
+        final v = d.primaryVelocity ?? 0;
+        if (v.abs() > 120) swipe(v < 0 ? 1 : -1);
+      },
       child: SizedBox(
         width: 70,
         height: 70,
         child: Stack(
           alignment: Alignment.center,
+          clipBehavior: Clip.none,
           children: [
             SizedBox(
               width: 70,
@@ -1575,7 +1592,7 @@ class _Spawner extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ArtImage(Art.basket, size: 26),
+                  ArtImage(icon, size: 26),
                   IconText(
                     full ? tr('spawner.full') : '[[energy]]${game.energy}',
                     style: const TextStyle(fontSize: 11),
@@ -1583,6 +1600,26 @@ class _Spawner extends StatelessWidget {
                 ],
               ),
             ),
+            if (open.length > 1)
+              Positioned(
+                bottom: -8,
+                child: Row(
+                  children: [
+                    for (final b in open)
+                      Container(
+                        width: 7,
+                        height: 7,
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: b == game.basket
+                              ? Palette.primary
+                              : Colors.black26,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),

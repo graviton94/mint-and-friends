@@ -287,7 +287,29 @@ class GameState extends ChangeNotifier {
   List<Chain> get availableChains => [
     Chain.flower,
     if (isUnlocked(Feature.snack)) Chain.snack,
+    for (var b = 1; b < Chains.baskets.length; b++)
+      if (basketOpen(b)) ...Chains.baskets[b],
   ];
+
+  /// 바구니(생성기) — 하단 바구니를 좌우로 넘겨 고른다 (바이블 D-013).
+  int basket = 0;
+
+  bool basketOpen(int b) =>
+      b == 0 ||
+      (b < Chains.baskets.length &&
+          currentArea >= Chains.basketArea[b] &&
+          Chains.baskets[b].every(Chains.ready));
+
+  List<int> get openBaskets => [
+    for (var b = 0; b < Chains.baskets.length; b++)
+      if (basketOpen(b)) b,
+  ];
+
+  void selectBasket(int b) {
+    if (!basketOpen(b) || b == basket) return;
+    basket = b;
+    notifyListeners();
+  }
 
   int lv(UpgradeType t) => upgrades[t] ?? 0;
 
@@ -405,7 +427,7 @@ class GameState extends ChangeNotifier {
   bool _hasMergeablePair() {
     final seen = <String>{};
     for (final it in board) {
-      if (it == null || it.isBubble || it.level >= GameConfig.maxLevel)
+      if (it == null || it.isBubble || it.level >= Chains.maxLevel(it.chain))
         continue;
       if (!seen.add('${it.chain.index}-${it.level}')) return true;
     }
@@ -562,11 +584,15 @@ class GameState extends ChangeNotifier {
   int? _spawnOne() {
     final cell = _emptyCell;
     if (cell == null) return null;
-    final chains = availableChains;
+    if (!basketOpen(basket)) basket = 0;
+    final chains = [
+      for (final c in Chains.baskets[basket])
+        if (availableChains.contains(c)) c,
+    ];
     final chain = chains[_rng.nextInt(chains.length)];
     var lvl = spawnLevel;
     if (_rng.nextDouble() < luckyChance) lvl += 1;
-    lvl = min(lvl, GameConfig.maxLevel);
+    lvl = min(lvl, Chains.maxLevel(chain));
     board[cell] = Item(_nextId++, chain, lvl);
     _checkDiscovery(chain, lvl);
     return cell;
@@ -617,7 +643,7 @@ class GameState extends ChangeNotifier {
     totalMerges++;
     _bump(Stat.merges);
     board[from] = null;
-    if (b.level >= GameConfig.maxLevel) {
+    if (b.level >= Chains.maxLevel(b.chain)) {
       final payout = GameConfig.maxMergePayoutOf(b.level) * _coinMult;
       board[to] = null;
       _earn(payout);
@@ -666,7 +692,7 @@ class GameState extends ChangeNotifier {
       final it = board[i];
       if (it == null ||
           it.isBubble ||
-          it.level >= GameConfig.maxLevel ||
+          it.level >= Chains.maxLevel(it.chain) ||
           _isOrderTarget(it))
         continue;
       groups
@@ -816,7 +842,7 @@ class GameState extends ChangeNotifier {
     Item? best;
     for (final it in board) {
       if (it == null || it.isBubble || !chains.contains(it.chain)) continue;
-      if (it.level <= top || it.level >= GameConfig.maxLevel) continue;
+      if (it.level <= top || it.level >= Chains.maxLevel(it.chain)) continue;
       if (orders.any((o) => o.chain == it.chain && o.level == it.level)) {
         continue;
       }
@@ -851,7 +877,7 @@ class GameState extends ChangeNotifier {
       final spread = 1.0 + min(1, attempt ~/ 15);
       final lvl = (center + (_rng.nextDouble() * 2 - 1) * spread).round().clamp(
         2,
-        GameConfig.maxLevel,
+        Chains.maxLevel(chain),
       );
       final dup = orders.any((o) => o.chain == chain && o.level == lvl);
       // 같은 부탁을 연달아 받아 별을 쉽게 모으지 못하게: 최근 전달한 것 · 판에 이미 있는 것은 피한다
@@ -1402,6 +1428,7 @@ class GameState extends ChangeNotifier {
       'hi': {for (final e in highest.entries) e.key.name: e.value},
       'area': currentArea,
       'placed': placed.toList(),
+      'basket': basket,
       if (decorStyle.isNotEmpty) 'styles': decorStyle,
       if (ownedStyles.isNotEmpty) 'ownedStyles': ownedStyles.toList(),
       'friends': friends.toList(),
@@ -1495,6 +1522,7 @@ class GameState extends ChangeNotifier {
     }
     currentArea = (j['area'] as num?)?.toInt() ?? 0;
     placed = {for (final s in (j['placed'] as List? ?? [])) (s as num).toInt()};
+    basket = (j['basket'] as num?)?.toInt() ?? 0;
     decorStyle = ((j['styles'] as Map?) ?? {}).map(
       (k, v) => MapEntry('$k', (v as num).toInt()),
     );
