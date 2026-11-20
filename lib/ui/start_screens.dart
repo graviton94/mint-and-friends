@@ -274,7 +274,6 @@ class _TitleViewState extends State<TitleView> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     const bg = ArtRef('assets/art/title/bg.webp', '');
     const fg = ArtRef('assets/art/title/fg.webp', '');
-    const hero = ArtRef('assets/art/title/hero.webp', '');
     return Scaffold(
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -325,36 +324,39 @@ class _TitleViewState extends State<TitleView> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
-                    // 3. 주인공 (아래에서 쏙, 통통)
+                    // 3. 친구들: 정해진 자리 · 정해진 앞뒤 순서(뒷줄 → 앞줄 → 가운데 민트)로 하나씩 통통
+                    for (final m in _cast)
+                      Positioned(
+                        left: w * m.x - _size(w, m) / 2,
+                        bottom: h * m.bottom,
+                        child: Transform.scale(
+                          scale: _pop(m.at, m.at + 0.28),
+                          alignment: Alignment.bottomCenter,
+                          child: Transform.rotate(
+                            angle: sway * m.swing,
+                            alignment: Alignment.bottomCenter,
+                            child: ArtImage(
+                              Art.friend(Friends.byId(m.id), happy: true),
+                              size: _size(w, m),
+                              flipX: m.flip,
+                            ),
+                          ),
+                        ),
+                      ),
+                    // 4. 전경 꽃덤불 (아래에서 올라와 친구들 발치를 덮는다)
                     Positioned(
                       left: 0,
                       right: 0,
-                      bottom: h * 0.2,
-                      height: h * 0.34,
-                      child: hero.available
-                          ? Transform.scale(
-                              scale: _pop(0.4, 0.75),
-                              alignment: Alignment.bottomCenter,
-                              child: Image.asset(
-                                hero.path,
-                                fit: BoxFit.contain,
-                              ),
-                            )
-                          : _HeroGroup(pop: _pop, sway: sway, width: w),
+                      bottom: -w * 0.36 * (1 - _fade(0.62, 0.8)),
+                      child: fg.available
+                          ? Image.asset(fg.path, fit: BoxFit.fitWidth)
+                          : const SizedBox.shrink(),
                     ),
-                    // 4. 전경 덤불 (아래에서 올라옴)
-                    if (fg.available)
-                      Positioned(
-                        left: 0,
-                        right: 0,
-                        bottom: -h * 0.12 * (1 - _fade(0.3, 0.55)),
-                        child: Image.asset(fg.path, fit: BoxFit.fitWidth),
-                      ),
                     // 5. 눌러서 시작 (마지막에 톡, 그다음 숨쉬듯 깜빡)
                     Positioned(
                       left: 0,
                       right: 0,
-                      bottom: h * 0.12,
+                      bottom: h * 0.05 + MediaQuery.of(context).padding.bottom,
                       child: Center(
                         child: Transform.scale(
                           scale:
@@ -391,7 +393,7 @@ class _TitleViewState extends State<TitleView> with TickerProviderStateMixin {
                     ),
                     if (widget.version.isNotEmpty)
                       Positioned(
-                        bottom: 16 + MediaQuery.of(context).padding.bottom,
+                        bottom: 4 + MediaQuery.of(context).padding.bottom,
                         left: 0,
                         right: 0,
                         child: Opacity(
@@ -420,58 +422,36 @@ class _TitleViewState extends State<TitleView> with TickerProviderStateMixin {
   }
 }
 
-/// 주인공 그림이 오기 전: 민트를 가운데에 두고 친구 넷이 한 명씩 통통 튀어나온다.
-class _HeroGroup extends StatelessWidget {
-  const _HeroGroup({
-    required this.pop,
-    required this.sway,
-    required this.width,
+/// 타이틀 친구 배치 (뒤 → 앞 순서가 곧 그리는 순서).
+/// x: 화면 너비 비율(가운데), bottom: 화면 높이 비율(발 위치), scale: 화면 너비 대비 크기,
+/// at: 나오는 시점(연출 0~1), swing: 살랑 흔들림 크기, flip: 좌우 반전(가운데를 보게).
+class _Member {
+  final String id;
+  final double x, bottom, scale, at, swing;
+  final bool flip;
+  const _Member(
+    this.id,
+    this.x,
+    this.bottom,
+    this.scale,
+    this.at, {
+    this.swing = 0.04,
+    this.flip = false,
   });
-  final double Function(double a, double b) pop;
-  final double sway;
-  final double width;
-
-  @override
-  Widget build(BuildContext context) {
-    final s = min(width * 0.3, 150.0);
-    final cast = <(String, String, double, double, double)>[
-      // id, 자세, x(가운데 기준 비율), 아래 여백 비율, 나오는 시점
-      ('dubu', 'happy', -0.34, 0.28, 0.42),
-      ('kwak', 'happy', 0.34, 0.3, 0.48),
-      ('nabi', 'wave', -0.2, 0.0, 0.54),
-      ('mochi', 'happy', 0.2, 0.02, 0.6),
-      ('bori', 'wave', 0, 0.12, 0.66),
-    ];
-    return LayoutBuilder(
-      builder: (context, c) => Stack(
-        clipBehavior: Clip.none,
-        children: [
-          for (final (id, pose, x, b, at) in cast)
-            Positioned(
-              left:
-                  c.maxWidth / 2 +
-                  x * c.maxWidth -
-                  (id == 'bori' ? s * 0.6 : s * 0.5),
-              bottom: b * c.maxHeight,
-              child: Transform.scale(
-                scale: pop(at, at + 0.3),
-                alignment: Alignment.bottomCenter,
-                child: Transform.rotate(
-                  angle: (id == 'bori' ? 0 : sway * 0.04),
-                  alignment: Alignment.bottomCenter,
-                  child: ArtImage(
-                    Art.friendPose(Friends.byId(id), pose) ??
-                        Art.friend(Friends.byId(id), happy: true),
-                    size: id == 'bori' ? s * 1.2 : s,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
 }
+
+const List<_Member> _cast = [
+  // 뒷줄 (작게, 조금 위)
+  _Member('dubu', 0.17, 0.205, 0.3, 0.36, flip: true),
+  _Member('kwak', 0.83, 0.205, 0.29, 0.42),
+  // 앞줄
+  _Member('nabi', 0.3, 0.135, 0.32, 0.48, flip: true),
+  _Member('mochi', 0.7, 0.135, 0.32, 0.54),
+  // 가운데 주인공 민트 (가장 크게, 맨 앞)
+  _Member('bori', 0.5, 0.15, 0.4, 0.6, swing: 0.02),
+];
+
+double _size(double w, _Member m) => min(w * m.scale, 220.0 * m.scale / 0.32);
 
 // ---------------------------------------------------------------- ③ 정원으로 들어가기
 

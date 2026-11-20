@@ -745,7 +745,7 @@
     "bg": true,
     "bgSize": [
       1080,
-      2340
+      1920
     ],
     "files": [
       "assets/art/title/bg.webp"
@@ -756,13 +756,6 @@
     "size": 1080,
     "files": [
       "assets/art/title/fg.webp"
-    ]
-  },
-  "title_hero": {
-    "cutout": true,
-    "size": 900,
-    "files": [
-      "assets/art/title/hero.webp"
     ]
   }
 }
