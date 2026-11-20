@@ -68,12 +68,30 @@ class Art {
   );
 
   /// 기쁨 표정 그림이 아직 없으면 기본 그림을 쓴다 (탭할 때 이모지로 바뀌지 않게).
-  static ArtRef friend(FriendDef f, {bool happy = false}) {
+  static ArtRef friend(FriendDef f, {bool happy = false, String? outfit}) {
+    if (outfit != null) {
+      final o = outfitArt(f, outfit, happy: happy);
+      if (o.available) return o;
+      final oi = outfitArt(f, outfit);
+      if (oi.available) return oi;
+    }
     final idle = ArtRef('assets/art/friends/${f.id}_idle.webp', f.emoji);
     if (!happy) return idle;
     final h = ArtRef('assets/art/friends/${f.id}_happy.webp', f.emoji);
     return h.available || !idle.available ? h : idle;
   }
+
+  static ArtRef outfitArt(FriendDef f, String outfit, {bool happy = false}) =>
+      ArtRef(
+        'assets/art/friends/${f.id}_${outfit}_${happy ? 'happy' : 'idle'}.webp',
+        f.emoji,
+      );
+
+  /// 이 친구가 입을 수 있는 의상 (그림이 들어온 것만).
+  static List<OutfitDef> outfitsFor(FriendDef f) => [
+    for (final o in Outfits.all)
+      if (outfitArt(f, o.id).available) o,
+  ];
 
   /// 추가 자세 (sleep · wave). 그림이 없으면 null → 기본 자세로 행동만 한다.
   static ArtRef? friendPose(FriendDef f, String pose) {

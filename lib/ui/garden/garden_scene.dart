@@ -472,11 +472,13 @@ class _GardenSceneState extends State<GardenScene>
           : walking
           ? -(sin(_t * 10).abs()) * sz * 0.12
           : 0.0;
-      final posed = wk.pose == null || wk.happyLeft > 0
+      final outfit = game.outfitOf(f.id);
+      // 의상을 입었으면 의상 그림(기본 · 기쁨)을, 아니면 자세 그림(졸기 · 인사)을 쓴다
+      final posed = wk.pose == null || wk.happyLeft > 0 || outfit != null
           ? null
           : Art.friendPose(f, wk.pose!);
       final image = ArtImage(
-        posed ?? Art.friend(f, happy: wk.happyLeft > 0),
+        posed ?? Art.friend(f, happy: wk.happyLeft > 0, outfit: outfit),
         size: sz,
         flipX: wk.facingRight,
       );

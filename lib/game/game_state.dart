@@ -226,6 +226,10 @@ class GameState extends ChangeNotifier {
   int currentArea = 0; // 지금 꾸미는 구역 (이전 구역은 모두 완성)
   Set<int> placed = {}; // 현재 구역에 설치한 장식 슬롯
 
+  /// 친구 의상: 친구 id → 입은 의상 id, 산 의상 'friend:outfit'.
+  Map<String, String> outfits = {};
+  Set<String> ownedOutfits = {};
+
   /// 장식 디자인: 'area:slot' → 고른 디자인(0 기본 · 1 고급 · 2 특별), 산 디자인 'area:slot:v'.
   Map<String, int> decorStyle = {};
   Set<String> ownedStyles = {};
@@ -1017,6 +1021,31 @@ class GameState extends ChangeNotifier {
     return StyleResult.ok;
   }
 
+  // ---------------------------------------------------------------- 친구 의상
+
+  String? outfitOf(String friendId) => outfits[friendId];
+  bool ownsOutfit(String friendId, String outfit) =>
+      ownedOutfits.contains('$friendId:$outfit');
+
+  /// 의상 입히기 (null = 기본 옷). 안 산 의상은 다이아로 사서 바로 입힌다.
+  StyleResult wearOutfit(String friendId, String? outfit) {
+    if (!friends.contains(friendId)) return StyleResult.notPlaced;
+    if (outfit != null) {
+      final o = Outfits.byId(outfit);
+      if (o == null) return StyleResult.notPlaced;
+      if (!ownsOutfit(friendId, outfit)) {
+        if (!_spendGems(o.gems)) return StyleResult.noGems;
+        ownedOutfits.add('$friendId:$outfit');
+        _bump(Stat.stylesBought);
+      }
+      outfits[friendId] = outfit;
+    } else {
+      outfits.remove(friendId);
+    }
+    notifyListeners();
+    return StyleResult.ok;
+  }
+
   // ---------------------------------------------------------------- 친구, 손님
 
   bool friendTapReady(String id) {
@@ -1430,6 +1459,8 @@ class GameState extends ChangeNotifier {
       'placed': placed.toList(),
       'basket': basket,
       if (decorStyle.isNotEmpty) 'styles': decorStyle,
+      if (outfits.isNotEmpty) 'outfits': outfits,
+      if (ownedOutfits.isNotEmpty) 'ownedOutfits': ownedOutfits.toList(),
       if (ownedStyles.isNotEmpty) 'ownedStyles': ownedStyles.toList(),
       'friends': friends.toList(),
       'deliv': deliveries,
@@ -1523,6 +1554,10 @@ class GameState extends ChangeNotifier {
     currentArea = (j['area'] as num?)?.toInt() ?? 0;
     placed = {for (final s in (j['placed'] as List? ?? [])) (s as num).toInt()};
     basket = (j['basket'] as num?)?.toInt() ?? 0;
+    outfits = ((j['outfits'] as Map?) ?? {}).map(
+      (k, v) => MapEntry('$k', '$v'),
+    );
+    ownedOutfits = {for (final s in (j['ownedOutfits'] as List? ?? [])) '$s'};
     decorStyle = ((j['styles'] as Map?) ?? {}).map(
       (k, v) => MapEntry('$k', (v as num).toInt()),
     );

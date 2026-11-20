@@ -343,6 +343,111 @@ class _StyleCard extends StatelessWidget {
   }
 }
 
+// ---------------------------------------------------------------- 친구 의상
+
+Future<void> showOutfitSheet(
+  BuildContext context,
+  GameState game,
+  FriendDef def,
+) => showGameSheet(
+  context,
+  game,
+  () => SheetFrame(
+    title: tr('outfit.title', {'name': friendName(def.id)}),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _OutfitCard(game: game, def: def, outfit: null),
+            ),
+            for (final o in Art.outfitsFor(def))
+              Expanded(
+                child: _OutfitCard(game: game, def: def, outfit: o),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        IconText(
+          tr('outfit.note'),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 13, color: Colors.black54),
+        ),
+      ],
+    ),
+  ),
+);
+
+class _OutfitCard extends StatelessWidget {
+  const _OutfitCard({
+    required this.game,
+    required this.def,
+    required this.outfit,
+  });
+  final GameState game;
+  final FriendDef def;
+  final OutfitDef? outfit;
+
+  @override
+  Widget build(BuildContext context) {
+    final id = outfit?.id;
+    final current = game.outfitOf(def.id) == id;
+    final owned = id == null || game.ownsOutfit(def.id, id);
+    final label = owned
+        ? (current ? tr('style.using') : tr('outfit.wear'))
+        : '[[diamond]] ${outfit!.gems}';
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
+      decoration: BoxDecoration(
+        color: current ? const Color(0xFFE6F2DC) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: current ? Palette.accent : const Color(0xFFE2D3B5),
+          width: current ? 2.5 : 1.5,
+        ),
+      ),
+      child: Column(
+        children: [
+          Text(
+            id == null ? tr('outfit.basic') : tr(outfit!.key),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF6B5638)),
+          ),
+          const SizedBox(height: 4),
+          ArtImage(Art.friend(def, outfit: id), size: 84),
+          const SizedBox(height: 6),
+          FilledButton(
+            style: framedButton(
+              FilledButton.styleFrom(
+                minimumSize: const Size(0, 40),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+              ),
+              current ? 'button_white' : 'button_green',
+            ),
+            onPressed: current
+                ? null
+                : () {
+                    final r = game.wearOutfit(def.id, id);
+                    if (r == StyleResult.ok) {
+                      sfx(Sfx.unlock);
+                    } else if (r == StyleResult.noGems) {
+                      sfx(Sfx.error);
+                      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                        SnackBar(content: Text(tr('style.noGems'))),
+                      );
+                    }
+                  },
+            child: FittedBox(
+              child: IconText(label, style: const TextStyle(fontSize: 15)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // ---------------------------------------------------------------- 도감
 
 Future<void> showCollectionSheet(
@@ -405,65 +510,72 @@ class _FriendCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final has = game.friends.contains(def.id);
     final aff = game.affection(def.id);
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: has ? Colors.white : const Color(0xFFEDE8DC),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Opacity(
-            opacity: has ? 1 : 0.2,
-            child: ArtImage(Art.friend(def), size: 38),
-          ),
-          const SizedBox(width: 6),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                FittedBox(
-                  child: Text(
-                    has
-                        ? '${friendName(def.id)} (${friendSpecies(def.id)})'
-                        : tr('book.unknown'),
-                    style: const TextStyle(fontSize: 15),
-                  ),
-                ),
-                if (has) ...[
-                  Row(
-                    children: [
-                      for (var h = 0; h < Friends.maxAffection ~/ 2; h++)
-                        Opacity(
-                          opacity: h * 2 + 2 <= aff
-                              ? 1
-                              : (h * 2 + 1 <= aff ? 0.6 : 0.15),
-                          child: ArtImage(Art.icon('heart'), size: 11),
-                        ),
-                    ],
-                  ),
+    final dress = has && Art.outfitsFor(def).isNotEmpty;
+    return GestureDetector(
+      onTap: dress ? () => showOutfitSheet(context, game, def) : null,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: has ? Colors.white : const Color(0xFFEDE8DC),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Opacity(
+              opacity: has ? 1 : 0.2,
+              child: ArtImage(
+                Art.friend(def, outfit: game.outfitOf(def.id)),
+                size: 38,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                   FittedBox(
-                    child: IconText(
-                      aff == 0 ? tr('book.noEffect') : buffText(def, aff),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF5E6B5E),
+                    child: Text(
+                      has
+                          ? '${friendName(def.id)} (${friendSpecies(def.id)})'
+                          : tr('book.unknown'),
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                  ),
+                  if (has) ...[
+                    Row(
+                      children: [
+                        for (var h = 0; h < Friends.maxAffection ~/ 2; h++)
+                          Opacity(
+                            opacity: h * 2 + 2 <= aff
+                                ? 1
+                                : (h * 2 + 1 <= aff ? 0.6 : 0.15),
+                            child: ArtImage(Art.icon('heart'), size: 11),
+                          ),
+                      ],
+                    ),
+                    FittedBox(
+                      child: IconText(
+                        aff == 0 ? tr('book.noEffect') : buffText(def, aff),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF5E6B5E),
+                        ),
                       ),
                     ),
-                  ),
-                ] else
-                  IconText(
-                    tr('book.invite'),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF8A8A7A),
+                  ] else
+                    IconText(
+                      tr('book.invite'),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF8A8A7A),
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

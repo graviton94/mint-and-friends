@@ -573,5 +573,10 @@
   "friend.pposong.line.2": "Watch me slide!",
   "friend.pposong.line.3": "My earmuffs are so warm.",
   "friend.pposong.line.4": "Let's build one more snowman!",
-  "friend.pposong.line.5": "Even cold days feel cozy with friends."
+  "friend.pposong.line.5": "Even cold days feel cozy with friends.",
+  "outfit.title": "{name}'s wardrobe",
+  "outfit.basic": "Usual look",
+  "outfit.wear": "Wear",
+  "outfit.note": "Outfits you own can be changed any time for free",
+  "outfit.picnic": "Spring picnic"
 }

@@ -540,5 +540,92 @@
       "assets/art/icons/star_jar.webp",
       "assets/art/icons/outfit.webp"
     ]
+  },
+  "decor_seaside_b": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/beach_hut_b.webp",
+      "assets/art/decor/parasol_b.webp",
+      "assets/art/decor/sandcastle_b.webp",
+      "assets/art/decor/lighthouse_b.webp",
+      "assets/art/decor/deck_chair_b.webp",
+      "assets/art/decor/shell_fountain_b.webp",
+      "assets/art/decor/surf_rack_b.webp",
+      "assets/art/decor/seagull_post_b.webp"
+    ]
+  },
+  "decor_seaside_c": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/beach_hut_c.webp",
+      "assets/art/decor/parasol_c.webp",
+      "assets/art/decor/sandcastle_c.webp",
+      "assets/art/decor/lighthouse_c.webp",
+      "assets/art/decor/deck_chair_c.webp",
+      "assets/art/decor/shell_fountain_c.webp",
+      "assets/art/decor/surf_rack_c.webp",
+      "assets/art/decor/seagull_post_c.webp"
+    ]
+  },
+  "decor_snow_village_b": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/snowman_b.webp",
+      "assets/art/decor/igloo_b.webp",
+      "assets/art/decor/sled_b.webp",
+      "assets/art/decor/winter_tree_b.webp",
+      "assets/art/decor/cocoa_stand_b.webp",
+      "assets/art/decor/ice_rink_b.webp",
+      "assets/art/decor/snow_lantern_b.webp",
+      "assets/art/decor/chimney_cottage_b.webp"
+    ]
+  },
+  "decor_snow_village_c": {
+    "cols": 4,
+    "rows": 2,
+    "size": 384,
+    "files": [
+      "assets/art/decor/snowman_c.webp",
+      "assets/art/decor/igloo_c.webp",
+      "assets/art/decor/sled_c.webp",
+      "assets/art/decor/winter_tree_c.webp",
+      "assets/art/decor/cocoa_stand_c.webp",
+      "assets/art/decor/ice_rink_c.webp",
+      "assets/art/decor/snow_lantern_c.webp",
+      "assets/art/decor/chimney_cottage_c.webp"
+    ]
+  },
+  "outfit_picnic": {
+    "cols": 5,
+    "rows": 4,
+    "size": 512,
+    "files": [
+      "assets/art/friends/bori_picnic_idle.webp",
+      "assets/art/friends/bori_picnic_happy.webp",
+      "assets/art/friends/dubu_picnic_idle.webp",
+      "assets/art/friends/dubu_picnic_happy.webp",
+      "assets/art/friends/kwak_picnic_idle.webp",
+      "assets/art/friends/kwak_picnic_happy.webp",
+      "assets/art/friends/nabi_picnic_idle.webp",
+      "assets/art/friends/nabi_picnic_happy.webp",
+      "assets/art/friends/dotori_picnic_idle.webp",
+      "assets/art/friends/dotori_picnic_happy.webp",
+      "assets/art/friends/mochi_picnic_idle.webp",
+      "assets/art/friends/mochi_picnic_happy.webp",
+      "assets/art/friends/danpung_picnic_idle.webp",
+      "assets/art/friends/danpung_picnic_happy.webp",
+      "assets/art/friends/kongtteok_picnic_idle.webp",
+      "assets/art/friends/kongtteok_picnic_happy.webp",
+      "assets/art/friends/bogeul_picnic_idle.webp",
+      "assets/art/friends/bogeul_picnic_happy.webp",
+      "assets/art/friends/pposong_picnic_idle.webp",
+      "assets/art/friends/pposong_picnic_happy.webp"
+    ]
   }
 }

@@ -574,5 +574,10 @@
   "friend.pposong.line.2": "미끄럼 타는 거 보여 줄게!",
   "friend.pposong.line.3": "귀마개가 따뜻해서 좋아.",
   "friend.pposong.line.4": "눈사람 하나 더 만들자!",
-  "friend.pposong.line.5": "추워도 친구랑 있으면 포근해."
+  "friend.pposong.line.5": "추워도 친구랑 있으면 포근해.",
+  "outfit.title": "{name}의 옷장",
+  "outfit.basic": "기본 옷",
+  "outfit.wear": "입히기",
+  "outfit.note": "한 번 산 옷은 언제든 무료로 갈아입혀요",
+  "outfit.picnic": "봄 피크닉"
 }

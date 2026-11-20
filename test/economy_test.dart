@@ -233,4 +233,19 @@ void main() {
       isTrue,
     );
   });
+
+  test('친구 의상: 데려온 친구만, 다이아로 사고, 산 옷은 무료로 갈아입힌다', () {
+    final g = make();
+    expect(g.wearOutfit('dubu', 'picnic'), StyleResult.notPlaced);
+    expect(g.wearOutfit(Friends.starter, 'picnic'), StyleResult.noGems);
+    g.gems = 60;
+    expect(g.wearOutfit(Friends.starter, 'picnic'), StyleResult.ok);
+    expect(g.gems, 0);
+    expect(g.outfitOf(Friends.starter), 'picnic');
+    expect(g.wearOutfit(Friends.starter, null), StyleResult.ok);
+    expect(g.wearOutfit(Friends.starter, 'picnic'), StyleResult.ok); // 무료
+    final g2 = make();
+    expect(g2.loadJson(g.toJson()), isTrue);
+    expect(g2.outfitOf(Friends.starter), 'picnic');
+  });
 }

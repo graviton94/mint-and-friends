@@ -745,3 +745,17 @@ class DailyShop {
       (pow(2, itemLevel - 1) * (Tuning.marketPriceBase + 2 * playerLevel))
           .round();
 }
+
+// ------------------------------------------------------------------ 친구 의상 (외형 전용, 바이블 D-008)
+
+class OutfitDef {
+  final String id;
+  final int gems;
+  const OutfitDef(this.id, this.gems);
+  String get key => 'outfit.$id';
+}
+
+class Outfits {
+  static const List<OutfitDef> all = [OutfitDef('picnic', 60)];
+  static OutfitDef? byId(String id) => all.where((o) => o.id == id).firstOrNull;
+}
