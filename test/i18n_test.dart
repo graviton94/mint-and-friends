@@ -109,4 +109,12 @@ void main() {
     expect(L10n.instance.t('b'), '기본');
     expect(L10n.instance.t('zzz'), 'zzz');
   });
+
+  test('한국어 조사: 받침에 따라 이/가 · 을/를 을 고른다', () {
+    expect(josa('로즈마리(이)가 놀러 와요'), '로즈마리가 놀러 와요');
+    expect(josa('말차(이)가 왔어요'), '말차가 왔어요');
+    expect(josa('넛멕(이)가 왔어요'), '넛멕이 왔어요');
+    expect(josa('라벤더(을)를 봐요'), '라벤더를 봐요');
+    expect(josa('Mint(이)가'), 'Mint가');
+  });
 }

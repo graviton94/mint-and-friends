@@ -96,7 +96,7 @@ class L10n extends ChangeNotifier {
     if (params.isNotEmpty) {
       params.forEach((k, v) => s = s.replaceAll('{$k}', '$v'));
     }
-    return s;
+    return s.contains('(') ? josa(s) : s;
   }
 
   bool has(String key) => _table.containsKey(key) || _fallback.containsKey(key);
@@ -105,3 +105,28 @@ class L10n extends ChangeNotifier {
 /// 짧게 쓰기 위한 전역 함수.
 String tr(String key, [Map<String, Object?> params = const {}]) =>
     L10n.instance.t(key, params);
+
+/// 한국어 조사 고르기: "로즈마리(이)가" → "로즈마리가", "세이지(을)를" → "세이지를".
+/// 앞 글자가 한글이면 받침으로 고르고, 아니면 괄호만 지운 뒷말을 쓴다.
+String josa(String s) {
+  const pairs = {
+    '(이)가': ('이', '가'),
+    '(을)를': ('을', '를'),
+    '(은)는': ('은', '는'),
+    '(과)와': ('과', '와'),
+    '(이)랑': ('이랑', '랑'),
+    '(이)에요': ('이에요', '예요'),
+  };
+  for (final e in pairs.entries) {
+    var i = s.indexOf(e.key);
+    while (i >= 0) {
+      final before = i > 0 ? s.codeUnitAt(i - 1) : 0;
+      final hangul = before >= 0xAC00 && before <= 0xD7A3;
+      final batchim = hangul && (before - 0xAC00) % 28 != 0;
+      final pick = hangul ? (batchim ? e.value.$1 : e.value.$2) : e.value.$2;
+      s = s.replaceRange(i, i + e.key.length, pick);
+      i = s.indexOf(e.key, i + pick.length);
+    }
+  }
+  return s;
+}

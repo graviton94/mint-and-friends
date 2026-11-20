@@ -189,6 +189,8 @@ class Art {
     'tea_basket': '',
     'star_jar': '',
     'outfit': '',
+    'area_seaside': '',
+    'area_snow_village': '',
   };
 
   /// 이미 받은 UI 그림(assets/art/ui)으로 그리는 아이콘.
@@ -211,7 +213,14 @@ class Art {
       return const ArtRef('assets/art/brand/kakao_symbol.png', '');
     if (id == 'google')
       return const ArtRef('assets/art/brand/google_g.png', '');
-    return ArtRef('assets/art/icons/$id.webp', iconFallback[id] ?? '•');
+    final r = ArtRef('assets/art/icons/$id.webp', iconFallback[id] ?? '•');
+    // 구역 엠블럼이 아직 없으면 그 구역의 첫 장식 그림으로
+    if (!r.available && id.startsWith('area_')) {
+      for (final a in Garden.areas) {
+        if ('area_${a.id}' == id) return decor(a.decor.first);
+      }
+    }
+    return r;
   }
 
   static ArtRef areaIcon(AreaDef a) => icon('area_${a.id}');

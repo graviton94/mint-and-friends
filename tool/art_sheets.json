@@ -668,5 +668,14 @@
       "assets/art/friends/bogeul_picnic_wave.webp",
       "assets/art/friends/pposong_picnic_wave.webp"
     ]
+  },
+  "ui_icons6": {
+    "cols": 2,
+    "rows": 1,
+    "size": 192,
+    "files": [
+      "assets/art/icons/area_seaside.webp",
+      "assets/art/icons/area_snow_village.webp"
+    ]
   }
 }
