@@ -26,6 +26,7 @@ import 'ui/widgets/icon_text.dart';
 import 'ui/widgets/frame_box.dart';
 import 'services/analytics_service.dart';
 import 'services/remote_tuning.dart';
+import 'services/dev_log.dart';
 import 'ui/start_screens.dart';
 
 Future<void> main() async {
@@ -57,6 +58,7 @@ Future<Widget> _boot(void Function(double) report) async {
   );
   report(0.55);
   await AudioService.instance.init();
+  await DevLog.instance.init();
   report(0.75);
 
   final save = SaveService(prefs);
@@ -147,6 +149,7 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     };
     auth.addListener(_onAuthChanged);
     _start();
+    DevLog.instance.record(game, 'start');
     AudioService.instance.startMusic();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _onAuthChanged();
@@ -159,6 +162,8 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     Analytics.instance.attach(game);
     _gameSub?.cancel();
     _gameSub = game.events.listen((e) {
+      if (e is LevelUpEvent) DevLog.instance.record(game, 'level');
+      if (e is AreaCompletedEvent) DevLog.instance.record(game, 'area');
       if (e is LevelUpEvent ||
           e is DecorPlacedEvent ||
           e is AreaCompletedEvent) {
@@ -222,7 +227,10 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     });
     _autosave?.cancel();
     _autosave = Timer.periodic(const Duration(seconds: 5), (_) {
-      if (auth.signedIn) save.saveLocal(game);
+      if (auth.signedIn) {
+        save.saveLocal(game);
+        DevLog.instance.maybeTick(game);
+      }
     });
   }
 
@@ -242,9 +250,11 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
         state == AppLifecycleState.detached) {
       _stop();
       AudioService.instance.pauseMusic();
+      DevLog.instance.record(game, 'pause');
     } else if (state == AppLifecycleState.resumed) {
       _start();
       AudioService.instance.resumeMusic();
+      DevLog.instance.record(game, 'start');
       _offerOffline();
       _refreshSocial();
     }
@@ -262,7 +272,7 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
       builder: (ctx) => GameDialog(
         banner: 'gold',
         title: IconText(
-          tr('offline.hello.${Random().nextInt(6)}'),
+          tr('offline.hello.${Random().nextInt(3)}'),
           textAlign: TextAlign.center,
         ),
         content: PopupHero(
@@ -370,6 +380,7 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
       context,
       listen: Listenable.merge([auth, save]),
       version: widget.version,
+      game: game,
       accountSection: () => Builder(
         builder: (sheetCtx) => AccountSection(
           auth: auth,

@@ -35,7 +35,30 @@ Future<void> showAchievementsSheet(BuildContext context, GameState game) =>
       return SheetFrame(
         title: tr('ach.title'),
         child: Column(
-          children: [for (final d in defs) _AchRow(game: game, def: d)],
+          children: [
+            if (game.claimableAchievements > 0)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: FilledButton(
+                  style: framedButton(
+                    FilledButton.styleFrom(minimumSize: const Size(160, 46)),
+                    'button_green',
+                  ),
+                  onPressed: () {
+                    sfx(Sfx.coin);
+                    final r = game.claimAllAchievements();
+                    ScaffoldMessenger.maybeOf(
+                      context,
+                    )?.showSnackBar(SnackBar(content: IconText(rewardText(r))));
+                  },
+                  child: Text(
+                    tr('ach.claimAll', {'n': game.claimableAchievements}),
+                    style: const TextStyle(fontSize: 17),
+                  ),
+                ),
+              ),
+            for (final d in defs) _AchRow(game: game, def: d),
+          ],
         ),
       );
     });

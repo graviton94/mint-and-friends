@@ -45,7 +45,10 @@ class GameConfig {
   static const double luckySpawnChance = 0.08;
 
   /// 합칠 때 같은 아이템이 든 비눗방울이 생길 확률. 광고를 보면 꺼내서 가질 수 있다.
-  static const double bubbleChance = 0.05;
+  /// 비눗방울: 합치기(4단계 이상) 3%, 판에 하나만, 빈칸이 4칸 이상일 때만, 5분에 한 번까지 (진행을 막지 않게).
+  static const double bubbleChance = 0.03;
+  static const int bubbleMinFree = 4;
+  static const Duration bubbleGap = Duration(minutes: 5);
   static const Duration bubbleLife = Duration(seconds: 60);
   static const int bubbleMinLevel = 4;
 

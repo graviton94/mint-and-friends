@@ -248,4 +248,35 @@ void main() {
     expect(g2.loadJson(g.toJson()), isTrue);
     expect(g2.outfitOf(Friends.starter), 'picnic');
   });
+
+  test('비눗방울: 판에 하나만, 5분 간격', () {
+    final g = make();
+    final cells = g.unlockedCells.toList()..sort();
+    var bubbles = 0;
+    for (var round = 0; round < 400; round++) {
+      for (final c in cells) {
+        g.board[c] = null;
+      }
+      g.board[cells[0]] = Item(9000 + round * 2, Chain.flower, 5);
+      g.board[cells[1]] = Item(9001 + round * 2, Chain.flower, 5);
+      g.move(cells[0], cells[1]);
+      final n = g.board.where((it) => it != null && it.isBubble).length;
+      expect(n, lessThanOrEqualTo(1));
+      bubbles += n;
+      now = now.add(const Duration(seconds: 30));
+    }
+    // 200분 동안 5분 간격이면 많아야 40번
+    expect(bubbles, lessThanOrEqualTo(40));
+  });
+
+  test('업적 모두 받기: 쌓인 단계를 한 번에', () {
+    final g = make();
+    g.stats[Stat.merges] = 600;
+    g.stats[Stat.spawns] = 300;
+    final before = g.claimableAchievements;
+    expect(before, greaterThan(0));
+    final r = g.claimAllAchievements();
+    expect(r.coins, greaterThan(0));
+    expect(g.claimableAchievements, 0);
+  });
 }

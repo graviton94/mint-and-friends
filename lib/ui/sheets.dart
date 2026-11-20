@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../art/art.dart';
@@ -8,6 +9,7 @@ import '../i18n/l10n.dart';
 import '../i18n/names.dart';
 import '../services/audio_service.dart';
 import '../services/billing_service.dart';
+import '../services/dev_log.dart';
 import 'theme.dart';
 import 'widgets/frame_box.dart';
 import 'widgets/icon_text.dart';
@@ -1006,6 +1008,7 @@ Future<void> showSettingsSheet(
   required Listenable listen,
   required Widget Function() accountSection,
   String version = '',
+  GameState? game,
 }) => showGameSheet(
   context,
   listen,
@@ -1062,11 +1065,8 @@ Future<void> showSettingsSheet(
         accountSection(),
         if (version.isNotEmpty) ...[
           const SizedBox(height: 18),
-          IconText(
-            tr('settings.version', {'v': version}),
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.black45),
-          ),
+          // 버전 글자를 7번 누르면 개발자 모드 (성장 로그)
+          _VersionTap(version: version, game: game),
         ],
       ],
     ),
@@ -1121,3 +1121,131 @@ class SheetFrame extends StatelessWidget {
     );
   }
 }
+
+class _VersionTap extends StatefulWidget {
+  const _VersionTap({required this.version, this.game});
+  final String version;
+  final GameState? game;
+
+  @override
+  State<_VersionTap> createState() => _VersionTapState();
+}
+
+class _VersionTapState extends State<_VersionTap> {
+  int _taps = 0;
+  DateTime _last = DateTime(2000);
+
+  void _tap() {
+    final now = DateTime.now();
+    _taps = now.difference(_last).inSeconds > 2 ? 1 : _taps + 1;
+    _last = now;
+    if (_taps >= 7) {
+      _taps = 0;
+      DevLog.instance.toggle().then((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(
+            content: Text(
+              DevLog.instance.on ? '개발자 모드 켜짐: 성장 로그 기록 시작' : '개발자 모드 꺼짐',
+            ),
+          ),
+        );
+        setState(() {});
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: DevLog.instance,
+      builder: (context, _) => Column(
+        children: [
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _tap,
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: IconText(
+                tr('settings.version', {'v': widget.version}),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.black45),
+              ),
+            ),
+          ),
+          if (DevLog.instance.on) ...[
+            const SizedBox(height: 6),
+            OutlinedButton(
+              onPressed: () => _showDevLog(context, widget.game),
+              child: Text('성장 로그 (${DevLog.instance.lines.length}줄)'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// 개발자 전용: 성장 로그 보기 · 복사 · 지금 기록 · 비우기.
+Future<void> _showDevLog(BuildContext context, GameState? game) =>
+    showGameSheet(context, DevLog.instance, () {
+      final log = DevLog.instance;
+      final tail = log.lines.length > 12
+          ? log.lines.sublist(log.lines.length - 12)
+          : log.lines;
+      return SheetFrame(
+        title: '성장 로그',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              '${log.lines.length}줄 기록됨 · 5분마다, 레벨업, 구역 완성, 앱을 켜고 내릴 때',
+              style: const TextStyle(fontSize: 13, color: Colors.black54),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F0E8),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Text(
+                  [DevLog.header, ...tail].join('\n'),
+                  style: const TextStyle(fontSize: 10, fontFamily: 'monospace'),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                FilledButton(
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: log.export()));
+                    if (context.mounted) {
+                      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                        const SnackBar(
+                          content: Text('복사했어요. Claude 대화창에 붙여 넣어 주세요'),
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('전체 복사'),
+                ),
+                OutlinedButton(
+                  onPressed: game == null
+                      ? null
+                      : () => log.record(game, 'manual'),
+                  child: const Text('지금 기록'),
+                ),
+                OutlinedButton(onPressed: log.clear, child: const Text('비우기')),
+              ],
+            ),
+          ],
+        ),
+      );
+    });

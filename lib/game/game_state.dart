@@ -661,7 +661,13 @@ class GameState extends ChangeNotifier {
     _checkDiscovery(b.chain, b.level);
     _gainXp(Leveling.xpForMerge(b.level));
     if (b.level >= GameConfig.bubbleMinLevel &&
+        !board.any((it) => it != null && it.isBubble) &&
+        board.indexed.where((e) => e.$2 == null && isCellOpen(e.$1)).length >=
+            GameConfig.bubbleMinFree &&
+        (_lastBubble == null ||
+            now.difference(_lastBubble!) >= GameConfig.bubbleGap) &&
         _rng.nextDouble() < GameConfig.bubbleChance) {
+      _lastBubble = now;
       final cell = _emptyCell;
       if (cell != null) {
         board[cell] = Item(
@@ -677,6 +683,8 @@ class GameState extends ChangeNotifier {
   }
 
   /// 비눗방울 꺼내기 (보상형 광고를 본 뒤 호출).
+  DateTime? _lastBubble;
+
   bool popBubble(int cell) {
     final it = board[cell];
     if (it == null || !it.isBubble) return false;
@@ -1129,6 +1137,20 @@ class GameState extends ChangeNotifier {
     return r;
   }
 
+  /// 받을 수 있는 업적 보상을 모두 받는다 (단계가 여럿 쌓였으면 전부).
+  Reward claimAllAchievements() {
+    var c = 0, e = 0, st = 0, gm = 0;
+    for (final d in Achievements.all) {
+      for (Reward? r; (r = claimAchievement(d)) != null;) {
+        c += r!.coins;
+        e += r.energy;
+        st += r.stars;
+        gm += r.gems;
+      }
+    }
+    return Reward(coins: c, energy: e, stars: st, gems: gm);
+  }
+
   void _applyReward(Reward r) {
     if (r.coins > 0) _earn(r.coins.toDouble());
     energy += r.energy; // 상한을 넘어도 된다
@@ -1258,14 +1280,15 @@ class GameState extends ChangeNotifier {
   }
 
   Reward claimAllMail() {
-    var c = 0, e = 0, s = 0;
+    var c = 0, e = 0, s = 0, g = 0;
     for (final m in mail.where((x) => !x.claimed).toList()) {
       final r = claimMail(m.id)!;
       c += r.coins;
       e += r.energy;
       s += r.stars;
+      g += r.gems;
     }
-    return Reward(coins: c, energy: e, stars: s);
+    return Reward(coins: c, energy: e, stars: s, gems: g);
   }
 
   void _sendWelcome() {
