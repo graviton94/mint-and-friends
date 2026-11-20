@@ -45,7 +45,7 @@
 
 ## 6. Firebase 원격 구성
 Firebase 콘솔 → Remote Config → 아래 8개 키를 지금 값 그대로 추가 후 게시 (이후 여기서 조정):
-`energy_regen_seconds` 150 · `energy_ad_amount` 20 · `refill_base` 40 · `refill_step` 20 · `refill_max` 120 · `rescue_chance` 0.25 · `market_price_base` 10 · `area_star_scale` 1.0
+`energy_regen_seconds` 150 · `energy_ad_amount` 20 · `refill_base` 60 · `refill_step` 30 · `refill_max` 150 · `rescue_chance` 0.25 · `market_price_base` 10 · `area_star_scale` 1.0
 
 ## 7. 비공개 테스트 트랙
 1. 테스트 → **비공개 테스트** → 트랙 만들기 → 테스터: 이메일 목록(Google 그룹 가능)

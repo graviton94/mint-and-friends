@@ -70,15 +70,15 @@ void main() {
   test('다이아: 레벨업 지급, 에너지 충전은 하루 안에 비싸지고 날이 바뀌면 원래대로', () {
     final g = make();
     g.gems = 200;
-    expect(g.refillCost, 40);
+    expect(g.refillCost, 60);
     final e0 = g.energy;
     expect(g.buyEnergyRefill(), isTrue);
     expect(g.energy, e0 + Gems.refillEnergy);
-    expect(g.gems, 160);
-    expect(g.refillCost, 60);
+    expect(g.gems, 140);
+    expect(g.refillCost, 90);
     now = now.add(const Duration(days: 1));
     expect(g.adsLeft(AdKind.energy), greaterThan(0)); // 날짜 갱신
-    expect(g.refillCost, 40);
+    expect(g.refillCost, 60);
     g.gems = 10;
     expect(g.buyEnergyRefill(), isFalse);
   });
@@ -167,7 +167,7 @@ void main() {
     expect(Gems.refillCost(0), 50);
     expect(Tuning.apply('area_star_scale', 2), isTrue);
     expect(Garden.areaStars(0), 48);
-    Tuning.apply('refill_base', 40);
+    Tuning.apply('refill_base', 60);
     Tuning.apply('area_star_scale', 1);
     expect(Tuning.defaults.keys.toSet(), Tuning.keys.keys.toSet());
   });
@@ -414,5 +414,18 @@ void main() {
     h.friends.add('bori');
     expect(h.wearOutfit('bori', 'starlight'), StyleResult.notPlaced);
     expect(h.gems, 999);
+  });
+
+  test('경제 v3: 옛 버전의 수백만 코인은 레벨 상한으로 줄인다 (별 · 부탁은 다시 곱하지 않음)', () {
+    final g = make();
+    g.level = 9;
+    g.coins = 9167228;
+    g.stars = 80;
+    final j = g.toJson()..['econ'] = 2;
+    final h = make()..loadJson(j);
+    expect(h.coins, GameState.coinCapFor(9));
+    expect(h.stars, 80);
+    final k = make()..loadJson(h.toJson());
+    expect(k.coins, h.coins);
   });
 }

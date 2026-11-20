@@ -1809,7 +1809,11 @@ class GameState extends ChangeNotifier {
   static const int saveVersion = 3;
 
   /// 경제 규칙 판. 2 = 부탁 별이 에너지에 비례.
-  static const int econVersion = 2;
+  static const int econVersion = 3;
+
+  /// 경제 v3: 옛 버전(조 단위 방치형 시절)에서 넘어온 코인이 수백만이면 코인이 의미가 없어진다.
+  /// 레벨에 맞는 상한까지 줄인다 (Lv9 ≈ 2.4만).
+  static double coinCapFor(int level) => 300.0 * level * level + 2000;
 
   /// 진행도 비교용 점수 (클라우드와 로컬 중 어느 쪽이 더 진행됐는지).
   double get progressScore =>
@@ -1917,7 +1921,7 @@ class GameState extends ChangeNotifier {
 
     coins = (j['coins'] as num).toDouble();
     stars = (j['stars'] as num?)?.toInt() ?? 0;
-    if (econ < econVersion) stars *= 4;
+    if (econ < 2) stars *= 4;
     gems = (j['gems'] as num?)?.toInt() ?? 0;
     checkInCount = (j['checkIn'] as num?)?.toInt() ?? 0;
     _checkInDay = j['checkInDay'] as String? ?? '';
@@ -1998,7 +2002,7 @@ class GameState extends ChangeNotifier {
       for (final o in (j['orders'] as List? ?? []))
         Order.fromJson((o as Map).cast<String, dynamic>()),
     ];
-    if (econ < econVersion) {
+    if (econ < 2) {
       orders = [
         for (final o in orders)
           Order(o.id, o.friendId, o.chain, o.level, Garden.orderStars(o.level)),
@@ -2030,6 +2034,7 @@ class GameState extends ChangeNotifier {
       for (final c in (j['vault'] as List? ?? [])) (c as num).toInt(),
     };
     _passDay = j['passDay'] as String? ?? '';
+    if (econ < 3) coins = min(coins, coinCapFor(level));
     passUntil = ts('passUntil');
     starterBought = j['starter'] as bool? ?? false;
     starterOfferUntil = ts('starterUntil');

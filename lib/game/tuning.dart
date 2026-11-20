@@ -8,9 +8,9 @@ class Tuning {
   static int energyAdAmount = 20;
 
   /// 다이아 에너지 충전: 첫 가격 · 같은 날 다시 살 때 오르는 폭 · 상한.
-  static int refillBase = 40;
-  static int refillStep = 20;
-  static int refillMax = 120;
+  static int refillBase = 60;
+  static int refillStep = 30;
+  static int refillMax = 150;
 
   /// 구조 부탁 확률.
   static double rescueChance = 0.25;
@@ -37,9 +37,9 @@ class Tuning {
   static Map<String, Object> get defaults => {
     'energy_regen_seconds': 150,
     'energy_ad_amount': 20,
-    'refill_base': 40,
-    'refill_step': 20,
-    'refill_max': 120,
+    'refill_base': 60,
+    'refill_step': 30,
+    'refill_max': 150,
     'rescue_chance': 0.25,
     'market_price_base': 10,
     'area_star_scale': 1.0,

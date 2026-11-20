@@ -763,7 +763,7 @@ class Gems {
   /// 레벨업마다 무료 다이아.
   static const int levelUp = 3;
 
-  /// 에너지 충전: 하루 안에 다시 살수록 비싸진다 (40 → 60 → 80 … 최대 120).
+  /// 에너지 충전: 하루 안에 다시 살수록 비싸진다 (60 → 90 → 120 → 최대 150).
   static const int refillEnergy = 100;
   static int refillCost(int boughtToday) => min(
     Tuning.refillMax,
@@ -828,13 +828,13 @@ class Outfits {
 
 // ------------------------------------------------------------------ 새싹 정원 패키지 (첫 결제, D-019)
 
-/// ₩2,900 계정당 1회. 체감 가치 ₩30,000 이상: 패스 30일 · 다이아 500 · 에너지 300 · 부스트 묶음 ·
+/// ₩2,900 계정당 1회. 체감 가치 ₩20,000 이상: 패스 30일 · 다이아 100 · 에너지 100 · 부스트 묶음 ·
 /// 한정 정원 효과(계절마다 꽃잎 · 반딧불 · 낙엽 · 눈) · 민트 한정 의상(별빛 요정).
 class Starter {
   static const String productId = 'starter_2900';
   static const int krw = 2900;
-  static const int gems = 500;
-  static const int energy = 300;
+  static const int gems = 100;
+  static const int energy = 100;
   static const Duration pass = Duration(days: 30);
   static const Map<BoostKind, Duration> boosts = {
     BoostKind.energy: Duration(minutes: 30),
@@ -847,5 +847,5 @@ class Starter {
 
   /// 처음 보여 준 뒤 이 시간 동안 '한정' 타이머 (지나도 상점에는 남는다).
   static const Duration offerWindow = Duration(hours: 48);
-  static const int worthKrw = 30000;
+  static const int worthKrw = 20000;
 }
