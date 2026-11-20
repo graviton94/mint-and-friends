@@ -1309,7 +1309,7 @@ class _SeasonPainter extends CustomPainter {
     final w = size.width, h = size.height;
     final unit = w / 60;
     if (intense) _backdrop(canvas, size, unit);
-    final n = intense ? 60 : 26;
+    final n = intense ? 18 : 8;
     for (var i = 0; i < n; i++) {
       // 입자마다 고정된 씨앗 값 (매 프레임 같은 궤적)
       final a = (i * 0.618034) % 1.0;
@@ -1486,7 +1486,7 @@ class _SeasonPainter extends CustomPainter {
         ..color = const Color(0xFFFFFAD2).withValues(alpha: 0.22 * k)
         ..strokeWidth = unit * 2.4
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
-      for (var j = 0; j < 5; j++) {
+      for (var j = 0; j < 3; j++) {
         canvas.drawLine(
           o,
           Offset(o.dx - size.width * (0.35 + j * 0.15), size.height),
@@ -1516,7 +1516,7 @@ class _SeasonPainter extends CustomPainter {
       ..color = const Color(0xFF7A5230)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.2;
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < 2; i++) {
       final ph = t * 0.35 + i * 1.3;
       final x = (0.15 + 0.7 * (0.5 + 0.5 * sin(ph))) * w;
       final y = (0.35 + 0.35 * (0.5 + 0.5 * sin(ph * 1.7 + i))) * h;
