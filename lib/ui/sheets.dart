@@ -397,6 +397,8 @@ class _OutfitCard extends StatelessWidget {
     final owned = id == null || game.ownsOutfit(def.id, id);
     final label = owned
         ? (current ? tr('style.using') : tr('outfit.wear'))
+        : outfit!.limited
+        ? tr('outfit.limited')
         : '[[diamond]] ${outfit!.gems}';
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -426,7 +428,7 @@ class _OutfitCard extends StatelessWidget {
               ),
               current ? 'button_white' : 'button_green',
             ),
-            onPressed: current
+            onPressed: current || (!owned && outfit!.limited)
                 ? null
                 : () {
                     final r = game.wearOutfit(def.id, id);
@@ -773,6 +775,10 @@ Future<void> showShopSheet(
           ),
         ),
         const SizedBox(height: 12),
+        if (!game.starterBought) ...[
+          StarterCard(billing: billing, game: game),
+          const SizedBox(height: 14),
+        ],
         if (game.dailyShopOpen) ...[
           _ShopHeader(tr('market.title')),
           for (var i = 0; i < game.offers.length; i++)
@@ -832,6 +838,126 @@ Future<void> showShopSheet(
         ),
       ],
     ),
+  ),
+);
+
+/// 새싹 정원 패키지 카드 (상점 맨 위 · 팝업 공용).
+class StarterCard extends StatelessWidget {
+  const StarterCard({super.key, required this.billing, required this.game});
+  final BillingService billing;
+  final GameState game;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget line(String icon, String text) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          ArtImage(Art.icon(icon), size: 26),
+          const SizedBox(width: 8),
+          Expanded(
+            child: IconText(
+              text,
+              style: const TextStyle(fontSize: 15, height: 1.25),
+            ),
+          ),
+        ],
+      ),
+    );
+    final d = billing.starter;
+    final price = d?.price ?? '₩${fmtInt(Starter.krw)}';
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFFFF4C9), Color(0xFFFFE3EC)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE0A21B), width: 2.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: IconText(
+                  tr('starter.title'),
+                  style: const TextStyle(fontSize: 20),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0533D),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  tr('starter.deal'),
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          IconText(
+            tr('starter.worth', {'w': fmtInt(Starter.worthKrw)}),
+            style: const TextStyle(fontSize: 13, color: Color(0xFF8A5A2B)),
+          ),
+          if (game.starterOfferActive)
+            IconText(
+              tr('starter.timer', {'t': fmtDuration(game.starterOfferLeft)}),
+              style: const TextStyle(fontSize: 13, color: Color(0xFFE0533D)),
+            ),
+          const SizedBox(height: 8),
+          line('no_ads', tr('starter.pass', {'d': Starter.pass.inDays})),
+          line('diamond', tr('starter.gems', {'n': Starter.gems})),
+          line('energy_jar', tr('starter.energy', {'n': Starter.energy})),
+          line('boost', tr('starter.boosts')),
+          line('sparkle', tr('starter.effect')),
+          line('outfit', tr('starter.outfit')),
+          const SizedBox(height: 10),
+          FilledButton(
+            style: framedButton(
+              FilledButton.styleFrom(minimumSize: const Size(0, 50)),
+              'button_green',
+            ),
+            onPressed: d == null || billing.purchasing
+                ? null
+                : billing.buyStarter,
+            child: IconText(
+              d == null ? tr('shop.connecting') : price,
+              style: const TextStyle(fontSize: 19),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 새싹 정원 패키지 팝업 (첫 구역 완성 직후 · 에너지가 떨어졌을 때 한 번 더).
+Future<void> showStarterSheet(
+  BuildContext context,
+  BillingService billing,
+  GameState game,
+) => showGameSheet(
+  context,
+  Listenable.merge([billing, game]),
+  () => SheetFrame(
+    title: tr('starter.sheetTitle'),
+    child: game.starterBought
+        ? IconText(
+            tr('starter.thanks'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 17),
+          )
+        : StarterCard(billing: billing, game: game),
   ),
 );
 
@@ -939,6 +1065,24 @@ class _BoostRow extends StatelessWidget {
                 ),
             ],
           ),
+          if ((game.boostTokens[kind] ?? 0) > 0) ...[
+            const SizedBox(height: 8),
+            FilledButton(
+              style: framedButton(btn, 'button_green'),
+              onPressed: room
+                  ? () {
+                      if (game.useBoostToken(kind)) sfx(Sfx.coin);
+                    }
+                  : null,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: IconText(
+                  tr('boost.useToken', {'n': game.boostTokens[kind]}),
+                  style: const TextStyle(fontSize: 15),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           Row(
             children: [
@@ -1216,6 +1360,16 @@ Future<void> showSettingsSheet(
                   if (v) sfx(Sfx.tap);
                 },
               ),
+              if (game != null && game.effects.contains(Starter.effect))
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    tr('settings.effect'),
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                  value: game.effectOn == Starter.effect,
+                  onChanged: (v) => game.setEffect(v ? Starter.effect : null),
+                ),
             ],
           ),
         ),
@@ -1428,6 +1582,11 @@ Future<void> _showDevLog(
               },
               child: const Text('파일로 내보내기'),
             ),
+            if (game != null && !game.starterBought)
+              OutlinedButton(
+                onPressed: game.grantStarter,
+                child: const Text('패키지 테스트 지급'),
+              ),
             OutlinedButton(
               onPressed: () async {
                 final ok = await showDialog<bool>(

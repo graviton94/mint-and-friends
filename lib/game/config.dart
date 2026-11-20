@@ -806,12 +806,46 @@ class DailyShop {
 
 class OutfitDef {
   final String id;
+
+  /// 다이아 가격. 음수 = 판매하지 않는 한정 의상 (패키지로만).
   final int gems;
   const OutfitDef(this.id, this.gems);
   String get key => 'outfit.$id';
+  bool get limited => gems < 0;
 }
 
 class Outfits {
-  static const List<OutfitDef> all = [OutfitDef('picnic', 60)];
+  /// 그림이 들어온 의상만 옷장에 보인다 (Art.outfitsFor).
+  static const List<OutfitDef> all = [
+    OutfitDef('picnic', 60),
+    OutfitDef('winter', 60),
+    OutfitDef('summer', 60),
+    OutfitDef('autumn', 60),
+    OutfitDef('starlight', -1),
+  ];
   static OutfitDef? byId(String id) => all.where((o) => o.id == id).firstOrNull;
+}
+
+// ------------------------------------------------------------------ 새싹 정원 패키지 (첫 결제, D-019)
+
+/// ₩2,900 계정당 1회. 체감 가치 ₩30,000 이상: 패스 30일 · 다이아 500 · 에너지 300 · 부스트 묶음 ·
+/// 한정 정원 효과(계절마다 꽃잎 · 반딧불 · 낙엽 · 눈) · 민트 한정 의상(별빛 요정).
+class Starter {
+  static const String productId = 'starter_2900';
+  static const int krw = 2900;
+  static const int gems = 500;
+  static const int energy = 300;
+  static const Duration pass = Duration(days: 30);
+  static const Map<BoostKind, Duration> boosts = {
+    BoostKind.energy: Duration(minutes: 30),
+    BoostKind.lucky: Duration(minutes: 30),
+    BoostKind.coins: Duration(minutes: 60),
+  };
+  static const String effect = 'seasons';
+  static const String outfitFriend = 'bori';
+  static const String outfit = 'starlight';
+
+  /// 처음 보여 준 뒤 이 시간 동안 '한정' 타이머 (지나도 상점에는 남는다).
+  static const Duration offerWindow = Duration(hours: 48);
+  static const int worthKrw = 30000;
 }

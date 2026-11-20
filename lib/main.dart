@@ -74,7 +74,10 @@ Future<Widget> _boot(void Function(double) report) async {
     uid: () => auth.uid,
     accountName: () => auth.isGuest ? null : auth.user?.displayName,
   );
-  final ads = AdsService(isAdFree: () => billing.adFree);
+  // 광고 없이 보상: 구독(adFree) 또는 기간제 정원 패스 (새싹 정원 패키지)
+  final ads = AdsService(
+    isAdFree: () => billing.adFree || (GameState.active?.passActive ?? false),
+  );
 
   String version = '';
   try {
@@ -138,10 +141,17 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     game = widget.game;
+    GameState.active = game;
     _bindGame();
     WidgetsBinding.instance.addObserver(this);
     widget.billing.addListener(() => game.adFree = widget.billing.adFree);
     // 다이아 결제 → 지금 게임에 넣고 바로 저장 (계정 전환 뒤에도 현재 game 을 쓴다)
+    widget.billing.onStarter = () {
+      if (game.grantStarter()) {
+        save.saveLocal(game);
+        save.upload(game);
+      }
+    };
     widget.billing.onGems = (n) {
       game.grantGems(n);
       save.saveLocal(game);
@@ -210,6 +220,7 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     _gameSub?.cancel();
     setState(() {
       game = GameState()..adFree = widget.billing.adFree;
+      GameState.active = game;
       _bindGame();
     });
   }

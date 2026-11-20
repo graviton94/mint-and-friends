@@ -381,4 +381,38 @@ void main() {
     final g2 = make()..loadJson(g.toJson());
     expect(g2.vaultOwned, {33});
   });
+
+  test('새싹 정원 패키지: 한 번만 지급, 기간제 패스 혜택, 보관 부스트, 한정 의상 · 효과', () {
+    final g = make();
+    g.currentArea = 1;
+    final gems = g.gems, energy = g.energy;
+    expect(g.passActive, isFalse);
+    expect(g.showStarterOffer(), isTrue);
+    expect(g.starterOfferActive, isTrue);
+    expect(g.grantStarter(), isTrue);
+    expect(g.grantStarter(), isFalse);
+    expect(g.gems, gems + Starter.gems);
+    expect(g.energy, energy + Starter.energy);
+    expect(g.passActive, isTrue);
+    expect(g.isCellOpen(30), isTrue);
+    final f = g.friends.first;
+    expect(g.starOrderLimit(f), OrderQuota.perFriend + OrderQuota.pass);
+    expect(g.ownsOutfit(Starter.outfitFriend, Starter.outfit), isTrue);
+    expect(g.effectOn, Starter.effect);
+    expect(g.useBoostToken(BoostKind.coins), isTrue);
+    expect(g.boostLeft(BoostKind.coins), const Duration(minutes: 60));
+    expect(g.boostTokens.containsKey(BoostKind.coins), isFalse);
+    final g2 = make()..loadJson(g.toJson());
+    expect(g2.starterBought, isTrue);
+    expect(g2.passActive, isTrue);
+    expect(g2.boostTokens[BoostKind.energy], 30);
+    now = now.add(const Duration(days: 31));
+    expect(g.passActive, isFalse);
+    // 한정 의상은 다이아로 살 수 없다
+    final h = make();
+    h.gems = 999;
+    h.friends.add('bori');
+    expect(h.wearOutfit('bori', 'starlight'), StyleResult.notPlaced);
+    expect(h.gems, 999);
+  });
 }

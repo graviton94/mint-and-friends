@@ -259,6 +259,24 @@ class GameState extends ChangeNotifier {
 
   /// 다이아로 영구 해금한 보관 칸 (맨 아랫줄).
   Set<int> vaultOwned = {};
+
+  /// 기간제 정원 패스 (새싹 정원 패키지 등). 구독(adFree)과 같은 혜택.
+  DateTime? passUntil;
+
+  /// 새싹 정원 패키지: 샀는지 · 한정 타이머 끝 · 몇 번 보여 줬는지.
+  bool starterBought = false;
+  DateTime? starterOfferUntil;
+  int starterShows = 0;
+
+  /// 아직 켜지 않은 부스트 (패키지로 받은 것, 분 단위).
+  final Map<BoostKind, int> boostTokens = {};
+
+  /// 가진 정원 효과 · 켜 둔 효과.
+  Set<String> effects = {};
+  String? effectOn;
+
+  /// 지금 활성 게임 (광고 서비스가 기간제 패스를 확인할 때).
+  static GameState? active;
   String _passDay = '';
   DateTime? coinBagReadyAt;
   late DateTime lastSeen;
@@ -445,11 +463,17 @@ class GameState extends ChangeNotifier {
       canWatchAd(AdKind.energy) &&
       energy < GameConfig.energyAdBelow;
 
+  /// 정원 패스 혜택 중 (구독 또는 기간제).
+  bool get passActive => adFree || (passUntil?.isAfter(now) ?? false);
+  Duration get passLeft => passUntil == null || !passUntil!.isAfter(now)
+      ? Duration.zero
+      : passUntil!.difference(now);
+
   bool isCellOpen(int i) =>
       unlockedCells.contains(i) ||
       (GameConfig.isVault(i) &&
           (vaultOwned.contains(i) ||
-              (adFree && GameConfig.passVault.contains(i))));
+              (passActive && GameConfig.passVault.contains(i))));
 
   /// 집어 들 수 있는 칸: 열린 칸 + 패스가 끝나 잠긴 보관 칸에 남은 아이템 (꺼내기만 가능).
   bool canTake(int i) =>
@@ -581,7 +605,7 @@ class GameState extends ChangeNotifier {
     _rollQuotaDay();
     return OrderQuota.perFriend +
         (starOrdersBonus[friendId] ?? 0) +
-        (adFree ? OrderQuota.pass : 0);
+        (passActive ? OrderQuota.pass : 0);
   }
 
   int starOrdersLeft(String friendId) => quotaActive
@@ -606,7 +630,7 @@ class GameState extends ChangeNotifier {
 
   /// 정원 패스: 하루 한 번 다이아 쪽지.
   void _passDaily() {
-    if (!adFree) return;
+    if (!passActive) return;
     final k = _dayKey(now);
     if (k == _passDay) return;
     _passDay = k;
@@ -1250,6 +1274,7 @@ class GameState extends ChangeNotifier {
       final o = Outfits.byId(outfit);
       if (o == null) return StyleResult.notPlaced;
       if (!ownsOutfit(friendId, outfit)) {
+        if (o.limited) return StyleResult.notPlaced; // 한정 의상은 패키지로만
         if (!_spendGems(o.gems)) return StyleResult.noGems;
         ownedOutfits.add('$friendId:$outfit');
         _bump(Stat.stylesBought);
@@ -1678,6 +1703,69 @@ class GameState extends ChangeNotifier {
   }
 
   void grantBoost() => grantBoostAd(BoostKind.coins);
+
+  /// 보관한 부스트 켜기 (분 단위 전부, 최대 60분까지만 쌓이고 남는 건 보관에 남긴다).
+  bool useBoostToken(BoostKind k) {
+    final have = boostTokens[k] ?? 0;
+    if (have <= 0 || !canAddBoostOf(k)) return false;
+    final room = (Boosts.max - boostLeft(k)).inMinutes;
+    final use = min(have, room);
+    _addBoost(k, Duration(minutes: use));
+    if (have - use > 0) {
+      boostTokens[k] = have - use;
+    } else {
+      boostTokens.remove(k);
+    }
+    _trace('boost', '${k.name},token,$use');
+    return true;
+  }
+
+  // ---------------------------------------------------------------- 새싹 정원 패키지
+
+  bool get starterOfferActive =>
+      !starterBought &&
+      starterOfferUntil != null &&
+      starterOfferUntil!.isAfter(now);
+  Duration get starterOfferLeft =>
+      starterOfferActive ? starterOfferUntil!.difference(now) : Duration.zero;
+
+  /// 팝업으로 보여 줄 때 (처음이면 48시간 타이머 시작). 보여 줄 차례가 아니면 false.
+  bool showStarterOffer() {
+    if (starterBought || starterShows >= 2) return false;
+    if (starterShows == 1 && !starterOfferActive) return false;
+    starterShows++;
+    starterOfferUntil ??= now.add(Starter.offerWindow);
+    notifyListeners();
+    return true;
+  }
+
+  /// 결제 완료 → 지급 (한 번만).
+  bool grantStarter() {
+    if (starterBought) return false;
+    starterBought = true;
+    gems += Starter.gems;
+    energy += Starter.energy;
+    final from = passActive && passUntil != null && passUntil!.isAfter(now)
+        ? passUntil!
+        : now;
+    passUntil = from.add(Starter.pass);
+    for (final e in Starter.boosts.entries) {
+      boostTokens[e.key] = (boostTokens[e.key] ?? 0) + e.value.inMinutes;
+    }
+    effects.add(Starter.effect);
+    effectOn = Starter.effect;
+    ownedOutfits.add('${Starter.outfitFriend}:${Starter.outfit}');
+    _trace('starter', '${Starter.krw}');
+    notifyListeners();
+    return true;
+  }
+
+  void setEffect(String? id) {
+    if (id != null && !effects.contains(id)) return;
+    effectOn = id;
+    notifyListeners();
+  }
+
   bool get canAddBoost => canAddBoostOf(BoostKind.coins);
 
   double get coinBagAmount => GameConfig.coinBagOf(level) * _coinMult;
@@ -1772,6 +1860,13 @@ class GameState extends ChangeNotifier {
       'rerolls': rerollsToday,
       'vault': vaultOwned.toList()..sort(),
       'passDay': _passDay,
+      'passUntil': passUntil?.millisecondsSinceEpoch,
+      'starter': starterBought,
+      'starterUntil': starterOfferUntil?.millisecondsSinceEpoch,
+      'starterShows': starterShows,
+      'boostTokens': {for (final e in boostTokens.entries) e.key.name: e.value},
+      'effects': effects.toList(),
+      'effectOn': effectOn,
       'bag': coinBagReadyAt?.millisecondsSinceEpoch,
       'seen': lastSeen.millisecondsSinceEpoch,
       'visitorNext': nextVisitorAt.millisecondsSinceEpoch,
@@ -1935,6 +2030,17 @@ class GameState extends ChangeNotifier {
       for (final c in (j['vault'] as List? ?? [])) (c as num).toInt(),
     };
     _passDay = j['passDay'] as String? ?? '';
+    passUntil = ts('passUntil');
+    starterBought = j['starter'] as bool? ?? false;
+    starterOfferUntil = ts('starterUntil');
+    starterShows = (j['starterShows'] as num?)?.toInt() ?? 0;
+    boostTokens.clear();
+    for (final e in ((j['boostTokens'] as Map?) ?? const {}).entries) {
+      final k = BoostKind.values.where((b) => b.name == e.key).firstOrNull;
+      if (k != null) boostTokens[k] = (e.value as num).toInt();
+    }
+    effects = {for (final x in (j['effects'] as List? ?? [])) '$x'};
+    effectOn = j['effectOn'] as String?;
     _migrateStorage();
     coinBagReadyAt = ts('bag');
     lastSeen = ts('seen') ?? now;

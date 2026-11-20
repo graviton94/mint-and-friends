@@ -67,7 +67,9 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _levelDialogOpen = false;
 
   GameState get game => widget.game;
-  bool get adFree => widget.billing.adFree;
+
+  /// 광고 없이 보상: 구독 또는 기간제 정원 패스 (새싹 정원 패키지).
+  bool get adFree => widget.billing.adFree || game.passActive;
 
   @override
   void initState() {
@@ -140,6 +142,14 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       case AreaCompletedEvent(:final area):
         _toast(tr('toast.areaDone', {'name': areaName(Garden.areaAt(area))}));
+        // 첫 구역 완성 직후: 새싹 정원 패키지 (한 번만)
+        if (area == 0) {
+          Future.delayed(const Duration(seconds: 3), () {
+            if (mounted && game.showStarterOffer()) {
+              showStarterSheet(context, widget.billing, game);
+            }
+          });
+        }
         Future.delayed(const Duration(milliseconds: 1500), () {
           if (mounted) setState(() => _viewArea = game.currentArea);
         });
@@ -517,7 +527,12 @@ class _HomeScreenState extends State<HomeScreen> {
     switch (game.tapSpawner()) {
       case TapResult.noEnergy:
         sfx(Sfx.error);
-        await _energyDialog();
+        // 패키지를 한 번 본 뒤 타이머 안에 에너지가 떨어지면 한 번 더 (그 뒤로는 상점에만)
+        if (game.starterShows == 1 && game.showStarterOffer()) {
+          await showStarterSheet(context, widget.billing, game);
+        } else {
+          await _energyDialog();
+        }
       case TapResult.boardFull:
         sfx(Sfx.error);
         _toast(tr('toast.boardFull'));

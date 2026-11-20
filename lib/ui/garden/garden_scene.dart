@@ -415,6 +415,18 @@ class _GardenSceneState extends State<GardenScene>
                         ),
                       ),
                     ),
+                    // 정원 효과 (새싹 정원 패키지): 계절마다 꽃잎 · 반딧불 · 낙엽 · 눈
+                    if (game.effectOn != null)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: CustomPaint(
+                            painter: _SeasonPainter(
+                              t: _t,
+                              month: game.now.month,
+                            ),
+                          ),
+                        ),
+                      ),
                     if (widget.onOrderTap != null)
                       Positioned.fill(
                         child: Stack(
@@ -1205,4 +1217,97 @@ class _BubblePainter extends CustomPainter {
   @override
   bool shouldRepaint(_BubblePainter o) =>
       o.fill != fill || o.line != line || o.tailX != tailX || o.glow != glow;
+}
+
+/// 계절 정원 효과: 3~5월 꽃잎, 6~8월 반딧불, 9~11월 낙엽, 12~2월 눈.
+class _SeasonPainter extends CustomPainter {
+  _SeasonPainter({required this.t, required this.month});
+  final double t;
+  final int month;
+
+  static const int _n = 26;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final season = switch (month) {
+      3 || 4 || 5 => 0,
+      6 || 7 || 8 => 1,
+      9 || 10 || 11 => 2,
+      _ => 3,
+    };
+    final w = size.width, h = size.height;
+    final unit = w / 60;
+    for (var i = 0; i < _n; i++) {
+      // 입자마다 고정된 씨앗 값 (매 프레임 같은 궤적)
+      final a = (i * 0.618034) % 1.0;
+      final b = (i * 0.414214 + 0.3) % 1.0;
+      final speed = 0.04 + 0.05 * b;
+      if (season == 1) {
+        // 반딧불: 제자리에서 둥실 · 깜빡
+        final x = (a + 0.04 * sin(t * 0.7 + i)) * w;
+        final y = (0.35 + 0.6 * b + 0.03 * sin(t * 0.9 + i * 2)) * h;
+        final glow = 0.5 + 0.5 * sin(t * 2.2 + i * 1.7);
+        canvas.drawCircle(
+          Offset(x, y),
+          unit * 0.9,
+          Paint()
+            ..color = const Color(0xFFFFF59D).withValues(alpha: 0.35 * glow)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+        );
+        canvas.drawCircle(
+          Offset(x, y),
+          unit * 0.28,
+          Paint()..color = const Color(0xFFFFFDE7).withValues(alpha: glow),
+        );
+        continue;
+      }
+      // 떨어지는 입자: 위에서 아래로, 좌우로 살랑
+      final p = (t * speed + a) % 1.0;
+      final x = ((b + 0.15 * sin(t * 0.8 + i)) % 1.0) * w;
+      final y = (p * 1.1 - 0.05) * h;
+      final rot = t * (0.8 + b) + i;
+      canvas.save();
+      canvas.translate(x, y);
+      canvas.rotate(rot);
+      switch (season) {
+        case 0: // 꽃잎
+          canvas.drawOval(
+            Rect.fromCenter(
+              center: Offset.zero,
+              width: unit * 1.5,
+              height: unit * 0.9,
+            ),
+            Paint()..color = const Color(0xFFFFB7CE).withValues(alpha: 0.9),
+          );
+        case 2: // 낙엽
+          final path = Path()
+            ..moveTo(0, -unit)
+            ..quadraticBezierTo(unit, 0, 0, unit)
+            ..quadraticBezierTo(-unit, 0, 0, -unit);
+          canvas.drawPath(
+            path,
+            Paint()
+              ..color =
+                  (i.isEven ? const Color(0xFFE8823A) : const Color(0xFFD9543A))
+                      .withValues(alpha: 0.9),
+          );
+        default: // 눈 (밝은 배경에서도 보이게 옅은 테두리)
+          final r = unit * (0.45 + 0.3 * b);
+          canvas.drawCircle(
+            Offset.zero,
+            r + 1,
+            Paint()..color = const Color(0x339DB6CC),
+          );
+          canvas.drawCircle(
+            Offset.zero,
+            r,
+            Paint()..color = Colors.white.withValues(alpha: 0.95),
+          );
+      }
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SeasonPainter o) => o.t != t || o.month != month;
 }

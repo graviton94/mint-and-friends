@@ -29,6 +29,10 @@ class BillingService extends ChangeNotifier {
   /// 다이아 결제가 끝나면 게임에 다이아를 넣는다 (main 이 연결).
   void Function(int gems)? onGems;
 
+  /// 새싹 정원 패키지 (소모형으로 팔고, 한 번만 지급은 게임이 막는다).
+  ProductDetails? starter;
+  void Function()? onStarter;
+
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     adFree = prefs.getBool(_cacheKey) ?? false; // 오프라인 대비 캐시
@@ -41,10 +45,13 @@ class BillingService extends ChangeNotifier {
 
     final resp = await _iap.queryProductDetails({
       kRemoveAdsProductId,
+      Starter.productId,
       for (final p in Gems.packs) p.id,
     });
     for (final d in resp.productDetails) {
-      if (d.id == kRemoveAdsProductId) {
+      if (d.id == Starter.productId) {
+        starter = d;
+      } else if (d.id == kRemoveAdsProductId) {
         product = d;
       } else {
         gemProducts[d.id] = d;
@@ -63,6 +70,14 @@ class BillingService extends ChangeNotifier {
 
   Future<void> _onPurchases(List<PurchaseDetails> list) async {
     for (final p in list) {
+      if (p.productID == Starter.productId) {
+        if (p.status == PurchaseStatus.purchased) {
+          Analytics.instance.purchase(p.productID);
+          onStarter?.call();
+        }
+        if (p.pendingCompletePurchase) await _iap.completePurchase(p);
+        continue;
+      }
       final pack = Gems.pack(p.productID);
       if (pack != null) {
         // 소모형: 결제 완료 시 한 번만 지급 (autoConsume 이 소비 처리)
@@ -112,6 +127,19 @@ class BillingService extends ChangeNotifier {
       await _iap.buyNonConsumable(
         purchaseParam: PurchaseParam(productDetails: p),
       );
+    } catch (_) {
+      purchasing = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> buyStarter() async {
+    final d = starter;
+    if (d == null || purchasing) return;
+    purchasing = true;
+    notifyListeners();
+    try {
+      await _iap.buyConsumable(purchaseParam: PurchaseParam(productDetails: d));
     } catch (_) {
       purchasing = false;
       notifyListeners();
