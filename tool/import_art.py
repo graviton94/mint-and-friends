@@ -38,7 +38,22 @@ def save(img, path):
 def import_sheet(sid, src, spec):
     img = Image.open(src)
     if spec.get("bg"):
-        save(img.convert("RGB").resize((1536, 1024), Image.LANCZOS), spec["files"][0])
+        w, h = spec.get("bgSize", (1536, 1024))
+        rgb = img.convert("RGB")
+        # 비율이 다르면 가운데를 잘라 맞춘다 (세로 타이틀 배경 1080x2340 등)
+        k = max(w / rgb.width, h / rgb.height)
+        rgb = rgb.resize((round(rgb.width * k), round(rgb.height * k)), Image.LANCZOS)
+        l, t = (rgb.width - w) // 2, (rgb.height - h) // 2
+        save(rgb.crop((l, t, l + w, t + h)), spec["files"][0])
+        return [spec["files"][0]]
+    if spec.get("cutout"):
+        # 로고 · 전경처럼 비율을 지키는 투명 그림 한 장: 흰 바탕을 지우고 내용만큼 잘라 긴 변을 size 로
+        clear = remove_white_bg(img) if spec.get("whiteBg", True) else img.convert("RGBA")
+        box = clear.getbbox()
+        if box:
+            clear = clear.crop(box)
+        k = spec["size"] / max(clear.size)
+        save(clear.resize((round(clear.width * k), round(clear.height * k)), Image.LANCZOS), spec["files"][0])
         return [spec["files"][0]]
     if spec.get("icon"):
         sq = img.convert("RGB")

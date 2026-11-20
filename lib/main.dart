@@ -25,26 +25,43 @@ import 'ui/widgets/icon_text.dart';
 import 'ui/widgets/frame_box.dart';
 import 'services/analytics_service.dart';
 import 'services/remote_tuning.dart';
+import 'ui/start_screens.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-
-  final prefs = await SharedPreferences.getInstance();
+  // 글자 · 그림 목록만 먼저 (스플래시를 그리는 데 필요): 나머지는 스플래시 뒤에서 진행도와 함께
   await Future.wait([L10n.instance.init(), Art.init()]);
 
+  String version = '';
+  try {
+    final info = await PackageInfo.fromPlatform();
+    version = info.version;
+  } catch (_) {}
+
+  runApp(StartApp(boot: _boot, version: version));
+}
+
+/// 스플래시 동안 하는 무거운 준비. 단계마다 진행도를 알리고, 끝나면 게임 화면을 돌려준다.
+Future<Widget> _boot(void Function(double) report) async {
+  report(0.1);
+  final prefs = await SharedPreferences.getInstance();
   final auth = AuthService();
   await auth.init();
+  report(0.35);
   // 경제 변수 원격 조정 (오래 걸리면 기본값으로 시작)
   await RemoteTuning.load().timeout(
     const Duration(seconds: 3),
     onTimeout: () {},
   );
+  report(0.55);
   await AudioService.instance.init();
+  report(0.75);
 
   final save = SaveService(prefs);
   final game = GameState();
   save.loadLocal(game);
+  report(0.9);
 
   final billing = BillingService();
   // 친구 · 선물 · 공지 (Firebase 가 없으면 꺼진다: 메뉴에서 친구가 숨는다)
@@ -62,20 +79,18 @@ Future<void> main() async {
     version = '${info.version} (${info.buildNumber})';
   } catch (_) {}
 
-  runApp(
-    GameApp(
-      game: game,
-      ads: ads,
-      billing: billing,
-      auth: auth,
-      save: save,
-      social: social,
-      version: version,
-    ),
-  );
-
   unawaited(billing.init());
   unawaited(ads.init());
+  report(1);
+  return GameApp(
+    game: game,
+    ads: ads,
+    billing: billing,
+    auth: auth,
+    save: save,
+    social: social,
+    version: version,
+  );
 }
 
 class GameApp extends StatefulWidget {

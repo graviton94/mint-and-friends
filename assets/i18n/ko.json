@@ -593,5 +593,15 @@
   "tipTitle.wardrobe": "[[outfit]] 친구 옷장",
   "tip.wardrobe": "도감에서 친구를 누르면\n새 옷을 입힐 수 있어요.",
   "tipTitle.friends": "[[friends]] 친구",
-  "tip.friends": "친구 코드로 친구를 맺고\n하루 한 번 선물해요."
+  "tip.friends": "친구 코드로 친구를 맺고\n하루 한 번 선물해요.",
+  "start.loading": "정원을 준비하고 있어요…",
+  "start.tap": "화면을 눌러 시작",
+  "start.entering": "정원으로 가는 중…",
+  "start.tipTitle": "알고 있었나요?",
+  "start.tip.0": "같은 아이템 둘을 끌어다 놓으면\n한 단계 높은 아이템이 돼요",
+  "start.tip.1": "부탁을 들어줄수록\n친구의 호감도가 올라요",
+  "start.tip.2": "꺼 둔 동안에도\n판 위 아이템이 코인을 모아요",
+  "start.tip.3": "매일 출석하면\n다이아를 받을 수 있어요",
+  "start.tip.4": "판이 가득 차면\n보관함에 맡겨 두세요",
+  "start.tip.5": "장식을 놓으면\n새 친구가 놀러 와요"
 }

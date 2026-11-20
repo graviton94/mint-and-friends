@@ -719,5 +719,50 @@
       "assets/art/friends/pposong_picnic_sleep.webp",
       "assets/art/friends/pposong_picnic_wave.webp"
     ]
+  },
+  "title_logo_ko": {
+    "cutout": true,
+    "size": 1200,
+    "files": [
+      "assets/art/title/logo_ko.webp"
+    ]
+  },
+  "title_logo_en": {
+    "cutout": true,
+    "size": 1200,
+    "files": [
+      "assets/art/title/logo_en.webp"
+    ]
+  },
+  "title_logo_ja": {
+    "cutout": true,
+    "size": 1200,
+    "files": [
+      "assets/art/title/logo_ja.webp"
+    ]
+  },
+  "title_bg": {
+    "bg": true,
+    "bgSize": [
+      1080,
+      2340
+    ],
+    "files": [
+      "assets/art/title/bg.webp"
+    ]
+  },
+  "title_fg": {
+    "cutout": true,
+    "size": 1080,
+    "files": [
+      "assets/art/title/fg.webp"
+    ]
+  },
+  "title_hero": {
+    "cutout": true,
+    "size": 900,
+    "files": [
+      "assets/art/title/hero.webp"
+    ]
   }
 }
