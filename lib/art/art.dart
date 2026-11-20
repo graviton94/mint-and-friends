@@ -93,8 +93,17 @@ class Art {
       if (outfitArt(f, o.id).available) o,
   ];
 
-  /// 추가 자세 (sleep · wave). 그림이 없으면 null → 기본 자세로 행동만 한다.
-  static ArtRef? friendPose(FriendDef f, String pose) {
+  /// 추가 자세 (sleep · wave). 의상을 입었으면 그 의상의 자세 그림을 먼저 찾는다.
+  /// 그림이 없으면 null → 기본 자세로 행동만 한다.
+  static ArtRef? friendPose(FriendDef f, String pose, {String? outfit}) {
+    if (outfit != null) {
+      final o = ArtRef(
+        'assets/art/friends/${f.id}_${outfit}_$pose.webp',
+        f.emoji,
+      );
+      // 의상 자세 그림이 아직 없으면 기본 옷 자세로 갈아입히지 않고 의상 기본 그림을 쓴다
+      return o.available ? o : null;
+    }
     final r = ArtRef('assets/art/friends/${f.id}_$pose.webp', f.emoji);
     return r.available ? r : null;
   }

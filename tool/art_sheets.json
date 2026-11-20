@@ -601,31 +601,72 @@
       "assets/art/decor/chimney_cottage_c.webp"
     ]
   },
-  "outfit_picnic": {
+  "outfit_picnic_idle": {
     "cols": 5,
-    "rows": 4,
+    "rows": 2,
     "size": 512,
     "files": [
       "assets/art/friends/bori_picnic_idle.webp",
-      "assets/art/friends/bori_picnic_happy.webp",
       "assets/art/friends/dubu_picnic_idle.webp",
-      "assets/art/friends/dubu_picnic_happy.webp",
       "assets/art/friends/kwak_picnic_idle.webp",
-      "assets/art/friends/kwak_picnic_happy.webp",
       "assets/art/friends/nabi_picnic_idle.webp",
-      "assets/art/friends/nabi_picnic_happy.webp",
       "assets/art/friends/dotori_picnic_idle.webp",
-      "assets/art/friends/dotori_picnic_happy.webp",
       "assets/art/friends/mochi_picnic_idle.webp",
-      "assets/art/friends/mochi_picnic_happy.webp",
       "assets/art/friends/danpung_picnic_idle.webp",
-      "assets/art/friends/danpung_picnic_happy.webp",
       "assets/art/friends/kongtteok_picnic_idle.webp",
-      "assets/art/friends/kongtteok_picnic_happy.webp",
       "assets/art/friends/bogeul_picnic_idle.webp",
+      "assets/art/friends/pposong_picnic_idle.webp"
+    ]
+  },
+  "outfit_picnic_happy": {
+    "cols": 5,
+    "rows": 2,
+    "size": 512,
+    "files": [
+      "assets/art/friends/bori_picnic_happy.webp",
+      "assets/art/friends/dubu_picnic_happy.webp",
+      "assets/art/friends/kwak_picnic_happy.webp",
+      "assets/art/friends/nabi_picnic_happy.webp",
+      "assets/art/friends/dotori_picnic_happy.webp",
+      "assets/art/friends/mochi_picnic_happy.webp",
+      "assets/art/friends/danpung_picnic_happy.webp",
+      "assets/art/friends/kongtteok_picnic_happy.webp",
       "assets/art/friends/bogeul_picnic_happy.webp",
-      "assets/art/friends/pposong_picnic_idle.webp",
       "assets/art/friends/pposong_picnic_happy.webp"
+    ]
+  },
+  "outfit_picnic_sleep": {
+    "cols": 5,
+    "rows": 2,
+    "size": 512,
+    "files": [
+      "assets/art/friends/bori_picnic_sleep.webp",
+      "assets/art/friends/dubu_picnic_sleep.webp",
+      "assets/art/friends/kwak_picnic_sleep.webp",
+      "assets/art/friends/nabi_picnic_sleep.webp",
+      "assets/art/friends/dotori_picnic_sleep.webp",
+      "assets/art/friends/mochi_picnic_sleep.webp",
+      "assets/art/friends/danpung_picnic_sleep.webp",
+      "assets/art/friends/kongtteok_picnic_sleep.webp",
+      "assets/art/friends/bogeul_picnic_sleep.webp",
+      "assets/art/friends/pposong_picnic_sleep.webp"
+    ]
+  },
+  "outfit_picnic_wave": {
+    "cols": 5,
+    "rows": 2,
+    "size": 512,
+    "files": [
+      "assets/art/friends/bori_picnic_wave.webp",
+      "assets/art/friends/dubu_picnic_wave.webp",
+      "assets/art/friends/kwak_picnic_wave.webp",
+      "assets/art/friends/nabi_picnic_wave.webp",
+      "assets/art/friends/dotori_picnic_wave.webp",
+      "assets/art/friends/mochi_picnic_wave.webp",
+      "assets/art/friends/danpung_picnic_wave.webp",
+      "assets/art/friends/kongtteok_picnic_wave.webp",
+      "assets/art/friends/bogeul_picnic_wave.webp",
+      "assets/art/friends/pposong_picnic_wave.webp"
     ]
   }
 }

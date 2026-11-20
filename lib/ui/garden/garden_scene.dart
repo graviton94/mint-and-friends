@@ -476,10 +476,10 @@ class _GardenSceneState extends State<GardenScene>
           ? -(sin(_t * 10).abs()) * sz * 0.12
           : 0.0;
       final outfit = game.outfitOf(f.id);
-      // 의상을 입었으면 의상 그림(기본 · 기쁨)을, 아니면 자세 그림(졸기 · 인사)을 쓴다
-      final posed = wk.pose == null || wk.happyLeft > 0 || outfit != null
+      // 자세 그림(졸기 · 인사)은 입은 의상의 것을 쓴다 (없으면 의상 기본 그림)
+      final posed = wk.pose == null || wk.happyLeft > 0
           ? null
-          : Art.friendPose(f, wk.pose!);
+          : Art.friendPose(f, wk.pose!, outfit: outfit);
       final image = ArtImage(
         posed ?? Art.friend(f, happy: wk.happyLeft > 0, outfit: outfit),
         size: sz,

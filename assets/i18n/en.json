@@ -578,5 +578,19 @@
   "outfit.basic": "Usual look",
   "outfit.wear": "Wear",
   "outfit.note": "Outfits you own can be changed any time for free",
-  "outfit.picnic": "Spring picnic"
+  "outfit.picnic": "Spring picnic",
+  "tipTitle.gems": "[[diamond]] Diamonds",
+  "tip.gems": "Use diamonds to refill energy or open bubbles right away. Level ups, check-ins and achievements give some too",
+  "tipTitle.checkIn": "[[calendar]] Daily gifts",
+  "tip.checkIn": "Get a gift every day from Check-in in the menu. Missed days don't reset it",
+  "tipTitle.market": "[[shop]] Today's market",
+  "tip.market": "The shop sells new items for coins every day",
+  "tipTitle.basket": "[[basket]] Switch baskets",
+  "tip.basket": "Swipe the basket sideways to switch to the new one",
+  "tipTitle.design": "[[decorate]] Decor designs",
+  "tip.design": "In Decorate you can switch placed decor to deluxe or special designs",
+  "tipTitle.wardrobe": "[[outfit]] Wardrobe",
+  "tip.wardrobe": "Tap a friend in the book to try on new outfits",
+  "tipTitle.friends": "[[friends]] Friends",
+  "tip.friends": "Add friends by code from the menu and send a gift once a day"
 }

@@ -74,11 +74,13 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _viewArea = game.currentArea;
     _sub = game.events.listen(_onEvent);
+    game.addListener(_checkNewTips);
     _loadTutorial();
   }
 
   @override
   void dispose() {
+    game.removeListener(_checkNewTips);
     _sub?.cancel();
     super.dispose();
   }
@@ -305,50 +307,104 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // ---------------------------------------------------------------- 새 기능 안내 (처음 한 번)
+  // 레벨로 열리는 기능(Feature) + 조건으로 열리는 기능(다이아 · 출석 · 시장 · 디자인 · 바구니 · 옷장 · 친구).
   static const _tipsPref = 'feature_tips_seen';
-  final List<Feature> _tips = [];
+  final List<String> _tips = [];
+  Set<String>? _tipsSeen;
 
-  Future<void> _queueFeatureTips(List<Feature> fs) async {
-    final p = await SharedPreferences.getInstance();
-    final seen = p.getStringList(_tipsPref) ?? const [];
+  Future<void> _queueFeatureTips(List<Feature> fs) =>
+      _queueTips([for (final f in fs) f.name]);
+
+  Future<void> _queueTips(List<String> ids) async {
+    final seen = _tipsSeen ??= {
+      ...?(await SharedPreferences.getInstance()).getStringList(_tipsPref),
+    };
     final add = [
-      for (final f in fs)
-        if (!seen.contains(f.name) && !_tips.contains(f)) f,
+      for (final id in ids)
+        if (!seen.contains(id) && !_tips.contains(id)) id,
     ];
     if (add.isEmpty || !mounted) return;
     setState(() => _tips.addAll(add));
   }
 
-  Future<void> _doneTip() async {
-    if (_tips.isEmpty) return;
-    final f = _tips.removeAt(0);
-    setState(() {});
-    final p = await SharedPreferences.getInstance();
-    final seen = [...?p.getStringList(_tipsPref), f.name];
-    p.setStringList(_tipsPref, seen);
+  /// 게임이 바뀔 때마다: 조건이 맞은 새 기능 안내를 줄에 넣는다 (한 번 본 것은 다시 안 나온다).
+  void _checkNewTips() {
+    if (_tut != _tutDone) return;
+    final want = <String>[
+      if (game.level >= 2) 'gems',
+      if (game.level >= 3) 'checkIn',
+      if (game.dailyShopOpen) 'market',
+      if (game.openBaskets.length > 1) 'basket',
+      if (_hasDesignChoice) 'design',
+      if (_hasWardrobe) 'wardrobe',
+      if (widget.openFriends != null && game.level >= 5) 'friends',
+    ];
+    final seen = _tipsSeen;
+    if (seen != null &&
+        want.every((w) => seen.contains(w) || _tips.contains(w))) {
+      return;
+    }
+    _queueTips(want);
   }
 
-  GlobalKey _tipTarget(Feature f) => switch (f) {
-    Feature.energyAd => _kEnergy,
-    Feature.boost => _kBoost,
-    Feature.coinBag => _kCoinBag,
-    Feature.snack => _kSpawner,
-    Feature.storage => _kStorage,
-    Feature.visitor => _kGarden,
-    Feature.upgrades ||
-    Feature.autoMerge ||
-    Feature.offlineCap ||
-    Feature.spawnLevel => _kUpgrade,
+  bool get _hasDesignChoice {
+    for (var a = 0; a <= game.currentArea; a++) {
+      final area = Garden.areaAt(a);
+      for (var i = 0; i < area.decor.length; i++) {
+        if (game.isPlaced(a, i) && Art.decorStyles(area.decor[i]).length > 1) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool get _hasWardrobe => [
+    for (final f in Friends.all)
+      if (game.friends.contains(f.id)) f,
+  ].any((f) => Art.outfitsFor(f).isNotEmpty);
+
+  Future<void> _doneTip() async {
+    if (_tips.isEmpty) return;
+    final id = _tips.removeAt(0);
+    setState(() {});
+    final p = await SharedPreferences.getInstance();
+    (_tipsSeen ??= {...?p.getStringList(_tipsPref)}).add(id);
+    p.setStringList(_tipsPref, _tipsSeen!.toList());
+  }
+
+  GlobalKey _tipTarget(String id) => switch (id) {
+    'energyAd' => _kEnergy,
+    'boost' => _kBoost,
+    'coinBag' => _kCoinBag,
+    'snack' || 'basket' => _kSpawner,
+    'storage' => _kStorage,
+    'visitor' => _kGarden,
+    'gems' || 'market' => _kGems,
+    'checkIn' || 'friends' => _kMenu,
+    'design' => _kDecor,
+    'wardrobe' => _kBook,
+    _ => _kUpgrade,
   };
+
+  String _tipTitle(String id) {
+    for (final f in Feature.values) {
+      if (f.name == id) return featureName(f);
+    }
+    return tr('tipTitle.$id');
+  }
 
   Widget? get _featureTip {
     if (_tut != _tutDone || _tips.isEmpty || _levelDialogOpen) return null;
-    final f = _tips.first;
-    final r = _rectOf(_tipTarget(f));
+    final id = _tips.first;
+    final r = _rectOf(_tipTarget(id));
+    // 바구니 넘기기는 손장갑이 옆으로 밀어 보인다
+    final swipe = id == 'basket' && r != null;
     return CoachOverlay(
-      text: '${featureName(f)}\n${tr('tip.${f.name}')}',
+      text: '${_tipTitle(id)}\n${tr('tip.$id')}',
       hole: r,
-      pointAt: r?.center,
+      pointAt: swipe ? r.center + const Offset(24, 0) : r?.center,
+      dragTo: swipe ? r.center - const Offset(24, 0) : null,
       buttonLabel: tr('tip.ok'),
       onNext: () {
         sfx(Sfx.tap);
@@ -674,6 +730,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final _kStorage = GlobalKey();
   final _kCoinBag = GlobalKey();
   final _kStack = GlobalKey();
+  final _kGems = GlobalKey();
+  final _kMenu = GlobalKey();
+  final _kBook = GlobalKey();
 
   // ---------------------------------------------------------------- 튜토리얼
   // 0 인사 → 1 바구니 3번 → 2 합치기 → 3 부탁 → 4 꾸미기 → 5 정원 · 방치 수익 → 끝(99)
@@ -956,6 +1015,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _Pill(icon: Art.star, text: fmt(game.stars.toDouble())),
                   const SizedBox(width: 6),
                   _Pill(
+                    key: _kGems,
                     icon: Art.icon('diamond'),
                     text: fmt(game.gems.toDouble()),
                     plus: true,
@@ -1011,6 +1071,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: 6),
           _IconButton(
+            key: _kMenu,
             icon: 'menu',
             fallback: Icons.menu_rounded,
             badge:
@@ -1182,6 +1243,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: 5),
           _MenuButton(
+            key: _kBook,
             icon: 'book',
             label: tr('menu.book'),
             badge: game.hasNewDiscovery,
@@ -2002,6 +2064,7 @@ class _Pill extends StatelessWidget {
 /// HUD 오른쪽 둥근 아이콘 버튼.
 class _IconButton extends StatelessWidget {
   const _IconButton({
+    super.key,
     required this.icon,
     required this.onTap,
     this.badge = 0,
