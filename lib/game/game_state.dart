@@ -1484,9 +1484,29 @@ class GameState extends ChangeNotifier {
   String encode() => jsonEncode(toJson());
 
   /// 저장 데이터를 불러온다. 버전이 다르면 false (새로 시작).
-  bool load(String raw) => loadJson(jsonDecode(raw) as Map<String, dynamic>);
+  bool load(String raw) {
+    final Object? j;
+    try {
+      j = jsonDecode(raw);
+    } catch (_) {
+      return false;
+    }
+    return j is Map<String, dynamic> && loadJson(j);
+  }
 
+  /// 저장 불러오기. 전부 되거나 전혀 안 되거나: 망가진 저장이면 원래 상태로 되돌리고 false.
   bool loadJson(Map<String, dynamic> j) {
+    final backup = toJson();
+    try {
+      return _loadJson(j);
+    } catch (e) {
+      debugPrint('save load failed: $e');
+      _loadJson(backup);
+      return false;
+    }
+  }
+
+  bool _loadJson(Map<String, dynamic> j) {
     if (j['v'] != saveVersion) return false;
     // 경제 2판(별이 에너지에 비례)으로 옮기기: 남은 별은 4배, 부탁의 별은 다시 계산
     final econ = (j['econ'] as num?)?.toInt() ?? 1;

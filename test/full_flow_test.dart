@@ -227,4 +227,39 @@ void main() {
     g.refreshOrder(0);
     expect(g.orders.first.id, isNot(before));
   });
+
+  test('시계 이상: 시간이 거꾸로 가거나 1년 만에 들어와도 값이 망가지지 않는다', () {
+    var now = DateTime(2026, 6, 1, 12);
+    final g = GameState(random: Random(4), clock: () => now);
+    g.level = 12;
+    g.board[g.unlockedCells.first] = Item(1, Chain.flower, 8);
+    g.lastSeen = now;
+    // 거꾸로 (폰 시계를 되돌림)
+    now = DateTime(2026, 5, 1);
+    expect(g.computeOffline(), isNull);
+    g.tick(1);
+    expect(g.energy >= 0 && g.coins >= 0, isTrue);
+    expect(g.claimCheckIn(), isNotNull);
+    // 1년 뒤
+    now = DateTime(2027, 6, 1);
+    final off = g.computeOffline();
+    if (off != null) {
+      expect(off.coins.isFinite && off.coins >= 0, isTrue);
+      g.grantOffline(off);
+    }
+    g.tick(1);
+    expect(g.coins.isFinite, isTrue);
+    expect(g.energy, lessThanOrEqualTo(GameConfig.energyCap * 3));
+    final g2 = GameState(random: Random(4), clock: () => now);
+    expect(g2.load(g.encode()), isTrue);
+  });
+
+  test('망가진 저장은 무시하고 새로 시작한다', () {
+    final g = GameState(random: Random(1));
+    g.coins = 77;
+    expect(g.load('{"v":3,"coins":"x"}'), isFalse);
+    expect(g.load('not json'), isFalse);
+    expect(g.coins, 77); // 반쯤 덮어쓰지 않고 원래대로
+    expect(g.orders.length, GameConfig.orderSlots);
+  });
 }
