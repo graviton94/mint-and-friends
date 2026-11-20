@@ -1355,84 +1355,98 @@ class _VersionTapState extends State<_VersionTap> {
 }
 
 /// 개발자 전용: 성장 로그 보기 · 파일로 내보내기 · 비우기.
-Future<void> _showDevLog(BuildContext context, GameState? game) =>
-    showGameSheet(context, DevLog.instance, () {
-      final log = DevLog.instance;
-      final kb = (log.bytes / 1024).round();
-      return SheetFrame(
-        title: '성장 로그',
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+Future<void> _showDevLog(
+  BuildContext context,
+  GameState? game,
+) => showGameSheet(context, DevLog.instance, () {
+  final log = DevLog.instance;
+  final kb = (log.bytes / 1024).round();
+  return SheetFrame(
+    title: '성장 로그',
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          '약 ${log.lineCount}줄 · ${kb}KB\n행동마다 · 1분마다 재화 · 5분마다 판 상태'
+          '${log.problem == null ? '' : '\n저장 문제: ${log.problem}'}',
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 13, color: Colors.black54),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 180,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F0E8),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: SingleChildScrollView(
+            reverse: true,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Text(
+                log.recent.join('\n'),
+                style: const TextStyle(fontSize: 10, fontFamily: 'monospace'),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          alignment: WrapAlignment.center,
           children: [
-            Text(
-              '약 ${log.lineCount}줄 · ${kb}KB\n행동마다 · 1분마다 재화 · 5분마다 판 상태',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: Colors.black54),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              height: 180,
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF3F0E8),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: SingleChildScrollView(
-                reverse: true,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Text(
-                    log.recent.join('\n'),
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontFamily: 'monospace',
+            FilledButton(
+              onPressed: () async {
+                final r = await log.exportFile();
+                if (!context.mounted) return;
+                final p = r.split(':');
+                // 결과는 창 위에 뜨는 대화상자로 (아래 알림은 이 창에 가려진다)
+                await showDialog<void>(
+                  context: context,
+                  builder: (c) => AlertDialog(
+                    content: Text(
+                      p.first == 'ok'
+                          ? '${p[1]}줄을 공유 창으로 보냈어요.\n드라이브 · 카톡 등에 저장해서 Claude 에게 올려 주세요.'
+                          : '공유 창을 열 수 없어 ${p[1]}줄 전체를 클립보드에 복사했어요.\n메모 앱 등에 붙여 넣어 보내 주세요.\n(${p.skip(2).join(':')})',
                     ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              alignment: WrapAlignment.center,
-              children: [
-                FilledButton(
-                  onPressed: () async {
-                    final path = await log.exportFile();
-                    if (path == null && context.mounted) {
-                      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                        const SnackBar(content: Text('이 기기에서는 파일로 저장할 수 없어요')),
-                      );
-                    }
-                  },
-                  child: const Text('파일로 내보내기'),
-                ),
-                OutlinedButton(
-                  onPressed: () async {
-                    final ok = await showDialog<bool>(
-                      context: context,
-                      builder: (c) => AlertDialog(
-                        content: const Text('기록을 모두 지울까요?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(c, false),
-                            child: const Text('아니요'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(c, true),
-                            child: const Text('지우기'),
-                          ),
-                        ],
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(c),
+                        child: const Text('확인'),
                       ),
-                    );
-                    if (ok == true) await log.clear();
-                  },
-                  child: const Text('비우기'),
-                ),
-              ],
+                    ],
+                  ),
+                );
+              },
+              child: const Text('파일로 내보내기'),
+            ),
+            OutlinedButton(
+              onPressed: () async {
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (c) => AlertDialog(
+                    content: const Text('기록을 모두 지울까요?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(c, false),
+                        child: const Text('아니요'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(c, true),
+                        child: const Text('지우기'),
+                      ),
+                    ],
+                  ),
+                );
+                if (ok == true) await log.clear();
+              },
+              child: const Text('비우기'),
             ),
           ],
         ),
-      );
-    });
+      ],
+    ),
+  );
+});

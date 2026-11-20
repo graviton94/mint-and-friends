@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -56,21 +58,39 @@ class DevLog extends ChangeNotifier {
   ({int coins, int stars, int gems, int energy})? _prev;
   GameState? _game;
 
+  /// 파일 저장이 안 될 때의 이유 (개발자 창에 그대로 보여 준다).
+  String? problem;
+
+  /// 파일에 못 쓰는 동안 줄을 메모리에 모아 둔다 (내보낼 때 쓴다).
+  final List<String> _mem = [];
+  static const int _memMax = 50000;
+
   Future<void> init() async {
     _p = await SharedPreferences.getInstance();
     on = _p!.getBool(_kOn) ?? false;
     _session = _p!.getInt(_kSession) ?? 0;
-    try {
-      final dir = await getApplicationSupportDirectory();
-      _file = File('${dir.path}/growth_log.csv');
-      if (await _file!.exists()) {
-        bytes = await _file!.length();
+    _p!.remove(_kOldLines);
+    // 앱 지원 폴더 → 문서 폴더 → 임시 폴더 순으로, 실제로 써지는 곳을 쓴다
+    final errors = <String>[];
+    for (final get in [
+      getApplicationSupportDirectory,
+      getApplicationDocumentsDirectory,
+      getTemporaryDirectory,
+    ]) {
+      try {
+        final dir = await get();
+        await dir.create(recursive: true);
+        final f = File('${dir.path}/growth_log.csv');
+        await f.writeAsString('', mode: FileMode.append, flush: true);
+        _file = f;
+        bytes = await f.length();
         lineCount = (bytes / 70).round(); // 대략치 (내보낼 때 정확히 셈)
+        break;
+      } catch (e) {
+        errors.add('$e');
       }
-      await _p!.remove(_kOldLines);
-    } catch (_) {
-      _file = null; // 웹 · 테스트 등 파일이 없는 곳: 메모리에만 (최근 줄)
     }
+    problem = _file == null ? 'no file: ${errors.join(' / ')}' : null;
     GameState.tracer = _onTrace;
   }
 
@@ -85,6 +105,10 @@ class DevLog extends ChangeNotifier {
   void _write(String type, String data) {
     final line = '${_now()},$_session,$type,$data';
     _buf.add(line);
+    if (_file == null) {
+      _mem.add(line);
+      if (_mem.length > _memMax) _mem.removeRange(0, _mem.length - _memMax);
+    }
     lineCount++;
     recent.add(line);
     if (recent.length > 40) recent.removeAt(0);
@@ -165,6 +189,7 @@ class DevLog extends ChangeNotifier {
 
   /// 모아 둔 줄을 파일 끝에 붙인다 (순서 보장).
   Future<void> flush() {
+    if (_file == null) _buf.clear();
     if (_file == null || _buf.isEmpty) return _flushing ?? Future.value();
     final chunk = '${_buf.join('\n')}\n';
     _buf.clear();
@@ -174,6 +199,7 @@ class DevLog extends ChangeNotifier {
       try {
         await f.writeAsString(chunk, mode: FileMode.append, flush: true);
         bytes = await f.length();
+        problem = null;
         if (bytes > rotateBytes) {
           final old = File('${f.path}.1');
           if (await old.exists()) await old.delete();
@@ -181,34 +207,63 @@ class DevLog extends ChangeNotifier {
           bytes = 0;
         }
       } catch (e) {
-        debugPrint('DevLog flush failed: $e');
+        problem = 'write: $e';
+        _mem.addAll(chunk.trimRight().split('\n'));
       }
+      notifyListeners();
     });
   }
 
-  /// 지난 파일 + 지금 파일을 한 파일로 묶어 공유 시트로 내보낸다 (드라이브 · 카톡 · 메일 등).
-  Future<String?> exportFile() async {
+  /// 전체 기록 글 (설명 머리말 + 지난 파일 + 지금 파일 + 메모리에만 있는 줄).
+  Future<String> _allText() async {
+    final b = StringBuffer()..writeln(header);
+    final f = _file;
+    if (f != null) {
+      for (final x in [File('${f.path}.1'), f]) {
+        try {
+          if (await x.exists()) b.write(await x.readAsString());
+        } catch (e) {
+          b.writeln('# read failed: $e');
+        }
+      }
+    }
+    for (final l in _mem) {
+      b.writeln(l);
+    }
+    return b.toString();
+  }
+
+  /// 공유 창으로 CSV 파일을 보낸다 (드라이브 · 카톡 · 메일 등).
+  /// 공유가 안 되면 전체 글을 클립보드에 복사한다. 결과 문구를 돌려준다 (화면에 그대로 보여 준다).
+  Future<String> exportFile() async {
     if (_game != null) record(_game!, 'manual');
     await flush();
-    final f = _file;
-    if (f == null) return null;
-    final out = File(
-      '${(await getTemporaryDirectory()).path}/mintfriends_log_${_now().replaceAll(':', '').replaceAll('-', '').replaceAll('T', '_')}.csv',
-    );
-    final sink = out.openWrite()..writeln(header);
-    final old = File('${f.path}.1');
-    if (await old.exists()) await sink.addStream(old.openRead());
-    if (await f.exists()) await sink.addStream(f.openRead());
-    await sink.close();
-    lineCount = (await out.readAsLines()).length - header.split('\n').length;
+    await (_flushing ?? Future.value());
+    final text = await _allText();
+    final lines = '\n'.allMatches(text).length - header.split('\n').length;
+    lineCount = max(0, lines);
     notifyListeners();
-    await SharePlus.instance.share(
-      ShareParams(
-        files: [XFile(out.path, mimeType: 'text/csv')],
-        subject: out.uri.pathSegments.last,
-      ),
-    );
-    return out.path;
+    final name =
+        'mintfriends_log_${_now().replaceAll(':', '').replaceAll('-', '').replaceAll('T', '_')}.csv';
+    String? shareError;
+    try {
+      final out = File('${(await getTemporaryDirectory()).path}/$name');
+      await out.writeAsString(text, flush: true);
+      final r = await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(out.path, mimeType: 'text/csv', name: name)],
+          subject: name,
+        ),
+      );
+      if (r.status != ShareResultStatus.unavailable) {
+        return 'ok:$lineCount';
+      }
+      shareError = 'share unavailable';
+    } catch (e) {
+      shareError = '$e';
+    }
+    await Clipboard.setData(ClipboardData(text: text));
+    return 'clip:$lineCount:$shareError';
   }
 
   Future<void> clear() async {
@@ -216,6 +271,7 @@ class DevLog extends ChangeNotifier {
     recent.clear();
     lineCount = 0;
     bytes = 0;
+    _mem.clear();
     try {
       if (_file != null) {
         await (_flushing ?? Future.value());
