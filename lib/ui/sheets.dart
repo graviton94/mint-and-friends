@@ -1,4 +1,3 @@
-import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../art/art.dart';
@@ -1189,7 +1188,7 @@ class _VersionTapState extends State<_VersionTap> {
             const SizedBox(height: 6),
             OutlinedButton(
               onPressed: () => _showDevLog(context, widget.game),
-              child: Text('성장 로그 (${DevLog.instance.lines.length}줄)'),
+              child: Text('성장 로그 (약 ${DevLog.instance.lineCount}줄)'),
             ),
           ],
         ],
@@ -1198,34 +1197,37 @@ class _VersionTapState extends State<_VersionTap> {
   }
 }
 
-/// 개발자 전용: 성장 로그 보기 · 복사 · 지금 기록 · 비우기.
+/// 개발자 전용: 성장 로그 보기 · 파일로 내보내기 · 비우기.
 Future<void> _showDevLog(BuildContext context, GameState? game) =>
     showGameSheet(context, DevLog.instance, () {
       final log = DevLog.instance;
-      final tail = log.lines.length > 12
-          ? log.lines.sublist(log.lines.length - 12)
-          : log.lines;
+      final kb = (log.bytes / 1024).round();
       return SheetFrame(
         title: '성장 로그',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              '${log.lines.length}줄 기록됨 · 5분마다, 레벨업, 구역 완성, 앱을 켜고 내릴 때',
+              '약 ${log.lineCount}줄 · ${kb}KB\n행동마다 · 1분마다 재화 · 5분마다 판 상태',
+              textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 13, color: Colors.black54),
             ),
             const SizedBox(height: 8),
             Container(
+              height: 180,
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: const Color(0xFFF3F0E8),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Text(
-                  [DevLog.header, ...tail].join('\n'),
-                  style: const TextStyle(fontSize: 10, fontFamily: 'monospace'),
+                reverse: true,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Text(
+                    log.recent.join('\n'),
+                    style: const TextStyle(fontSize: 10, fontFamily: 'monospace'),
+                  ),
                 ),
               ),
             ),
@@ -1237,24 +1239,37 @@ Future<void> _showDevLog(BuildContext context, GameState? game) =>
               children: [
                 FilledButton(
                   onPressed: () async {
-                    await Clipboard.setData(ClipboardData(text: log.export()));
-                    if (context.mounted) {
+                    final path = await log.exportFile();
+                    if (path == null && context.mounted) {
                       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                        const SnackBar(
-                          content: Text('복사했어요. Claude 대화창에 붙여 넣어 주세요'),
-                        ),
+                        const SnackBar(content: Text('이 기기에서는 파일로 저장할 수 없어요')),
                       );
                     }
                   },
-                  child: const Text('전체 복사'),
+                  child: const Text('파일로 내보내기'),
                 ),
                 OutlinedButton(
-                  onPressed: game == null
-                      ? null
-                      : () => log.record(game, 'manual'),
-                  child: const Text('지금 기록'),
+                  onPressed: () async {
+                    final ok = await showDialog<bool>(
+                      context: context,
+                      builder: (c) => AlertDialog(
+                        content: const Text('기록을 모두 지울까요?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(c, false),
+                            child: const Text('아니요'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(c, true),
+                            child: const Text('지우기'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (ok == true) await log.clear();
+                  },
+                  child: const Text('비우기'),
                 ),
-                OutlinedButton(onPressed: log.clear, child: const Text('비우기')),
               ],
             ),
           ],

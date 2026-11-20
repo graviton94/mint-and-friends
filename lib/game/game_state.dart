@@ -609,6 +609,7 @@ class GameState extends ChangeNotifier {
     if (_rng.nextDouble() < luckyChance) lvl += 1;
     lvl = min(lvl, Chains.maxLevel(chain));
     board[cell] = Item(_nextId++, chain, lvl);
+    _trace('spawn', '${chain.name},$lvl,$basket');
     _checkDiscovery(chain, lvl);
     return cell;
   }
@@ -663,11 +664,13 @@ class GameState extends ChangeNotifier {
       board[to] = null;
       _earn(payout);
       _bump(Stat.maxMerges);
+      _trace('merge', '${b.chain.name},${b.level},max,${payout.round()}');
       _events.add(MaxMergeEvent(payout));
       _gainXp(Leveling.xpForMerge(b.level));
       return MoveResult.maxMerged;
     }
     b.level += 1;
+    _trace('merge', '${b.chain.name},${b.level - 1},${b.level}');
     _events.add(MergedEvent(to, b.level));
     _checkDiscovery(b.chain, b.level);
     _gainXp(Leveling.xpForMerge(b.level));
@@ -687,6 +690,7 @@ class GameState extends ChangeNotifier {
           b.level,
           bubbleUntil: now.add(GameConfig.bubbleLife),
         );
+        _trace('bubble', '${b.chain.name},${b.level}');
         _events.add(BubbleEvent(cell));
       }
     }
@@ -955,6 +959,7 @@ class GameState extends ChangeNotifier {
     if (_recentOrders.length > 3) _recentOrders.removeAt(0);
     orders[orderIndex] = _placeholder;
     orders[orderIndex] = _newOrder();
+    _trace('order', '${o.friendId},${o.chain.name},${o.level},$gained,${c.round()}');
     _events.add(OrderDeliveredEvent(o.friendId, gained, c, up));
     _gainXp(Leveling.xpForOrder(o.level));
     notifyListeners();
@@ -966,8 +971,11 @@ class GameState extends ChangeNotifier {
   /// 부탁 교체 (보상형 광고).
   void refreshOrder(int orderIndex) {
     if (orderIndex < 0 || orderIndex >= orders.length) return;
+    final old = orders[orderIndex];
     orders[orderIndex] = _placeholder;
     orders[orderIndex] = _newOrder();
+    final o = orders[orderIndex];
+    _trace('reroll', '${old.chain.name},${old.level}>${o.chain.name},${o.level}');
     notifyListeners();
   }
 
@@ -1104,7 +1112,39 @@ class GameState extends ChangeNotifier {
   // ---------------------------------------------------------------- 누적 기록 · 업적
 
   int stat(Stat s) => stats[s] ?? 0;
-  void _bump(Stat s, [int n = 1]) => stats[s] = stat(s) + n;
+  void _bump(Stat s, [int n = 1]) {
+    stats[s] = stat(s) + n;
+    if (!_detailed.contains(s)) _trace('act', '${s.name},$n');
+  }
+
+  /// 개발자 성장 로그로 보내는 행동 기록 (꺼져 있으면 아무것도 안 함).
+  /// [type] 이 행 종류, [data] 는 쉼표로 구분한 값.
+  static void Function(String type, String data)? tracer;
+  void _trace(String type, String data) => tracer?.call(type, data);
+
+  /// 따로 자세히 남기거나(합치기 · 생성 · 부탁) 너무 잦은(코인 생산) 기록은 'act' 에서 뺀다.
+  static const _detailed = {
+    Stat.merges,
+    Stat.maxMerges,
+    Stat.spawns,
+    Stat.energySpent,
+    Stat.orders,
+    Stat.orderStars,
+    Stat.coinsEarned,
+    Stat.shopBuys,
+    Stat.gemsSpent,
+  };
+
+  /// 판 상태 한 줄: 칸마다 사슬 글자(f 꽃 · s 간식 · t 차 · d 별가루)+단계, 빈칸 '.', 잠긴 칸 '#', 비눗방울은 뒤에 '*'.
+  String boardCode() => [
+    for (var i = 0; i < board.length; i++)
+      if (!isCellOpen(i))
+        '#'
+      else if (board[i] == null)
+        '.'
+      else
+        '${const ['f', 's', 't', 'd'][board[i]!.chain.index]}${board[i]!.level}${board[i]!.isBubble ? '*' : ''}',
+  ].join(' ');
 
   /// 소셜 친구에게 선물을 보냈다 (업적 '선물 보내기'용).
   void recordGiftSent() {
@@ -1163,6 +1203,7 @@ class GameState extends ChangeNotifier {
   }
 
   void _applyReward(Reward r) {
+    _trace('reward', '${r.coins},${r.energy},${r.stars},${r.gems}');
     if (r.coins > 0) _earn(r.coins.toDouble());
     energy += r.energy; // 상한을 넘어도 된다
     stars += r.stars;
@@ -1233,6 +1274,7 @@ class GameState extends ChangeNotifier {
     o.sold = true;
     board[cell] = Item(_nextId++, o.chain, o.level);
     _bump(Stat.shopBuys);
+    _trace('buy', '${o.chain.name},${o.level},${o.price.round()},${o.kind}');
     notifyListeners();
     return BuyResult.ok;
   }
@@ -1243,6 +1285,7 @@ class GameState extends ChangeNotifier {
   void grantGems(int n) {
     if (n <= 0) return;
     gems += n;
+    _trace('gems', '+$n');
     notifyListeners();
   }
 
@@ -1250,6 +1293,7 @@ class GameState extends ChangeNotifier {
     if (gems < n) return false;
     gems -= n;
     _bump(Stat.gemsSpent, n);
+    _trace('gems', '-$n');
     return true;
   }
 
