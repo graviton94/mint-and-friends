@@ -54,10 +54,10 @@
             </intent-filter>
         </activity>
 
-        <!-- AdMob 앱 ID: 출시 전 본인 AdMob 앱 ID로 교체 (현재 Google 테스트 ID) -->
+        <!-- AdMob 앱 ID: 스토어 빌드는 시크릿 ADMOB_APP_ID (build.gradle.kts → admobAppId), 없으면 Google 테스트 ID -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="${admobAppId}"/>
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

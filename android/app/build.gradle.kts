@@ -29,6 +29,8 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         // 카카오 로그인 키: CI 시크릿 KAKAO_NATIVE_APP_KEY → app.yml/aab.yml 이 HF_KAKAO_NATIVE_APP_KEY 로 넘긴다.
+        manifestPlaceholders["admobAppId"] =
+            System.getenv("HF_ADMOB_APP_ID")?.takeIf { it.isNotBlank() } ?: "ca-app-pub-3940256099942544~3347511713"
         manifestPlaceholders["kakaoScheme"] = "kakao" + (System.getenv("HF_KAKAO_NATIVE_APP_KEY")?.takeIf { it.isNotBlank() } ?: "none")
 
         // 시험용 APK 는 arm64 폰만 (app.yml --target-platform android-arm64). 스토어 AAB 는 모든 ABI.

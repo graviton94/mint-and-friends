@@ -30,3 +30,10 @@ k = (os.environ.get("KAKAO") or "").strip()
 print(f"Kakao: {'set' if k else 'missing'}", file=sys.stderr)
 if k:
     print(f"--dart-define=KAKAO_NATIVE_APP_KEY={k}")
+
+# AdMob 광고 단위 (스토어 빌드만 시크릿을 넘긴다. 없으면 앱 안의 테스트 ID)
+for env, name in (("ADMOB_REWARDED", "ADMOB_REWARDED"), ("ADMOB_INTERSTITIAL", "ADMOB_INTERSTITIAL"), ("ADMOB_BANNER", "ADMOB_BANNER")):
+    v = (os.environ.get(env) or "").strip()
+    if v:
+        print(f"--dart-define={name}={v}")
+print("AdMob units: " + ", ".join(n for n in ("ADMOB_REWARDED", "ADMOB_INTERSTITIAL") if (os.environ.get(n) or "").strip()) or "AdMob units: test", file=sys.stderr)

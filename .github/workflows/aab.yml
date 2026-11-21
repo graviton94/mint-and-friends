@@ -47,7 +47,11 @@ jobs:
           GSJ: ${{ secrets.GOOGLE_SERVICES_JSON }}
           WEB: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
           KAKAO: ${{ secrets.KAKAO_NATIVE_APP_KEY }}
+          ADMOB_REWARDED: ${{ secrets.ADMOB_REWARDED }}
+          ADMOB_INTERSTITIAL: ${{ secrets.ADMOB_INTERSTITIAL }}
+          ADMOB_APP: ${{ secrets.ADMOB_APP_ID }}
         run: |
+          A=$(printf %s "$ADMOB_APP" | tr -d '[:space:]'); if [ -n "$A" ]; then echo "HF_ADMOB_APP_ID=$A" >> "$GITHUB_ENV"; else echo "::warning::ADMOB_APP_ID 시크릿 없음 → 테스트 광고"; fi
           python3 tool/ci_defines.py > "$RUNNER_TEMP/app.defines"
           echo "dart-define: $(wc -l < "$RUNNER_TEMP/app.defines") values"
           K=$(printf %s "$KAKAO" | tr -d '[:space:]'); if [ -n "$K" ]; then echo "HF_KAKAO_NATIVE_APP_KEY=$K" >> "$GITHUB_ENV"; fi
