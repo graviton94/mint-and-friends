@@ -137,30 +137,32 @@ class GameDialog extends StatelessWidget {
                 top: hasRibbon ? 4 : -8,
                 child: GestureDetector(
                   onTap: onClose,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFFBF0),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0xFF7A5230),
-                        width: 2.5,
-                      ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x33000000),
-                          blurRadius: 4,
-                          offset: Offset(0, 2),
+                  child: Art.icon('close').available
+                      ? ArtImage(Art.icon('close'), size: 42)
+                      : Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFFBF0),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFF7A5230),
+                              width: 2.5,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x33000000),
+                                blurRadius: 4,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            size: 24,
+                            color: Color(0xFF7A5230),
+                          ),
                         ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.close_rounded,
-                      size: 24,
-                      color: Color(0xFF7A5230),
-                    ),
-                  ),
                 ),
               ),
             ],
@@ -672,7 +674,8 @@ class _GlowHaloState extends State<GlowHalo>
   @override
   Widget build(BuildContext context) {
     final s = widget.size;
-    final burst = Art.frame('levelup_burst');
+    final rays = Art.frame('rays');
+    final burst = rays.available ? rays : Art.frame('levelup_burst');
     return SizedBox(
       width: s,
       height: s * 0.8,
@@ -699,7 +702,7 @@ class _GlowHaloState extends State<GlowHalo>
             RotationTransition(
               turns: _spin,
               child: Opacity(
-                opacity: 0.35,
+                opacity: rays.available ? 0.9 : 0.35,
                 child: Image.asset(burst.path, width: s, height: s),
               ),
             ),

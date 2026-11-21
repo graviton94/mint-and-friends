@@ -2106,29 +2106,35 @@ class _BasketArrowState extends State<_BasketArrow>
                 opacity: hot ? 1 : 0.75,
                 child: ArtImage(widget.icon, size: 18),
               ),
-              Container(
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: hot ? const Color(0xFFFFD45C) : Colors.white,
-                  border: Border.all(
+              if (Art.icon('chevron').available)
+                Transform.flip(
+                  flipX: widget.dir < 0,
+                  child: ArtImage(Art.icon('chevron'), size: 24),
+                )
+              else
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: hot ? const Color(0xFFFFD45C) : Colors.white,
+                    border: Border.all(
+                      color: hot
+                          ? const Color(0xFFB57A12)
+                          : const Color(0x55000000),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Icon(
+                    widget.dir < 0
+                        ? Icons.chevron_left_rounded
+                        : Icons.chevron_right_rounded,
+                    size: 20,
                     color: hot
-                        ? const Color(0xFFB57A12)
-                        : const Color(0x55000000),
-                    width: 1.5,
+                        ? const Color(0xFF6B4300)
+                        : const Color(0xFF5E5242),
                   ),
                 ),
-                child: Icon(
-                  widget.dir < 0
-                      ? Icons.chevron_left_rounded
-                      : Icons.chevron_right_rounded,
-                  size: 20,
-                  color: hot
-                      ? const Color(0xFF6B4300)
-                      : const Color(0xFF5E5242),
-                ),
-              ),
             ],
           ),
         ),
