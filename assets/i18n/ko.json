@@ -501,7 +501,7 @@
   "checkIn.done": "내일 또 만나요",
   "menu.checkIn": "출석",
   "market.title": "오늘의 시장",
-  "market.level": "Lv{n} · 매일 새로 들어와요",
+  "market.level": "Lv{n}",
   "market.sold": "팔림",
   "style.title": "{name} 디자인",
   "style.0": "기본",
@@ -878,5 +878,6 @@
   "notify.miss.title": "{name}(이)가 보고 싶대요",
   "notify.miss.body": "{name}(이)가 정원에서 기다리고 있어요. 부탁도 하나 있대요!",
   "notify.miss3.title": "정원 친구들이 기다려요",
-  "notify.miss3.body": "꽃이 활짝 피었어요. 친구들이 같이 놀고 싶대요"
+  "notify.miss3.body": "꽃이 활짝 피었어요. 친구들이 같이 놀고 싶대요",
+  "market.titleRefresh": "오늘의 시장 (매일 {h}시 갱신!)"
 }

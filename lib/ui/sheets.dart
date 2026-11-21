@@ -1083,7 +1083,8 @@ Future<void> showShopSheet(
         ],
         // 오늘의 시장: 코인 4칸 + 다이아 1칸 + 광고 1칸 (3열 카드)
         if (game.dailyShopOpen) ...[
-          _ShopHeader(tr('market.title')),
+          // 시장은 날짜가 바뀌는 0시에 새로 들어온다 (game.offers 의 날짜 키)
+          _ShopHeader(tr('market.titleRefresh', {'h': 0})),
           _CardGrid([
             for (var i = 0; i < game.offers.length; i++)
               _offerCard(context, game, i, watchAd, ad),

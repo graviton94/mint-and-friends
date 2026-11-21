@@ -149,8 +149,8 @@ class GameConfig {
     AdKind.market: 1,
   };
 
-  /// 광고 보고 다이아: 하루 3번 × 5개 (한 번 ≈ ₩95어치, 한 달 최대 450, D-034).
-  static const int adGems = 5;
+  /// 광고 보고 다이아: 하루 3번 × 3개 (한 달 최대 270 ≈ ₩5,100어치, D-036).
+  static const int adGems = 3;
 
   /// 하루 부탁 단계 보상: 오늘 N번째 부탁을 들어주면 다이아 (하루 최대 10, 한 달 300).
   static const List<int> orderMilestones = [10, 20, 30];

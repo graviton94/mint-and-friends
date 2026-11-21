@@ -563,7 +563,7 @@ void main() {
     expect(g.nextOrderMilestone, (10, 2));
   });
 
-  test('광고 다이아: 하루 3번 · 5개씩', () {
+  test('광고 다이아: 하루 3번 · 3개씩', () {
     final g = make();
     final g0 = g.gems;
     var n = 0;
@@ -573,7 +573,7 @@ void main() {
       n++;
     }
     expect(n, 3);
-    expect(g.gems - g0, 15);
+    expect(g.gems - g0, 9);
   });
 
   test('회차 별 보너스: 2회차부터 회차당 +5%, 최대 +50%', () {

@@ -500,7 +500,7 @@
   "checkIn.done": "また明日ね",
   "menu.checkIn": "ログイン",
   "market.title": "今日のマーケット",
-  "market.level": "Lv{n} · 毎日入れ替わります",
+  "market.level": "Lv{n}",
   "market.sold": "売り切れ",
   "style.title": "{name}のデザイン",
   "style.0": "ベーシック",
@@ -877,5 +877,6 @@
   "notify.miss.title": "{name}が会いたがってる",
   "notify.miss.body": "{name}が庭でお願いを持って待ってるよ!",
   "notify.miss3.title": "庭の友だちが待ってるよ",
-  "notify.miss3.body": "花が満開だよ。みんな一緒に遊びたいって"
+  "notify.miss3.body": "花が満開だよ。みんな一緒に遊びたいって",
+  "market.titleRefresh": "今日のマーケット (毎日{h}時に入れ替え!)"
 }

@@ -500,7 +500,7 @@
   "checkIn.done": "See you tomorrow",
   "menu.checkIn": "Check-in",
   "market.title": "Today's market",
-  "market.level": "Lv{n} · New stock every day",
+  "market.level": "Lv{n}",
   "market.sold": "Sold",
   "style.title": "{name} designs",
   "style.0": "Basic",
@@ -877,5 +877,6 @@
   "notify.miss.title": "{name} misses you",
   "notify.miss.body": "{name} is waiting in the garden with a request!",
   "notify.miss3.title": "Your friends are waiting",
-  "notify.miss3.body": "The flowers are in bloom. Your friends want to play!"
+  "notify.miss3.body": "The flowers are in bloom. Your friends want to play!",
+  "market.titleRefresh": "Today's market (new stock daily at {h}:00!)"
 }
