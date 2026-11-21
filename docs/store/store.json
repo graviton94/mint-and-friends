@@ -1,0 +1,336 @@
+{
+ "meta": {
+  "updated": "2026-11-21",
+  "package": "io.github.graviton94.mintandfriends",
+  "defaultLang": "en-US",
+  "category": "게임 › 캐주얼",
+  "price": "무료",
+  "email": "ruahn49@gmail.com",
+  "privacy": "https://graviton94.github.io/mintandfriends/privacy/",
+  "deletion": "https://graviton94.github.io/mintandfriends/privacy/#delete",
+  "repoStore": "docs/store/"
+ },
+ "release": {
+  "version": "1.0.0",
+  "versionCode": 1007,
+  "track": "비공개 테스트",
+  "aab": "MintAndFriends-1.0.0-1007.aab",
+  "releaseUrl": "https://github.com/graviton94/mint-and-friends/releases",
+  "tag": "store-1.0.0-1007",
+  "built": "2026-11-21",
+  "signed": "업로드 키 서명 확인됨",
+  "notes": {
+   "en-US": "Thanks for joining the Mint & Friends closed test!\nMerging, requests, garden decorating, upgrades, garden renewal, friends and daily gifts are all in.\nPlease send bugs or anything confusing through the contact email in Settings.",
+   "ko-KR": "민트앤프렌즈 비공개 테스트에 와 주셔서 고마워요!\n합치기 · 부탁 · 정원 꾸미기 · 강화 · 정원 재단장 · 친구 · 출석까지 모두 들어 있어요.\n불편한 점이나 버그는 앱 설정의 문의 메일로 알려 주세요.",
+   "ja-JP": "ミント＆フレンズのクローズドテストにご参加ありがとうございます！\n合成・お願い・お庭づくり・強化・リニューアル・フレンド・ログインギフトまで全部入っています。\n不具合や分かりにくい点は、設定のお問い合わせメールで教えてください。"
+  }
+ },
+ "langs": [
+  {
+   "code": "en-US",
+   "label": "English (기본)",
+   "default": true,
+   "appLabel": "Mint & Friends",
+   "title": "Mint & Friends: Merge Garden",
+   "short": "Merge flowers and treats, help cute animal friends and decorate your cozy garden",
+   "full": "Come visit a little garden where Mint the bunny and her herb-named friends live.\n\n■ Just merge\nDrag two matching flowers, treats, tea leaves or stardust together to make something lovelier. Every chain grows through 30 levels, from a tiny sprout to a legendary treasure.\n\n■ Friends' requests\nSage, Basil, Lavender... bring your friends what they ask for and collect stars and coins. Level up each friend to 30 for bigger helping bonuses.\n\n■ Your own garden\nSunny Yard, Sparkle Pond, Fragrant Greenhouse, Starlight Hill, Wave Beach and Snowflake Village. Place decorations with stars and pick a basic, deluxe or special design for each, plus seasonal decor and outfits that change through the year.\n\n■ Grows while you're away\nYour garden keeps earning coins when the app is closed. Upgrade your basket, production and income, then renew your garden for Golden Seeds that boost your income for good.\n\n■ A little every day\nDaily check-in gifts, today's market, daily request rewards, notes from your animal friends, hundreds of achievement goals, and gentle reminders when your energy is full (never at night).\n\n■ With friends\nAdd friends by code, send a daily energy gift and visit their gardens.\n\nA cozy game for quiet moments in a busy day.\n\nFree to play. Optional in-app purchases (diamonds, Sprout Garden Package, Garden Pass subscription). Contains ads: rewarded ads you choose to watch, and an occasional short ad after placing decorations (none with the Garden Pass).",
+   "shots": "en",
+   "lens": {
+    "title": 28,
+    "short": 80,
+    "full": 1472
+   }
+  },
+  {
+   "code": "ko-KR",
+   "label": "한국어",
+   "appLabel": "민트앤프렌즈",
+   "title": "민트앤프렌즈: 방치형 머지 힐링",
+   "short": "아이템을 합쳐 동물 친구들의 부탁을 들어주고, 별을 모아 나만의 정원을 꾸미는 힐링 머지 게임",
+   "full": "토끼 민트와 허브 친구들이 사는 작은 정원으로 놀러 오세요.\n\n■ 합치기만 하면 끝\n같은 꽃 · 간식 · 찻잎 · 별가루를 끌어다 합치면 더 예쁜 아이템이 돼요. 모든 아이템은 새싹부터 전설의 보물까지 30단계로 자라요.\n\n■ 친구들의 부탁\n세이지, 바질, 라벤더… 친구들이 원하는 아이템을 전해 주고 별과 코인을 모아요. 친구 레벨을 30까지 올리면 더 크게 도와줘요.\n\n■ 나만의 정원\n햇살 앞마당, 반짝 연못, 꽃향기 온실, 별빛 언덕, 파도 모래사장, 눈꽃 마을까지. 별로 장식을 놓고 기본 · 고급 · 특별 디자인을 골라요. 계절마다 바뀌는 시즌 장식과 친구 의상도 있어요.\n\n■ 방치해도 자라요\n앱을 꺼 둬도 정원이 코인을 모아요. 바구니 · 생산력 · 수익을 강화하고, 정원을 재단장하면 영원히 수입을 늘려 주는 황금 씨앗을 받아요.\n\n■ 매일 조금씩\n7일 출석 선물, 오늘의 시장, 하루 부탁 보상, 동물 친구의 쪽지 선물, 수백 단계의 업적. 에너지가 가득 차면 살짝 알려 드려요 (밤에는 조용히).\n\n■ 친구와 함께\n친구 코드로 친구를 맺고, 하루 한 번 에너지 선물을 보내고, 친구의 정원을 구경해요.\n\n바쁜 하루 틈틈이, 머리 비우고 편하게 즐기는 힐링 게임입니다.\n\n※ 게임은 무료이며, 다이아 · 새싹 정원 패키지 · 정원 패스(월 구독) 등 선택형 인앱 구매가 있어요. 광고 포함: 원할 때만 보는 보상형 광고와, 장식을 놓은 뒤 가끔 나오는 짧은 광고가 있어요 (정원 패스는 광고 없음).",
+   "shots": "ko",
+   "lens": {
+    "title": 17,
+    "short": 52,
+    "full": 737
+   }
+  },
+  {
+   "code": "ja-JP",
+   "label": "日本語",
+   "appLabel": "ミント＆フレンズ",
+   "title": "ミント＆フレンズ：癒しのマージ庭",
+   "short": "お花とおやつを合成して動物の仲間のお願いを叶え、星を集めて自分だけのお庭を飾る癒しのマージゲーム",
+   "full": "ウサギのミントとハーブの名前の仲間たちが暮らす小さなお庭へようこそ。\n\n■ 合成するだけ\n同じお花・おやつ・茶葉・星くずをドラッグして合わせると、もっとかわいいアイテムに。どのアイテムも新芽から伝説の宝物まで30段階に育ちます。\n\n■ 仲間のお願い\nセージ、バジル、ラベンダー…仲間が欲しいアイテムを届けて、星とコインを集めましょう。仲間のレベルを30まで上げると、もっと手伝ってくれます。\n\n■ 自分だけのお庭\nひだまりの前庭、きらきら池、花かおる温室、星あかりの丘、波の砂浜、雪の花の村まで。星で飾りを置き、ベーシック・デラックス・スペシャルのデザインから選べます。季節ごとの飾りや仲間の衣装も。\n\n■ 放置でも育つ\nアプリを閉じていてもお庭がコインを集めます。かご・生産力・収益を強化し、お庭をリニューアルすると、ずっと収益を増やす金の種がもらえます。\n\n■ 毎日すこしずつ\n7日間のログインギフト、今日のマーケット、毎日のお願い報酬、仲間からのお手紙、数百段階の実績。エネルギーが満タンになったらそっとお知らせ（夜は静かに）。\n\n■ フレンドと一緒に\nフレンドコードでつながり、毎日エネルギーを贈って、お庭を見に行けます。\n\n忙しい毎日のすきまに、のんびり楽しめる癒しのゲームです。\n\n基本プレイ無料。ダイヤ・新芽ガーデンパック・ガーデンパス（月額）などの任意のアプリ内課金があります。広告を含みます：見たいときだけ見るリワード広告と、飾りを置いたあとにときどき出る短い広告（ガーデンパスは広告なし）。",
+   "shots": "ja",
+   "lens": {
+    "title": 16,
+    "short": 48,
+    "full": 655
+   }
+  }
+ ],
+ "shots": [
+  {
+   "n": 1,
+   "ko": [
+    "같은 것끼리 합쳐요",
+    "꽃, 간식, 찻잎, 별가루, 30단계"
+   ],
+   "en": [
+    "Merge matching items",
+    "Flowers, treats, tea and stardust"
+   ],
+   "ja": [
+    "同じものを合成しよう",
+    "お花・おやつ・お茶・星くず"
+   ]
+  },
+  {
+   "n": 2,
+   "ko": [
+    "나만의 정원을 꾸며요",
+    "바닷가부터 눈꽃 마을까지"
+   ],
+   "en": [
+    "Decorate your garden",
+    "From the beach to a snowy village"
+   ],
+   "ja": [
+    "自分だけのお庭を飾ろう",
+    "海辺から雪の村まで"
+   ]
+  },
+  {
+   "n": 3,
+   "ko": [
+    "장식마다 3가지 디자인",
+    "기본, 고급, 특별"
+   ],
+   "en": [
+    "Three designs for every decor",
+    "Basic, deluxe and special"
+   ],
+   "ja": [
+    "飾りごとに3つのデザイン",
+    "ベーシック・デラックス・スペシャル"
+   ]
+  },
+  {
+   "n": 4,
+   "ko": [
+    "강화로 쑥쑥 자라요",
+    "바구니, 생산력, 수익"
+   ],
+   "en": [
+    "Upgrade and grow",
+    "Basket, production and income"
+   ],
+   "ja": [
+    "強化でぐんぐん育つ",
+    "かご・生産力・収益"
+   ]
+  },
+  {
+   "n": 5,
+   "ko": [
+    "정원 재단장",
+    "황금 씨앗으로 영원히 더 크게"
+   ],
+   "en": [
+    "Renew your garden",
+    "Golden Seeds boost you for good"
+   ],
+   "ja": [
+    "お庭をリニューアル",
+    "金の種でずっと強く"
+   ]
+  },
+  {
+   "n": 6,
+   "ko": [
+    "친구와 선물을 주고받아요",
+    "친구 코드로 간편하게"
+   ],
+   "en": [
+    "Send gifts to friends",
+    "Connect with a friend code"
+   ],
+   "ja": [
+    "フレンドとプレゼント交換",
+    "フレンドコードでかんたん"
+   ]
+  },
+  {
+   "n": 7,
+   "ko": [
+    "친구의 정원에 놀러 가요",
+    "구경하고 답례도 받아요"
+   ],
+   "en": [
+    "Visit friends' gardens",
+    "Look around, get a thank-you gift"
+   ],
+   "ja": [
+    "フレンドのお庭へ遊びに",
+    "見に行くとお礼がもらえます"
+   ]
+  },
+  {
+   "n": 8,
+   "ko": [
+    "동물 친구들을 모아요",
+    "10명의 친구와 도감"
+   ],
+   "en": [
+    "Collect animal friends",
+    "Ten friends and a growing album"
+   ],
+   "ja": [
+    "動物の仲間を集めよう",
+    "10人の仲間と図鑑"
+   ]
+  }
+ ],
+ "graphics": [
+  {
+   "id": "icon",
+   "name": "앱 아이콘",
+   "file": "icon_512.png",
+   "size": "512×512 PNG"
+  },
+  {
+   "id": "feature",
+   "name": "그래픽 이미지 (언어별)",
+   "file": "feature/{en,ko,ja}.png",
+   "size": "1024×500"
+  }
+ ],
+ "products": [
+  {
+   "id": "starter_2900",
+   "type": "관리형 (1회)",
+   "price": "₩2,900",
+   "name": "새싹 정원 패키지"
+  },
+  {
+   "id": "gems_100",
+   "type": "관리형 (소모성)",
+   "price": "₩1,900",
+   "name": "다이아 100"
+  },
+  {
+   "id": "gems_430",
+   "type": "관리형 (소모성)",
+   "price": "₩5,900",
+   "name": "다이아 430"
+  },
+  {
+   "id": "gems_900",
+   "type": "관리형 (소모성)",
+   "price": "₩9,900",
+   "name": "다이아 900",
+   "todo": true
+  },
+  {
+   "id": "gems_2000",
+   "type": "관리형 (소모성)",
+   "price": "₩19,000",
+   "name": "다이아 2,000"
+  },
+  {
+   "id": "gems_6000",
+   "type": "관리형 (소모성)",
+   "price": "₩38,000",
+   "name": "다이아 6,000"
+  },
+  {
+   "id": "gems_14000",
+   "type": "관리형 (소모성)",
+   "price": "₩79,000",
+   "name": "다이아 14,000"
+  },
+  {
+   "id": "garden_pass_1m",
+   "type": "정기 결제 (월)",
+   "price": "₩5,900",
+   "name": "정원 패스"
+  }
+ ],
+ "appContent": [
+  [
+   "개인정보처리방침",
+   "https://graviton94.github.io/mintandfriends/privacy/"
+  ],
+  [
+   "앱 액세스 권한",
+   "모든 기능 제한 없이 사용 가능 (게스트로 시작)"
+  ],
+  [
+   "광고",
+   "예, 광고 포함 — 보상형 + 장식 설치 후 가끔 전면 광고 (3분 간격, 정원 패스는 없음)"
+  ],
+  [
+   "콘텐츠 등급 (IARC)",
+   "폭력 · 공포 · 성적 · 욕설 · 약물 · 도박 없음 / 사용자 상호작용 예 (친구 코드 · 정원 구경, 자유 채팅 없음) / 디지털 상품 구매 예 / 유료 무작위 아이템 아니요 → 전체이용가 · PEGI 3 · ESRB Everyone"
+  ],
+  [
+   "타깃층",
+   "13세 이상 (아동 대상 아님)"
+  ],
+  [
+   "데이터 보안",
+   "이름(별명) · 사용자 ID · 게임 진행(선택, 클라우드 저장) · 애널리틱스 이벤트(필수) · 광고 ID와 대략적 위치(AdMob 공유). 전송 암호화 예, 삭제 요청 가능"
+  ],
+  [
+   "계정 삭제",
+   "앱 안 삭제 + https://graviton94.github.io/mintandfriends/privacy/#delete"
+  ],
+  [
+   "알림",
+   "POST_NOTIFICATIONS (안드로이드 13+, 처음 한 번 물음) · 부팅 후 예약 복구 RECEIVE_BOOT_COMPLETED"
+  ],
+  [
+   "정부 · 금융 · 건강",
+   "모두 아님"
+  ]
+ ],
+ "checklist": [
+  [
+   "앱 만들기: 기본 언어 English (United States), 게임, 무료",
+   false
+  ],
+  [
+   "번역 추가: 한국어 · 일본어 (이 페이지 문구 그대로)",
+   false
+  ],
+  [
+   "그래픽: 아이콘 · 그래픽 이미지 · 언어별 스크린샷 8장",
+   false
+  ],
+  [
+   "인앱 상품 7개 + 구독 1개 (gems_900 새로)",
+   false
+  ],
+  [
+   "앱 콘텐츠 답안 입력",
+   false
+  ],
+  [
+   "AdMob 실제 ID → GitHub 비밀값 3개 → AAB 다시 빌드",
+   false
+  ],
+  [
+   "비공개 테스트 트랙에 AAB 업로드 · 출시 노트",
+   false
+  ],
+  [
+   "첫 업로드 뒤 앱 서명 키 SHA-1/256 → Firebase · 카카오 키 해시",
+   false
+  ],
+  [
+   "테스터 12명 이상 · 14일 연속",
+   false
+  ]
+ ]
+}

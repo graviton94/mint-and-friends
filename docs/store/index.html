@@ -1,0 +1,215 @@
+<title>민트앤프렌즈 스토어 등록정보</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Sans+JP:wght@400;500&display=swap">
+<style>
+/* Layout: Play Console 순서대로 — 앱 기본 정보 · 출시 파일 → 언어별 등록정보(탭) → 그래픽 → 상품 → 앱 콘텐츠 → 할 일 */
+:root {
+  --bg: #F3F6EF;
+  --panel: #FFFFFF;
+  --ink: #2F3A2C;
+  --muted: #6A7565;
+  --line: #DCE3D3;
+  --accent: #3F8A4E;
+  --accent-soft: #E3F0DF;
+  --warn: #B86A12;
+  --warn-soft: #FCEBD3;
+  --display: "Jua", "Noto Sans KR", system-ui, sans-serif;
+  --body: "Noto Sans KR", "Noto Sans JP", system-ui, -apple-system, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161B15; --panel: #1F261D; --ink: #E4EBDF; --muted: #9AA594; --line: #323C2F;
+    --accent: #7CC58A; --accent-soft: #243A27; --warn: #F0AC5C; --warn-soft: #3A2C17;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161B15; --panel: #1F261D; --ink: #E4EBDF; --muted: #9AA594; --line: #323C2F;
+  --accent: #7CC58A; --accent-soft: #243A27; --warn: #F0AC5C; --warn-soft: #3A2C17;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 14px; line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 30px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap: balance; }
+h1 { font-size: 30px; }
+h2 { font-size: 22px; }
+h3 { font-size: 16px; color: var(--muted); }
+section { display: flex; flex-direction: column; gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+.top { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; }
+.top img { width: 84px; height: 84px; border-radius: 20px; }
+.top p { margin: 4px 0 0; color: var(--muted); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+.fact { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; min-width: 0; }
+.fact span { display: block; font-size: 11.5px; letter-spacing: .05em; color: var(--muted); }
+.fact b { font-weight: 500; overflow-wrap: anywhere; }
+.fact.hl { background: var(--accent-soft); border-color: transparent; }
+code, .mono { font-family: var(--mono); font-size: 12.5px; }
+a { color: var(--accent); }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.tab { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 7px 14px; font: inherit; cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.tab:focus-visible, .copy:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field + .field { margin-top: 14px; }
+.flabel { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); }
+.count { font-variant-numeric: tabular-nums; }
+.count.over { color: var(--warn); font-weight: 700; }
+.copy { margin-left: auto; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 8px; padding: 3px 10px; font: inherit; font-size: 12px; cursor: pointer; }
+.val { background: var(--bg); border-radius: 10px; padding: 10px 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.val.big { font-family: var(--display); font-size: 20px; }
+.full { max-height: 340px; overflow: auto; }
+.shots { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x mandatory; }
+.shot { flex: none; width: 170px; scroll-snap-align: start; display: flex; flex-direction: column; gap: 6px; }
+.shot img { width: 170px; aspect-ratio: 9 / 16; border-radius: 10px; border: 1px solid var(--line); object-fit: cover; background: var(--panel); }
+.shot b { font-weight: 500; font-size: 13px; }
+.shot span { font-size: 12px; color: var(--muted); }
+.gfx { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+.gfx figure { margin: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.gfx img { border-radius: 12px; border: 1px solid var(--line); max-width: 100%; }
+.gfx figcaption { font-size: 12.5px; color: var(--muted); }
+.tbl { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+table { width: 100%; border-collapse: collapse; min-width: 560px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { font-size: 11.5px; letter-spacing: .05em; color: var(--muted); font-weight: 500; background: var(--bg); }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pill { display: inline-block; font-size: 11.5px; padding: 1px 8px; border-radius: 999px; background: var(--warn-soft); color: var(--warn); white-space: nowrap; }
+.check { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.check li { display: flex; gap: 10px; align-items: flex-start; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; }
+.box { flex: none; width: 18px; height: 18px; border-radius: 5px; border: 2px solid var(--line); margin-top: 2px; }
+.box.on { background: var(--accent); border-color: var(--accent); }
+.note { color: var(--muted); font-size: 12.5px; }
+.empty { color: var(--muted); padding: 12px; }
+@media (max-width: 520px) { .top { grid-template-columns: 1fr; } .shot, .shot img { width: 140px; } }
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <img src="icon_512.png" alt="앱 아이콘">
+    <div>
+      <h1>민트앤프렌즈 스토어 등록정보</h1>
+      <p>Play Console 에 넣을 문구 · 그림 · 상품 · 답안과 올릴 AAB 를 한곳에. 원본 파일은 저장소 <code>docs/store/</code>.</p>
+    </div>
+  </div>
+
+  <div class="facts" id="facts"><div class="empty">불러오는 중…</div></div>
+
+  <section>
+    <h2>언어별 등록정보</h2>
+    <div class="tabs" id="tabs" role="tablist" aria-label="언어"></div>
+    <div class="card" id="lang"></div>
+  </section>
+
+  <section>
+    <h2>스크린샷 <span class="note" id="shotnote"></span></h2>
+    <div class="shots" id="shots"></div>
+    <p class="note">미리보기는 절반 크기. 올릴 원본(1080×1920 JPG)은 <code>docs/store/screenshots/{en,ko,ja}/1~8.jpg</code>, 같은 번호 순서로.</p>
+  </section>
+
+  <section>
+    <h2>그래픽</h2>
+    <div class="gfx">
+      <figure><img src="icon_512.png" alt="" width="128" height="128"><figcaption>앱 아이콘 · 512×512 PNG</figcaption></figure>
+      <figure><img id="feat" src="feature/en.png" alt="" width="512" height="250"><figcaption id="featcap">그래픽 이미지 · 1024×500</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>인앱 상품</h2>
+    <div class="tbl" id="products"></div>
+    <p class="note">가격 · 효용 근거는 경제 카탈로그 장부: <a href="https://claude.ai/artifact/KZrspc3tmoeNaT4EcGGcM4" target="_blank" rel="noopener">민트앤프렌즈 경제 카탈로그</a></p>
+  </section>
+
+  <section>
+    <h2>앱 콘텐츠 답안</h2>
+    <div class="tbl" id="content"></div>
+  </section>
+
+  <section>
+    <h2>등록 할 일</h2>
+    <ul class="check" id="check"></ul>
+  </section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const LIM = { title: 30, short: 80, full: 4000 };
+let data = null, cur = null;
+
+function copyBtn(key) { return `<button class="copy" data-copy="${key}">복사</button>`; }
+function field(label, key, text, big, full) {
+  const n = [...text].length, lim = LIM[key];
+  const cnt = lim ? `<span class="count ${n > lim ? 'over' : ''}">${n} / ${lim}</span>` : '';
+  return `<div class="field"><div class="flabel">${label} ${cnt}${copyBtn(key)}</div><div class="val ${big ? 'big' : ''} ${full ? 'full' : ''}" data-val="${key}">${esc(text)}</div></div>`;
+}
+
+function renderLang() {
+  const l = data.langs.find((x) => x.code === cur);
+  $('lang').innerHTML =
+    `<div class="flabel" style="margin-bottom:12px"><span>언어 코드 <code>${esc(l.code)}</code>${l.default ? ' · 기본 언어' : ' · 번역'}</span></div>` +
+    field('기기에 보이는 앱 이름 (런처)', 'appLabel', l.appLabel, true) +
+    field('앱 이름', 'title', l.title, true) +
+    field('간단한 설명', 'short', l.short) +
+    field('자세한 설명', 'full', l.full, false, true) +
+    field('출시 노트 (1.0.0)', 'notes', data.release.notes[l.code] || '');
+  const cap = l.shots;
+  $('shotnote').textContent = `· ${l.label} 8장`;
+  $('feat').src = `feature/${cap}.png`;
+  $('featcap').textContent = `그래픽 이미지 · 1024×500 · ${l.label} (docs/store/feature/${cap}.png)`;
+  $('shots').innerHTML = data.shots.map((s) =>
+    `<div class="shot"><img src="shots/${cap}/${s.n}.jpg" alt="${esc(s[cap][0])}" loading="lazy"><b>${s.n}. ${esc(s[cap][0])}</b><span>${esc(s[cap][1])}</span></div>`).join('');
+  for (const t of document.querySelectorAll('.tab')) t.setAttribute('aria-selected', String(t.dataset.code === cur));
+}
+
+function render() {
+  const m = data.meta, r = data.release;
+  const def = data.langs.find((l) => l.default);
+  $('facts').innerHTML = [
+    ['패키지명', `<code>${esc(m.package)}</code>`, true],
+    ['기본 언어', `${esc(def.code)} — ${esc(def.title)}`, true],
+    ['올릴 AAB', `${esc(r.aab)}<div class="note">버전 ${esc(r.version)} · 코드 ${r.versionCode} · ${esc(r.signed)} · <a href="${esc(r.releaseUrl)}" target="_blank" rel="noopener">GitHub 초안 릴리스 ${esc(r.tag)}</a></div>`, true],
+    ['트랙', esc(r.track)],
+    ['카테고리 · 가격', `${esc(m.category)} · ${esc(m.price)}`],
+    ['문의 이메일', esc(m.email)],
+    ['개인정보처리방침', `<a href="${esc(m.privacy)}" target="_blank" rel="noopener">${esc(m.privacy)}</a>`],
+    ['계정 삭제 안내', `<a href="${esc(m.deletion)}" target="_blank" rel="noopener">${esc(m.deletion)}</a>`],
+    ['기준일', esc(m.updated)],
+  ].map(([k, v, hl]) => `<div class="fact ${hl ? 'hl' : ''}"><span>${k}</span><b>${v}</b></div>`).join('');
+
+  $('tabs').innerHTML = data.langs.map((l) =>
+    `<button class="tab" role="tab" id="tab-${l.code}" data-code="${l.code}" aria-selected="false">${esc(l.label)}</button>`).join('');
+  for (const t of document.querySelectorAll('.tab')) t.addEventListener('click', () => { cur = t.dataset.code; renderLang(); });
+  cur = cur || def.code;
+  renderLang();
+
+  $('products').innerHTML = `<table><thead><tr><th>상품 ID</th><th>이름</th><th>종류</th><th>가격</th><th></th></tr></thead><tbody>${
+    data.products.map((p) => `<tr><td><code>${esc(p.id)}</code></td><td>${esc(p.name)}</td><td>${esc(p.type)}</td><td class="num">${esc(p.price)}</td><td>${p.todo ? '<span class="pill">새로 등록</span>' : ''}</td></tr>`).join('')}</tbody></table>`;
+
+  $('content').innerHTML = `<table><thead><tr><th>항목</th><th>답</th></tr></thead><tbody>${
+    data.appContent.map(([k, v]) => `<tr><td style="white-space:nowrap">${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</tbody></table>`;
+
+  $('check').innerHTML = data.checklist.map(([t, done]) => `<li><span class="box ${done ? 'on' : ''}" aria-hidden="true"></span><span>${esc(t)}</span></li>`).join('');
+}
+
+document.addEventListener('click', async (e) => {
+  const b = e.target.closest('.copy');
+  if (!b) return;
+  const el = b.closest('.field').querySelector('[data-val]');
+  try { await navigator.clipboard.writeText(el.textContent); b.textContent = '복사됨'; }
+  catch { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = '선택됨'; }
+  setTimeout(() => { b.textContent = '복사'; }, 1400);
+});
+
+fetch('store.json').then((r) => r.json()).then((j) => { data = j; render(); })
+  .catch(() => { $('facts').innerHTML = '<div class="empty">store.json 을 읽지 못했어요. 새로고침해 보세요.</div>'; });
+</script>
