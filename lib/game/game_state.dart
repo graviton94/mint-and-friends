@@ -2270,31 +2270,45 @@ class GameState extends ChangeNotifier {
     return top;
   }
 
-  /// 깜짝 상자 단계 범위: 판 최고 단계 -2 ~ -1 (최소 바구니 +1).
+  /// 추천 아이템 단계 범위: 판 최고 단계 -2 ~ -1 (최소 바구니 +1).
   int get surpriseMax => max(spawnLevel + 1, _fieldTop - 1);
   int get surpriseMin => max(spawnLevel + 1, _fieldTop - 2);
 
-  /// 깜짝 상자 값: 두 단계의 평균 에너지값 × 0.7.
+  /// 추천 아이템 (다이아): 무엇을 받는지 사기 전에 정확히 보여 주고 그대로 준다 (무작위 상품이 아님, D-039).
+  /// 정해진 상품은 사거나, 날이 바뀌거나, 바구니가 더 높아져 쓸모없어질 때만 새로 정한다 (다시 뽑기 없음).
+  (Chain, int)? _featured;
+  String _featuredDay = '';
+  (Chain, int) get featuredItem {
+    final f = _featured;
+    if (f == null || _featuredDay != _dayKey(now) || f.$2 <= spawnLevel) {
+      final chains = availableChains;
+      final c = chains[_rng.nextInt(chains.length)];
+      final l = (surpriseMin + _rng.nextInt(surpriseMax - surpriseMin + 1))
+          .clamp(1, Chains.maxLevel(c));
+      _featured = (c, l);
+      _featuredDay = _dayKey(now);
+    }
+    return _featured!;
+  }
+
+  /// 추천 아이템 값: 그 아이템을 바구니로 만드는 에너지 × 0.7.
   int get surpriseGems {
-    double e(int l) => pow(2, l - spawnLevel).toDouble();
-    final avg = (e(surpriseMin) + e(surpriseMax)) / 2;
-    return (avg * Gems.surpriseGemPerEnergy).round().clamp(
+    final l = featuredItem.$2;
+    return (pow(2, l - spawnLevel) * Gems.surpriseGemPerEnergy).round().clamp(
       Gems.surpriseMinGems,
       Gems.surpriseMaxGems,
     );
   }
 
-  /// 깜짝 상자 (다이아): 내 수준의 거의 최고 단계 아이템 하나를 빈 칸에.
+  /// 추천 아이템 사기: 보여 준 그 아이템을 빈 칸에.
   bool buySurprise() {
     final cell = _emptyCell;
     if (cell == null) return false;
-    final lo = surpriseMin, hi = surpriseMax;
+    final (c, l) = featuredItem;
     if (!_spendGems(surpriseGems)) return false;
-    final chains = availableChains;
-    final c = chains[_rng.nextInt(chains.length)];
-    final l = lo + _rng.nextInt(hi - lo + 1);
-    board[cell] = Item(_nextId++, c, l.clamp(1, Chains.maxLevel(c)));
-    _trace('surprise', c.name);
+    board[cell] = Item(_nextId++, c, l);
+    _trace('featured', '${c.name}$l');
+    _featured = null;
     notifyListeners();
     return true;
   }
@@ -2391,6 +2405,8 @@ class GameState extends ChangeNotifier {
       'ordToday': _ordersToday,
       'seedsT': seedsTotal,
       'seedsC': seedsClaimed,
+      if (_featured != null)
+        'featured': [_featured!.$1.index, _featured!.$2, _featuredDay],
       'seeds': seeds,
       'runStart': runStartCoins,
       'perks': {for (final e in seedPerks.entries) e.key.name: e.value},
@@ -2506,6 +2522,16 @@ class GameState extends ChangeNotifier {
     _ordersToday = (j['ordToday'] as num?)?.toInt() ?? 0;
     seedsTotal = (j['seedsT'] as num?)?.toInt() ?? 0;
     seedsClaimed = (j['seedsC'] as num?)?.toInt() ?? seedsTotal;
+    final fe = j['featured'];
+    if (fe is List && fe.length == 3) {
+      _featured = (
+        Chain.values[(fe[0] as num).toInt().clamp(0, Chain.values.length - 1)],
+        (fe[1] as num).toInt(),
+      );
+      _featuredDay = fe[2] as String? ?? '';
+    } else {
+      _featured = null;
+    }
     seeds = (j['seeds'] as num?)?.toInt() ?? 0;
     // 예전 저장(재단장 전)은 지금까지 번 코인을 이번 회차로 치지 않는다 (씨앗 과지급 방지)
     runStartCoins = (j['runStart'] as num?)?.toDouble() ?? lifetimeCoins;

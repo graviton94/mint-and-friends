@@ -288,25 +288,40 @@ void main() {
     expect(g.inflation, greaterThan(10));
   });
 
-  test('깜짝 상자: 판 최고 단계 -2~-1 (최소 바구니+1), 값은 에너지값을 따른다', () {
+  test('추천 아이템: 사기 전에 보여 준 아이템을 그대로 준다 (무작위 상품 아님)', () {
     final g = make();
     final s = g.spawnLevel;
-    expect(g.surpriseMin, s + 1);
-    expect(g.surpriseMax, s + 1);
+    expect(g.featuredItem.$2, s + 1);
     expect(g.surpriseGems, Gems.surpriseMinGems);
-    g.board[g.board.indexWhere((x) => x == null && true)] =
-        Item(9001, Chain.flower, s + 7);
-    expect(g.surpriseMax, s + 6);
-    expect(g.surpriseMin, s + 5);
-    // (2^5 + 2^6) / 2 × 0.7 = 33.6
-    expect(g.surpriseGems, 34);
-    g.gems = 34;
-    expect(g.buySurprise(), isTrue);
-    expect(g.gems, 0);
-    expect(
-      g.board.whereType<Item>().where((it) => it.level >= s + 5).length,
-      2,
+    g.board[g.board.indexWhere((x) => x == null)] = Item(
+      9001,
+      Chain.flower,
+      s + 7,
     );
+    // 이미 정해진 상품은 판이 바뀌어도 그대로 (다시 뽑기 없음)
+    final shown = g.featuredItem;
+    expect(g.featuredItem, shown);
+    g.gems = 999;
+    final before = g.board.whereType<Item>().length;
+    expect(g.buySurprise(), isTrue);
+    expect(g.board.whereType<Item>().length, before + 1);
+    expect(
+      g.board.whereType<Item>().any(
+        (it) => it.id != 9001 && it.chain == shown.$1 && it.level == shown.$2,
+      ),
+      isTrue,
+    );
+    // 산 뒤 다음 상품은 판 최고 단계 -2~-1, 값은 그 아이템의 에너지값 × 0.7
+    final next = g.featuredItem;
+    expect(next.$2, inInclusiveRange(s + 5, s + 6));
+    expect(
+      g.surpriseGems,
+      (pow(2, next.$2 - s) * Gems.surpriseGemPerEnergy).round(),
+    );
+    // 저장 · 불러오기 뒤에도 같은 상품
+    final g2 = make();
+    expect(g2.loadJson(g.toJson()), isTrue);
+    expect(g2.featuredItem, next);
   });
 
   test('패키지 패스 끝 알림: 사흘 전 · 하루 전 · 끝남, 한 번씩', () {

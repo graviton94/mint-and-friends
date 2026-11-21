@@ -1161,14 +1161,14 @@ Future<void> showShopSheet(
               if (game.buyEnergyRefill()) sfx(Sfx.coin);
             },
           ),
+          // 추천 아이템: 무엇이 들었는지 그림 · 이름 · 단계를 그대로 보여 준다 (무작위 상품 아님)
           _ShopCard(
-            icon: Art.gift,
-            title: tr('shop.surprise'),
-            note: tr('shop.surpriseNote', {
-              'r': game.surpriseMin == game.surpriseMax
-                  ? '${game.surpriseMax}'
-                  : '${game.surpriseMin}~${game.surpriseMax}',
-            }),
+            icon: Art.item(game.featuredItem.$1, game.featuredItem.$2),
+            title: itemName(
+              Chains.item(game.featuredItem.$1, game.featuredItem.$2),
+            ),
+            note: tr('shop.featuredNote', {'n': game.featuredItem.$2}),
+            tag: tr('shop.featuredTag'),
             button: game.boardFull
                 ? tr('market.boardFull')
                 : '[[diamond]] ${game.surpriseGems}',
