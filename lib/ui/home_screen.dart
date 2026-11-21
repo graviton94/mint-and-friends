@@ -1205,10 +1205,75 @@ class _HomeScreenState extends State<HomeScreen> {
         if (mounted && game.checkInReady) showCheckInSheet(context, game);
       });
     }
+    // 패키지로 받은 기간제 패스: 사흘 전 · 하루 전 · 끝난 날 한 번씩 (출석판과 겹치지 않게 다음 접속으로)
+    else if (step == _tutDone && game.passNoticeDue != null) {
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) _passNotice();
+      });
+    }
     // 레이아웃이 끝난 뒤 위치를 다시 잰다
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() {});
     });
+  }
+
+  /// 정원 패스 끝 알림: 구독으로 이어 가게.
+  Future<void> _passNotice() async {
+    final stage = game.passNoticeDue;
+    if (stage == null) return;
+    game.markPassNotice(stage);
+    final days = game.passLeft.inHours ~/ 24 + 1;
+    final b = widget.billing;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => GameDialog(
+        banner: 'gold',
+        title: IconText(tr('pass.notice.title'), textAlign: TextAlign.center),
+        onClose: () => Navigator.pop(ctx),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ArtImage(Art.icon('garden_pass'), size: 96),
+            const SizedBox(height: 8),
+            IconText(
+              tr('pass.notice.$stage', {'d': days}),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 20),
+            ),
+            const SizedBox(height: 6),
+            IconText(
+              tr('pass.notice.body', {
+                'gems': OrderQuota.passDailyGems,
+                'quota': OrderQuota.pass,
+                'cells': GameConfig.passVault.length,
+              }),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: Color(0xFF6B5A44)),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: IconText(tr('pass.notice.later')),
+          ),
+          FilledButton(
+            style: framedButton(FilledButton.styleFrom(), 'button_green'),
+            onPressed: b.product == null
+                ? null
+                : () {
+                    Navigator.pop(ctx);
+                    b.buyRemoveAds();
+                  },
+            child: IconText(
+              b.product == null
+                  ? tr('shop.connecting')
+                  : tr('pass.notice.keep', {'price': b.product!.price}),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   bool _tutLoaded = false;

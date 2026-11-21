@@ -250,6 +250,48 @@ void main() {
     );
   });
 
+  test('깜짝 상자: 판 최고 단계 -2~-1 (최소 바구니+1), 값은 에너지값을 따른다', () {
+    final g = make();
+    final s = g.spawnLevel;
+    expect(g.surpriseMin, s + 1);
+    expect(g.surpriseMax, s + 1);
+    expect(g.surpriseGems, Gems.surpriseMinGems);
+    g.board[g.board.indexWhere((x) => x == null && true)] =
+        Item(9001, Chain.flower, s + 7);
+    expect(g.surpriseMax, s + 6);
+    expect(g.surpriseMin, s + 5);
+    // (2^5 + 2^6) / 2 × 0.7 = 33.6
+    expect(g.surpriseGems, 34);
+    g.gems = 34;
+    expect(g.buySurprise(), isTrue);
+    expect(g.gems, 0);
+    expect(
+      g.board.whereType<Item>().where((it) => it.level >= s + 5).length,
+      2,
+    );
+  });
+
+  test('패키지 패스 끝 알림: 사흘 전 · 하루 전 · 끝남, 한 번씩', () {
+    final g = make();
+    expect(g.passNoticeDue, isNull);
+    g.passUntil = now.add(const Duration(days: 5));
+    expect(g.passNoticeDue, isNull);
+    g.passUntil = now.add(const Duration(days: 2));
+    expect(g.passNoticeDue, 1);
+    g.markPassNotice(1);
+    expect(g.passNoticeDue, isNull);
+    g.passUntil = now.add(const Duration(hours: 5));
+    expect(g.passNoticeDue, 2);
+    g.markPassNotice(2);
+    g.passUntil = now.subtract(const Duration(hours: 1));
+    expect(g.passNoticeDue, 3);
+    g.markPassNotice(3);
+    expect(g.passNoticeDue, isNull);
+    g.adFree = true;
+    g.passNoticeSeen = 0;
+    expect(g.passNoticeDue, isNull); // 구독 중이면 없음
+  });
+
   test('친구 의상: 데려온 친구만, 그 계절에만 다이아로 사고, 산 옷은 무료로 갈아입힌다', () {
     final g = make();
     expect(g.wearOutfit('dubu', 'winter'), StyleResult.notPlaced);
@@ -259,8 +301,7 @@ void main() {
       g.wearOutfit(Friends.starter, 'picnic'),
       StyleResult.notPlaced,
     ); // 1월엔 봄 옷을 안 판다
-    g.gems = 0;
-    g.gems = 60;
+    g.gems = Outfits.byId('winter')!.gems;
     expect(g.wearOutfit(Friends.starter, 'winter'), StyleResult.ok);
     expect(g.gems, 0);
     expect(g.outfitOf(Friends.starter), 'winter');

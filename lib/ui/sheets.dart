@@ -1093,25 +1093,26 @@ Future<void> showShopSheet(
         ],
         // 다이아 충전: 광고 1칸 + 팩 5칸
         _ShopHeader(tr('shop.gems')),
+        // 광고 다이아는 한 줄로 (팩 6종은 3×2 로 맞춘다)
+        if (watchAd != null)
+          _ShopRow(
+            icon: Art.icon('free_gift'),
+            title: tr('shop.adGemsShort', {'n': GameConfig.adGems}),
+            note: tr('energy.left', {'n': game.adsLeft(AdKind.gems)}),
+            tag: tr('shop.freeTag'),
+            button: game.gemAdAvailable
+                ? '$ad+${GameConfig.adGems}'
+                : tr('shop.adGemsDone'),
+            ad: true,
+            enabled: game.gemAdAvailable,
+            onTap: () async {
+              if (await watchAd(AdKind.gems)) {
+                game.grantGemAd();
+                sfx(Sfx.coin);
+              }
+            },
+          ),
         _CardGrid([
-          if (watchAd != null)
-            _ShopCard(
-              icon: Art.icon('free_gift'),
-              title: tr('shop.adGemsShort', {'n': GameConfig.adGems}),
-              note: tr('energy.left', {'n': game.adsLeft(AdKind.gems)}),
-              tag: tr('shop.freeTag'),
-              button: game.gemAdAvailable
-                  ? '$ad+${GameConfig.adGems}'
-                  : tr('shop.adGemsDone'),
-              ad: true,
-              enabled: game.gemAdAvailable,
-              onTap: () async {
-                if (await watchAd(AdKind.gems)) {
-                  game.grantGemAd();
-                  sfx(Sfx.coin);
-                }
-              },
-            ),
           for (var i = 0; i < Gems.packs.length; i++)
             _gemPackCard(billing, Gems.packs[i], i),
         ]),
@@ -1170,8 +1171,8 @@ Future<void> showShopSheet(
             }),
             button: game.boardFull
                 ? tr('market.boardFull')
-                : '[[diamond]] ${Gems.surpriseGems}',
-            enabled: !game.boardFull && game.gems >= Gems.surpriseGems,
+                : '[[diamond]] ${game.surpriseGems}',
+            enabled: !game.boardFull && game.gems >= game.surpriseGems,
             onTap: () {
               if (game.buySurprise()) sfx(Sfx.unlock);
             },
@@ -1989,6 +1990,7 @@ class _ShopRow extends StatelessWidget {
     required this.onTap,
     this.note,
     this.tag,
+    this.ad = false,
   });
   final ArtRef icon;
   final String title;
@@ -1996,6 +1998,7 @@ class _ShopRow extends StatelessWidget {
   final String? tag;
   final String button;
   final bool enabled;
+  final bool ad;
   final VoidCallback onTap;
 
   @override
@@ -2057,7 +2060,11 @@ class _ShopRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          CostButton(label: button, onPressed: enabled ? onTap : null),
+          CostButton(
+            label: button,
+            onPressed: enabled ? onTap : null,
+            frame: ad ? 'button_purple' : 'button_green',
+          ),
         ],
       ),
     );

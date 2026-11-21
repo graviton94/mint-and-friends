@@ -723,6 +723,28 @@ class GameState extends ChangeNotifier {
       energy < GameConfig.energyAdBelow;
 
   /// 정원 패스 혜택 중 (구독 또는 기간제).
+  /// 패키지로 받은 기간제 패스 끝 알림 단계: 0 없음 · 1 사흘 전 · 2 하루 전 · 3 끝남 (본 단계까지 저장).
+  int passNoticeSeen = 0;
+
+  /// 지금 보여 줄 패스 끝 알림 단계 (구독 중이면 없음).
+  int? get passNoticeDue {
+    if (adFree || passUntil == null) return null;
+    final left = passUntil!.difference(now);
+    final stage = left.isNegative
+        ? 3
+        : left <= const Duration(days: 1)
+        ? 2
+        : left <= const Duration(days: 3)
+        ? 1
+        : 0;
+    return stage > passNoticeSeen ? stage : null;
+  }
+
+  void markPassNotice(int stage) {
+    passNoticeSeen = max(passNoticeSeen, stage);
+    notifyListeners();
+  }
+
   bool get passActive => adFree || (passUntil?.isAfter(now) ?? false);
   Duration get passLeft => passUntil == null || !passUntil!.isAfter(now)
       ? Duration.zero
@@ -2204,17 +2226,38 @@ class GameState extends ChangeNotifier {
     return true;
   }
 
-  /// 깜짝 상자에서 나오는 단계 범위 (바구니 최고 단계 -2 ~ 최고 단계).
-  int get surpriseMax => spawnLevel;
-  int get surpriseMin => max(1, spawnLevel - Gems.surpriseSpread);
+  /// 지금 판 · 보관함에 있는 가장 높은 단계 (비눗방울 제외).
+  int get _fieldTop {
+    var top = spawnLevel;
+    for (final it in [...board, ...storage]) {
+      if (it != null && !it.isBubble && it.level > top) top = it.level;
+    }
+    return top;
+  }
 
-  /// 깜짝 상자 (다이아): 바구니 단계 근처 아이템 하나를 빈 칸에.
+  /// 깜짝 상자 단계 범위: 판 최고 단계 -2 ~ -1 (최소 바구니 +1).
+  int get surpriseMax => max(spawnLevel + 1, _fieldTop - 1);
+  int get surpriseMin => max(spawnLevel + 1, _fieldTop - 2);
+
+  /// 깜짝 상자 값: 두 단계의 평균 에너지값 × 0.7.
+  int get surpriseGems {
+    double e(int l) => pow(2, l - spawnLevel).toDouble();
+    final avg = (e(surpriseMin) + e(surpriseMax)) / 2;
+    return (avg * Gems.surpriseGemPerEnergy).round().clamp(
+      Gems.surpriseMinGems,
+      Gems.surpriseMaxGems,
+    );
+  }
+
+  /// 깜짝 상자 (다이아): 내 수준의 거의 최고 단계 아이템 하나를 빈 칸에.
   bool buySurprise() {
     final cell = _emptyCell;
-    if (cell == null || !_spendGems(Gems.surpriseGems)) return false;
+    if (cell == null) return false;
+    final lo = surpriseMin, hi = surpriseMax;
+    if (!_spendGems(surpriseGems)) return false;
     final chains = availableChains;
     final c = chains[_rng.nextInt(chains.length)];
-    final l = surpriseMin + _rng.nextInt(surpriseMax - surpriseMin + 1);
+    final l = lo + _rng.nextInt(hi - lo + 1);
     board[cell] = Item(_nextId++, c, l.clamp(1, Chains.maxLevel(c)));
     _trace('surprise', c.name);
     notifyListeners();
@@ -2352,6 +2395,7 @@ class GameState extends ChangeNotifier {
       'starter': starterBought,
       'starterUntil': starterOfferUntil?.millisecondsSinceEpoch,
       'starterShows': starterShows,
+      'passNoticeSeen': passNoticeSeen,
       'boostTokens': {for (final e in boostTokens.entries) e.key.name: e.value},
       'effects': effects.toList(),
       'effectOn': effectOn,
@@ -2566,6 +2610,7 @@ class GameState extends ChangeNotifier {
     starterBought = j['starter'] as bool? ?? false;
     starterOfferUntil = ts('starterUntil');
     starterShows = (j['starterShows'] as num?)?.toInt() ?? 0;
+    passNoticeSeen = (j['passNoticeSeen'] as num?)?.toInt() ?? 0;
     boostTokens.clear();
     for (final e in ((j['boostTokens'] as Map?) ?? const {}).entries) {
       final k = BoostKind.values.where((b) => b.name == e.key).firstOrNull;

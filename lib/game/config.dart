@@ -189,8 +189,8 @@ class Boosts {
   };
   static const Map<BoostKind, int> gemCost = {
     BoostKind.coins: 20,
-    BoostKind.energy: 40,
-    BoostKind.lucky: 25,
+    BoostKind.energy: 20,
+    BoostKind.lucky: 20,
   };
 
   /// 쌓을 수 있는 최대 남은 시간.
@@ -986,6 +986,7 @@ class Gems {
     // 캐주얼 장르는 고가 팩을 거의 사지 않으므로, 위 단계로 갈수록 파격적으로 싸게 (가치 1 → 1.4 → 2 → 3 → 3.4배)
     GemPack('gems_100', 100, 1900),
     GemPack('gems_430', 430, 5900),
+    GemPack('gems_900', 900, 9900),
     GemPack('gems_2000', 2000, 19000),
     GemPack('gems_6000', 6000, 38000),
     GemPack('gems_14000', 14000, 79000),
@@ -1012,11 +1013,14 @@ class Gems {
   ];
 
   /// 계절 정원 효과 따로 사기.
-  static const int effectGems = 300;
+  static const int effectGems = 450;
 
-  /// 깜짝 상자: 바구니가 내는 최고 단계 ~ 그보다 [surpriseSpread] 낮은 단계 중 하나.
-  static const int surpriseGems = 10;
-  static const int surpriseSpread = 2;
+  /// 깜짝 상자: 지금 판 · 보관함의 최고 단계보다 1~2단계 낮은 아이템 하나 (최소 바구니 +1).
+  /// 값은 그 아이템을 바구니로 만드는 에너지(2^(단계-바구니)) × [surpriseGemPerEnergy],
+  /// 에너지 100 충전(0.6개/에너지)보다 살짝 비싸게 — 시간을 사는 값.
+  static const double surpriseGemPerEnergy = 0.7;
+  static const int surpriseMinGems = 10;
+  static const int surpriseMaxGems = 600;
 
   /// 오늘의 시장: 다이아 칸 가격 · 단계(바구니 +4), 광고 칸 단계(바구니 +3).
   static const int marketGemPrice = 12;
@@ -1076,10 +1080,10 @@ class OutfitDef {
 class Outfits {
   /// 그림이 들어온 의상만 옷장에 보인다 (Art.outfitsFor).
   static const List<OutfitDef> all = [
-    OutfitDef('picnic', 60, months: [3, 4, 5]), // 봄
-    OutfitDef('summer', 60, months: [6, 7, 8]),
-    OutfitDef('autumn', 60, months: [9, 10, 11]),
-    OutfitDef('winter', 60, months: [12, 1, 2]),
+    OutfitDef('picnic', 120, months: [3, 4, 5]), // 봄
+    OutfitDef('summer', 120, months: [6, 7, 8]),
+    OutfitDef('autumn', 120, months: [9, 10, 11]),
+    OutfitDef('winter', 120, months: [12, 1, 2]),
     OutfitDef('starlight', -1),
   ];
   static OutfitDef? byId(String id) => all.where((o) => o.id == id).firstOrNull;
@@ -1094,7 +1098,7 @@ class Starter {
   static const int krw = 2900;
   static const int gems = 100;
   static const int energy = 100;
-  static const Duration pass = Duration(days: 30);
+  static const Duration pass = Duration(days: 7);
 
   /// 부스트 묶음 (보관 후 30분씩 꺼내 쓴다): 에너지 절약 2시간 · 행운 2시간 · 코인 꾸러미 3시간.
   static const Map<BoostKind, Duration> boosts = {
