@@ -422,10 +422,19 @@ class GameState extends ChangeNotifier {
       friends.contains(id) &&
       friendLevel(id) < Friends.maxAffection &&
       friendLevel(id) < affection(id) &&
-      coins >= Friends.levelCost(friendLevel(id));
+      coins >= friendLevelCost(id);
+
+  /// 고정 가격 소모처(친구 레벨 · 칸 · 고급 장식)는 바구니 등급만큼 물가가 오른다 (수입 인플레이션을 따라감).
+  double get inflation =>
+      pow(GameConfig.valueGrowth, spawnLevel - 1).toDouble();
+  double friendLevelCost(String id) =>
+      Friends.levelCost(friendLevel(id)) * inflation;
+  double styleCost(int area, int slot) =>
+      Garden.styleCoins(area, slot) * inflation;
+
   bool levelFriend(String id) {
     if (!canLevelFriend(id)) return false;
-    coins -= Friends.levelCost(friendLevel(id));
+    coins -= friendLevelCost(id);
     friendLevels[id] = friendLevel(id) + 1;
     _bump(Stat.upgradesBought);
     notifyListeners();
@@ -451,7 +460,11 @@ class GameState extends ChangeNotifier {
     return i == null ? null : i / (1 + buff(FriendBuff.autoMerge));
   }
 
-  int get spawnLevel => 1;
+  /// 바구니 기본 단계 = 1 + 바구니 등급 (D-029).
+  int get spawnLevel => 1 + lv(UpgradeType.basketTier);
+
+  /// 바구니 기준 상대 단계 (부탁 별 · 경험치는 이 값으로: 등급이 올라도 별 · 레벨 속도는 그대로).
+  int relLevel(int level) => max(1, level - spawnLevel + 1);
 
   /// 바구니에서 2단계가 나올 확률 (기본 + 품질 강화 + 친구 버프).
   double get luckyChance =>
@@ -534,7 +547,7 @@ class GameState extends ChangeNotifier {
   /// 아이템 1개의 초당 방치 수익 (단계 × 종류별 생산력 × 수익 강화 · 버프).
   double itemIncomePerSec(Item it) => it.isBubble
       ? 0
-      : GameConfig.incomeOf(it.level) *
+      : GameConfig.incomeOf(it.chain, it.level) *
             Upgrades.chainPower(lv(Upgrades.powerOf(it.chain))) *
             _incomeMult;
 
@@ -905,7 +918,7 @@ class GameState extends ChangeNotifier {
   void _checkDiscovery(Chain chain, int lvl) {
     if (lvl > (highest[chain] ?? 1)) {
       highest[chain] = lvl;
-      final bonus = GameConfig.discoveryBonusOf(lvl) * _coinMult;
+      final bonus = GameConfig.discoveryBonusOf(chain, lvl) * _coinMult;
       _earn(bonus);
       _events.add(DiscoveryEvent(chain, lvl, bonus));
       _gainXp(Leveling.xpForDiscovery);
@@ -948,7 +961,7 @@ class GameState extends ChangeNotifier {
     _bump(Stat.merges);
     board[from] = null;
     if (b.level >= Chains.maxLevel(b.chain)) {
-      final payout = GameConfig.maxMergePayoutOf(b.level) * _coinMult;
+      final payout = GameConfig.maxMergePayoutOf(b.chain, b.level) * _coinMult;
       board[to] = null;
       _earn(payout);
       _bump(Stat.maxMerges);
@@ -962,7 +975,7 @@ class GameState extends ChangeNotifier {
     _events.add(MergedEvent(to, b.level));
     _checkDiscovery(b.chain, b.level);
     _gainXp(Leveling.xpForMerge(b.level));
-    if (b.level >= GameConfig.bubbleMinLevel &&
+    if (relLevel(b.level) >= GameConfig.bubbleMinLevel &&
         !board.any((it) => it != null && it.isBubble) &&
         board.indexed.where((e) => e.$2 == null && isCellOpen(e.$1)).length >=
             GameConfig.bubbleMinFree &&
@@ -1008,7 +1021,11 @@ class GameState extends ChangeNotifier {
       if (it == null ||
           it.isBubble ||
           it.level >= Chains.maxLevel(it.chain) ||
-          it.level >= Upgrades.autoMergeMaxLevel(lv(UpgradeType.autoMerge)) ||
+          it.level >=
+              Upgrades.autoMergeMaxLevel(
+                lv(UpgradeType.autoMerge),
+                spawnLevel,
+              ) ||
           _isOrderTarget(it))
         continue;
       groups
@@ -1036,7 +1053,7 @@ class GameState extends ChangeNotifier {
   int get lockedCellCount =>
       GameConfig.coinCells -
       unlockedCells.where((c) => c < GameConfig.coinCells).length;
-  double get nextCellCost => cellCost(cellsPurchased);
+  double get nextCellCost => cellCost(cellsPurchased) * inflation;
   int get nextCellLevel => Leveling.cellLevel(cellsPurchased);
 
   bool canBuyCell(int cell) =>
@@ -1055,7 +1072,7 @@ class GameState extends ChangeNotifier {
     return true;
   }
 
-  double sellPrice(Item it) => GameConfig.sellValueOf(it.level);
+  double sellPrice(Item it) => GameConfig.sellValueOf(it.chain, it.level);
 
   /// 최고 단계 아이템인가 (친구에게 선물할 수 있다).
   bool isMaxItem(Item it) =>
@@ -1078,7 +1095,7 @@ class GameState extends ChangeNotifier {
     final full = affection(friendId) >= Friends.maxAffection;
     deliveries[friendId] =
         (deliveries[friendId] ?? 0) + Friends.deliveriesPerAffection;
-    final coins = GameConfig.maxGiftCoinsOf(it.level) * _coinMult;
+    final coins = GameConfig.maxGiftCoinsOf(it.chain, it.level) * _coinMult;
     _earn(coins);
     final s = full ? GameConfig.maxGiftStars : 0;
     stars += s;
@@ -1209,7 +1226,7 @@ class GameState extends ChangeNotifier {
 
   /// 판에서 부탁 범위보다 높아 쓸 데 없이 칸을 막는 아이템 (가장 높은 것).
   Item? get stuckItem {
-    final top = Leveling.orderLevelCenter(level) + 2;
+    final top = orderCenter + 2;
     final chains = availableChains;
     Item? best;
     for (final it in board) {
@@ -1223,11 +1240,14 @@ class GameState extends ChangeNotifier {
     return best;
   }
 
+  /// 부탁 단계의 중심: 바구니 기본 단계 + 레벨에 따른 폭 (Lv1 ≈ +1.5, Lv20 이상 +6.5).
+  double get orderCenter => spawnLevel - 1 + Leveling.orderLevelCenter(level);
+
   Order _newOrder({Chain? preferChain}) {
     final askers = _askers;
     final pool = askers.isEmpty ? (friends.toList()..sort()) : askers;
     final chains = availableChains;
-    final center = Leveling.orderLevelCenter(level);
+    final center = orderCenter;
     // 구조 부탁: 막힌 고단계 아이템을 가끔(1/4, 10분에 한 번까지) 원한다. 별 · 코인은 에너지 비례라 공정하다.
     final stuck = preferChain == null ? stuckItem : null;
     if (stuck != null &&
@@ -1240,7 +1260,7 @@ class GameState extends ChangeNotifier {
         _pickFriend(pool),
         stuck.chain,
         stuck.level,
-        Garden.orderStars(stuck.level),
+        Garden.orderStars(relLevel(stuck.level)),
       );
     }
     for (var attempt = 0; ; attempt++) {
@@ -1249,7 +1269,7 @@ class GameState extends ChangeNotifier {
       // 피할 것이 많아 고를 게 없으면 단계 폭을 조금씩 넓힌다 (±1 → ±2 → ±3)
       final spread = 1.0 + min(1, attempt ~/ 15);
       final lvl = (center + (_rng.nextDouble() * 2 - 1) * spread).round().clamp(
-        2,
+        spawnLevel + 1,
         Chains.maxLevel(chain),
       );
       final dup = orders.any((o) => o.chain == chain && o.level == lvl);
@@ -1264,7 +1284,13 @@ class GameState extends ChangeNotifier {
       if ((!dup && !recent && !onBoard) ||
           (attempt > 30 && !justGiven && !onBoard) ||
           attempt > 60) {
-        return Order(_nextId++, friendId, chain, lvl, Garden.orderStars(lvl));
+        return Order(
+          _nextId++,
+          friendId,
+          chain,
+          lvl,
+          Garden.orderStars(relLevel(lvl)),
+        );
       }
     }
   }
@@ -1279,8 +1305,11 @@ class GameState extends ChangeNotifier {
     return _findItem(o.chain, o.level) >= 0;
   }
 
+  /// 부탁 코인도 생산력 · 수익 강화를 따라 커진다 (부탁이 수입에서 밀려나지 않게).
   double orderCoins(Order o) =>
-      GameConfig.orderCoinsOf(o.level) *
+      GameConfig.orderCoinsOf(o.chain, o.level) *
+      Upgrades.chainPower(lv(Upgrades.powerOf(o.chain))) *
+      _incomeMult *
       _coinMult *
       (1 + buff(FriendBuff.orderCoins));
 
@@ -1313,7 +1342,7 @@ class GameState extends ChangeNotifier {
       'order',
       '${o.friendId},${o.chain.name},${o.level},$gained,${c.round()}',
     );
-    final gx = Leveling.xpForOrder(o.level);
+    final gx = Leveling.xpForOrder(relLevel(o.level));
     _events.add(OrderDeliveredEvent(o.friendId, gained, c, up, gx));
     _gainXp(gx);
     notifyListeners();
@@ -1392,7 +1421,7 @@ class GameState extends ChangeNotifier {
         if (style != seasonStyleNow) return StyleResult.notPlaced;
         if (!_spendGems(Garden.seasonGems)) return StyleResult.noGems;
       } else if (style == 1) {
-        final c = Garden.styleCoins(area, slot);
+        final c = styleCost(area, slot);
         if (coins < c) return StyleResult.noCoins;
         coins -= c;
       } else {
@@ -1482,7 +1511,7 @@ class GameState extends ChangeNotifier {
   }
 
   double visitorCoins({required bool withAd}) =>
-      GameConfig.visitorCoinsOf(level) *
+      GameConfig.visitorCoinsOf(level, baseIncomePerSec) *
       _coinMult *
       (withAd ? GameConfig.visitorAdMultiplier : 1);
 
@@ -1628,22 +1657,29 @@ class GameState extends ChangeNotifier {
       _offersDay = k;
       final chains = availableChains;
       Chain pick() => chains[_rng.nextInt(chains.length)];
-      final center = Leveling.orderLevelCenter(level).round();
-      int price(int l) => DailyShop.price(l, level);
+      final center = orderCenter.round();
       final list = <ShopOffer>[
-        ShopOffer(pick(), min(3, 1 + level ~/ 6) + 1, 0, kind: 1),
+        ShopOffer(pick(), spawnLevel + min(3, 1 + level ~/ 6), 0, kind: 1),
       ];
       final pending = [
         for (final o in orders)
-          if (!canDeliver(orders.indexOf(o)) && o.level >= 3) o,
+          if (!canDeliver(orders.indexOf(o)) && relLevel(o.level) >= 3) o,
       ];
       if (pending.isNotEmpty) {
         final o = pending[_rng.nextInt(pending.length)];
-        list.add(ShopOffer(o.chain, o.level - 1, price(o.level - 1), kind: 2));
+        list.add(
+          ShopOffer(
+            o.chain,
+            o.level - 1,
+            DailyShop.price(o.chain, o.level - 1, level),
+            kind: 2,
+          ),
+        );
       }
       while (list.length < DailyShop.slots) {
-        final l = max(2, center - 2 + _rng.nextInt(2));
-        list.add(ShopOffer(pick(), l, price(l)));
+        final l = max(spawnLevel + 1, center - 2 + _rng.nextInt(2));
+        final c = pick();
+        list.add(ShopOffer(c, l, DailyShop.price(c, l, level)));
       }
       _offers = list;
     }
@@ -1950,7 +1986,8 @@ class GameState extends ChangeNotifier {
 
   bool get canAddBoost => canAddBoostOf(BoostKind.coins);
 
-  double get coinBagAmount => GameConfig.coinBagOf(level) * _coinMult;
+  double get coinBagAmount =>
+      GameConfig.coinBagOf(level, baseIncomePerSec) * _coinMult;
 
   double grantCoinBag() {
     final amount = coinBagAmount;
@@ -2190,7 +2227,13 @@ class GameState extends ChangeNotifier {
     if (econ < 2) {
       orders = [
         for (final o in orders)
-          Order(o.id, o.friendId, o.chain, o.level, Garden.orderStars(o.level)),
+          Order(
+            o.id,
+            o.friendId,
+            o.chain,
+            o.level,
+            Garden.orderStars(relLevel(o.level)),
+          ),
       ];
     }
     _fillOrders();

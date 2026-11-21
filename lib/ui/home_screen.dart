@@ -701,7 +701,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 4),
             IconText(
               tr('gift.note', {
-                'coins': fmt(GameConfig.maxGiftCoinsOf(it.level)),
+                'coins': fmt(GameConfig.maxGiftCoinsOf(it.chain, it.level)),
               }),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 14, color: Color(0xFF6B5A44)),

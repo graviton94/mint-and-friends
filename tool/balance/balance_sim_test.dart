@@ -190,7 +190,7 @@ class Sim {
       for (final f in g.friends) {
         if (g.canLevelFriend(f)) {
           cands.add((
-            Friends.levelCost(g.friendLevel(f)),
+            g.friendLevelCost(f),
             'friend',
             () => g.levelFriend(f),
           ));
@@ -200,7 +200,7 @@ class Sim {
         for (var a = 0; a <= g.currentArea; a++) {
           for (var s = 0; s < Garden.slotsPerArea; s++) {
             if (g.isPlaced(a, s) && !g.ownsStyle(a, s, 1)) {
-              final c = Garden.styleCoins(a, s).toDouble();
+              final c = g.styleCost(a, s);
               if (g.coins >= c) {
                 cands.add((c, 'style', () => g.setStyle(a, s, 1)));
               }
@@ -212,6 +212,8 @@ class Sim {
       cands.sort((a, b) => a.$1.compareTo(b.$1));
       final (_, cat, fn) = cands.first;
       final before = g.coins;
+      buys++;
+      buysBy[cat] = (buysBy[cat] ?? 0) + 1;
       fn();
       spend(cat, before);
     }
@@ -378,10 +380,28 @@ class Sim {
     }
   }
 
+  int buys = 0;
+  final Map<String, int> buysBy = {};
+  double _lastRate = 0;
+
   String dayRow(int day) {
+    final rate = g.incomePerSec * 3600;
+    final rateGrowth = _lastRate > 0 ? rate / _lastRate : 0;
+    _lastRate = rate;
+    final buyStr = 'buys $buys ${buysBy.entries.map((e) => '${e.key}:${e.value}').join(',')} '
+        'rate/h ${rate.toStringAsExponential(2)} x${rateGrowth.toStringAsFixed(2)} ';
+    buys = 0;
+    buysBy.clear();
     final earned = g.lifetimeCoins;
     final spent = coinsOut.m.values.fold(0.0, (a, b) => a + b);
     final funcSpent = spent - coinsOut['style'];
+    final shares = coinsIn.m.entries.toList()
+      ..sort((x, y) => y.value.compareTo(x.value));
+    final totalIn = shares.fold(0.0, (a, e) => a + e.value);
+    final shareStr = shares
+        .take(5)
+        .map((e) => '${e.key}${(100 * e.value / max(1, totalIn)).round()}%')
+        .join(' ');
     final h = g.highest;
     final up = UpgradeType.values.map((t) => g.lv(t)).join('/');
     final fl = [for (final f in g.friends.toList()..sort()) g.friendLevel(f)];
@@ -392,7 +412,7 @@ class Sim {
         'bal ${g.coins.round()} stars ${g.stars} gems ${g.gems} '
         'spawns paid $paidSpawns free $freeSpawns '
         'upg[$up] cells ${g.cellsPurchased} friends ${fl.join(',')} '
-        'gifts $gifts sells $sells';
+        'gifts $gifts sells $sells | $buyStr| in: $shareStr';
   }
 
   String summary() {

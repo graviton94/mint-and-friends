@@ -18,6 +18,9 @@ class Tuning {
   /// 오늘의 시장 가격 계수 (에너지값 × (base + 2·레벨)).
   static int marketPriceBase = 10;
 
+  /// 코인 수입 · 가격 전체 배율 (인플레이션 조정용, 둘 다 같은 배율이라 비율은 그대로).
+  static double coinScale = 1.0;
+
   /// 구역 꾸미기 별 합계 배율 (구역 진행 속도 A/B).
   static double areaStarScale = 1.6;
 
@@ -31,6 +34,7 @@ class Tuning {
     'rescue_chance': (0, 1, (v) => rescueChance = v.toDouble()),
     'market_price_base': (1, 100, (v) => marketPriceBase = v.toInt()),
     'area_star_scale': (0.3, 3, (v) => areaStarScale = v.toDouble()),
+    'coin_scale': (0.1, 10, (v) => coinScale = v.toDouble()),
   };
 
   /// 기본값 표 (Remote Config 콘솔에 넣을 값과 같다).
@@ -42,7 +46,8 @@ class Tuning {
     'refill_max': 150,
     'rescue_chance': 0.25,
     'market_price_base': 10,
-    'area_star_scale': 1.0,
+    'area_star_scale': 1.6,
+    'coin_scale': 1.0,
   };
 
   /// 서버 값 하나 적용. 범위 밖이면 false.

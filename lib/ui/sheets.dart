@@ -49,7 +49,7 @@ Future<void> showUpgradesSheet(BuildContext context, GameState game) =>
         for (final f in Friends.all)
           if (game.friends.contains(f.id) &&
               game.friendLevel(f.id) < Friends.maxAffection)
-            Friends.levelCost(game.friendLevel(f.id)),
+            game.friendLevelCost(f.id),
       ]);
       return SheetFrame(
         title: tr('upgrade.title'),
@@ -97,7 +97,7 @@ class _FriendLevelRow extends StatelessWidget {
         ? tr('common.max')
         : lv >= hearts
         ? tr('upgrade.needHeart')
-        : '[[coin]] ${unit(Friends.levelCost(lv))}';
+        : '[[coin]] ${unit(game.friendLevelCost(def.id))}';
     return Card(
       color: Colors.white,
       margin: const EdgeInsets.symmetric(vertical: 5),
@@ -134,6 +134,8 @@ class _FriendLevelRow extends StatelessWidget {
                         ? tr('upgrade.milestone5', {'n': Friends.starMilestone})
                         : lv < Friends.boostMilestone
                         ? tr('upgrade.milestone10', {'n': Friends.boostMilestone})
+                        : lv < Friends.maxMilestone
+                        ? tr('upgrade.milestone30', {'n': Friends.maxMilestone})
                         : tr('upgrade.milestoneDone')}',
                     style: const TextStyle(fontSize: 12, color: Colors.black45),
                   ),
@@ -229,7 +231,9 @@ class _UpgradeRow extends StatelessWidget {
     } else if (capped) {
       button = tr('upgrade.needLevel', {'n': game.upgradeLevelNeeded(t)});
     } else {
-      button = '[[coin]] ${unit(game.upgradeCost(t))}';
+      button = lv == 0 && def.unlockCost > 0
+          ? '${tr('upgrade.open')} ${unit(game.upgradeCost(t))}'
+          : '[[coin]] ${unit(game.upgradeCost(t))}';
     }
     return Opacity(
       opacity: 1,
@@ -498,7 +502,7 @@ class _StyleCard extends StatelessWidget {
     final label = owned
         ? (current ? tr('style.using') : tr('style.use'))
         : style == 1
-        ? '[[coin]] ${fmt(Garden.styleCoins(area, slot).toDouble())}'
+        ? '[[coin]] ${fmt(game.styleCost(area, slot))}'
         : Garden.isSeasonStyle(style)
         ? '[[diamond]] ${Garden.seasonGems}'
         : '[[diamond]] ${Garden.styleGems(area)}';
@@ -831,16 +835,12 @@ class _FriendCard extends StatelessWidget {
                     ),
                   ),
                   if (has) ...[
-                    Row(
-                      children: [
-                        for (var h = 0; h < Friends.maxAffection ~/ 2; h++)
-                          Opacity(
-                            opacity: h * 2 + 2 <= aff
-                                ? 1
-                                : (h * 2 + 1 <= aff ? 0.6 : 0.15),
-                            child: ArtImage(Art.icon('heart'), size: 11),
-                          ),
-                      ],
+                    IconText(
+                      '[[heart]] $aff/${Friends.maxAffection}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFFB0506E),
+                      ),
                     ),
                     FittedBox(
                       child: IconText(

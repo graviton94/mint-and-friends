@@ -25,35 +25,47 @@ class GameConfig {
       for (var c = 1; c <= 4; c++) r * cols + c,
   };
 
-  static const int maxLevel = 15;
+  static const int maxLevel = 30;
 
   // ---- 코인 (머지 장르 기준: 코인은 주로 부탁으로 번다. 방치 수익은 부탁 수입의 약 10%)
   // 참고: Merge Mansion · Gossip Harbor 등 — 에너지 1 ≈ 코인 1, 코인은 칸 · 보관함 · 강화에 쓴다.
 
-  /// 판 위 아이템 1개의 초당 방치 수익 (시간당 단계만큼 코인. 지수로 늘지 않는다).
-  /// 칸마다 시간당 값을 작게 표시하므로 정수로 떨어지게 둔다. 오프라인은 감쇄가 걸린다.
-  static double incomeOf(int level) => level / 3600;
+  /// 아이템 가치 (코인 인플레이션의 기준, D-029): 단계마다 ×2.2 → 두 개를 합치면 가치 ×1.1.
+  /// 뒤에 열리는 체인일수록 단계당 가치가 크다 (꽃 · 간식 1, 찻잎 3, 별가루 8).
+  static const double valueGrowth = 2.2;
+  static const Map<Chain, double> chainValue = {
+    Chain.flower: 1,
+    Chain.snack: 1,
+    Chain.tea: 3,
+    Chain.stardust: 8,
+  };
+  static double valueOf(Chain c, int level) =>
+      chainValue[c]! * pow(valueGrowth, level - 1) * Tuning.coinScale;
 
-  /// 부탁 보상 코인의 기준 (아이템을 만드는 데 든 에너지 수 = 2^(단계-1)).
-  static double orderCoinsOf(int level) => pow(2, level - 1).toDouble();
+  /// 판 위 아이템 1개의 초당 방치 수익: 시간당 가치 1배.
+  static double incomeOf(Chain c, int level) => valueOf(c, level) / 3600;
 
-  /// 판매 가격: 만드는 데 든 에너지의 절반 (최소 1).
-  static double sellValueOf(int level) => max(1, pow(2, level - 1) * 0.5);
+  /// 부탁 보상 코인: 가치 2배 (2시간치 방치 수익).
+  static double orderCoinsOf(Chain c, int level) => 2 * valueOf(c, level);
+
+  /// 판매 가격: 가치의 절반 (최소 1).
+  static double sellValueOf(Chain c, int level) =>
+      max(1, 0.5 * valueOf(c, level));
 
   /// 판매 되돌리기 가능 시간.
   static const Duration sellUndoWindow = Duration(seconds: 6);
 
   /// 최고 레벨 두 개를 합치면 사라지면서 지급되는 코인.
-  static double maxMergePayoutOf(int level) => 20.0 * level;
+  static double maxMergePayoutOf(Chain c, int level) => 3 * valueOf(c, level);
 
   /// 최고 단계 아이템을 친구에게 선물할 때 코인 (하트 +1 과 함께).
-  static double maxGiftCoinsOf(int level) => 100.0 * level;
+  static double maxGiftCoinsOf(Chain c, int level) => 2 * valueOf(c, level);
 
   /// 하트가 다 찬 친구에게 선물하면 대신 별.
   static const int maxGiftStars = 30;
 
   /// 신규 아이템 발견 보너스 코인.
-  static double discoveryBonusOf(int level) => 3.0 * level;
+  static double discoveryBonusOf(Chain c, int level) => valueOf(c, level);
 
   /// 바구니에서 2단계가 나올 확률 (기본). 바구니 품질 강화로 더 오른다.
   static const double luckySpawnChance = 0.08;
@@ -86,7 +98,9 @@ class GameConfig {
   /// 보상형 광고: 코인 2배 (부탁 · 방치 수익 모두) 1회당 시간, 최대 누적.
 
   /// 보상형 광고: 코인 주머니 = 20 + 8 × 레벨, 쿨다운.
-  static double coinBagOf(int playerLevel) => 20.0 + 8 * playerLevel;
+  /// 코인 주머니: 기본 + 지금 방치 수익 20분치 (수입 인플레이션을 따라간다).
+  static double coinBagOf(int playerLevel, double incomePerSec) =>
+      20.0 + 8 * playerLevel + incomePerSec * 1200;
   static const Duration coinBagCooldown = Duration(minutes: 30);
 
   /// 전면 광고 최소 간격, 앱 시작 후 유예.
@@ -104,8 +118,10 @@ class GameConfig {
   static const Duration visitorMinGap = Duration(minutes: 6);
   static const Duration visitorMaxGap = Duration(minutes: 12);
   static const Duration visitorStay = Duration(seconds: 50);
-  static double visitorCoinsOf(int playerLevel) =>
-      10.0 + 3 * playerLevel; // 그냥 받기
+
+  /// 손님 선물: 기본 + 지금 방치 수익 10분치.
+  static double visitorCoinsOf(int playerLevel, double incomePerSec) =>
+      10.0 + 3 * playerLevel + incomePerSec * 600; // 그냥 받기
   static const double visitorAdMultiplier = 2; // 광고 보고 받기
   static const int visitorAdStars = 5;
 
@@ -369,17 +385,21 @@ class Chains {
       '🍱',
     ],
     // 새 체인은 그림이 들어와야 열린다 (이모지 대체 없음)
-    Chain.tea: ['', '', '', '', '', '', '', '', '', ''],
-    Chain.stardust: ['', '', '', '', '', '', '', '', '', ''],
+    Chain.tea: [],
+    Chain.stardust: [],
   };
 
-  /// 체인별 최고 단계: 꽃 · 간식 15, 구역 체인(찻잎 · 별가루) 10 (바이블 §5.1).
-  static int maxLevel(Chain c) =>
-      c == Chain.tea || c == Chain.stardust ? 10 : GameConfig.maxLevel;
+  /// 체인별 최고 단계: 모두 30 (D-029, 방치 머지의 수입 인플레이션 · 바구니 등급으로 올라간다).
+  static int maxLevel(Chain c) => GameConfig.maxLevel;
+
+  /// 처음부터 그림이 있던 단계 수 (이 단계까지 그림이 있으면 체인이 열린다).
+  static int baseArtLevels(Chain c) =>
+      c == Chain.tea || c == Chain.stardust ? 10 : 15;
 
   static ItemDef item(Chain c, int level) {
     final l = level.clamp(1, maxLevel(c));
-    return ItemDef(c, l, _emoji[c]![l - 1]);
+    final e = _emoji[c]!;
+    return ItemDef(c, l, e.isEmpty ? '' : e[min(l, e.length) - 1]);
   }
 
   /// 체인 그림이 준비됐는지 (Art.init 이 바꿔 낀다). 기본: 꽃 · 간식만.
@@ -411,6 +431,9 @@ enum UpgradeType {
   offlineCap,
   flowerPower,
   snackPower,
+  basketTier,
+  teaPower,
+  stardustPower,
 }
 
 class UpgradeDef {
@@ -420,6 +443,9 @@ class UpgradeDef {
   final double baseCost;
   final double costGrowth;
   final Feature? feature; // 이 기능이 해금돼야 살 수 있음
+
+  /// 처음 여는 비용 (0 = 없음). 새 강화 줄은 비싸게 열고, 그 뒤 단계는 작게 · 지수로 오른다.
+  final double unlockCost;
 
   /// 단계마다 필요한 플레이어 레벨: 다음 단계 L(0부터) = gateStart + gateStep × L.
   final int gateStart;
@@ -431,91 +457,126 @@ class UpgradeDef {
     this.baseCost,
     this.costGrowth, {
     this.feature,
+    this.unlockCost = 0,
     this.gateStart = 2,
-    this.gateStep = 2,
+    this.gateStep = 0,
   });
 
-  double costAt(int level) => baseCost * pow(costGrowth, level);
+  double costAt(int level) =>
+      (level == 0 && unlockCost > 0
+          ? unlockCost
+          : baseCost * pow(costGrowth, level)) *
+      Tuning.coinScale;
   int levelFor(int nextLevel) => gateStart + gateStep * nextLevel;
   String get key => 'upgrade.${type.name}';
 }
 
-/// 강화 (D-024, 장르 조사 반영): 단계는 짧게(5~10), 비용은 단계마다 ×1.7~2.2로 가파르게,
-/// 단계마다 플레이어 레벨 조건. 자동 합치기는 느리고 낮은 단계만 (머지 장르는 자동화를 강하게 막는다).
+/// 강화 (D-029, 방치 머지 구조): 단계를 많이 · 단계당 성장은 조금 · 가격은 지수로.
+/// 뒤 단계일수록 가성비가 나빠지고(코인 소모처), 새 강화 줄은 비싸게 연다.
+/// 수입은 아이템 가치(단계마다 ×2.2)로 불어나고, 가격도 지수로 따라 오른다 (총수입 ↔ 총지출).
 class Upgrades {
   static const List<UpgradeDef> all = [
-    // 에너지 회복: 150초 → 단계마다 -6초, 최대 5단계(120초 = 업계 표준). Lv 8 · 14 · 20 · 26 · 32
+    // 바구니 등급: 바구니에서 나오는 기본 단계 +1 (부탁 · 수입이 한 단계씩 올라간다). 단계마다 가격 ×2.75
+    // (수입은 단계당 ×2.2 → 갈수록 오래 모아야 한다). Lv 4 · 6 · 8 …
     UpgradeDef(
-      UpgradeType.energyRegen,
-      'timer',
-      5,
-      2000,
-      2.2,
-      gateStart: 8,
-      gateStep: 6,
+      UpgradeType.basketTier,
+      'basket',
+      24,
+      400,
+      2.75,
+      gateStart: 4,
+      gateStep: 2,
     ),
-    // 방치 수익 +10% × 10단계
-    UpgradeDef(
-      UpgradeType.income,
-      'coinbag',
-      10,
-      800,
-      1.7,
-      gateStart: 3,
-      gateStep: 3,
-    ),
-    // 자동 합치기: 30초 → 12초, 합치는 단계 상한 Lv4 → Lv8. Lv 6 · 12 · 18 · 24 · 30
-    UpgradeDef(
-      UpgradeType.autoMerge,
-      'auto',
-      5,
-      3000,
-      2.2,
-      feature: Feature.autoMerge,
-      gateStart: 6,
-      gateStep: 6,
-    ),
-    // 바구니 품질: 2단계 확률 +2%p × 5
-    UpgradeDef(
-      UpgradeType.spawnLevel,
-      'quality',
-      5,
-      2500,
-      2.0,
-      feature: Feature.spawnLevel,
-      gateStart: 10,
-      gateStep: 5,
-    ),
-    // 오프라인 한도: 2 → 3 → 4 → 6 → 8 → 10시간
-    UpgradeDef(
-      UpgradeType.offlineCap,
-      'moon',
-      5,
-      1500,
-      1.9,
-      feature: Feature.offlineCap,
-      gateStart: 8,
-      gateStep: 4,
-    ),
-    // 생산력 (꽃 · 간식): 끝이 없고 단계마다 ×1.2, 10단계마다 효과 ×1.5 (소모처 리포트), 레벨 2마다 1단계
+    // 체인별 생산력: 끝없음, 단계당 +5% · 25단계마다 ×2, 가격 ×1.28
     UpgradeDef(
       UpgradeType.flowerPower,
       'item:flower:6',
       Upgrades.endless,
-      300,
-      1.2,
-      gateStart: 2,
-      gateStep: 2,
+      150,
+      1.28,
     ),
     UpgradeDef(
       UpgradeType.snackPower,
       'item:snack:6',
       Upgrades.endless,
-      300,
-      1.2,
+      200,
+      1.28,
       feature: Feature.snack,
       gateStart: 3,
+    ),
+    UpgradeDef(
+      UpgradeType.teaPower,
+      'item:tea:6',
+      Upgrades.endless,
+      2000,
+      1.28,
+      unlockCost: 20000,
+      gateStart: 10,
+    ),
+    UpgradeDef(
+      UpgradeType.stardustPower,
+      'item:stardust:6',
+      Upgrades.endless,
+      8000,
+      1.28,
+      unlockCost: 150000,
+      gateStart: 15,
+    ),
+    // 전체 수익: 끝없음, 단계당 +3%, 가격 ×1.32
+    UpgradeDef(
+      UpgradeType.income,
+      'coinbag',
+      Upgrades.endless,
+      500,
+      1.32,
+      gateStart: 3,
+    ),
+    // 에너지 회복: 150초 → 단계당 −2.5초, 20단계(100초)
+    UpgradeDef(
+      UpgradeType.energyRegen,
+      'timer',
+      20,
+      1500,
+      1.3,
+      unlockCost: 4000,
+      gateStart: 6,
       gateStep: 2,
+    ),
+    // 바구니 품질: 한 단계 높게 나올 확률 +0.5%p × 20
+    UpgradeDef(
+      UpgradeType.spawnLevel,
+      'quality',
+      20,
+      1500,
+      1.3,
+      feature: Feature.spawnLevel,
+      unlockCost: 8000,
+      gateStart: 10,
+      gateStep: 2,
+    ),
+    // 오프라인 한도: 2시간 → 12시간 (10단계)
+    UpgradeDef(
+      UpgradeType.offlineCap,
+      'moon',
+      10,
+      1500,
+      1.45,
+      feature: Feature.offlineCap,
+      unlockCost: 4000,
+      gateStart: 8,
+      gateStep: 3,
+    ),
+    // 자동 합치기: 30초 → 8초 (10단계), 합치는 상한 = 바구니 단계 + 2 + 단계/2
+    UpgradeDef(
+      UpgradeType.autoMerge,
+      'auto',
+      10,
+      5000,
+      1.5,
+      feature: Feature.autoMerge,
+      unlockCost: 20000,
+      gateStart: 6,
+      gateStep: 3,
     ),
   ];
 
@@ -523,37 +584,38 @@ class Upgrades {
 
   static UpgradeDef of(UpgradeType t) => all.firstWhere((u) => u.type == t);
 
-  /// 종류별 생산력 강화 (꽃 · 간식): 그 종류 아이템의 방치 수익 +20% / 단계.
+  /// 체인별 생산력: 단계당 +5%, 25단계마다 ×2.
   static double chainPower(int lv) =>
-      (1 + 0.1 * lv) * pow(1.5, lv ~/ 10).toDouble();
+      (1 + 0.05 * lv) * pow(2, lv ~/ 25).toDouble();
 
-  /// 찻잎은 꽃 생산력, 별가루는 간식 생산력을 따른다.
-  static UpgradeType powerOf(Chain c) => c == Chain.flower || c == Chain.tea
-      ? UpgradeType.flowerPower
-      : UpgradeType.snackPower;
+  static UpgradeType powerOf(Chain c) => switch (c) {
+    Chain.flower => UpgradeType.flowerPower,
+    Chain.snack => UpgradeType.snackPower,
+    Chain.tea => UpgradeType.teaPower,
+    Chain.stardust => UpgradeType.stardustPower,
+  };
 
-  /// 에너지 1 회복 간격(초). 아이템은 바구니 탭(에너지 1)으로만 나온다 (머지 장르 표준:
-  /// Merge Mansion · Travel Town 모두 생산은 에너지, 방치 요소는 수익·자동 합치기).
   static double energyRegenSeconds(int lv) =>
-      max(100.0, Tuning.energyRegenSeconds - 6.0 * lv);
+      max(100.0, Tuning.energyRegenSeconds - 2.5 * lv);
 
-  /// 방치 수익 배율: 단계마다 +5% (최대 20단계 = ×2). 크게 키우면 방치 수익이 부탁 수입을 압도한다.
-  static double incomeMultiplier(int lv) => 1 + 0.1 * lv;
+  /// 전체 수익 배율: 단계당 +3%.
+  static double incomeMultiplier(int lv) => 1 + 0.03 * lv;
 
+  static const List<double> _autoIntervals = [
+    30, 27, 24, 21, 18, 16, 14, 12, 10, 8, //
+  ];
   static double? autoMergeInterval(int lv) =>
-      lv <= 0 ? null : const [30.0, 25.0, 20.0, 16.0, 12.0][min(lv, 5) - 1];
+      lv <= 0 ? null : _autoIntervals[min(lv, _autoIntervals.length) - 1];
 
-  /// 자동 합치기가 손대는 최고 단계 (그 위는 직접 합친다): Lv4 → Lv8.
-  static int autoMergeMaxLevel(int lv) => 3 + min(lv, 5);
+  /// 자동 합치기가 손대는 최고 단계: 바구니 기본 단계 + 2 + 단계/2.
+  static int autoMergeMaxLevel(int lv, int spawnLevel) =>
+      spawnLevel + 2 + (min(lv, 10) + 1) ~/ 2;
 
-  /// 바구니 품질: 2단계가 나올 확률 추가 (+4% / 단계).
-  static double qualityChance(int lv) => 0.02 * lv;
+  /// 바구니 품질: 한 단계 높게 나올 확률 추가 (+0.5% / 단계).
+  static double qualityChance(int lv) => 0.005 * lv;
 
-  /// 오프라인 수익 최대 시간: 2시간 + 30분씩, 최대 6시간.
-  /// 앞 단계일수록 크게 (8시간 넘으면 체감이 거의 없다).
-  static const List<int> _offlineHours = [2, 3, 4, 6, 8, 10];
-  static Duration offlineCap(int lv) =>
-      Duration(hours: _offlineHours[lv.clamp(0, _offlineHours.length - 1)]);
+  /// 오프라인 수익 최대 시간: 2시간 + 1시간씩 (10단계 = 12시간).
+  static Duration offlineCap(int lv) => Duration(hours: 2 + min(lv, 10));
 }
 
 // ------------------------------------------------------------------ 친구
@@ -580,28 +642,33 @@ class FriendDef {
 }
 
 class Friends {
-  /// 친구 레벨 올리기 비용 (다음 레벨 L+1): 코인 600 × 1.8^L. 하트(호감도)가 그 레벨 이상이어야 한다.
-  /// 레벨 5: 그 친구 별 부탁 하루 +1. 레벨 10: 효과 ×1.5.
-  static const int starMilestone = 5;
-  static const int boostMilestone = 10;
-  static double effectiveLevel(int lv) =>
-      lv >= boostMilestone ? lv * 1.5 : lv.toDouble();
+  /// 친구 레벨 (D-029): 최대 30, 단계당 효과는 작게, 가격은 지수(600 × 1.3^L).
+  /// 하트(호감도)가 그 레벨 이상이어야 한다. 레벨 10: 그 친구 별 부탁 하루 +1, 20: 효과 ×1.25, 30: ×1.5.
+  static const int starMilestone = 10;
+  static const int boostMilestone = 20;
+  static const int maxMilestone = 30;
+  static double effectiveLevel(int lv) => lv >= maxMilestone
+      ? lv * 1.5
+      : lv >= boostMilestone
+      ? lv * 1.25
+      : lv.toDouble();
 
-  static double levelCost(int current) => 600 * pow(1.8, current).toDouble();
+  static double levelCost(int current) =>
+      600 * pow(1.3, current).toDouble() * Tuning.coinScale;
 
   static const List<FriendDef> all = [
-    // 친구 레벨 1당 효과 (D-024: 친구 레벨은 강화로 올린다, 최대 10 · 하트만큼)
-    FriendDef('bori', '🐰', FriendBuff.energyRegen, 0.01),
-    FriendDef('dubu', '🐻', FriendBuff.income, 0.03),
-    FriendDef('kwak', '🦆', FriendBuff.orderCoins, 0.03),
-    FriendDef('nabi', '🐱', FriendBuff.lucky, 0.005),
-    FriendDef('dotori', '🐿️', FriendBuff.offline, 0.03),
-    FriendDef('mochi', '🐼', FriendBuff.income, 0.03),
-    FriendDef('danpung', '🦊', FriendBuff.starBonus, 0.02),
-    FriendDef('kongtteok', '🐹', FriendBuff.autoMerge, 0.03),
+    // 친구 레벨 1당 효과 (D-029: 최대 30 · 하트만큼, 단계당 작게)
+    FriendDef('bori', '🐰', FriendBuff.energyRegen, 0.004),
+    FriendDef('dubu', '🐻', FriendBuff.income, 0.01),
+    FriendDef('kwak', '🦆', FriendBuff.orderCoins, 0.01),
+    FriendDef('nabi', '🐱', FriendBuff.lucky, 0.002),
+    FriendDef('dotori', '🐿️', FriendBuff.offline, 0.01),
+    FriendDef('mochi', '🐼', FriendBuff.income, 0.01),
+    FriendDef('danpung', '🦊', FriendBuff.starBonus, 0.007),
+    FriendDef('kongtteok', '🐹', FriendBuff.autoMerge, 0.01),
     // 5 · 6구역 친구 (그림이 들어오면 그 구역과 함께 열린다)
-    FriendDef('bogeul', '🦦', FriendBuff.orderCoins, 0.03),
-    FriendDef('pposong', '🐧', FriendBuff.energyRegen, 0.01),
+    FriendDef('bogeul', '🦦', FriendBuff.orderCoins, 0.01),
+    FriendDef('pposong', '🐧', FriendBuff.energyRegen, 0.004),
   ];
 
   /// 처음부터 있던 친구 (그림 걱정 없이 도감에 보인다).
@@ -610,7 +677,7 @@ class Friends {
   static FriendDef byId(String id) => all.firstWhere((f) => f.id == id);
 
   static const String starter = 'bori';
-  static const int maxAffection = 10;
+  static const int maxAffection = 30;
 
   /// 부탁 N번 들어줄 때마다 호감도 1.
   static const int deliveriesPerAffection = 2;
@@ -899,8 +966,10 @@ class DailyShop {
   static const int slots = 4;
 
   /// 가격: 아이템 에너지값 × (10 + 2·레벨) — 레벨이 오를수록 코인 가치 하락을 따라간다.
-  static int price(int itemLevel, int playerLevel) =>
-      (pow(2, itemLevel - 1) * (Tuning.marketPriceBase + 2 * playerLevel))
+  static int price(Chain c, int itemLevel, int playerLevel) =>
+      (GameConfig.valueOf(c, itemLevel) *
+              (Tuning.marketPriceBase + 2 * playerLevel) /
+              4)
           .round();
 }
 

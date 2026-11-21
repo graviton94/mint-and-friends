@@ -133,7 +133,10 @@ void main() {
     g.board[open[2]] = flower(3, 5);
     expect(g.move(open[0], open[3]), MoveResult.none);
     expect(g.move(open[2], open[0]), MoveResult.none);
-    expect(g.baseIncomePerSec, closeTo(GameConfig.incomeOf(5), 1e-9));
+    expect(
+      g.baseIncomePerSec,
+      closeTo(GameConfig.incomeOf(Chain.flower, 5), 1e-9),
+    );
     expect(g.popBubble(open[0]), isTrue);
     expect(g.board[open[0]]!.isBubble, isFalse);
     now = now.add(GameConfig.bubbleLife);
@@ -196,13 +199,18 @@ void main() {
     g.coins = 1e12;
     expect(g.canBuyUpgrade(UpgradeType.energyRegen), isFalse); // 강화 메뉴 잠김
     g.level = 2;
-    expect(g.canBuyUpgrade(UpgradeType.energyRegen), isFalse); // Lv8 부터
-    g.level = 8;
+    expect(g.canBuyUpgrade(UpgradeType.energyRegen), isFalse); // Lv6 부터
+    g.level = 6;
     expect(g.canBuyUpgrade(UpgradeType.spawnLevel), isFalse); // Lv10 기능
+    // 첫 단계는 여는 비용(비싸게), 그다음은 작은 단계가 지수로
+    expect(
+      g.upgradeCost(UpgradeType.energyRegen),
+      Upgrades.of(UpgradeType.energyRegen).unlockCost,
+    );
     while (g.buyUpgrade(UpgradeType.energyRegen)) {}
-    expect(g.lv(UpgradeType.energyRegen), 1); // 다음 단계는 Lv14
+    expect(g.lv(UpgradeType.energyRegen), 1); // 다음 단계는 Lv8
     expect(g.upgradeCapped(UpgradeType.energyRegen), isTrue);
-    expect(g.upgradeLevelNeeded(UpgradeType.energyRegen), 14);
+    expect(g.upgradeLevelNeeded(UpgradeType.energyRegen), 8);
   });
 
   test('친구 호감도는 버프가 된다', () {
@@ -354,10 +362,35 @@ void main() {
     expect(g.energy, 3 + Leveling.levelUpEnergy(2, 3));
   });
 
-  test('수익 강화: 단계마다 +10%, 최대 10단계 ×2', () {
+  test('수익 · 생산력 강화: 끝없이, 단계당 조금씩, 가격은 지수 (뒤로 갈수록 가성비 하락)', () {
     expect(Upgrades.incomeMultiplier(0), 1);
-    expect(Upgrades.incomeMultiplier(10), closeTo(2.0, 1e-9));
-    expect(Upgrades.of(UpgradeType.income).maxLevel, 10);
+    expect(Upgrades.incomeMultiplier(10), closeTo(1.3, 1e-9));
+    expect(Upgrades.of(UpgradeType.income).maxLevel, Upgrades.endless);
+    expect(Upgrades.chainPower(25), closeTo(2.25 * 2, 1e-9)); // 25단계마다 ×2
+    final d = Upgrades.of(UpgradeType.flowerPower);
+    // 효과 증가율 / 가격 증가율이 계속 줄어든다
+    double eff(int l) =>
+        (Upgrades.chainPower(l + 1) - Upgrades.chainPower(l)) / d.costAt(l);
+    expect(eff(40), lessThan(eff(5)));
+  });
+
+  test('아이템 가치: 단계마다 ×2.2, 합치면 수입이 늘어난다', () {
+    for (var l = 1; l < 30; l++) {
+      expect(
+        GameConfig.incomeOf(Chain.flower, l + 1),
+        greaterThan(2 * GameConfig.incomeOf(Chain.flower, l)),
+      );
+    }
+  });
+
+  test('바구니 등급: 나오는 단계와 부탁 단계가 함께 오르고, 별 · 경험치는 상대 단계 기준', () {
+    final g = make();
+    final s0 = Garden.orderStars(g.relLevel(5));
+    g.upgrades[UpgradeType.basketTier] = 3;
+    expect(g.spawnLevel, 4);
+    expect(g.relLevel(8), 5);
+    expect(Garden.orderStars(g.relLevel(8)), s0);
+    expect(g.orderCenter, greaterThan(4));
   });
 
   test(

@@ -26,19 +26,23 @@ String upgradeValue(UpgradeType t, int lv) {
     case UpgradeType.energyRegen:
       return tr('unit.sec', {'n': Upgrades.energyRegenSeconds(lv).round()});
     case UpgradeType.income:
-      return '×${Upgrades.incomeMultiplier(lv).toStringAsFixed(1)}';
+      return '×${Upgrades.incomeMultiplier(lv).toStringAsFixed(2)}';
     case UpgradeType.autoMerge:
       final i = Upgrades.autoMergeInterval(lv);
       return i == null
           ? tr('upgrade.autoMerge.off')
           : tr('unit.sec', {'n': i.round()});
     case UpgradeType.spawnLevel:
-      return '${((GameConfig.luckySpawnChance + Upgrades.qualityChance(lv)) * 100).round()}%';
+      return '${((GameConfig.luckySpawnChance + Upgrades.qualityChance(lv)) * 100).toStringAsFixed(1)}%';
     case UpgradeType.offlineCap:
       return tr('unit.hour', {'n': Upgrades.offlineCap(lv).inHours});
     case UpgradeType.flowerPower:
     case UpgradeType.snackPower:
-      return '×${Upgrades.chainPower(lv).toStringAsFixed(1)}';
+    case UpgradeType.teaPower:
+    case UpgradeType.stardustPower:
+      return '×${Upgrades.chainPower(lv).toStringAsFixed(2)}';
+    case UpgradeType.basketTier:
+      return 'Lv.${1 + lv}';
   }
 }
 

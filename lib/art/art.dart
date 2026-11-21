@@ -58,17 +58,28 @@ class Art {
     Chains.ready = (c) =>
         c == Chain.flower ||
         c == Chain.snack ||
-        [for (var l = 1; l <= Chains.maxLevel(c); l++) item(c, l)]
+        [for (var l = 1; l <= Chains.baseArtLevels(c); l++) _itemRef(c, l)]
             .every((r) => r.available);
   }
 
   static bool has(String path) => _available.contains(path);
 
   // ---- 경로 규칙 (docs/ART_SPEC.md 와 같아야 함)
-  static ArtRef item(Chain c, int level) => ArtRef(
+  static ArtRef _itemRef(Chain c, int level) => ArtRef(
     'assets/art/items/${c.name}_${level.toString().padLeft(2, '0')}.webp',
     Chains.item(c, level).emoji,
   );
+
+  /// 아이템 그림. 아직 그림이 없는 높은 단계(30단계 확장분)는 그 체인의 가장 높은 그림으로 대신한다.
+  static ArtRef item(Chain c, int level) {
+    final r = _itemRef(c, level);
+    if (r.available || _available.isEmpty) return r;
+    for (var l = level - 1; l >= 1; l--) {
+      final f = _itemRef(c, l);
+      if (f.available) return f;
+    }
+    return r;
+  }
 
   /// 기쁨 표정 그림이 아직 없으면 기본 그림을 쓴다 (탭할 때 이모지로 바뀌지 않게).
   static ArtRef friend(FriendDef f, {bool happy = false, String? outfit}) {
