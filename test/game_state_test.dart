@@ -402,10 +402,11 @@ void main() {
       int cum(int to) =>
           [for (var l = 1; l < to; l++) Leveling.xpToNext(l)]
               .fold(0, (a, b) => a + b);
-      expect(cum(5), inInclusiveRange(105, 125));
-      expect(cum(10), inInclusiveRange(720, 820));
-      expect(cum(20), inInclusiveRange(4900, 5500));
-      expect(cum(30), inInclusiveRange(14800, 16200));
+      // 초반 가산(Lv1~10) 포함
+      expect(cum(5), inInclusiveRange(205, 230));
+      expect(cum(10), inInclusiveRange(880, 980));
+      expect(cum(20), inInclusiveRange(5050, 5700));
+      expect(cum(30), inInclusiveRange(14950, 16400));
     },
   );
 

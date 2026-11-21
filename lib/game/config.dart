@@ -236,7 +236,10 @@ class Leveling {
   /// 기준값 = 초반 부탁 약 4건 분량 (부탁 1건 = 별1 = 5xp).
   /// 장르 조사 곡선(10 + 5·(L−1)^1.6)에 1.3배: 시뮬레이션(하루 4회 × 12분)에서
   /// Lv5 첫 세션 · Lv10 2~3일 · Lv20 약 2주 · Lv30 약 6주가 되도록 맞춘 값.
-  static int xpToNext(int level) => (13 + 6.5 * pow(level - 1, 1.6)).round();
+  /// 초반 가산(D-033, 실기기 로그: 14분에 Lv7 → 너무 빠름): Lv1 +30 → Lv10 +3, 그 뒤 0.
+  /// 장기 곡선은 그대로 두고 첫 세션을 Lv5 안팎으로.
+  static int xpToNext(int level) =>
+      (13 + 6.5 * pow(level - 1, 1.6) + max(0, 30 - 3 * (level - 1))).round();
 
   /// 기능별 해금 레벨.
   static const Map<Feature, int> unlockLevel = {

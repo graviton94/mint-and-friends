@@ -96,19 +96,78 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          // 친구들 (바닥선에 나란히)
+                          // 친구들: 민트가 가운데 앞, 셋이 뒤에서 둘러싼 무대 (발이 패널 위에 걸친다)
                           SizedBox(
-                            height: 96,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                for (final f in Friends.all.take(4))
-                                  ArtImage(Art.friend(f), size: 78),
-                              ],
+                            height: 150,
+                            child: Center(
+                              child: SizedBox(
+                                width: 330,
+                                height: 150,
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    // 양옆 뒤(곰 · 판다) → 양옆 앞(오리 · 고양이) → 가운데 맨 앞 민트(손 흔들기), 좌우 대칭
+                                    for (final (art, left, bottom, size) in [
+                                      (
+                                        Art.friend(
+                                          Friends.byId('dubu'),
+                                          happy: true,
+                                        ),
+                                        0.0,
+                                        30.0,
+                                        88.0,
+                                      ),
+                                      (
+                                        Art.friend(
+                                          Friends.byId('mochi'),
+                                          happy: true,
+                                        ),
+                                        242.0,
+                                        30.0,
+                                        88.0,
+                                      ),
+                                      (
+                                        Art.friend(Friends.byId('kwak')),
+                                        46.0,
+                                        4.0,
+                                        98.0,
+                                      ),
+                                      (
+                                        Art.friend(
+                                          Friends.byId('nabi'),
+                                          happy: true,
+                                        ),
+                                        186.0,
+                                        4.0,
+                                        98.0,
+                                      ),
+                                      (
+                                        const ArtRef(
+                                          'assets/art/friends/bori_wave.webp',
+                                          '',
+                                        ),
+                                        101.0,
+                                        -18.0,
+                                        128.0,
+                                      ),
+                                    ])
+                                      Positioned(
+                                        left: left,
+                                        bottom: bottom,
+                                        child: ArtImage(
+                                          art.available
+                                              ? art
+                                              : Art.friend(
+                                                  Friends.byId('bori'),
+                                                ),
+                                          size: size,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
-                          SizedBox(height: c.maxHeight * 0.04),
                           // 로그인 패널: 크림색 카드 + 갈색 테두리 (게임 창과 같은 모양)
                           Container(
                             padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
