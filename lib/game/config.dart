@@ -1014,20 +1014,9 @@ class Gems {
   /// 계절 정원 효과 따로 사기.
   static const int effectGems = 300;
 
-  /// 오늘의 시장 다시 들이기 (무료 선물을 받았으면 받은 채로 남는다).
-  static const int marketRefreshGems = 10;
-
-  /// 깜짝 상자: 바구니보다 [surpriseLevelUp] 단계 높은 아이템 하나를 판에 놓는다.
-  static const int surpriseGems = 25;
-  static const int surpriseLevelUp = 3;
-
-  /// 큰 깜짝 상자: 바구니보다 5단계 높은 아이템.
-  static const int bigSurpriseGems = 70;
-  static const int bigSurpriseLevelUp = 5;
-
-  /// 에너지 한 병: 값이 오르지 않는 작은 충전 (큰 충전보다 개당은 살짝 비싸다).
-  static const int smallEnergy = 30;
-  static const int smallEnergyGems = 25;
+  /// 깜짝 상자: 바구니가 내는 최고 단계 ~ 그보다 [surpriseSpread] 낮은 단계 중 하나.
+  static const int surpriseGems = 10;
+  static const int surpriseSpread = 2;
 
   /// 오늘의 시장: 다이아 칸 가격 · 단계(바구니 +4), 광고 칸 단계(바구니 +3).
   static const int marketGemPrice = 12;

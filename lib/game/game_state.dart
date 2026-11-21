@@ -1944,14 +1944,6 @@ class GameState extends ChangeNotifier {
     return true;
   }
 
-  /// 에너지 한 병 (값이 오르지 않는 작은 충전).
-  bool buySmallEnergy() {
-    if (!_spendGems(Gems.smallEnergyGems)) return false;
-    energy += Gems.smallEnergy;
-    notifyListeners();
-    return true;
-  }
-
   int bubbleGemCost(int cell) {
     final it = board[cell];
     final until = it?.bubbleUntil;
@@ -2212,44 +2204,19 @@ class GameState extends ChangeNotifier {
     return true;
   }
 
-  /// 오늘의 시장을 새로 들인다 (다이아). 오늘 무료 선물은 다시 주지 않는다.
-  bool refreshMarket() {
-    if (!dailyShopOpen) return false;
-    final freeTaken = offers.any((o) => o.kind == 1 && o.sold);
-    if (!_spendGems(Gems.marketRefreshGems)) return false;
-    _offers = [];
-    final fresh = offers;
-    if (freeTaken) {
-      for (final o in fresh) {
-        if (o.kind == 1) o.sold = true;
-      }
-    }
-    _trace('marketRefresh', '');
-    notifyListeners();
-    return true;
-  }
+  /// 깜짝 상자에서 나오는 단계 범위 (바구니 최고 단계 -2 ~ 최고 단계).
+  int get surpriseMax => spawnLevel;
+  int get surpriseMin => max(1, spawnLevel - Gems.surpriseSpread);
 
-  /// 깜짝 상자에서 나오는 단계 (큰 상자는 더 높게).
-  int surpriseLevel({bool big = false}) => min(
-    Chains.maxLevel(Chain.flower),
-    spawnLevel + (big ? Gems.bigSurpriseLevelUp : Gems.surpriseLevelUp),
-  );
-
-  /// 깜짝 상자 (다이아): 높은 단계 아이템 하나를 빈 칸에.
-  bool buySurprise({bool big = false}) {
+  /// 깜짝 상자 (다이아): 바구니 단계 근처 아이템 하나를 빈 칸에.
+  bool buySurprise() {
     final cell = _emptyCell;
-    if (cell == null ||
-        !_spendGems(big ? Gems.bigSurpriseGems : Gems.surpriseGems)) {
-      return false;
-    }
+    if (cell == null || !_spendGems(Gems.surpriseGems)) return false;
     final chains = availableChains;
     final c = chains[_rng.nextInt(chains.length)];
-    board[cell] = Item(
-      _nextId++,
-      c,
-      surpriseLevel(big: big).clamp(1, Chains.maxLevel(c)),
-    );
-    _trace(big ? 'bigSurprise' : 'surprise', c.name);
+    final l = surpriseMin + _rng.nextInt(surpriseMax - surpriseMin + 1);
+    board[cell] = Item(_nextId++, c, l.clamp(1, Chains.maxLevel(c)));
+    _trace('surprise', c.name);
     notifyListeners();
     return true;
   }
