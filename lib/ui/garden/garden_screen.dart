@@ -410,7 +410,30 @@ class _Circle extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
+  Widget build(BuildContext context) {
+    // 그림 아이콘이 있으면 그것으로 (뒤로 · 좌우 넘기기)
+    final art = icon == Icons.arrow_back_rounded
+        ? Art.icon('back')
+        : (icon == Icons.chevron_left_rounded ||
+              icon == Icons.chevron_right_rounded)
+        ? Art.icon('chevron')
+        : null;
+    if (art != null && art.available) {
+      return GestureDetector(
+        onTap: () {
+          sfx(Sfx.tap);
+          onTap();
+        },
+        child: Transform.flip(
+          flipX: icon == Icons.chevron_left_rounded,
+          child: ArtImage(art, size: 44),
+        ),
+      );
+    }
+    return _plain();
+  }
+
+  Widget _plain() => GestureDetector(
     onTap: () {
       sfx(Sfx.tap);
       onTap();

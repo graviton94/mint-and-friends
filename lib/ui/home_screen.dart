@@ -123,7 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final quota = done && stars > 0
             ? tr('toast.quotaDone', {'name': friendName(friendId)})
             : '';
-        _toast('$thanks  XP+$xp$heart$quota');
+        _toast('$thanks  [[xp]]+$xp$heart$quota');
         // 오늘 부탁이 모두 끝나면 한 번만 알려 준다 (이후엔 정원의 작은 아이콘)
         if (!game.ordersDoneToday) _allDoneShown = false;
         if (game.ordersDoneToday && !_allDoneShown) {
@@ -832,7 +832,7 @@ class _HomeScreenState extends State<HomeScreen> {
             FilledButton.styleFrom(
               minimumSize: const Size(double.infinity, 56),
             ),
-            'button_green',
+            'button_gold',
           ),
           onPressed: () => Navigator.pop(ctx),
           child: IconText(
@@ -2455,7 +2455,20 @@ class _RoundButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
+  Widget build(BuildContext context) {
+    if (label == 'expand' && Art.icon('expand').available) {
+      return GestureDetector(
+        onTap: () {
+          sfx(Sfx.tap);
+          onTap();
+        },
+        child: ArtImage(Art.icon('expand'), size: 38),
+      );
+    }
+    return _plain();
+  }
+
+  Widget _plain() => GestureDetector(
     onTap: () {
       sfx(Sfx.tap);
       onTap();
@@ -2541,19 +2554,22 @@ class _Pill extends StatelessWidget {
             ),
             if (plus) ...[
               const SizedBox(width: 4),
-              Container(
-                width: 20,
-                height: 20,
-                decoration: const BoxDecoration(
-                  color: Palette.primary,
-                  shape: BoxShape.circle,
+              if (Art.icon('plus').available)
+                ArtImage(Art.icon('plus'), size: 22)
+              else
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: const BoxDecoration(
+                    color: Palette.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.add_rounded,
+                    size: 16,
+                    color: Colors.white,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.add_rounded,
-                  size: 16,
-                  color: Colors.white,
-                ),
-              ),
             ],
           ],
         ),

@@ -403,7 +403,9 @@ class _MyCard extends StatelessWidget {
                       constraints: const BoxConstraints(),
                       padding: const EdgeInsets.all(6),
                       tooltip: tr('social.rename'),
-                      icon: const Icon(Icons.edit_rounded, size: 18),
+                      icon: Art.icon('edit').available
+                          ? ArtImage(Art.icon('edit'), size: 22)
+                          : const Icon(Icons.edit_rounded, size: 18),
                       onPressed: onRename,
                     ),
                   ],

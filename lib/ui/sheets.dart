@@ -232,7 +232,7 @@ class _UpgradeRow extends StatelessWidget {
       button = '[[coin]] ${unit(game.upgradeCost(t))}';
     }
     return Opacity(
-      opacity: featureLocked ? 0.55 : 1,
+      opacity: 1,
       child: Card(
         color: Colors.white,
         margin: const EdgeInsets.symmetric(vertical: 5),
@@ -359,25 +359,21 @@ class _DecorRow extends StatelessWidget {
             : null,
         trailing: placed
             ? (Art.decorStyles(d).length > 1
-                  ? SizedBox(
+                  ? CostButton(
+                      label: tr('style.change'),
+                      frame: 'button_white',
+                      onPressed: () =>
+                          showStyleSheet(context, game, game.currentArea, slot),
+                    )
+                  : SizedBox(
                       width: 108,
                       height: 44,
-                      child: OutlinedButton(
-                        onPressed: () => showStyleSheet(
-                          context,
-                          game,
-                          game.currentArea,
-                          slot,
-                        ),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: IconText(tr('style.change')),
+                      child: Center(
+                        child: IconText(
+                          tr('decor.done'),
+                          style: const TextStyle(fontSize: 15),
                         ),
                       ),
-                    )
-                  : IconText(
-                      tr('decor.done'),
-                      style: const TextStyle(fontSize: 15),
                     ))
             : CostButton(
                 label: game.areaLocked

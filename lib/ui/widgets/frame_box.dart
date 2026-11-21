@@ -721,9 +721,13 @@ class CostButton extends StatelessWidget {
     required this.onPressed,
     this.width = 108,
     this.height = 44,
+    this.frame = 'button_green',
   });
   final String label;
   final VoidCallback? onPressed;
+
+  /// 'button_green'(사기 · 올리기) · 'button_white'(보조: 디자인 바꾸기 등) · 'button_gold'.
+  final String frame;
   final double width;
   final double height;
 
@@ -737,8 +741,10 @@ class CostButton extends StatelessWidget {
           minimumSize: Size(width, height),
           maximumSize: Size(width, height),
           padding: const EdgeInsets.symmetric(horizontal: 10),
+          backgroundColor: frame == 'button_white' ? Colors.white : null,
+          foregroundColor: frame == 'button_white' ? Palette.text : null,
         ),
-        'button_green',
+        frame,
       ),
       onPressed: onPressed,
       child: FittedBox(
