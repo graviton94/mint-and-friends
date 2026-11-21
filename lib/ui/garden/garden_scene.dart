@@ -143,6 +143,35 @@ class _GardenSceneState extends State<GardenScene>
 
   int? _walkArea;
 
+  /// 부탁을 든 친구가 서 있을 자리: 부탁 순서대로 왼쪽 · 가운데 · 오른쪽에 고르게 (말풍선이 겹치지 않게).
+  /// 걸을 수 있는 땅 안에서 그 x 에 가장 가까운 곳, 높이는 땅 위쪽 1/3 (말풍선이 화면 위로 넘치지 않게 조금 아래).
+  Map<String, Offset> _orderSpots() {
+    final ids = [
+      for (final o in game.orders)
+        if (_walkers.containsKey(o.friendId)) o.friendId,
+    ];
+    final zones = Garden.areaAt(widget.area).walk;
+    final n = ids.length;
+    final out = <String, Offset>{};
+    for (var k = 0; k < n; k++) {
+      final x = 0.18 + 0.64 * (n == 1 ? 0.5 : k / (n - 1));
+      WalkZone best = zones.first;
+      var bd = double.infinity;
+      for (final z in zones) {
+        final d = x < z.x0 ? z.x0 - x : (x > z.x1 ? x - z.x1 : 0.0);
+        if (d < bd) {
+          bd = d;
+          best = z;
+        }
+      }
+      out[ids[k]] = Offset(
+        x.clamp(best.x0, best.x1).toDouble(),
+        best.y0 + (best.y1 - best.y0) * (0.45 + 0.1 * (k % 2)),
+      );
+    }
+    return out;
+  }
+
   void _onTick(Duration elapsed) {
     final dt = ((elapsed - _last).inMicroseconds / 1e6).clamp(0.0, 0.1);
     _last = elapsed;
@@ -184,7 +213,16 @@ class _GardenSceneState extends State<GardenScene>
       }
     }
 
-    for (final w in _walkers.values) {
+    // 부탁을 든 친구는 정해진 자리로 가서 기다린다
+    final spots = _orderSpots();
+    for (final e in spots.entries) {
+      final w = _walkers[e.key]!;
+      w.target = e.value;
+      w.visitingDecor = null;
+    }
+    for (final e in _walkers.entries) {
+      final w = e.value;
+      final waiting = spots.containsKey(e.key);
       w.happyLeft = max(0, w.happyLeft - dt);
       w.speechLeft = max(0, w.speechLeft - dt);
       w.poseLeft = max(0, w.poseLeft - dt);
@@ -195,6 +233,11 @@ class _GardenSceneState extends State<GardenScene>
       }
       final d = w.target - w.pos;
       final dist = d.distance;
+      if (dist < 0.01 && waiting) {
+        // 자리에서 기다림 (손님 쪽을 바라보게: 화면 가운데를 향해)
+        w.facingRight = w.pos.dx < 0.5;
+        continue;
+      }
       if (dist < 0.01) {
         w.pauseLeft = 1 + _rng.nextDouble() * 3.5;
         w.target = _randomSpot();
@@ -263,9 +306,10 @@ class _GardenSceneState extends State<GardenScene>
   void _randomLife() {
     if (_walkers.isEmpty) return;
     // 자는 친구는 건드리지 않는다
+    final waiting = _orderSpots();
     final ids = [
       for (final e in _walkers.entries)
-        if (e.value.pose != 'sleep') e.key,
+        if (e.value.pose != 'sleep' && !waiting.containsKey(e.key)) e.key,
     ]..shuffle(_rng);
     if (ids.isEmpty) return;
     final a = ids.first;

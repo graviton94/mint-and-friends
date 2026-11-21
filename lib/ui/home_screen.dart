@@ -138,8 +138,17 @@ class _HomeScreenState extends State<HomeScreen> {
         sfx(Sfx.place);
         _tutorialEvent(e);
         final d = Garden.areaAt(area).decor[slot];
-        _toast(
-          tr('toast.decorDone', {'emoji': decorToken(d), 'name': decorName(d)}),
+        // 장식 설치 축하 창: 장식 그림 + 이름 + 정원 매력 (구역 완성은 따로 축하)
+        RewardPopup.show(
+          context,
+          const Reward(),
+          title: tr('decorDone.title'),
+          art: Art.decor(d, style: game.styleOf(area, slot)),
+          sub: tr('decorDone.sub', {
+            'name': decorName(d),
+            'n': (GameConfig.decorIncomeBonus * 100).round(),
+          }),
+          stay: const Duration(milliseconds: 2200),
         );
         setState(() => _viewArea = area);
         widget.ads.maybeShowInterstitial();

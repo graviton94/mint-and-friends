@@ -841,5 +841,7 @@
   "reward.achievement": "Achievement!",
   "reward.mail": "A gift arrived!",
   "reward.checkIn": "Daily gift!",
-  "reward.visitor": "Guest's gift!"
+  "reward.visitor": "Guest's gift!",
+  "decorDone.title": "Decor placed!",
+  "decorDone.sub": "{name}\nGarden charm +{n}%"
 }

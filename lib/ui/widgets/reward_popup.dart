@@ -21,8 +21,10 @@ class RewardPopup {
     Reward r, {
     String? title,
     ArtRef? art,
+    String? sub,
+    Duration stay = const Duration(milliseconds: 2800),
   }) {
-    if (r.isEmpty) return;
+    if (r.isEmpty && art == null) return;
     final overlay = Overlay.maybeOf(context, rootOverlay: true);
     if (overlay == null) return;
     _live?.remove();
@@ -45,13 +47,14 @@ class RewardPopup {
       builder: (ctx) => _RewardView(
         title: title ?? tr('reward.got'),
         art: art,
+        sub: sub,
         items: items,
         onClose: close,
       ),
     );
     _live = e;
     overlay.insert(e);
-    t = Timer(const Duration(milliseconds: 2800), close);
+    t = Timer(stay, close);
   }
 }
 
@@ -61,9 +64,11 @@ class _RewardView extends StatelessWidget {
     required this.items,
     required this.onClose,
     this.art,
+    this.sub,
   });
   final String title;
   final ArtRef? art;
+  final String? sub;
   final List<(ArtRef, String)> items;
   final VoidCallback onClose;
 
@@ -112,6 +117,17 @@ class _RewardView extends StatelessWidget {
                   children: [
                     if (art != null)
                       GlowHalo(size: 150, child: ArtImage(art!, size: 110)),
+                    if (sub != null) ...[
+                      IconText(
+                        sub!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          color: Color(0xFF4A3A22),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     SizedBox(
                       width: double.infinity,
                       child: Wrap(

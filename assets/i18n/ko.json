@@ -842,5 +842,7 @@
   "reward.achievement": "업적 달성!",
   "reward.mail": "선물 도착!",
   "reward.checkIn": "출석 선물!",
-  "reward.visitor": "손님 선물!"
+  "reward.visitor": "손님 선물!",
+  "decorDone.title": "장식 완성!",
+  "decorDone.sub": "{name}\n정원 매력 +{n}%"
 }

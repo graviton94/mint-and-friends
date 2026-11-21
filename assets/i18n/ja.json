@@ -841,5 +841,7 @@
   "reward.achievement": "実績達成!",
   "reward.mail": "プレゼント到着!",
   "reward.checkIn": "出席プレゼント!",
-  "reward.visitor": "お客さんの贈り物!"
+  "reward.visitor": "お客さんの贈り物!",
+  "decorDone.title": "飾り完成!",
+  "decorDone.sub": "{name}\n庭の魅力 +{n}%"
 }
