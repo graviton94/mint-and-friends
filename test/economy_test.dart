@@ -531,9 +531,12 @@ void main() {
   test('하루 부탁 단계 보상: 10 · 20 · 30번째에 다이아 2 · 3 · 5, 다음 날 다시', () {
     final g = make();
     g.friends.add('dubu');
+    g.currentArea = 1; // 하루 한도가 걸리는 때부터 센다
     final g0 = g.gems;
     final l0 = g.level;
     void deliverOne() {
+      g.starOrderLimit('dubu'); // 날짜를 먼저 넘기고
+      g.starOrdersUsed['dubu'] = 0; // 별 부탁 한도 안에서
       g.orders = [Order(900 + g.ordersToday, 'dubu', Chain.flower, 3, 1)];
       g.board[8] = Item(990 + g.ordersToday, Chain.flower, 3);
       expect(g.deliver(0), isTrue);

@@ -835,5 +835,11 @@
   "shop.adGems": "広告でダイヤ {n}個",
   "shop.adGemsDone": "また明日",
   "renew.multChangeShort": "収入 ×{a} → ×{b}",
-  "renew.recommend": "おすすめ"
+  "renew.recommend": "おすすめ",
+  "reward.got": "プレゼント!",
+  "reward.tap": "タップで閉じる",
+  "reward.achievement": "実績達成!",
+  "reward.mail": "プレゼント到着!",
+  "reward.checkIn": "出席プレゼント!",
+  "reward.visitor": "お客さんの贈り物!"
 }

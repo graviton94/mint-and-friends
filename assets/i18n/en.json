@@ -835,5 +835,11 @@
   "shop.adGems": "Watch an ad for {n} diamond",
   "shop.adGemsDone": "Tomorrow",
   "renew.multChangeShort": "Income ×{a} → ×{b}",
-  "renew.recommend": "Now!"
+  "renew.recommend": "Now!",
+  "reward.got": "You got a gift!",
+  "reward.tap": "Tap to close",
+  "reward.achievement": "Achievement!",
+  "reward.mail": "A gift arrived!",
+  "reward.checkIn": "Daily gift!",
+  "reward.visitor": "Guest's gift!"
 }

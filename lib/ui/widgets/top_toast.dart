@@ -35,20 +35,30 @@ class TopToast {
                   horizontal: 18,
                   vertical: 11,
                 ),
-                decoration: FrameBox.decorationFor(
-                  'toast',
-                  BoxDecoration(
-                    color: const Color(0xEE2F3B2F),
-                    borderRadius: BorderRadius.circular(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xF7FFF8EA),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: const Color(0xFF7A5230),
+                    width: 2.5,
                   ),
-                  corner: 16,
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
                 ),
                 child: Material(
                   type: MaterialType.transparency,
                   child: IconText(
                     text,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white, fontSize: 15),
+                    style: const TextStyle(
+                      color: Color(0xFF3A2E22),
+                      fontSize: 15,
+                    ),
                   ),
                 ),
               ),

@@ -250,6 +250,15 @@ class GameState extends ChangeNotifier {
   int stars = 0;
   double lifetimeCoins = 0;
 
+  // ---- 튜토리얼 · 기능 안내 (계정 저장, 기기 설정이 아니라): -1 = 예전 저장(기기 값 사용)
+  int tutorial = 0;
+  final Set<String> tipsSeen = {};
+  bool tipsKnown = true;
+  void setTutorial(int step) {
+    tutorial = step;
+    notifyListeners();
+  }
+
   // ---- 정원 재단장 (D-031)
   /// 몇 번째 회차인가 (1부터).
   int renewCount = 1;
@@ -1345,7 +1354,9 @@ class GameState extends ChangeNotifier {
         (o) => !canDeliverOrder(o) && starOrdersLeft(o.friendId) <= 0,
       );
     }
-    while (orders.length < GameConfig.orderSlots && _askers.isNotEmpty) {
+    // 친구 한 명당 부탁 하나 (정원에서 친구 머리 위 말풍선 하나)
+    final slots = min(GameConfig.orderSlots, friends.length);
+    while (orders.length < slots && _askers.isNotEmpty) {
       orders.add(_newOrder());
     }
   }
@@ -1462,10 +1473,11 @@ class GameState extends ChangeNotifier {
     if (withStars && renewCount > 1) {
       gained = (gained * (1 + GameConfig.roundStarBonus(renewCount))).round();
     }
-    // 하루 부탁 단계 보상
+    // 하루 부탁 단계 보상: 하루 한도가 걸리는 별 부탁만 센다 (첫 구역의 한도 없는 부탁으로 쉽게 채우지 않게)
     _rollOrdersDay();
-    _ordersToday += 1;
-    final mi = GameConfig.orderMilestones.indexOf(_ordersToday);
+    final counts = withStars && quotaActive;
+    if (counts) _ordersToday += 1;
+    final mi = counts ? GameConfig.orderMilestones.indexOf(_ordersToday) : -1;
     if (mi >= 0) {
       final g = GameConfig.orderMilestoneGems[mi];
       gems += g;
@@ -2203,6 +2215,8 @@ class GameState extends ChangeNotifier {
       'econ': econVersion,
       'life': lifetimeCoins,
       'renew': renewCount,
+      'tut': tutorial,
+      'tips': tipsSeen.toList(),
       'ordDay': _ordersDay,
       'ordToday': _ordersToday,
       'seedsT': seedsTotal,
@@ -2311,6 +2325,11 @@ class GameState extends ChangeNotifier {
     _gemRefillsToday = (j['gemRefills'] as num?)?.toInt() ?? 0;
     lifetimeCoins = (j['life'] as num?)?.toDouble() ?? coins;
     renewCount = (j['renew'] as num?)?.toInt() ?? 1;
+    tutorial = (j['tut'] as num?)?.toInt() ?? -1;
+    tipsSeen
+      ..clear()
+      ..addAll([for (final t in (j['tips'] as List?) ?? const []) '$t']);
+    tipsKnown = j['tips'] != null;
     _ordersDay = j['ordDay'] as String? ?? '';
     _ordersToday = (j['ordToday'] as num?)?.toInt() ?? 0;
     seedsTotal = (j['seedsT'] as num?)?.toInt() ?? 0;

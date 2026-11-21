@@ -146,7 +146,7 @@ void main() {
 
   test('부탁: 아이템을 전달하면 별·코인·호감도·경험치', () {
     final g = make();
-    expect(g.orders.length, GameConfig.orderSlots);
+    expect(g.orders.length, min(GameConfig.orderSlots, g.friends.length));
     final o = g.orders[0];
     expect(g.canDeliver(0), isFalse);
     g.board[open[4]] = Item(99, o.chain, o.level);
@@ -302,7 +302,10 @@ void main() {
     expect(g2.placed, {2, 5});
     expect(g2.friends, containsAll(['bori', 'kwak']));
     expect(g2.savedAt, isNotNull);
-    expect([for (final o in g2.orders) o.id], [for (final o in g.orders) o.id]);
+    // 불러온 뒤 친구가 늘었으면 부탁이 더 채워질 수 있다 (친구당 하나)
+    expect([for (final o in g2.orders) o.id].take(g.orders.length), [
+      for (final o in g.orders) o.id,
+    ]);
   });
 
   test('예전 버전 저장은 무시한다', () {

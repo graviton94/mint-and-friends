@@ -27,6 +27,7 @@ import '../services/analytics_service.dart';
 import 'widgets/icon_text.dart';
 import 'widgets/frame_box.dart';
 import 'widgets/top_toast.dart';
+import 'widgets/reward_popup.dart';
 
 /// 메인 화면. 배치(위→아래): HUD / 정원 창(남는 높이 전부) / 정원 도구줄 / 부탁 / 머지 보드 / 정보 줄 / 광고·바구니.
 /// 배너 광고는 두지 않는다 (보상형 · 전면만).
@@ -124,11 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final quota = done && stars > 0
             ? tr('toast.quotaDone', {'name': friendName(friendId)})
             : '';
-        final ms = game.nextOrderMilestone;
-        final prog = ms == null
-            ? ''
-            : '  ·  ${game.ordersToday}/${ms.$1}[[diamond]]';
-        _toast('$thanks  [[xp]]+$xp$heart$quota$prog');
+        _toast('$thanks  [[xp]]+$xp$heart$quota');
         // 오늘 부탁이 모두 끝나면 한 번만 알려 준다 (이후엔 정원의 작은 아이콘)
         if (!game.ordersDoneToday) _allDoneShown = false;
         if (game.ordersDoneToday && !_allDoneShown) {
@@ -316,14 +313,17 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () {},
         ),
       ),
-      Feature.coinBag => SizedBox(
-        width: 84,
-        child: _BarTile(
-          icon: 'coinbag',
-          label: '[[coin]]${fmt(game.coinBagAmount)}',
-          ad: true,
-          onTap: () {},
-        ),
+      // 실제 정원 오른쪽 위의 코인 주머니 버튼 그대로 + 받는 양
+      Feature.coinBag => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _GardenTool(icon: 'coinbag', ad: true, onTap: () {}),
+          const SizedBox(width: 8),
+          IconText(
+            '[[coin]]${fmt(game.coinBagAmount)}',
+            style: const TextStyle(fontSize: 20),
+          ),
+        ],
       ),
       Feature.energyAd => _Pill(
         icon: Art.icon('energy'),
@@ -397,9 +397,18 @@ class _HomeScreenState extends State<HomeScreen> {
     'wardrobe',
   ];
 
-  Future<Set<String>> _seenTips() async => _tipsSeen ??= {
-    ...?(await SharedPreferences.getInstance()).getStringList(_tipsPref),
-  };
+  /// 본 안내는 계정 저장(game.tipsSeen)에 둔다. 예전 저장이면 기기 값을 옮겨 온다.
+  Future<Set<String>> _seenTips() async {
+    if (_tipsSeen != null) return _tipsSeen!;
+    if (!game.tipsKnown) {
+      game.tipsSeen.addAll(
+        (await SharedPreferences.getInstance()).getStringList(_tipsPref) ??
+            const [],
+      );
+      game.tipsKnown = true;
+    }
+    return _tipsSeen = game.tipsSeen;
+  }
 
   Future<void> _queueTips(List<String> ids) async {
     final seen = await _seenTips();
@@ -488,7 +497,7 @@ class _HomeScreenState extends State<HomeScreen> {
     });
     setState(() {});
     final p = await SharedPreferences.getInstance();
-    (_tipsSeen ??= {...?p.getStringList(_tipsPref)}).add(id);
+    (await _seenTips()).add(id);
     p.setStringList(_tipsPref, _tipsSeen!.toList());
   }
 
@@ -1136,10 +1145,11 @@ class _HomeScreenState extends State<HomeScreen> {
     if (withAd == null) return;
     final ok = withAd ? await widget.ads.showRewarded() : false;
     final r = game.claimVisitor(withAd: ok);
-    if (r != null) {
-      _toast(
-        tr('toast.gift', {'coins': fmt(r.coins)}) +
-            (r.stars > 0 ? tr('toast.giftStars', {'stars': r.stars}) : ''),
+    if (r != null && mounted) {
+      RewardPopup.show(
+        context,
+        Reward(coins: r.coins.round(), stars: r.stars),
+        title: tr('reward.visitor'),
       );
     }
   }
@@ -1167,7 +1177,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadTutorial() async {
     final p = await SharedPreferences.getInstance();
-    var step = p.getInt(_tutPref) ?? 0;
+    // 진행은 계정 저장에 둔다 (새 계정은 같은 기기에서도 처음부터). 예전 저장만 기기 값
+    var step = game.tutorial >= 0 ? game.tutorial : (p.getInt(_tutPref) ?? 0);
     // 이미 한참 진행한 플레이어에게는 다시 보여 주지 않는다
     if (step == 0 && (game.level >= 3 || game.totalMerges > 20))
       step = _tutDone;
@@ -1194,6 +1205,7 @@ class _HomeScreenState extends State<HomeScreen> {
       Analytics.instance.tutorialComplete();
     }
     setState(() => _tut = step);
+    game.setTutorial(step);
     (await SharedPreferences.getInstance()).setInt(_tutPref, step);
   }
 
@@ -2730,21 +2742,32 @@ class _ToastView extends StatelessWidget {
           child: child,
         ),
       ),
+      // 크림색 말풍선 카드 (게임 창과 같은 갈색 테두리), 한 줄로 줄여 맞춤
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-        decoration: FrameBox.decorationFor(
-          'toast',
-          BoxDecoration(
-            color: const Color(0xEE2F3B2F),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          corner: 16,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        constraints: const BoxConstraints(maxWidth: 340),
+        decoration: BoxDecoration(
+          color: const Color(0xF7FFF8EA),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF7A5230), width: 2.5),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x33000000),
+              blurRadius: 8,
+              offset: Offset(0, 3),
+            ),
+          ],
         ),
-        child: IconText(
-          text,
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.white, fontSize: 15),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: IconText(
+            text,
+            maxLines: 1,
+            textAlign: TextAlign.center,
+            iconScale: 1.15,
+            style: const TextStyle(color: Color(0xFF3A2E22), fontSize: 16),
+          ),
         ),
       ),
     );

@@ -836,5 +836,11 @@
   "shop.adGems": "광고 보고 다이아 {n}개",
   "shop.adGemsDone": "내일 또",
   "renew.multChangeShort": "수입 ×{a} → ×{b}",
-  "renew.recommend": "추천"
+  "renew.recommend": "추천",
+  "reward.got": "선물 받았어요!",
+  "reward.tap": "눌러서 닫기",
+  "reward.achievement": "업적 달성!",
+  "reward.mail": "선물 도착!",
+  "reward.checkIn": "출석 선물!",
+  "reward.visitor": "손님 선물!"
 }

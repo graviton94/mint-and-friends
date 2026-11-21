@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
-import 'widgets/top_toast.dart';
+import 'widgets/reward_popup.dart';
 
 import '../art/art.dart';
 import '../game/config.dart';
@@ -49,7 +49,11 @@ Future<void> showAchievementsSheet(BuildContext context, GameState game) =>
                   onPressed: () {
                     sfx(Sfx.coin);
                     final r = game.claimAllAchievements();
-                    TopToast.show(context, rewardText(r));
+                    RewardPopup.show(
+                      context,
+                      r,
+                      title: tr('reward.achievement'),
+                    );
                   },
                   child: Text(
                     tr('ach.claimAll', {'n': game.claimableAchievements}),
@@ -157,7 +161,11 @@ class _AchRow extends StatelessWidget {
                       {
                         final r = game.claimAchievement(def);
                         if (r != null && rewardText(r).isNotEmpty) {
-                          TopToast.show(context, rewardText(r));
+                          RewardPopup.show(
+                            context,
+                            r,
+                            title: tr('reward.achievement'),
+                          );
                         }
                       }
                     }
@@ -194,7 +202,7 @@ Future<void> showMailSheet(BuildContext context, GameState game) =>
                     {
                       final r = game.claimAllMail();
                       if (rewardText(r).isNotEmpty) {
-                        TopToast.show(context, rewardText(r));
+                        RewardPopup.show(context, r, title: tr('reward.mail'));
                       }
                     }
                   },
@@ -294,7 +302,11 @@ class _MailRow extends StatelessWidget {
                       {
                         final r = game.claimMail(mail.id);
                         if (r != null && rewardText(r).isNotEmpty) {
-                          TopToast.show(context, rewardText(r));
+                          RewardPopup.show(
+                            context,
+                            r,
+                            title: tr('reward.mail'),
+                          );
                         }
                       }
                     },
@@ -444,7 +456,11 @@ Future<void> showCheckInSheet(BuildContext context, GameState game) =>
                       {
                         final r = game.claimCheckIn();
                         if (r != null && rewardText(r).isNotEmpty) {
-                          TopToast.show(context, rewardText(r));
+                          RewardPopup.show(
+                            context,
+                            r,
+                            title: tr('reward.checkIn'),
+                          );
                         }
                       }
                     }

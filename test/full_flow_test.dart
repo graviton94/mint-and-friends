@@ -282,7 +282,7 @@ void main() {
     now = now.add(const Duration(minutes: 10));
     g.tick(600);
     expect(g.energy, greaterThan(0)); // 시간이 지나면 다시 찬다
-    expect(g.orders.length, GameConfig.orderSlots);
+    expect(g.orders.length, min(GameConfig.orderSlots, g.friends.length));
     // 부탁 교체도 늘 된다
     final before = g.orders.first.id;
     g.refreshOrder(0);
@@ -321,6 +321,6 @@ void main() {
     expect(g.load('{"v":3,"coins":"x"}'), isFalse);
     expect(g.load('not json'), isFalse);
     expect(g.coins, 77); // 반쯤 덮어쓰지 않고 원래대로
-    expect(g.orders.length, GameConfig.orderSlots);
+    expect(g.orders.length, min(GameConfig.orderSlots, g.friends.length));
   });
 }
