@@ -705,5 +705,8 @@
   "upgrade.spawnLevel.short": "2단계 확률",
   "upgrade.offlineCap.short": "최대",
   "upgrade.flowerPower.short": "[[coin]]/시간",
-  "upgrade.snackPower.short": "[[coin]]/시간"
+  "upgrade.snackPower.short": "[[coin]]/시간",
+  "upgrade.milestone5": "Lv{n}: 별 부탁 +1",
+  "upgrade.milestone10": "Lv{n}: 효과 ×1.5",
+  "upgrade.milestoneDone": "별 부탁 +1 · 효과 ×1.5"
 }

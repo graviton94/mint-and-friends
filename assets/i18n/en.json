@@ -704,5 +704,8 @@
   "upgrade.spawnLevel.short": "Lv.2 chance",
   "upgrade.offlineCap.short": "Up to",
   "upgrade.flowerPower.short": "[[coin]]/h",
-  "upgrade.snackPower.short": "[[coin]]/h"
+  "upgrade.snackPower.short": "[[coin]]/h",
+  "upgrade.milestone5": "Lv{n}: +1 star request",
+  "upgrade.milestone10": "Lv{n}: effect ×1.5",
+  "upgrade.milestoneDone": "+1 star request · ×1.5"
 }

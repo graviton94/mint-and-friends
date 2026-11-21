@@ -704,5 +704,8 @@
   "upgrade.spawnLevel.short": "Lv.2確率",
   "upgrade.offlineCap.short": "最大",
   "upgrade.flowerPower.short": "[[coin]]/時",
-  "upgrade.snackPower.short": "[[coin]]/時"
+  "upgrade.snackPower.short": "[[coin]]/時",
+  "upgrade.milestone5": "Lv{n}: 星お願い +1",
+  "upgrade.milestone10": "Lv{n}: 効果 ×1.5",
+  "upgrade.milestoneDone": "星お願い +1 · 効果 ×1.5"
 }

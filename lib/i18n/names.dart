@@ -50,7 +50,7 @@ String upgradeLine(UpgradeType t, int lv, {bool maxed = false}) {
 }
 
 String buffText(FriendDef f, int level) {
-  final v = f.perLevel * level * 100;
+  final v = f.perLevel * Friends.effectiveLevel(level) * 100;
   final s = v.toStringAsFixed(v == v.roundToDouble() ? 0 : 1);
   return tr('buff.${f.buff.name}', {'v': s});
 }

@@ -472,7 +472,7 @@ class Upgrades {
       gateStart: 10,
       gateStep: 5,
     ),
-    // 오프라인 한도: 2시간 + 2시간 × 5 = 12시간
+    // 오프라인 한도: 2 → 3 → 4 → 6 → 8 → 10시간
     UpgradeDef(
       UpgradeType.offlineCap,
       'moon',
@@ -483,13 +483,13 @@ class Upgrades {
       gateStart: 8,
       gateStep: 4,
     ),
-    // 생산력 (꽃 · 간식): 끝이 없지만 단계마다 ×1.35, 레벨 2마다 1단계
+    // 생산력 (꽃 · 간식): 끝이 없고 단계마다 ×1.2, 10단계마다 효과 ×1.5 (소모처 리포트), 레벨 2마다 1단계
     UpgradeDef(
       UpgradeType.flowerPower,
       'item:flower:6',
       Upgrades.endless,
       300,
-      1.35,
+      1.2,
       gateStart: 2,
       gateStep: 2,
     ),
@@ -498,7 +498,7 @@ class Upgrades {
       'item:snack:6',
       Upgrades.endless,
       300,
-      1.35,
+      1.2,
       feature: Feature.snack,
       gateStart: 3,
       gateStep: 2,
@@ -510,7 +510,8 @@ class Upgrades {
   static UpgradeDef of(UpgradeType t) => all.firstWhere((u) => u.type == t);
 
   /// 종류별 생산력 강화 (꽃 · 간식): 그 종류 아이템의 방치 수익 +20% / 단계.
-  static double chainPower(int lv) => 1 + 0.1 * lv;
+  static double chainPower(int lv) =>
+      (1 + 0.1 * lv) * pow(1.5, lv ~/ 10).toDouble();
 
   /// 찻잎은 꽃 생산력, 별가루는 간식 생산력을 따른다.
   static UpgradeType powerOf(Chain c) => c == Chain.flower || c == Chain.tea
@@ -535,7 +536,10 @@ class Upgrades {
   static double qualityChance(int lv) => 0.02 * lv;
 
   /// 오프라인 수익 최대 시간: 2시간 + 30분씩, 최대 6시간.
-  static Duration offlineCap(int lv) => Duration(hours: 2 + 2 * lv);
+  /// 앞 단계일수록 크게 (8시간 넘으면 체감이 거의 없다).
+  static const List<int> _offlineHours = [2, 3, 4, 6, 8, 10];
+  static Duration offlineCap(int lv) =>
+      Duration(hours: _offlineHours[lv.clamp(0, _offlineHours.length - 1)]);
 }
 
 // ------------------------------------------------------------------ 친구
@@ -563,6 +567,12 @@ class FriendDef {
 
 class Friends {
   /// 친구 레벨 올리기 비용 (다음 레벨 L+1): 코인 600 × 1.8^L. 하트(호감도)가 그 레벨 이상이어야 한다.
+  /// 레벨 5: 그 친구 별 부탁 하루 +1. 레벨 10: 효과 ×1.5.
+  static const int starMilestone = 5;
+  static const int boostMilestone = 10;
+  static double effectiveLevel(int lv) =>
+      lv >= boostMilestone ? lv * 1.5 : lv.toDouble();
+
   static double levelCost(int current) => 600 * pow(1.8, current).toDouble();
 
   static const List<FriendDef> all = [

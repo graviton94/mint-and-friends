@@ -397,7 +397,7 @@ class GameState extends ChangeNotifier {
     double sum = 0;
     for (final f in Friends.all) {
       if (f.buff == b && friends.contains(f.id))
-        sum += f.perLevel * friendLevel(f.id);
+        sum += f.perLevel * Friends.effectiveLevel(friendLevel(f.id));
     }
     return sum;
   }
@@ -668,6 +668,7 @@ class GameState extends ChangeNotifier {
   int starOrderLimit(String friendId) {
     _rollQuotaDay();
     return OrderQuota.perFriend +
+        (friendLevel(friendId) >= Friends.starMilestone ? 1 : 0) +
         (starOrdersBonus[friendId] ?? 0) +
         (passActive ? OrderQuota.pass : 0);
   }

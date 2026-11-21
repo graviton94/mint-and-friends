@@ -117,10 +117,11 @@ class _FriendLevelRow extends StatelessWidget {
                     ),
                   ),
                   IconText(
-                    tr('upgrade.hearts', {
-                      'n': hearts,
-                      'max': Friends.maxAffection,
-                    }),
+                    '${tr('upgrade.hearts', {'n': hearts, 'max': Friends.maxAffection})}  ·  ${lv < Friends.starMilestone
+                        ? tr('upgrade.milestone5', {'n': Friends.starMilestone})
+                        : lv < Friends.boostMilestone
+                        ? tr('upgrade.milestone10', {'n': Friends.boostMilestone})
+                        : tr('upgrade.milestoneDone')}',
                     style: const TextStyle(fontSize: 12, color: Colors.black45),
                   ),
                 ],
