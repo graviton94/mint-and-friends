@@ -223,6 +223,15 @@ class Art {
     'outfit': '',
     'area_seaside': '',
     'area_snow_village': '',
+    'coins_s': '🪙',
+    'coins_m': '💰',
+    'coins_l': '💰',
+    'boost_bundle': '',
+    'season_fx': '✨',
+    'garden_pass': '🎫',
+    'energy_crate': '⚡',
+    'free_gift': '🎁',
+    'alarm': '⏰',
   };
 
   /// 이미 받은 UI 그림(assets/art/ui)으로 그리는 아이콘.

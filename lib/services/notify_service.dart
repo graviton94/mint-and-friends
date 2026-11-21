@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
@@ -40,7 +41,7 @@ class NotifyService extends ChangeNotifier {
       _on = p.getBool(_key) ?? true;
       await _plugin.initialize(
         settings: const InitializationSettings(
-          android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+          android: AndroidInitializationSettings('ic_stat_notify'),
         ),
       );
       _ready = true;
@@ -184,6 +185,8 @@ class NotifyService extends ChangeNotifier {
         channelDescription: 'Energy, gifts and friends',
         importance: Importance.defaultImportance,
         priority: Priority.defaultPriority,
+        icon: 'ic_stat_notify',
+        color: Color(0xFF5FA05A),
       ),
     );
     for (var i = 0; i < kept.length; i++) {

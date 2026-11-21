@@ -844,7 +844,7 @@
   "reward.visitor": "Guest's gift!",
   "decorDone.title": "Decor placed!",
   "decorDone.sub": "{name}\nGarden charm +{n}%",
-  "starter.timerBig": "[[timer]] Gone in {t}!",
+  "starter.timerBig": "[[alarm]] Gone in {t}!",
   "starter.passShort": "Pass {d}d",
   "starter.boostShort": "Boosts {h}h",
   "starter.effectShort": "Seasonal FX",

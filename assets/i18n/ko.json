@@ -845,7 +845,7 @@
   "reward.visitor": "손님 선물!",
   "decorDone.title": "장식 완성!",
   "decorDone.sub": "{name}\n정원 매력 +{n}%",
-  "starter.timerBig": "[[timer]] {t} 뒤 사라져요!",
+  "starter.timerBig": "[[alarm]] {t} 뒤 사라져요!",
   "starter.passShort": "패스 {d}일",
   "starter.boostShort": "부스트 {h}시간",
   "starter.effectShort": "계절 효과",

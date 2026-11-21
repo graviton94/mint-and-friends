@@ -1096,7 +1096,7 @@ Future<void> showShopSheet(
         _CardGrid([
           if (watchAd != null)
             _ShopCard(
-              icon: Art.icon('diamond'),
+              icon: Art.icon('free_gift'),
               title: tr('shop.adGemsShort', {'n': GameConfig.adGems}),
               note: tr('energy.left', {'n': game.adsLeft(AdKind.gems)}),
               tag: tr('shop.freeTag'),
@@ -1113,7 +1113,12 @@ Future<void> showShopSheet(
               },
             ),
           for (var i = 0; i < Gems.packs.length; i++)
-            _gemPackCard(billing, Gems.packs[i], i),
+            _gemPackCard(
+              billing,
+              Gems.packs[i],
+              i,
+              best: i == Gems.packs.length - 1,
+            ),
         ]),
         if (!billing.available || billing.gemProducts.isEmpty)
           Padding(
@@ -1129,7 +1134,7 @@ Future<void> showShopSheet(
         _ShopHeader(tr('shop.withGems')),
         _CardGrid([
           _ShopCard(
-            icon: Art.icon('energy_jar'),
+            icon: Art.icon('energy_crate'),
             title: tr('shop.refillShort', {'n': Gems.refillEnergy}),
             button: '[[diamond]] ${game.refillCost}',
             enabled: game.gems >= game.refillCost,
@@ -1139,8 +1144,7 @@ Future<void> showShopSheet(
           ),
           for (var i = 0; i < Gems.coinPacks.length; i++)
             _ShopCard(
-              icon: Art.icon(const ['coinbag', 'coinbag', 'coinbag'][i]),
-              iconScale: 0.8 + 0.15 * i,
+              icon: Art.icon(const ['coins_s', 'coins_m', 'coins_l'][i]),
               title: '[[coin]] ${fmt(game.coinPackAmount(i))}',
               note: tr('shop.coinPack.$i'),
               button: '[[diamond]] ${Gems.coinPacks[i].$1}',
@@ -1162,7 +1166,7 @@ Future<void> showShopSheet(
             ),
           if (!game.effects.contains(Starter.effect))
             _ShopCard(
-              icon: Art.icon('sparkle'),
+              icon: Art.icon('season_fx'),
               title: tr('shop.effect'),
               note: tr('shop.effectNote'),
               button: '[[diamond]] ${Gems.effectGems}',
@@ -1182,7 +1186,7 @@ Future<void> showShopSheet(
           )
         else
           _ShopRow(
-            icon: Art.icon('no_ads'),
+            icon: Art.icon('garden_pass'),
             title: tr('shop.adFree'),
             tag: tr('shop.passTag'),
             note: tr('shop.body', {
@@ -1264,9 +1268,15 @@ Widget _offerCard(
 }
 
 /// 다이아 팩 카드.
-Widget _gemPackCard(BillingService billing, GemPack pack, int index) {
+Widget _gemPackCard(
+  BillingService billing,
+  GemPack pack,
+  int index, {
+  bool best = false,
+}) {
   final d = billing.gemProducts[pack.id];
   return _ShopCard(
+    best: best,
     icon: Art.icon('dia_${index + 1}'),
     title: '[[diamond]] ${fmtInt(pack.gems)}',
     tag: pack.valueX >= 1.95
@@ -1313,16 +1323,16 @@ class _ShopCard extends StatelessWidget {
     this.note,
     this.tag,
     this.ad = false,
-    this.iconScale = 1,
+    this.best = false,
   });
   final ArtRef icon;
+  final bool best;
   final String title;
   final String? note;
   final String? tag;
   final String button;
   final bool enabled;
   final bool ad;
-  final double iconScale;
   final VoidCallback onTap;
 
   @override
@@ -1342,7 +1352,7 @@ class _ShopCard extends StatelessWidget {
             children: [
               SizedBox(
                 height: 62,
-                child: Center(child: ArtImage(icon, size: 58 * iconScale)),
+                child: Center(child: ArtImage(icon, size: 58)),
               ),
               const SizedBox(height: 2),
               FittedBox(
@@ -1394,6 +1404,13 @@ class _ShopCard extends StatelessWidget {
               ),
             ],
           ),
+          // 가장 이득인 상품: 왼쪽 위 모서리에 금색 리본
+          if (best && Art.frame('corner_best').available)
+            Positioned(
+              top: -14,
+              left: -12,
+              child: Image.asset(Art.frame('corner_best').path, width: 50),
+            ),
           if (tag != null)
             Positioned(
               top: -12,
@@ -1432,11 +1449,11 @@ class StarterCard extends StatelessWidget {
     final pct = (100 - 100 * Starter.krw / Starter.worthKrw).round();
     // 무엇이 들었는지 한눈에: 큰 아이콘 + 큰 숫자
     final items = [
-      ('no_ads', tr('starter.passShort', {'d': Starter.pass.inDays})),
+      ('garden_pass', tr('starter.passShort', {'d': Starter.pass.inDays})),
       ('diamond', '×${Starter.gems}'),
-      ('energy_jar', '×${Starter.energy}'),
-      ('boost', tr('starter.boostShort', {'h': hours})),
-      ('sparkle', tr('starter.effectShort')),
+      ('energy_crate', '×${Starter.energy}'),
+      ('boost_bundle', tr('starter.boostShort', {'h': hours})),
+      ('season_fx', tr('starter.effectShort')),
       ('outfit', tr('starter.outfitShort')),
     ];
     return Padding(
@@ -1468,21 +1485,31 @@ class StarterCard extends StatelessWidget {
                 // 제목 + 한 줄 미끼 (배지 자리만큼 오른쪽을 비운다)
                 Padding(
                   padding: const EdgeInsets.only(right: 70),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      IconText(
-                        tr('starter.title'),
-                        style: const TextStyle(
-                          fontSize: 22,
-                          color: Color(0xFF6B3A10),
-                        ),
-                      ),
-                      IconText(
-                        tr('starter.hook'),
-                        style: const TextStyle(
-                          fontSize: 13.5,
-                          color: Color(0xFFB0472E),
+                      if (Art.frame('promo_hero').available) ...[
+                        Image.asset(Art.frame('promo_hero').path, width: 68),
+                        const SizedBox(width: 6),
+                      ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            IconText(
+                              tr('starter.title'),
+                              style: const TextStyle(
+                                fontSize: 22,
+                                color: Color(0xFF6B3A10),
+                              ),
+                            ),
+                            IconText(
+                              tr('starter.hook'),
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                color: Color(0xFFB0472E),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
@@ -1491,13 +1518,24 @@ class StarterCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 // 한정 기간: 빨간 띠 + 남은 시간
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 7),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFE0533D), Color(0xFFF0784F)],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  height: 46,
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.only(bottom: 4),
+                  decoration: Art.frame('ribbon_limited').available
+                      ? BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage(Art.frame('ribbon_limited').path),
+                            // 양 끝 꼬리는 그대로, 가운데만 늘린다
+                            centerSlice: const Rect.fromLTRB(110, 40, 274, 123),
+                            scale: 163 / 46,
+                          ),
+                        )
+                      : BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFE0533D), Color(0xFFF0784F)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                   child: IconText(
                     game.starterOfferActive
                         ? tr('starter.timerBig', {
@@ -1595,23 +1633,30 @@ class StarterCard extends StatelessWidget {
             child: Transform.rotate(
               angle: 0.18,
               child: Container(
-                width: 82,
-                height: 82,
+                width: 88,
+                height: 88,
                 alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const RadialGradient(
-                    colors: [Color(0xFFFF6A4D), Color(0xFFD8392A)],
-                  ),
-                  border: Border.all(color: Colors.white, width: 3.5),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x55000000),
-                      blurRadius: 8,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
+                decoration: Art.frame('sale_badge').available
+                    ? BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage(Art.frame('sale_badge').path),
+                          fit: BoxFit.contain,
+                        ),
+                      )
+                    : BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const RadialGradient(
+                          colors: [Color(0xFFFF6A4D), Color(0xFFD8392A)],
+                        ),
+                        border: Border.all(color: Colors.white, width: 3.5),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x55000000),
+                            blurRadius: 8,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
+                      ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [

@@ -844,7 +844,7 @@
   "reward.visitor": "お客さんの贈り物!",
   "decorDone.title": "飾り完成!",
   "decorDone.sub": "{name}\n庭の魅力 +{n}%",
-  "starter.timerBig": "[[timer]] あと{t}で終了!",
+  "starter.timerBig": "[[alarm]] あと{t}で終了!",
   "starter.passShort": "パス{d}日",
   "starter.boostShort": "ブースト{h}時間",
   "starter.effectShort": "季節エフェクト",
