@@ -586,14 +586,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
             ),
             actionsAlignment: MainAxisAlignment.center,
+            onClose: () => Navigator.pop(ctx, false),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: IconText(
-                  tr('energy.wait'),
-                  style: const TextStyle(fontSize: 17),
-                ),
-              ),
               if (canAd)
                 _DialogAdButton(
                   label: tr('energy.watch', {'n': Tuning.energyAdAmount}),
@@ -683,14 +677,8 @@ class _HomeScreenState extends State<HomeScreen> {
               : tr('quota.note', {'n': OrderQuota.perAd}),
         ),
         actionsAlignment: MainAxisAlignment.center,
+        onClose: () => Navigator.pop(ctx, false),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: IconText(
-              tr('quota.later'),
-              style: const TextStyle(fontSize: 17),
-            ),
-          ),
           _DialogAdButton(
             label: tr('quota.watch', {'n': OrderQuota.perAd}),
             sub: tr('energy.left', {'n': game.adsLeft(AdKind.quota)}),
@@ -721,14 +709,8 @@ class _HomeScreenState extends State<HomeScreen> {
           note: tr(passCell ? 'vault.notePass' : 'vault.note'),
         ),
         actionsAlignment: MainAxisAlignment.center,
+        onClose: () => Navigator.pop(ctx, false),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: IconText(
-              tr('common.cancel'),
-              style: const TextStyle(fontSize: 17),
-            ),
-          ),
           FilledButton(
             style: framedButton(
               FilledButton.styleFrom(minimumSize: const Size(120, 48)),
@@ -805,14 +787,8 @@ class _HomeScreenState extends State<HomeScreen> {
           note: tr('cell.note'),
         ),
         actionsAlignment: MainAxisAlignment.center,
+        onClose: () => Navigator.pop(ctx, false),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: IconText(
-              tr('common.cancel'),
-              style: const TextStyle(fontSize: 17),
-            ),
-          ),
           FilledButton(
             style: framedButton(
               FilledButton.styleFrom(minimumSize: const Size(120, 48)),
@@ -846,6 +822,7 @@ class _HomeScreenState extends State<HomeScreen> {
           note: tr('bubble.note'),
         ),
         actionsAlignment: MainAxisAlignment.center,
+        onClose: () => Navigator.pop(ctx),
         actions: [
           _DialogAdButton(
             label: tr('bubble.ad'),
@@ -1363,24 +1340,21 @@ class _HomeScreenState extends State<HomeScreen> {
           note: tr('order.wantsNote', {'stars': o.stars}),
         ),
         actionsAlignment: MainAxisAlignment.center,
+        onClose: () => Navigator.pop(ctx, false),
         actions: [
-          TextButton(
+          FilledButton(
+            style: framedButton(
+              FilledButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Palette.text,
+              ),
+              'button_white',
+            ),
             onPressed: () => Navigator.pop(ctx, true),
             child: IconText(
               game.freeRerollsLeft > 0
                   ? tr('order.changeFree', {'n': game.freeRerollsLeft})
                   : '${adFree ? '' : '[[ad]] '}${tr('order.change')}',
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
-          FilledButton(
-            style: framedButton(
-              FilledButton.styleFrom(minimumSize: const Size(110, 46)),
-              'button_green',
-            ),
-            onPressed: () => Navigator.pop(ctx, false),
-            child: IconText(
-              tr('common.ok'),
               style: const TextStyle(fontSize: 17),
             ),
           ),
@@ -2118,8 +2092,8 @@ class _DialogAdButton extends StatelessWidget {
       style: framedButton(
         FilledButton.styleFrom(
           backgroundColor: Palette.ad,
-          minimumSize: const Size(140, 52),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+          minimumSize: const Size(double.infinity, 56),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
         ),
         'button_purple',
       ),

@@ -71,7 +71,7 @@ class _UpgradeRow extends StatelessWidget {
     } else if (maxed) {
       button = tr('common.max');
     } else if (capped) {
-      button = tr('upgrade.needLevel', {'n': game.level + 1});
+      button = tr('upgrade.needLevel', {'n': game.upgradeLevelNeeded(t)});
     } else {
       button = '[[coin]] ${fmt(game.upgradeCost(t))}';
     }
@@ -1145,16 +1145,67 @@ class _BoostRow extends StatelessWidget {
     final on = game.boosted(kind);
     final room = game.canAddBoostOf(kind);
     final cost = Boosts.gemCost[kind]!;
-    final btn = FilledButton.styleFrom(
-      minimumSize: const Size(0, 40),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+    final tokens = game.boostTokenCount(kind);
+    final pack = game.boostTokenPack(kind);
+
+    // 두 줄 버튼: 위 아이콘 · 값, 아래 설명 (두 버튼 모두 같은 크기)
+    Widget btn({
+      required String frame,
+      required String top,
+      required String bottom,
+      required bool light,
+      required VoidCallback? onTap,
+    }) => Expanded(
+      child: SizedBox(
+        height: 60,
+        child: FilledButton(
+          style: framedButton(
+            FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+            ),
+            frame,
+          ),
+          onPressed: onTap,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: IconText(
+                  top,
+                  iconScale: 1.1,
+                  style: TextStyle(
+                    fontSize: 17,
+                    height: 1.1,
+                    color: light ? Colors.white : null,
+                  ),
+                ),
+              ),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  bottom,
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.2,
+                    color: light
+                        ? const Color(0xE6FFFFFF)
+                        : const Color(0xFF4A3A22),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       decoration: BoxDecoration(
         color: on ? const Color(0xFFFFF6D8) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: on ? Palette.accent : const Color(0xFFE2D3B5),
           width: 1.5,
@@ -1164,7 +1215,7 @@ class _BoostRow extends StatelessWidget {
         children: [
           Row(
             children: [
-              ArtImage(Art.icon(boostIcon(kind)), size: 44),
+              ArtImage(Art.icon(boostIcon(kind)), size: 40),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -1177,8 +1228,8 @@ class _BoostRow extends StatelessWidget {
                     IconText(
                       tr('boost.${kind.name}.note'),
                       style: const TextStyle(
-                        fontSize: 13.5,
-                        height: 1.35,
+                        fontSize: 13,
+                        height: 1.3,
                         color: Color(0xFF5E6B5E),
                       ),
                     ),
@@ -1186,71 +1237,69 @@ class _BoostRow extends StatelessWidget {
                 ),
               ),
               if (on)
-                IconText(
-                  '[[timer]]${fmtDuration(game.boostLeft(kind))}',
-                  style: const TextStyle(fontSize: 15),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Palette.accent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: IconText(
+                    '[[timer]]${fmtDuration(game.boostLeft(kind))}',
+                    iconScale: 1.0,
+                    style: const TextStyle(fontSize: 13, color: Colors.white),
+                  ),
                 ),
             ],
           ),
-          if ((game.boostTokens[kind] ?? 0) > 0) ...[
-            const SizedBox(height: 8),
-            FilledButton(
-              style: framedButton(btn, 'button_green'),
-              onPressed: room
-                  ? () {
-                      if (game.useBoostToken(kind)) sfx(Sfx.coin);
-                    }
-                  : null,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: IconText(
-                  tr('boost.useToken', {'n': game.boostTokens[kind]}),
-                  style: const TextStyle(fontSize: 15),
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(
-                child: FilledButton(
-                  style: framedButton(btn, 'button_purple'),
-                  onPressed: room && game.canWatchAd(AdKind.boost)
-                      ? () async {
-                          if (await watchAd(AdKind.boost)) {
-                            game.grantBoostAd(kind);
-                            sfx(Sfx.coin);
-                          }
+              btn(
+                frame: 'button_purple',
+                top: adFree ? tr('boost.free') : '[[ad]]',
+                bottom: tr('boost.minutes', {
+                  'n': Boosts.perAd[kind]!.inMinutes,
+                }),
+                light: true,
+                onTap: room && game.canWatchAd(AdKind.boost)
+                    ? () async {
+                        if (await watchAd(AdKind.boost)) {
+                          game.grantBoostAd(kind);
+                          sfx(Sfx.coin);
                         }
-                      : null,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: IconText(
-                      '${adFree ? '' : '[[ad]] '}${tr('boost.minutes', {'n': Boosts.perAd[kind]!.inMinutes})}',
-                      style: const TextStyle(fontSize: 15),
-                    ),
-                  ),
-                ),
+                      }
+                    : null,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton(
-                  style: framedButton(btn, 'button_green'),
-                  onPressed: room && game.gems >= cost
-                      ? () {
-                          if (game.buyBoost(kind)) sfx(Sfx.coin);
-                        }
-                      : null,
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: IconText(
-                      '[[diamond]]$cost · ${tr('boost.minutes', {'n': Boosts.perGems[kind]!.inMinutes})}',
-                      style: const TextStyle(fontSize: 15),
+              const SizedBox(width: 10),
+              tokens > 0
+                  ? btn(
+                      frame: 'button_green',
+                      top:
+                          '[[${boostIcon(kind)}]] ${tr('boost.count', {'n': tokens})}',
+                      bottom: tr('boost.use', {'n': pack}),
+                      light: false,
+                      onTap: room
+                          ? () {
+                              if (game.useBoostToken(kind)) sfx(Sfx.coin);
+                            }
+                          : null,
+                    )
+                  : btn(
+                      frame: 'button_green',
+                      top: '[[diamond]] $cost',
+                      bottom: tr('boost.minutes', {
+                        'n': Boosts.perGems[kind]!.inMinutes,
+                      }),
+                      light: false,
+                      onTap: room && game.gems >= cost
+                          ? () {
+                              if (game.buyBoost(kind)) sfx(Sfx.coin);
+                            }
+                          : null,
                     ),
-                  ),
-                ),
-              ),
             ],
           ),
         ],

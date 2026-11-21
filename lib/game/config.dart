@@ -406,6 +406,10 @@ class UpgradeDef {
   final double baseCost;
   final double costGrowth;
   final Feature? feature; // 이 기능이 해금돼야 살 수 있음
+
+  /// 단계마다 필요한 플레이어 레벨: 다음 단계 L(0부터) = gateStart + gateStep × L.
+  final int gateStart;
+  final int gateStep;
   const UpgradeDef(
     this.type,
     this.icon,
@@ -413,58 +417,91 @@ class UpgradeDef {
     this.baseCost,
     this.costGrowth, {
     this.feature,
+    this.gateStart = 2,
+    this.gateStep = 2,
   });
 
   double costAt(int level) => baseCost * pow(costGrowth, level);
+  int levelFor(int nextLevel) => gateStart + gateStep * nextLevel;
   String get key => 'upgrade.${type.name}';
 }
 
-/// 강화. 방치형 기준(AdVenture Capitalist 1.07, Cookie Clicker 1.15, 펭귄의 섬 1.2):
-/// 비용은 단계마다 x1.13~1.15, 수익 강화는 x1.08 + 10/25/50/100 단계 달성 시 x2.
+/// 강화 (D-024, 장르 조사 반영): 단계는 짧게(5~10), 비용은 단계마다 ×1.7~2.2로 가파르게,
+/// 단계마다 플레이어 레벨 조건. 자동 합치기는 느리고 낮은 단계만 (머지 장르는 자동화를 강하게 막는다).
 class Upgrades {
   static const List<UpgradeDef> all = [
-    UpgradeDef(UpgradeType.energyRegen, 'timer', 30, 100, 1.18),
-    UpgradeDef(UpgradeType.income, 'coinbag', 20, 80, 1.25),
+    // 에너지 회복: 150초 → 단계마다 -6초, 최대 5단계(120초 = 업계 표준). Lv 8 · 14 · 20 · 26 · 32
+    UpgradeDef(
+      UpgradeType.energyRegen,
+      'timer',
+      5,
+      2000,
+      2.2,
+      gateStart: 8,
+      gateStep: 6,
+    ),
+    // 방치 수익 +10% × 10단계
+    UpgradeDef(
+      UpgradeType.income,
+      'coinbag',
+      10,
+      800,
+      1.7,
+      gateStart: 3,
+      gateStep: 3,
+    ),
+    // 자동 합치기: 30초 → 12초, 합치는 단계 상한 Lv4 → Lv8. Lv 6 · 12 · 18 · 24 · 30
     UpgradeDef(
       UpgradeType.autoMerge,
       'auto',
-      20,
-      400,
-      1.3,
+      5,
+      3000,
+      2.2,
       feature: Feature.autoMerge,
+      gateStart: 6,
+      gateStep: 6,
     ),
+    // 바구니 품질: 2단계 확률 +2%p × 5
     UpgradeDef(
       UpgradeType.spawnLevel,
       'quality',
-      3,
-      500,
-      3,
+      5,
+      2500,
+      2.0,
       feature: Feature.spawnLevel,
+      gateStart: 10,
+      gateStep: 5,
     ),
+    // 오프라인 한도: 2시간 + 2시간 × 5 = 12시간
     UpgradeDef(
       UpgradeType.offlineCap,
       'moon',
-      8,
-      300,
-      1.6,
+      5,
+      1500,
+      1.9,
       feature: Feature.offlineCap,
+      gateStart: 8,
+      gateStep: 4,
     ),
-    // 생산력 강화는 끝이 없다 (머지 · 방치 장르의 후반 코인 소모처): 비용은 단계마다 ×1.28 로
-    // 지수 증가, 효과는 +20% 로 선형 증가라 저절로 느려진다. 레벨 상한(4 + 3·레벨)으로만 막힌다.
+    // 생산력 (꽃 · 간식): 끝이 없지만 단계마다 ×1.35, 레벨 2마다 1단계
     UpgradeDef(
       UpgradeType.flowerPower,
       'item:flower:6',
       Upgrades.endless,
-      60,
-      1.28,
+      300,
+      1.35,
+      gateStart: 2,
+      gateStep: 2,
     ),
     UpgradeDef(
       UpgradeType.snackPower,
       'item:snack:6',
       Upgrades.endless,
-      60,
-      1.28,
+      300,
+      1.35,
       feature: Feature.snack,
+      gateStart: 3,
+      gateStep: 2,
     ),
   ];
 
@@ -473,7 +510,7 @@ class Upgrades {
   static UpgradeDef of(UpgradeType t) => all.firstWhere((u) => u.type == t);
 
   /// 종류별 생산력 강화 (꽃 · 간식): 그 종류 아이템의 방치 수익 +20% / 단계.
-  static double chainPower(int lv) => 1 + 0.2 * lv;
+  static double chainPower(int lv) => 1 + 0.1 * lv;
 
   /// 찻잎은 꽃 생산력, 별가루는 간식 생산력을 따른다.
   static UpgradeType powerOf(Chain c) => c == Chain.flower || c == Chain.tea
@@ -483,19 +520,22 @@ class Upgrades {
   /// 에너지 1 회복 간격(초). 아이템은 바구니 탭(에너지 1)으로만 나온다 (머지 장르 표준:
   /// Merge Mansion · Travel Town 모두 생산은 에너지, 방치 요소는 수익·자동 합치기).
   static double energyRegenSeconds(int lv) =>
-      max(60.0, Tuning.energyRegenSeconds * pow(0.98, lv).toDouble());
+      max(100.0, Tuning.energyRegenSeconds - 6.0 * lv);
 
   /// 방치 수익 배율: 단계마다 +5% (최대 20단계 = ×2). 크게 키우면 방치 수익이 부탁 수입을 압도한다.
-  static double incomeMultiplier(int lv) => 1 + 0.05 * lv;
+  static double incomeMultiplier(int lv) => 1 + 0.1 * lv;
 
   static double? autoMergeInterval(int lv) =>
-      lv <= 0 ? null : max(1.0, 10.0 * pow(0.93, lv - 1));
+      lv <= 0 ? null : const [30.0, 25.0, 20.0, 16.0, 12.0][min(lv, 5) - 1];
+
+  /// 자동 합치기가 손대는 최고 단계 (그 위는 직접 합친다): Lv4 → Lv8.
+  static int autoMergeMaxLevel(int lv) => 3 + min(lv, 5);
 
   /// 바구니 품질: 2단계가 나올 확률 추가 (+4% / 단계).
-  static double qualityChance(int lv) => 0.04 * lv;
+  static double qualityChance(int lv) => 0.02 * lv;
 
   /// 오프라인 수익 최대 시간: 2시간 + 30분씩, 최대 6시간.
-  static Duration offlineCap(int lv) => Duration(minutes: 120 + 30 * lv);
+  static Duration offlineCap(int lv) => Duration(hours: 2 + 2 * lv);
 }
 
 // ------------------------------------------------------------------ 친구
@@ -522,18 +562,22 @@ class FriendDef {
 }
 
 class Friends {
+  /// 친구 레벨 올리기 비용 (다음 레벨 L+1): 코인 600 × 1.8^L. 하트(호감도)가 그 레벨 이상이어야 한다.
+  static double levelCost(int current) => 600 * pow(1.8, current).toDouble();
+
   static const List<FriendDef> all = [
-    FriendDef('bori', '🐰', FriendBuff.energyRegen, 0.03),
-    FriendDef('dubu', '🐻', FriendBuff.income, 0.05),
-    FriendDef('kwak', '🦆', FriendBuff.orderCoins, 0.10),
-    FriendDef('nabi', '🐱', FriendBuff.lucky, 0.01),
+    // 친구 레벨 1당 효과 (D-024: 친구 레벨은 강화로 올린다, 최대 10 · 하트만큼)
+    FriendDef('bori', '🐰', FriendBuff.energyRegen, 0.01),
+    FriendDef('dubu', '🐻', FriendBuff.income, 0.03),
+    FriendDef('kwak', '🦆', FriendBuff.orderCoins, 0.03),
+    FriendDef('nabi', '🐱', FriendBuff.lucky, 0.005),
     FriendDef('dotori', '🐿️', FriendBuff.offline, 0.03),
-    FriendDef('mochi', '🐼', FriendBuff.income, 0.05),
-    FriendDef('danpung', '🦊', FriendBuff.starBonus, 0.03),
-    FriendDef('kongtteok', '🐹', FriendBuff.autoMerge, 0.04),
+    FriendDef('mochi', '🐼', FriendBuff.income, 0.03),
+    FriendDef('danpung', '🦊', FriendBuff.starBonus, 0.02),
+    FriendDef('kongtteok', '🐹', FriendBuff.autoMerge, 0.03),
     // 5 · 6구역 친구 (그림이 들어오면 그 구역과 함께 열린다)
-    FriendDef('bogeul', '🦦', FriendBuff.orderCoins, 0.08),
-    FriendDef('pposong', '🐧', FriendBuff.energyRegen, 0.03),
+    FriendDef('bogeul', '🦦', FriendBuff.orderCoins, 0.03),
+    FriendDef('pposong', '🐧', FriendBuff.energyRegen, 0.01),
   ];
 
   /// 처음부터 있던 친구 (그림 걱정 없이 도감에 보인다).

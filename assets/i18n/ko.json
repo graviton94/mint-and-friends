@@ -618,7 +618,7 @@
   "boost.coins": "코인 2배",
   "boost.coins.note": "코인 수익 · 보상이 2배",
   "boost.energy": "무한 에너지",
-  "boost.energy.note": "바구니를 눌러도 [[energy]]가 줄지 않아요",
+  "boost.energy.note": "바구니를 눌러도 [[energy]]가 줄지 않아요 (그동안 회복은 멈춰요)",
   "boost.lucky": "행운 바구니",
   "boost.lucky.note": "한 단계 높은 아이템이 더 자주 나와요",
   "boost.minutes": "{n}분",
@@ -676,5 +676,8 @@
   "outfit.offSeason": "{from}~{to}월 판매",
   "toast.seasonSet": "{area} {season} 세트 완성! 계절 풍경이 켜지고 정원 매력 +{n}%",
   "book.seasons": "계절 컬렉션",
-  "book.seasonsNote": "한 구역의 계절 장식 8종을 모으면 그 계절 풍경이 켜지고 정원 매력 +{n}%"
+  "book.seasonsNote": "한 구역의 계절 장식 8종을 모으면 그 계절 풍경이 켜지고 정원 매력 +{n}%",
+  "boost.count": "{n}개",
+  "boost.use": "사용하기 ({n}분)",
+  "boost.free": "무료"
 }

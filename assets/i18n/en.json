@@ -617,7 +617,7 @@
   "boost.coins": "Coins x2",
   "boost.coins.note": "Double coin income and rewards",
   "boost.energy": "Free energy",
-  "boost.energy.note": "The basket costs no [[energy]]",
+  "boost.energy.note": "Basket taps cost no [[energy]] (regen pauses meanwhile)",
   "boost.lucky": "Lucky basket",
   "boost.lucky.note": "Higher-level items come out more often",
   "boost.minutes": "{n} min",
@@ -675,5 +675,8 @@
   "outfit.offSeason": "On sale {from}–{to}",
   "toast.seasonSet": "{area} {season} set complete! Seasonal scenery on, garden charm +{n}%",
   "book.seasons": "Seasonal collection",
-  "book.seasonsNote": "Collect all 8 seasonal pieces of an area for its seasonal scenery and +{n}% garden charm"
+  "book.seasonsNote": "Collect all 8 seasonal pieces of an area for its seasonal scenery and +{n}% garden charm",
+  "boost.count": "x{n}",
+  "boost.use": "Use ({n} min)",
+  "boost.free": "Free"
 }

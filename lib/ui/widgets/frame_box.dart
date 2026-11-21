@@ -61,7 +61,11 @@ class GameDialog extends StatelessWidget {
     this.banner = 'green',
     this.emblem,
     this.emblemText,
+    this.onClose,
   });
+
+  /// 오른쪽 위 X 버튼 (닫기 · 기다리기 · 괜찮아요 같은 선택지 대신).
+  final VoidCallback? onClose;
 
   /// 엠블럼 가운데 글자 (예: 레벨 숫자).
   final String? emblemText;
@@ -105,33 +109,73 @@ class GameDialog extends StatelessWidget {
             Flexible(child: SingleChildScrollView(child: content!)),
           ],
           if (actions != null && actions!.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Wrap(
-              alignment: switch (actionsAlignment) {
-                MainAxisAlignment.center => WrapAlignment.center,
-                MainAxisAlignment.start => WrapAlignment.start,
-                _ => WrapAlignment.end,
-              },
-              spacing: 8,
-              runSpacing: 8,
-              children: actions!,
-            ),
+            const SizedBox(height: 18),
+            // 버튼은 한 줄에 하나씩, 같은 폭 · 같은 높이 (글자 버튼은 맨 아래 작게)
+            for (final (i, a) in [
+              ...actions!.where((a) => a is! TextButton),
+              ...actions!.whereType<TextButton>(),
+            ].indexed) ...[
+              if (i > 0) const SizedBox(height: 10),
+              if (a is TextButton)
+                Center(child: a)
+              else
+                SizedBox(height: 56, child: a),
+            ],
           ],
         ],
       ),
     );
+    final closable = onClose == null
+        ? panel
+        : Stack(
+            clipBehavior: Clip.none,
+            children: [
+              panel,
+              Positioned(
+                right: -8,
+                top: hasRibbon ? 4 : -8,
+                child: GestureDetector(
+                  onTap: onClose,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFFBF0),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFF7A5230),
+                        width: 2.5,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x33000000),
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.close_rounded,
+                      size: 24,
+                      color: Color(0xFF7A5230),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
       insetPadding: EdgeInsets.fromLTRB(28, emblem != null ? 160 : 52, 28, 24),
       clipBehavior: Clip.none,
       child: !hasRibbon
-          ? panel
+          ? closable
           : Stack(
               clipBehavior: Clip.none,
               alignment: Alignment.topCenter,
               children: [
-                panel,
+                closable,
                 // 축하 꽃가루 + 레벨업 별: 팝업 위에만 (본문을 가리지 않게), 톡 튀어나온다
                 if (banner == 'gold' && Art.frame('confetti').available)
                   Positioned(

@@ -7,6 +7,29 @@ import 'package:mint_and_friends/game/game_state.dart';
 
 /// 비공개 테스트 전 전체 흐름 검증: 처음 실행 → 6구역까지, 모든 기능을 써 보며
 /// 매 세션 저장 · 다시 불러오기를 하고, 값이 망가지거나 막히는 곳이 없는지 확인한다.
+/// 시뮬레이션 플레이어의 손 합치기: 가장 낮은 단계의 같은 아이템 한 쌍을 합친다.
+bool manualMerge(GameState g) {
+  final groups = <String, List<int>>{};
+  for (var i = 0; i < g.board.length; i++) {
+    final it = g.board[i];
+    if (it == null || it.isBubble || it.level >= Chains.maxLevel(it.chain))
+      continue;
+    if (g.orders.any((o) => o.chain == it.chain && o.level == it.level))
+      continue;
+    groups
+        .putIfAbsent(
+          '${it.level.toString().padLeft(2, '0')}-${it.chain.index}',
+          () => [],
+        )
+        .add(i);
+  }
+  for (final k in groups.keys.toList()..sort()) {
+    final c = groups[k]!;
+    if (c.length >= 2) return g.move(c[1], c[0]) != MoveResult.none;
+  }
+  return false;
+}
+
 void main() {
   test('처음부터 6구역까지: 모든 기능 · 저장/불러오기 · 불변 조건', () {
     final keepChains = Chains.ready;
@@ -122,7 +145,8 @@ void main() {
               rng.nextDouble() < 0.02) {
             if (g.buyEnergyRefill()) used.add('refill');
           }
-          g.autoMergeOnce();
+          // 플레이어가 직접 합친다 (같은 아이템 한 쌍, 부탁에 걸린 것은 남긴다)
+          manualMerge(g);
           for (var i = 0; i < g.orders.length; i++) {
             if (g.deliver(i)) used.add('deliver');
           }

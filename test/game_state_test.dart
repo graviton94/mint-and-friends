@@ -196,11 +196,13 @@ void main() {
     g.coins = 1e12;
     expect(g.canBuyUpgrade(UpgradeType.energyRegen), isFalse); // 강화 메뉴 잠김
     g.level = 2;
-    expect(g.canBuyUpgrade(UpgradeType.energyRegen), isTrue);
-    expect(g.canBuyUpgrade(UpgradeType.autoMerge), isFalse);
+    expect(g.canBuyUpgrade(UpgradeType.energyRegen), isFalse); // Lv8 부터
+    g.level = 8;
+    expect(g.canBuyUpgrade(UpgradeType.spawnLevel), isFalse); // Lv10 기능
     while (g.buyUpgrade(UpgradeType.energyRegen)) {}
-    expect(g.lv(UpgradeType.energyRegen), Leveling.upgradeCap(2));
+    expect(g.lv(UpgradeType.energyRegen), 1); // 다음 단계는 Lv14
     expect(g.upgradeCapped(UpgradeType.energyRegen), isTrue);
+    expect(g.upgradeLevelNeeded(UpgradeType.energyRegen), 14);
   });
 
   test('친구 호감도는 버프가 된다', () {
@@ -208,6 +210,12 @@ void main() {
     final base = g.energyRegenSeconds;
     g.deliveries['bori'] = Friends.deliveriesPerAffection * 5;
     expect(g.affection('bori'), 5);
+    expect(g.energyRegenSeconds, base); // 하트만으로는 효과 없음, 레벨을 올려야
+    g.coins = 1e9;
+    for (var k = 0; k < 7; k++) {
+      g.levelFriend('bori');
+    }
+    expect(g.friendLevel('bori'), 5); // 하트 5개까지
     expect(g.energyRegenSeconds, lessThan(base));
   });
 
@@ -346,10 +354,10 @@ void main() {
     expect(g.energy, 3 + Leveling.levelUpEnergy(2, 3));
   });
 
-  test('수익 강화: 단계마다 +5%, 최대 ×2', () {
+  test('수익 강화: 단계마다 +10%, 최대 10단계 ×2', () {
     expect(Upgrades.incomeMultiplier(0), 1);
-    expect(Upgrades.incomeMultiplier(10), closeTo(1.5, 1e-9));
-    expect(Upgrades.incomeMultiplier(20), closeTo(2.0, 1e-9));
+    expect(Upgrades.incomeMultiplier(10), closeTo(2.0, 1e-9));
+    expect(Upgrades.of(UpgradeType.income).maxLevel, 10);
   });
 
   test(

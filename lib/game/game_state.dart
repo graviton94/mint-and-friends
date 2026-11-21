@@ -369,11 +369,28 @@ class GameState extends ChangeNotifier {
     (deliveries[friendId] ?? 0) ~/ Friends.deliveriesPerAffection,
   );
 
+  /// 친구 레벨 (강화로 올림). 하트(호감도)보다 높을 수 없다.
+  final Map<String, int> friendLevels = {};
+  int friendLevel(String id) => friendLevels[id] ?? 0;
+  bool canLevelFriend(String id) =>
+      friends.contains(id) &&
+      friendLevel(id) < Friends.maxAffection &&
+      friendLevel(id) < affection(id) &&
+      coins >= Friends.levelCost(friendLevel(id));
+  bool levelFriend(String id) {
+    if (!canLevelFriend(id)) return false;
+    coins -= Friends.levelCost(friendLevel(id));
+    friendLevels[id] = friendLevel(id) + 1;
+    _bump(Stat.upgradesBought);
+    notifyListeners();
+    return true;
+  }
+
   double buff(FriendBuff b) {
     double sum = 0;
     for (final f in Friends.all) {
       if (f.buff == b && friends.contains(f.id))
-        sum += f.perLevel * affection(f.id);
+        sum += f.perLevel * friendLevel(f.id);
     }
     return sum;
   }
@@ -738,6 +755,8 @@ class GameState extends ChangeNotifier {
   // ---------------------------------------------------------------- 에너지
 
   void _regenEnergy(double dt) {
+    // 무한 에너지 동안은 회복을 멈춘다 (부스트와 회복을 겹쳐 받지 않게)
+    if (boosted(BoostKind.energy)) return;
     if (energy >= GameConfig.energyCap) {
       energyProgress = 0;
       return;
@@ -936,6 +955,7 @@ class GameState extends ChangeNotifier {
       if (it == null ||
           it.isBubble ||
           it.level >= Chains.maxLevel(it.chain) ||
+          it.level >= Upgrades.autoMergeMaxLevel(lv(UpgradeType.autoMerge)) ||
           _isOrderTarget(it))
         continue;
       groups
@@ -1730,7 +1750,8 @@ class GameState extends ChangeNotifier {
   }
 
   /// 플레이어 레벨 상한에 걸렸는지.
-  bool upgradeCapped(UpgradeType t) => lv(t) >= Leveling.upgradeCap(level);
+  bool upgradeCapped(UpgradeType t) => level < upgradeLevelNeeded(t);
+  int upgradeLevelNeeded(UpgradeType t) => Upgrades.of(t).levelFor(lv(t));
 
   bool canBuyUpgrade(UpgradeType t) =>
       !upgradeFeatureLocked(t) &&
@@ -1775,12 +1796,17 @@ class GameState extends ChangeNotifier {
 
   void grantBoost() => grantBoostAd(BoostKind.coins);
 
-  /// 보관한 부스트 켜기 (분 단위 전부, 최대 60분까지만 쌓이고 남는 건 보관에 남긴다).
+  /// 보관 부스트 한 묶음 크기(분)와 개수.
+  int boostTokenPack(BoostKind k) => Starter.boosts[k]!.inMinutes;
+  int boostTokenCount(BoostKind k) =>
+      ((boostTokens[k] ?? 0) / boostTokenPack(k)).ceil();
+
+  /// 보관한 부스트 하나 켜기 (최대 60분까지만 쌓이고 남는 건 보관에 남긴다).
   bool useBoostToken(BoostKind k) {
     final have = boostTokens[k] ?? 0;
     if (have <= 0 || !canAddBoostOf(k)) return false;
     final room = (Boosts.max - boostLeft(k)).inMinutes;
-    final use = min(have, room);
+    final use = min(min(have, boostTokenPack(k)), room);
     _addBoost(k, Duration(minutes: use));
     if (have - use > 0) {
       boostTokens[k] = have - use;
@@ -1935,6 +1961,7 @@ class GameState extends ChangeNotifier {
       'rerolls': rerollsToday,
       'vault': vaultOwned.toList()..sort(),
       'passDay': _passDay,
+      'friendLv': friendLevels,
       'passUntil': passUntil?.millisecondsSinceEpoch,
       'starter': starterBought,
       'starterUntil': starterOfferUntil?.millisecondsSinceEpoch,
@@ -2105,6 +2132,18 @@ class GameState extends ChangeNotifier {
       for (final c in (j['vault'] as List? ?? [])) (c as num).toInt(),
     };
     _passDay = j['passDay'] as String? ?? '';
+    friendLevels.clear();
+    if (j['friendLv'] is Map) {
+      for (final e in (j['friendLv'] as Map).entries) {
+        friendLevels['${e.key}'] = (e.value as num).toInt();
+      }
+    } else {
+      // 예전 저장: 호감도가 곧 효과였다 → 친구 레벨 2까지는 그대로 이어 준다
+      for (final f in friends) {
+        final a = min(affection(f), 2);
+        if (a > 0) friendLevels[f] = a;
+      }
+    }
     if (econ < 3) coins = min(coins, coinCapFor(level));
     passUntil = ts('passUntil');
     starterBought = j['starter'] as bool? ?? false;

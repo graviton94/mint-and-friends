@@ -617,7 +617,7 @@
   "boost.coins": "コイン2倍",
   "boost.coins.note": "コイン収益・報酬が2倍",
   "boost.energy": "エネルギー無限",
-  "boost.energy.note": "かごを押しても[[energy]]が減らない",
+  "boost.energy.note": "かごを押しても[[energy]]が減らない (その間回復は止まる)",
   "boost.lucky": "ラッキーかご",
   "boost.lucky.note": "一段上のアイテムがよく出る",
   "boost.minutes": "{n}分",
@@ -675,5 +675,8 @@
   "outfit.offSeason": "{from}〜{to}月 販売",
   "toast.seasonSet": "{area}の{season}セット完成! 季節の風景がついて庭の魅力+{n}%",
   "book.seasons": "季節コレクション",
-  "book.seasonsNote": "エリアの季節飾り8種を集めると季節の風景がつき、庭の魅力+{n}%"
+  "book.seasonsNote": "エリアの季節飾り8種を集めると季節の風景がつき、庭の魅力+{n}%",
+  "boost.count": "{n}個",
+  "boost.use": "使う ({n}分)",
+  "boost.free": "無料"
 }
