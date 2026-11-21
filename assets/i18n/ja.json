@@ -716,7 +716,7 @@
   "toast.basketEmpty": "このかごはお休み中 · {time}後に1回",
   "spawner.charges": "あと{n}",
   "upgrade.basketTier": "かごランク",
-  "upgrade.basketTier.short": "出る段階",
+  "upgrade.basketTier.short": "アイテム・お願い",
   "upgrade.teaPower": "茶葉の生産力",
   "upgrade.stardustPower": "星くずの生産力",
   "upgrade.teaPower.short": "[[coin]]/時",
@@ -798,7 +798,7 @@
   "upgrade.stardustPower.desc": "1時間 [[coin]] ×{v}",
   "renew.title": "庭のリニューアル",
   "renew.round": "{n}周目",
-  "renew.runCoins": "今回かせいだコイン [[coin]]{v}",
+  "renew.runCoins": "これまでかせいだコイン [[coin]]{v}",
   "renew.preview": "今リニューアルすると黄金の種 +{n}",
   "renew.need": "かごランク Lv.{n}から (いま Lv.{now})",
   "renew.mult": "永久収入 ×{v}",
@@ -893,5 +893,5 @@
   "starter.once": "アカウントごとに1回だけ",
   "starter.off": "OFF",
   "starter.buy": "今すぐ {p}",
-  "renew.needCoins": "今回[[coin]]{n}以上かせぐと種がもらえます"
+  "renew.needCoins": "あと[[coin]]{n}かせぐと次の種がもらえます"
 }

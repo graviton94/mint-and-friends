@@ -83,7 +83,7 @@ class RenewCard extends StatelessWidget {
                         ],
                       ),
                       IconText(
-                        tr('renew.runCoins', {'v': fmt(game.runCoins)}),
+                        tr('renew.runCoins', {'v': fmt(game.lifetimeCoins)}),
                         style: const TextStyle(
                           fontSize: 13,
                           color: Color(0xFF7A5A22),
@@ -97,9 +97,9 @@ class RenewCard extends StatelessWidget {
                                 'n': Renewal.needBasketTier,
                                 'now': tier,
                               })
-                            // 등급은 됐지만 이번 회차 코인이 모자라 씨앗이 0개
+                            // 등급은 됐지만 다음 씨앗까지 코인이 모자라다
                             : tr('renew.needCoins', {
-                                'n': fmt(Renewal.coinsPerSeedBase),
+                                'n': fmt(game.coinsToNextSeed),
                               }),
                         style: const TextStyle(fontSize: 15),
                       ),

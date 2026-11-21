@@ -250,6 +250,44 @@ void main() {
     );
   });
 
+  test('재단장 씨앗은 누적 코인 몫 − 이미 받은 몫 (같은 지점에서 다시 하면 0)', () {
+    final g = make();
+    g.upgrades[UpgradeType.basketTier] = Renewal.needBasketTier;
+    g.lifetimeCoins = Renewal.coinsForSeeds(8);
+    expect(g.renewSeedsPreview, 8);
+    expect(g.renew(), 8);
+    g.upgrades[UpgradeType.basketTier] = Renewal.needBasketTier;
+    expect(g.renewSeedsPreview, 0);
+    expect(g.canRenew, isFalse);
+    g.lifetimeCoins = Renewal.coinsForSeeds(10);
+    expect(g.renewSeedsPreview, 2);
+    // 광고 1.5배로 더 받은 씨앗은 다음 몫을 깎지 않는다
+    expect(g.renew(withAd: true), 3);
+    expect(g.seedsTotal, 11);
+    expect(g.seedsClaimed, 10);
+  });
+
+  test('바구니 등급을 올리면 만들 수 없는 낮은 부탁은 새 부탁으로 바뀐다', () {
+    final g = make();
+    g.orders
+      ..clear()
+      ..add(const Order(901, 'bori', Chain.flower, 2, 1));
+    g.upgrades[UpgradeType.basketTier] = 4;
+    g.level = 40;
+    g.coins = 1e12;
+    expect(g.buyUpgrade(UpgradeType.basketTier), isTrue);
+    expect(g.orders.first.friendId, 'bori');
+    expect(g.orders.first.level, greaterThan(g.spawnLevel));
+  });
+
+  test('끝없는 강화 값은 바구니 물가를 따라간다', () {
+    final g = make();
+    final c1 = g.upgradeCost(UpgradeType.income);
+    g.upgrades[UpgradeType.basketTier] = 3;
+    expect(g.upgradeCost(UpgradeType.income), closeTo(c1 * g.inflation, 1e-6));
+    expect(g.inflation, greaterThan(10));
+  });
+
   test('깜짝 상자: 판 최고 단계 -2~-1 (최소 바구니+1), 값은 에너지값을 따른다', () {
     final g = make();
     final s = g.spawnLevel;

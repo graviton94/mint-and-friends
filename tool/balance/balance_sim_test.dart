@@ -220,6 +220,11 @@ class Sim {
       final grp = cat.startsWith('up:') ? 'upgrade' : cat;
       buysBy[grp] = (buysBy[grp] ?? 0) + 1;
       audit(cat, cost);
+      if (cat == 'up:basketTier') {
+        tierLog.add(
+          'R${g.renewCount}:T${g.lv(UpgradeType.basketTier) + 1}@D${curDay + 1} ${(earnPerHour).toStringAsExponential(1)}/h cost ${cost.toStringAsExponential(1)}',
+        );
+      }
       fn();
       spend(grp, before);
     }
@@ -473,6 +478,7 @@ class Sim {
     return b.toString();
   }
 
+  final List<String> tierLog = [];
   int buys = 0;
   final Map<String, int> buysBy = {};
   double _lastRate = 0;
@@ -526,6 +532,7 @@ class Sim {
       'starsIn: ${fmt(starsIn)}',
       'ads: boost=$adsBoost other=$adsOther delivered=$delivered',
       auditReport(),
+      'tiers: ${tierLog.take(40).join(' | ')}',
     ].join('\n');
   }
 }

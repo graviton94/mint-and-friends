@@ -467,6 +467,10 @@ class UpgradeDef {
   /// 단계마다 필요한 플레이어 레벨: 다음 단계 L(0부터) = gateStart + gateStep × L.
   final int gateStart;
   final int gateStep;
+
+  /// 높은 단계에서 더 가파르게 (애드캡처럼 비싼 줄일수록 성장률이 다르다): [lateFrom] 단계부터 단계마다 ×[lateGrowth].
+  final int lateFrom;
+  final double lateGrowth;
   const UpgradeDef(
     this.type,
     this.icon,
@@ -477,12 +481,16 @@ class UpgradeDef {
     this.unlockCost = 0,
     this.gateStart = 2,
     this.gateStep = 0,
+    this.lateFrom = 1 << 30,
+    this.lateGrowth = 1,
   });
 
   double costAt(int level) =>
       (level == 0 && unlockCost > 0
           ? unlockCost
-          : baseCost * pow(costGrowth, level)) *
+          : baseCost *
+                pow(costGrowth, level) *
+                pow(lateGrowth / costGrowth, max(0, level - lateFrom))) *
       Tuning.coinScale;
   int levelFor(int nextLevel) => gateStart + gateStep * nextLevel;
   String get key => 'upgrade.${type.name}';
@@ -500,9 +508,11 @@ class Upgrades {
       'basket',
       24,
       400,
-      2.75,
+      4.0,
       gateStart: 3,
-      gateStep: 3,
+      gateStep: 2,
+      lateFrom: 12,
+      lateGrowth: 6.0,
     ),
     // 체인별 생산력: 끝없음, 단계당 +5% · 25단계마다 ×2, 가격 ×1.28
     UpgradeDef(
@@ -665,10 +675,13 @@ class Renewal {
   static double get coinsPerSeedBase => Tuning.seedCoinBase;
   static const double adBonus = 1.5;
 
-  /// 이번 회차에 번 코인으로 받을 씨앗: ⌊(코인 ÷ 10억)^(1/3)⌋.
-  static int seedsFor(double runCoins) => runCoins <= 0
-      ? 0
-      : (pow(runCoins / coinsPerSeedBase, 1 / 3) + 1e-9).floor();
+  /// 지금까지 번 모든 코인으로 정해지는 씨앗 몫: ⌊(누적 코인 ÷ 기준)^(1/3)⌋ (D-038).
+  /// 재단장 때는 이 몫에서 이미 받은 만큼을 뺀 것만 받는다 → 씨앗이 씨앗을 부르는 눈덩이가 없다.
+  static int seedsFor(double coins) =>
+      coins <= 0 ? 0 : (pow(coins / coinsPerSeedBase, 1 / 3) + 1e-9).floor();
+
+  /// 씨앗 몫이 n 이 되는 누적 코인.
+  static double coinsForSeeds(int n) => coinsPerSeedBase * pow(n, 3);
 
   static const List<SeedPerkDef> perks = [
     SeedPerkDef(SeedPerk.startBasket, 'seed_basket', 5, 5),

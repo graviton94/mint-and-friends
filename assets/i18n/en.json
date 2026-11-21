@@ -716,7 +716,7 @@
   "toast.basketEmpty": "This basket is resting · 1 more in {time}",
   "spawner.charges": "{n} left",
   "upgrade.basketTier": "Basket tier",
-  "upgrade.basketTier.short": "Spawns",
+  "upgrade.basketTier.short": "Items & requests",
   "upgrade.teaPower": "Tea power",
   "upgrade.stardustPower": "Stardust power",
   "upgrade.teaPower.short": "[[coin]]/h",
@@ -798,7 +798,7 @@
   "upgrade.stardustPower.desc": "[[coin]]/hour ×{v}",
   "renew.title": "Garden renewal",
   "renew.round": "Round {n}",
-  "renew.runCoins": "Coins this round [[coin]]{v}",
+  "renew.runCoins": "Coins earned in total [[coin]]{v}",
   "renew.preview": "Renew now for golden seeds +{n}",
   "renew.need": "From basket tier Lv.{n} (now Lv.{now})",
   "renew.mult": "Permanent income ×{v}",
@@ -893,5 +893,5 @@
   "starter.once": "Only once per account",
   "starter.off": "OFF",
   "starter.buy": "Get it {p}",
-  "renew.needCoins": "Earn [[coin]]{n}+ this round to get seeds"
+  "renew.needCoins": "Earn [[coin]]{n} more for the next seed"
 }

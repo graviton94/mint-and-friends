@@ -717,7 +717,7 @@
   "toast.basketEmpty": "이 바구니는 쉬는 중이에요 · {time} 뒤 1번 더",
   "spawner.charges": "{n}번",
   "upgrade.basketTier": "바구니 등급",
-  "upgrade.basketTier.short": "나오는 단계",
+  "upgrade.basketTier.short": "아이템 · 부탁 단계",
   "upgrade.teaPower": "찻잎 생산력",
   "upgrade.stardustPower": "별가루 생산력",
   "upgrade.teaPower.short": "[[coin]]/시간",
@@ -799,7 +799,7 @@
   "upgrade.stardustPower.desc": "시간당 [[coin]] ×{v}",
   "renew.title": "정원 재단장",
   "renew.round": "{n}회차",
-  "renew.runCoins": "이번 회차에 번 코인 [[coin]]{v}",
+  "renew.runCoins": "지금까지 번 코인 [[coin]]{v}",
   "renew.preview": "지금 하면 황금 씨앗 +{n}",
   "renew.need": "바구니 등급 Lv.{n}부터 (지금 Lv.{now})",
   "renew.mult": "영구 수입 ×{v}",
@@ -894,5 +894,5 @@
   "starter.once": "계정당 딱 한 번만 살 수 있어요",
   "starter.off": "할인",
   "starter.buy": "지금 받기 {p}",
-  "renew.needCoins": "이번 회차에 [[coin]]{n} 이상 벌면 씨앗이 나와요"
+  "renew.needCoins": "[[coin]]{n} 더 벌면 다음 씨앗이 나와요"
 }

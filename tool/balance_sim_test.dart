@@ -31,7 +31,11 @@ void sim() {
   final milestones = <int, String>{};
   final areas = <int, String>{};
   var lastArea = 0, sold = 0, ads = 0;
-  var orderCoins = 0.0, achCoins = 0, mailCoins = 0, achStars = 0, mailStars = 0;
+  var orderCoins = 0.0,
+      achCoins = 0,
+      mailCoins = 0,
+      achStars = 0,
+      mailStars = 0;
   // 인플레이션 기록: 하루 단위 수입 · 지출 · 잔고 · 다음 지출처 가격
   final daily = <String>[];
   var dayStartEarned = 0.0, dayStartCoins = 0.0;

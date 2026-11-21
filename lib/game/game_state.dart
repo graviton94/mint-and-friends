@@ -267,6 +267,9 @@ class GameState extends ChangeNotifier {
   int seedsTotal = 0;
   int seeds = 0;
 
+  /// 공식으로 받은 씨앗 (광고 보너스 제외). 받을 씨앗 = 누적 코인으로 정해지는 몫 − 이 값 (D-038).
+  int seedsClaimed = 0;
+
   /// 이번 회차가 시작될 때의 누적 코인 (이번 회차에 번 코인 = lifetimeCoins − 이 값).
   double runStartCoins = 0;
   final Map<SeedPerk, int> seedPerks = {};
@@ -274,10 +277,17 @@ class GameState extends ChangeNotifier {
 
   double get runCoins => max(0, lifetimeCoins - runStartCoins);
   double get seedMultiplier => 1 + Renewal.seedIncome * seedsTotal;
+
+  /// 지금까지 번 모든 코인으로 정해지는 씨앗 몫 (쿠키 클리커 · 애드캡 방식: 같은 지점에서 다시 해도 0).
+  int get seedsEntitled => Renewal.seedsFor(lifetimeCoins);
   bool get canRenew =>
       lv(UpgradeType.basketTier) >= Renewal.needBasketTier &&
-      Renewal.seedsFor(runCoins) > 0;
-  int get renewSeedsPreview => Renewal.seedsFor(runCoins);
+      renewSeedsPreview > 0;
+  int get renewSeedsPreview => max(0, seedsEntitled - seedsClaimed);
+
+  /// 다음 씨앗 1개까지 더 벌어야 하는 코인.
+  double get coinsToNextSeed =>
+      max(0, Renewal.coinsForSeeds(seedsEntitled + 1) - lifetimeCoins);
 
   /// 재단장 추천: 받을 씨앗이 가진 씨앗의 절반(최소 3) 이상이거나, 살 수 있는 강화가 30분 넘게 없을 때.
   double _noBuySecs = 0;
@@ -348,6 +358,7 @@ class GameState extends ChangeNotifier {
     final base = renewSeedsPreview;
     final got = withAd ? (base * Renewal.adBonus).round() : base;
     final lastRun = runCoins;
+    seedsClaimed += base;
     seedsTotal += got;
     seeds += got;
     renewCount += 1;
@@ -1395,6 +1406,23 @@ class GameState extends ChangeNotifier {
 
   bool canDeliverOrder(Order o) => _findItem(o.chain, o.level) >= 0;
 
+  /// 바구니 등급이 바뀐 뒤: 바구니가 더는 만들 수 없는 낮은 부탁(판에도 없음)은 같은 친구의 새 부탁으로,
+  /// 남는 부탁은 별을 지금 등급 기준으로 다시 매긴다 (재단장 뒤 낮은 부탁이 판을 영영 막던 버그).
+  void _refreshOrdersForTier() {
+    for (var i = 0; i < orders.length; i++) {
+      final o = orders[i];
+      if (o.level <= spawnLevel && !canDeliverOrder(o)) {
+        final n = _newOrder();
+        orders[i] = Order(n.id, o.friendId, n.chain, n.level, n.stars);
+      } else {
+        final st = Garden.orderStars(relLevel(o.level));
+        if (st != o.stars) {
+          orders[i] = Order(o.id, o.friendId, o.chain, o.level, st);
+        }
+      }
+    }
+  }
+
   /// 오늘 별 부탁이 모두 끝나 부탁이 하나도 없다 (정원에 '내일 또 와요' 표시).
   bool get ordersDoneToday => quotaActive && orders.isEmpty;
 
@@ -2093,7 +2121,13 @@ class GameState extends ChangeNotifier {
 
   // ---------------------------------------------------------------- 강화
 
-  double upgradeCost(UpgradeType t) => Upgrades.of(t).costAt(lv(t));
+  /// 끝없는 강화(생산력 · 수익)는 바구니 등급 물가를 따라간다 (D-038):
+  /// 등급을 올렸다고 다른 강화가 상대적으로 싸지지 않게 (눈덩이 방지).
+  double upgradeCost(UpgradeType t) {
+    final d = Upgrades.of(t);
+    return d.costAt(lv(t)) * (d.maxLevel == Upgrades.endless ? inflation : 1);
+  }
+
   bool upgradeMaxed(UpgradeType t) => lv(t) >= Upgrades.of(t).maxLevel;
 
   bool upgradeFeatureLocked(UpgradeType t) {
@@ -2115,6 +2149,7 @@ class GameState extends ChangeNotifier {
     if (!canBuyUpgrade(t)) return false;
     coins -= upgradeCost(t);
     upgrades[t] = lv(t) + 1;
+    if (t == UpgradeType.basketTier) _refreshOrdersForTier();
     _bump(Stat.upgradesBought);
     notifyListeners();
     return true;
@@ -2355,6 +2390,7 @@ class GameState extends ChangeNotifier {
       'ordDay': _ordersDay,
       'ordToday': _ordersToday,
       'seedsT': seedsTotal,
+      'seedsC': seedsClaimed,
       'seeds': seeds,
       'runStart': runStartCoins,
       'perks': {for (final e in seedPerks.entries) e.key.name: e.value},
@@ -2469,6 +2505,7 @@ class GameState extends ChangeNotifier {
     _ordersDay = j['ordDay'] as String? ?? '';
     _ordersToday = (j['ordToday'] as num?)?.toInt() ?? 0;
     seedsTotal = (j['seedsT'] as num?)?.toInt() ?? 0;
+    seedsClaimed = (j['seedsC'] as num?)?.toInt() ?? seedsTotal;
     seeds = (j['seeds'] as num?)?.toInt() ?? 0;
     // 예전 저장(재단장 전)은 지금까지 번 코인을 이번 회차로 치지 않는다 (씨앗 과지급 방지)
     runStartCoins = (j['runStart'] as num?)?.toDouble() ?? lifetimeCoins;
@@ -2651,7 +2688,8 @@ class GameState extends ChangeNotifier {
     }
     savedAt = ts('savedAt');
     notifyListeners();
-    // 한도 · 친구 레벨 · 패스를 다 읽은 뒤에 부탁을 채운다
+    // 한도 · 친구 레벨 · 패스를 다 읽은 뒤에 부탁을 채운다 (예전 저장의 막힌 낮은 부탁도 바꾼다)
+    _refreshOrdersForTier();
     _fillOrders();
     return true;
   }
