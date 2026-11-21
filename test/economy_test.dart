@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mint_and_friends/services/notify_service.dart';
 import 'package:mint_and_friends/game/config.dart';
 import 'package:mint_and_friends/game/game_state.dart';
 import 'package:mint_and_friends/game/tuning.dart';
@@ -579,5 +580,32 @@ void main() {
     expect(GameConfig.roundStarBonus(1), 0);
     expect(GameConfig.roundStarBonus(3), closeTo(0.10, 1e-9));
     expect(GameConfig.roundStarBonus(30), 0.5);
+  });
+
+  test('알림 조용한 시간: 21시~08시는 다음 08시로', () {
+    expect(
+      NotifyService.quiet(DateTime(2026, 11, 21, 14, 30)),
+      DateTime(2026, 11, 21, 14, 30),
+    );
+    expect(
+      NotifyService.quiet(DateTime(2026, 11, 21, 21, 0)),
+      DateTime(2026, 11, 22, 8),
+    );
+    expect(
+      NotifyService.quiet(DateTime(2026, 11, 21, 23, 40)),
+      DateTime(2026, 11, 22, 8),
+    );
+    expect(
+      NotifyService.quiet(DateTime(2026, 11, 22, 3, 10)),
+      DateTime(2026, 11, 22, 8),
+    );
+    expect(
+      NotifyService.quiet(DateTime(2026, 11, 22, 7, 59)),
+      DateTime(2026, 11, 22, 8),
+    );
+    expect(
+      NotifyService.quiet(DateTime(2026, 11, 22, 8, 0)),
+      DateTime(2026, 11, 22, 8),
+    );
   });
 }

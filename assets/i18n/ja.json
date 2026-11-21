@@ -863,5 +863,19 @@
   "market.rareTag": "レア",
   "upgrade.canLevel": "[[heart]]{n} · Lv.{n}まで上げられます",
   "upgrade.needMore": "[[heart]]お願いをもっと聞くと上げられます",
-  "shop.passTag": "人気"
+  "shop.passTag": "人気",
+  "settings.notify": "通知",
+  "settings.notifyNote": "エネルギー・プレゼント・友だち (8〜21時のみ)",
+  "notify.energy.title": "エネルギー満タン!",
+  "notify.energy.body": "かごにエネルギー{n}が満タン! 庭で合成しよう",
+  "notify.offline.title": "コインぶくろがいっぱい",
+  "notify.offline.body": "庭がためたコインを受け取りに来てね",
+  "notify.gift.title": "プレゼントが届きました",
+  "notify.gift.body": "{name}がプレゼントを置いていったよ。郵便を見てね!",
+  "notify.checkIn.title": "今日の出席プレゼント",
+  "notify.checkIn.body": "今日のプレゼントが待ってるよ!",
+  "notify.miss.title": "{name}が会いたがってる",
+  "notify.miss.body": "{name}が庭でお願いを持って待ってるよ!",
+  "notify.miss3.title": "庭の友だちが待ってるよ",
+  "notify.miss3.body": "花が満開だよ。みんな一緒に遊びたいって"
 }

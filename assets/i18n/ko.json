@@ -864,5 +864,19 @@
   "market.rareTag": "귀한 것",
   "upgrade.canLevel": "[[heart]]{n} · Lv.{n}까지 올릴 수 있어요",
   "upgrade.needMore": "[[heart]]부탁을 더 들어주면 올릴 수 있어요",
-  "shop.passTag": "인기"
+  "shop.passTag": "인기",
+  "settings.notify": "알림",
+  "settings.notifyNote": "에너지 · 선물 · 친구 소식 (08~21시에만)",
+  "notify.energy.title": "에너지가 가득 찼어요!",
+  "notify.energy.body": "바구니에 에너지 {n}이 가득! 정원으로 와서 합쳐 볼까요?",
+  "notify.offline.title": "수입 주머니가 꽉 찼어요",
+  "notify.offline.body": "정원이 모은 코인을 받으러 와 주세요",
+  "notify.gift.title": "선물이 도착했어요",
+  "notify.gift.body": "{name}(이)가 선물을 두고 갔어요. 쪽지함을 열어 보세요!",
+  "notify.checkIn.title": "오늘의 출석 선물",
+  "notify.checkIn.body": "오늘 선물이 기다리고 있어요. 받으러 오세요!",
+  "notify.miss.title": "{name}(이)가 보고 싶대요",
+  "notify.miss.body": "{name}(이)가 정원에서 기다리고 있어요. 부탁도 하나 있대요!",
+  "notify.miss3.title": "정원 친구들이 기다려요",
+  "notify.miss3.body": "꽃이 활짝 피었어요. 친구들이 같이 놀고 싶대요"
 }

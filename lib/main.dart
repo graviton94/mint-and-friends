@@ -13,6 +13,7 @@ import 'i18n/l10n.dart';
 import 'i18n/names.dart';
 import 'services/ads_service.dart';
 import 'services/audio_service.dart';
+import 'services/notify_service.dart';
 import 'services/auth_service.dart';
 import 'services/billing_service.dart';
 import 'services/save_service.dart';
@@ -59,6 +60,7 @@ Future<Widget> _boot(void Function(double) report) async {
   );
   report(0.55);
   await AudioService.instance.init();
+  await NotifyService.instance.init();
   await DevLog.instance.init();
   report(0.75);
 
@@ -161,6 +163,9 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     auth.addListener(_onAuthChanged);
     _start();
     DevLog.instance.record(game, 'start');
+    // 알림 권한은 처음 한 번, 게임 화면이 뜬 뒤에 묻는다
+    Future.delayed(const Duration(seconds: 6), NotifyService.instance.askOnce);
+    NotifyService.instance.cancel();
     AudioService.instance.startMusic().then((_) {
       final a = AudioService.instance;
       DevLog.instance.note(
@@ -269,7 +274,9 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
       _stop();
       AudioService.instance.pauseMusic();
       DevLog.instance.record(game, 'pause');
+      NotifyService.instance.schedule(game);
     } else if (state == AppLifecycleState.resumed) {
+      NotifyService.instance.cancel();
       _start();
       AudioService.instance.resumeMusic();
       DevLog.instance.record(game, 'start');

@@ -13,6 +13,7 @@ import '../i18n/names.dart';
 import '../services/audio_service.dart';
 import '../services/billing_service.dart';
 import '../services/dev_log.dart';
+import '../services/notify_service.dart';
 import 'renew_ui.dart';
 import 'theme.dart';
 import 'widgets/frame_box.dart';
@@ -1928,6 +1929,22 @@ Future<void> showSettingsSheet(
           listenable: AudioService.instance,
           builder: (context, _) => Column(
             children: [
+              ListenableBuilder(
+                listenable: NotifyService.instance,
+                builder: (context, _) => SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    tr('settings.notify'),
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                  subtitle: Text(
+                    tr('settings.notifyNote'),
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  value: NotifyService.instance.on,
+                  onChanged: NotifyService.instance.setOn,
+                ),
+              ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(

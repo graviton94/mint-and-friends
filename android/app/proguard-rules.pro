@@ -12,3 +12,8 @@
 # 카카오 SDK(Gson 으로 응답 모델을 읽음)
 -keep class com.kakao.sdk.**.model.** { *; }
 -keepattributes Signature, *Annotation*, InnerClasses, EnclosingMethod
+
+# 예약 알림 플러그인 (Gson 으로 예약 정보를 저장 · 복원)
+-keep class com.dexterous.** { *; }
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken

@@ -863,5 +863,19 @@
   "market.rareTag": "Rare",
   "upgrade.canLevel": "[[heart]]{n} · can level up to Lv.{n}",
   "upgrade.needMore": "[[heart]]Fulfil more requests to level up",
-  "shop.passTag": "Popular"
+  "shop.passTag": "Popular",
+  "settings.notify": "Notifications",
+  "settings.notifyNote": "Energy, gifts and friends (8am–9pm only)",
+  "notify.energy.title": "Energy is full!",
+  "notify.energy.body": "Your basket has {n} energy. Come merge in the garden!",
+  "notify.offline.title": "Your coin pouch is full",
+  "notify.offline.body": "Come collect the coins your garden earned",
+  "notify.gift.title": "A gift arrived",
+  "notify.gift.body": "{name} left you a gift. Check your mailbox!",
+  "notify.checkIn.title": "Today's daily gift",
+  "notify.checkIn.body": "Today's gift is waiting. Come get it!",
+  "notify.miss.title": "{name} misses you",
+  "notify.miss.body": "{name} is waiting in the garden with a request!",
+  "notify.miss3.title": "Your friends are waiting",
+  "notify.miss3.body": "The flowers are in bloom. Your friends want to play!"
 }
