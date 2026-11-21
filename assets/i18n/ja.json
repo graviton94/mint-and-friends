@@ -678,5 +678,10 @@
   "book.seasonsNote": "エリアの季節飾り8種を集めると季節の風景がつき、庭の魅力+{n}%",
   "boost.count": "{n}個",
   "boost.use": "使う ({n}分)",
-  "boost.free": "無料"
+  "boost.free": "無料",
+  "menu.wardrobe": "クローゼット",
+  "upgrade.friends": "友だちレベル",
+  "upgrade.friendsNote": "お願いを聞くとハートがたまり、ハートの数までレベルを上げられます",
+  "upgrade.needHeart": "ハート不足",
+  "upgrade.hearts": "ハート {n}/{max}"
 }

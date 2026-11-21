@@ -679,5 +679,10 @@
   "book.seasonsNote": "한 구역의 계절 장식 8종을 모으면 그 계절 풍경이 켜지고 정원 매력 +{n}%",
   "boost.count": "{n}개",
   "boost.use": "사용하기 ({n}분)",
-  "boost.free": "무료"
+  "boost.free": "무료",
+  "menu.wardrobe": "옷장",
+  "upgrade.friends": "친구 레벨",
+  "upgrade.friendsNote": "부탁을 들어주면 하트가 쌓이고, 하트 수만큼 레벨을 올릴 수 있어요",
+  "upgrade.needHeart": "하트 부족",
+  "upgrade.hearts": "하트 {n}/{max}"
 }

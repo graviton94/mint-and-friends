@@ -719,7 +719,10 @@ class _GardenSceneState extends State<GardenScene>
   List<Widget> _orderLayer(Size s, Rect visible) {
     final unit = min(s.width, s.height * 1.6);
     final sz = unit * 0.15;
-    final bw = max(66.0, unit * 0.19);
+    final bw = max(
+      game.openBaskets.length > 1 ? 82.0 : 66.0,
+      unit * (game.openBaskets.length > 1 ? 0.24 : 0.19),
+    );
     final bh = bw * 0.6;
     // 1) 친구 머리 위 자리
     final items = <({int i, double fx, double cx, double top})>[];
@@ -785,6 +788,14 @@ class _GardenSceneState extends State<GardenScene>
             onTap: () => widget.onOrderTap!(i),
             child: _OrderBubble(
               item: Art.item(o.chain, o.level),
+              // 바구니가 여럿이면 어느 바구니에서 나오는지
+              basket: game.openBaskets.length > 1
+                  ? Art.icon(
+                      Chains.basketIcon[Chains.baskets.indexWhere(
+                        (b) => b.contains(o.chain),
+                      )],
+                    )
+                  : null,
               label: ready
                   ? tr('order.deliverShort')
                   : stars
@@ -1104,8 +1115,10 @@ class _OrderBubble extends StatelessWidget {
     required this.ready,
     required this.dim,
     required this.tailX,
+    this.basket,
   });
   final ArtRef item;
+  final ArtRef? basket;
   final String label;
   final bool ready;
   final bool dim;
@@ -1139,6 +1152,11 @@ class _OrderBubble extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                if (basket != null)
+                  Padding(
+                    padding: EdgeInsets.only(right: h * 0.02),
+                    child: ArtImage(basket!, size: h * 0.42),
+                  ),
                 ArtImage(item, size: h * 0.74),
                 Flexible(
                   child: FittedBox(

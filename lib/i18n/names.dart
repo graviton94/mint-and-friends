@@ -52,8 +52,8 @@ String upgradeDescribe(UpgradeType t, int lv) {
   }
 }
 
-String buffText(FriendDef f, int affection) {
-  final v = f.perLevel * affection * 100;
+String buffText(FriendDef f, int level) {
+  final v = f.perLevel * level * 100;
   final s = v.toStringAsFixed(v == v.roundToDouble() ? 0 : 1);
   return tr('buff.${f.buff.name}', {'v': s});
 }

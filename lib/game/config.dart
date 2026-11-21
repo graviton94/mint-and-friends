@@ -777,6 +777,9 @@ class Garden {
   };
   static bool isSeasonStyle(int s) => seasonStyles.containsKey(s);
 
+  /// 화면에 보이는 계절 순서: 봄 · 여름 · 가을 · 겨울.
+  static const List<int> seasonOrder = [4, 5, 6, 3];
+
   /// 시즌 디자인 → 계절 번호 (0 봄 · 1 여름 · 2 가을 · 3 겨울).
   static int seasonIndexOf(int style) => switch (style) {
     4 => 0,

@@ -28,6 +28,7 @@ import 'services/analytics_service.dart';
 import 'services/remote_tuning.dart';
 import 'services/dev_log.dart';
 import 'ui/start_screens.dart';
+import 'ui/widgets/top_toast.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -326,16 +327,9 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
   void _snack(String code) {
     final ctx = _navKey.currentContext;
     if (ctx == null) return;
-    ScaffoldMessenger.of(ctx).showSnackBar(
-      SnackBar(
-        content: IconText(
-          tr(
-            code == 'already_linked'
-                ? 'account.alreadyLinked'
-                : 'account.error',
-          ),
-        ),
-      ),
+    TopToast.show(
+      ctx,
+      tr(code == 'already_linked' ? 'account.alreadyLinked' : 'account.error'),
     );
   }
 

@@ -678,5 +678,10 @@
   "book.seasonsNote": "Collect all 8 seasonal pieces of an area for its seasonal scenery and +{n}% garden charm",
   "boost.count": "x{n}",
   "boost.use": "Use ({n} min)",
-  "boost.free": "Free"
+  "boost.free": "Free",
+  "menu.wardrobe": "Wardrobe",
+  "upgrade.friends": "Friend levels",
+  "upgrade.friendsNote": "Fulfil requests to earn hearts; level friends up to their hearts",
+  "upgrade.needHeart": "Need hearts",
+  "upgrade.hearts": "Hearts {n}/{max}"
 }

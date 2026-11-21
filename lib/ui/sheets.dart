@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:material_ui/material_ui.dart';
 
+import 'widgets/top_toast.dart';
+
 import '../art/art.dart';
 import '../game/config.dart';
 import '../game/format.dart';
@@ -45,8 +47,138 @@ Future<void> showUpgradesSheet(BuildContext context, GameState game) =>
       () => SheetFrame(
         title: tr('upgrade.title'),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             for (final u in Upgrades.all) _UpgradeRow(game: game, def: u),
+            if (game.friends.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              IconText(
+                tr('upgrade.friends'),
+                style: const TextStyle(fontSize: 18),
+              ),
+              IconText(
+                tr('upgrade.friendsNote'),
+                style: const TextStyle(fontSize: 13, color: Colors.black54),
+              ),
+              const SizedBox(height: 4),
+              for (final f in Friends.all)
+                if (game.friends.contains(f.id))
+                  _FriendLevelRow(game: game, def: f),
+            ],
+          ],
+        ),
+      ),
+    );
+
+class _FriendLevelRow extends StatelessWidget {
+  const _FriendLevelRow({required this.game, required this.def});
+  final GameState game;
+  final FriendDef def;
+
+  @override
+  Widget build(BuildContext context) {
+    final lv = game.friendLevel(def.id);
+    final hearts = game.affection(def.id);
+    final maxed = lv >= Friends.maxAffection;
+    final button = maxed
+        ? tr('common.max')
+        : lv >= hearts
+        ? tr('upgrade.needHeart')
+        : '[[coin]] ${fmt(Friends.levelCost(lv))}';
+    return Card(
+      color: Colors.white,
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            ArtImage(Art.friend(def, outfit: game.outfitOf(def.id)), size: 38),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${friendName(def.id)}  Lv.$lv',
+                    style: const TextStyle(fontSize: 17),
+                  ),
+                  IconText(
+                    maxed
+                        ? buffText(def, lv)
+                        : '${lv == 0 ? tr('book.noEffect') : buffText(def, lv)} → ${buffText(def, lv + 1)}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF5E6B5E),
+                    ),
+                  ),
+                  IconText(
+                    tr('upgrade.hearts', {
+                      'n': hearts,
+                      'max': Friends.maxAffection,
+                    }),
+                    style: const TextStyle(fontSize: 12, color: Colors.black45),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            FilledButton(
+              onPressed: game.canLevelFriend(def.id)
+                  ? () => game.levelFriend(def.id)
+                  : null,
+              child: IconText(button),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 옷장 고르기: 데려온 친구 중 옷이 있는 친구를 골라 옷장을 연다.
+Future<void> showWardrobePicker(BuildContext context, GameState game) =>
+    showGameSheet(
+      context,
+      game,
+      () => SheetFrame(
+        title: tr('menu.wardrobe'),
+        child: GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          childAspectRatio: 0.85,
+          children: [
+            for (final f in Friends.all)
+              if (game.friends.contains(f.id) && Art.outfitsFor(f).isNotEmpty)
+                GestureDetector(
+                  onTap: () => showOutfitSheet(context, game, f),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: const Color(0xFFE2D3B5),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ArtImage(
+                          Art.friend(f, outfit: game.outfitOf(f.id)),
+                          size: 64,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          friendName(f.id),
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
           ],
         ),
       ),
@@ -288,9 +420,7 @@ Future<void> showStyleSheet(
                   sfx(Sfx.unlock);
                 } else {
                   sfx(Sfx.error);
-                  ScaffoldMessenger.maybeOf(
-                    context,
-                  )?.showSnackBar(SnackBar(content: Text(tr('style.noGems'))));
+                  TopToast.show(context, tr('style.noGems'));
                 }
               },
               child: FittedBox(
@@ -379,12 +509,9 @@ class _StyleCard extends StatelessWidget {
                         sfx(Sfx.unlock);
                       case StyleResult.noCoins || StyleResult.noGems:
                         sfx(Sfx.error);
-                        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              tr(style == 1 ? 'style.noCoins' : 'style.noGems'),
-                            ),
-                          ),
+                        TopToast.show(
+                          context,
+                          tr(style == 1 ? 'style.noCoins' : 'style.noGems'),
                         );
                       case StyleResult.notPlaced:
                         break;
@@ -508,9 +635,7 @@ class _OutfitCard extends StatelessWidget {
                       sfx(Sfx.unlock);
                     } else if (r == StyleResult.noGems) {
                       sfx(Sfx.error);
-                      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                        SnackBar(content: Text(tr('style.noGems'))),
-                      );
+                      TopToast.show(context, tr('style.noGems'));
                     }
                   },
             child: FittedBox(
@@ -572,7 +697,7 @@ Future<void> showCollectionSheet(
                 children: [
                   ArtImage(Art.areaIcon(Garden.areaAt(a)), size: 26),
                   const SizedBox(width: 6),
-                  for (final st in Garden.seasonStyles.keys)
+                  for (final st in Garden.seasonOrder)
                     Expanded(
                       child: Container(
                         margin: const EdgeInsets.symmetric(horizontal: 2),
@@ -640,6 +765,7 @@ class _FriendCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final has = game.friends.contains(def.id);
     final aff = game.affection(def.id);
+    final flv = game.friendLevel(def.id);
     final dress = has && Art.outfitsFor(def).isNotEmpty;
     return GestureDetector(
       onTap: dress ? () => showOutfitSheet(context, game, def) : null,
@@ -667,7 +793,7 @@ class _FriendCard extends StatelessWidget {
                   FittedBox(
                     child: Text(
                       has
-                          ? '${friendName(def.id)} (${friendSpecies(def.id)})'
+                          ? '${friendName(def.id)}  Lv.$flv'
                           : tr('book.unknown'),
                       style: const TextStyle(fontSize: 15),
                     ),
@@ -686,7 +812,7 @@ class _FriendCard extends StatelessWidget {
                     ),
                     FittedBox(
                       child: IconText(
-                        aff == 0 ? tr('book.noEffect') : buffText(def, aff),
+                        flv == 0 ? tr('book.noEffect') : buffText(def, flv),
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF5E6B5E),
@@ -1647,12 +1773,9 @@ class _VersionTapState extends State<_VersionTap> {
       _taps = 0;
       DevLog.instance.toggle().then((_) {
         if (!mounted) return;
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(
-            content: Text(
-              DevLog.instance.on ? '개발자 모드 켜짐: 성장 로그 보기 가능' : '개발자 모드 꺼짐',
-            ),
-          ),
+        TopToast.show(
+          context,
+          DevLog.instance.on ? '개발자 모드 켜짐: 성장 로그 보기 가능' : '개발자 모드 꺼짐',
         );
         setState(() {});
       });

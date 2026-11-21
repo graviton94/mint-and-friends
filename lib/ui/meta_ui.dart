@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'widgets/top_toast.dart';
+
 import '../art/art.dart';
 import '../game/config.dart';
 import '../game/format.dart';
@@ -47,9 +49,7 @@ Future<void> showAchievementsSheet(BuildContext context, GameState game) =>
                   onPressed: () {
                     sfx(Sfx.coin);
                     final r = game.claimAllAchievements();
-                    ScaffoldMessenger.maybeOf(
-                      context,
-                    )?.showSnackBar(SnackBar(content: IconText(rewardText(r))));
+                    TopToast.show(context, rewardText(r));
                   },
                   child: Text(
                     tr('ach.claimAll', {'n': game.claimableAchievements}),
@@ -154,7 +154,12 @@ class _AchRow extends StatelessWidget {
               onPressed: claimable
                   ? () {
                       sfx(Sfx.coin);
-                      game.claimAchievement(def);
+                      {
+                        final r = game.claimAchievement(def);
+                        if (r != null && rewardText(r).isNotEmpty) {
+                          TopToast.show(context, rewardText(r));
+                        }
+                      }
                     }
                   : null,
               child: IconText(
@@ -186,7 +191,12 @@ Future<void> showMailSheet(BuildContext context, GameState game) =>
                 child: TextButton(
                   onPressed: () {
                     sfx(Sfx.coin);
-                    game.claimAllMail();
+                    {
+                      final r = game.claimAllMail();
+                      if (rewardText(r).isNotEmpty) {
+                        TopToast.show(context, rewardText(r));
+                      }
+                    }
                   },
                   child: Text(
                     tr('mail.claimAll'),
@@ -281,7 +291,12 @@ class _MailRow extends StatelessWidget {
                     ),
                     onPressed: () {
                       sfx(mail.hasReward ? Sfx.coin : Sfx.tap);
-                      game.claimMail(mail.id);
+                      {
+                        final r = game.claimMail(mail.id);
+                        if (r != null && rewardText(r).isNotEmpty) {
+                          TopToast.show(context, rewardText(r));
+                        }
+                      }
                     },
                     child: Text(
                       tr('mail.claim'),
@@ -426,7 +441,12 @@ Future<void> showCheckInSheet(BuildContext context, GameState game) =>
               onPressed: game.checkInReady
                   ? () {
                       sfx(Sfx.coin);
-                      game.claimCheckIn();
+                      {
+                        final r = game.claimCheckIn();
+                        if (r != null && rewardText(r).isNotEmpty) {
+                          TopToast.show(context, rewardText(r));
+                        }
+                      }
                     }
                   : null,
               child: IconText(

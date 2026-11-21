@@ -784,7 +784,6 @@ class _HomeScreenState extends State<HomeScreen> {
         content: PopupHero(
           art: ArtImage(Art.lock, size: 76),
           big: '[[coin]]${fmt(cost)}',
-          note: tr('cell.note'),
         ),
         actionsAlignment: MainAxisAlignment.center,
         onClose: () => Navigator.pop(ctx, false),
@@ -1481,7 +1480,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   tr('board.selected', {
                     'lv': sel.level,
                     'name': itemName(sel.def),
-                    'v': fmt(GameConfig.incomeOf(sel.level) * 3600),
+                    'v': fmt(game.itemIncomePerHour(sel)),
                   }),
                   style: const TextStyle(fontSize: 15),
                 ),
@@ -1594,6 +1593,14 @@ class _HomeScreenState extends State<HomeScreen> {
           },
           badge: Upgrades.all.any((u) => game.canBuyUpgrade(u.type)) ? -1 : 0,
         ),
+        if (game.friends.any(
+          (id) => Art.outfitsFor(Friends.byId(id)).isNotEmpty,
+        ))
+          MenuEntry(
+            'outfit',
+            tr('menu.wardrobe'),
+            () => showWardrobePicker(context, game),
+          ),
         MenuEntry('book', tr('menu.book'), () {
           game.markBookSeen();
           showCollectionSheet(context, game);
