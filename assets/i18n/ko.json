@@ -640,7 +640,7 @@
   "menu.gifts": "선물함",
   "order.deliverShort": "전달!",
   "order.wants": "{name} 부탁",
-  "order.wantsNote": "판에서 만들어 오면 [[star]]{stars}",
+  "order.wantsNote": "판에서 만들어 오세요",
   "order.changeFree": "다른 부탁 (무료 {n})",
   "order.change": "다른 부탁",
   "ctrl.boost.idle": "광고 · 다이아",
@@ -689,5 +689,12 @@
   "discover.title": "새로 발견!",
   "season.title": "풍경 변신!",
   "season.note": "{area}에 계절 풍경이 켜졌어요\n정원 매력 +{n}%",
-  "season.ok": "구경하기"
+  "season.ok": "구경하기",
+  "order.reward": "보상 [[star]]{stars}  XP+{xp}",
+  "xp.title": "경험치",
+  "xp.progress": "Lv.{lv}  {xp} / {need}",
+  "xp.order": "[[friends]] 부탁 들어주기: 높은 단계일수록 크게\n(Lv4 아이템 +{a}, Lv7 아이템 +{b})",
+  "xp.decor": "[[decorate]] 장식 놓기: 구역이 뒤일수록 크게",
+  "xp.discover": "[[book]] 새 아이템 발견 +{n}",
+  "xp.note": "합치기만으로는 경험치가 오르지 않아요"
 }

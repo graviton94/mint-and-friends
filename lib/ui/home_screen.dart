@@ -108,22 +108,22 @@ class _HomeScreenState extends State<HomeScreen> {
         :final friendId,
         :final stars,
         :final affectionUp,
+        :final xp,
       ):
         sfx(Sfx.deliver);
         _tutorialEvent(e);
         final done = game.quotaActive && game.starOrdersLeft(friendId) == 0;
-        _toast(
-          (stars > 0
-                  ? tr('toast.thanks', {
-                      'emoji': friendToken(friendId),
-                      'stars': stars,
-                    })
-                  : tr('toast.thanksCoins', {'emoji': friendToken(friendId)})) +
-              (affectionUp ? tr('toast.affectionUp') : '') +
-              (done && stars > 0
-                  ? tr('toast.quotaDone', {'name': friendName(friendId)})
-                  : ''),
-        );
+        final thanks = stars > 0
+            ? tr('toast.thanks', {
+                'emoji': friendToken(friendId),
+                'stars': stars,
+              })
+            : tr('toast.thanksCoins', {'emoji': friendToken(friendId)});
+        final heart = affectionUp ? tr('toast.affectionUp') : '';
+        final quota = done && stars > 0
+            ? tr('toast.quotaDone', {'name': friendName(friendId)})
+            : '';
+        _toast('$thanks  XP+$xp$heart$quota');
         // 오늘 부탁이 모두 끝나면 한 번만 알려 준다 (이후엔 정원의 작은 아이콘)
         if (!game.ordersDoneToday) _allDoneShown = false;
         if (game.ordersDoneToday && !_allDoneShown) {
@@ -660,6 +660,58 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   bool _allDoneShown = false;
+
+  /// 레벨 배지를 누르면: 경험치를 어떻게 얻는지.
+  Future<void> _xpInfo() => showDialog<void>(
+    context: context,
+    builder: (ctx) => GameDialog(
+      title: IconText(tr('xp.title'), textAlign: TextAlign.center),
+      onClose: () => Navigator.pop(ctx),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconText(
+            tr('xp.progress', {
+              'lv': game.level,
+              'xp': game.xp,
+              'need': game.xpToNext,
+            }),
+            style: const TextStyle(fontSize: 20),
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: (game.xp / game.xpToNext).clamp(0.0, 1.0),
+              minHeight: 10,
+              color: Palette.primary,
+              backgroundColor: const Color(0xFFE8E0CC),
+            ),
+          ),
+          const SizedBox(height: 14),
+          for (final k in ['order', 'decor', 'discover'])
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: IconText(
+                tr('xp.$k', {
+                  'a': Leveling.xpForOrder(4),
+                  'b': Leveling.xpForOrder(7),
+                  'n': Leveling.xpForDiscovery,
+                }),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 15, color: Color(0xFF5E4B36)),
+              ),
+            ),
+          const SizedBox(height: 6),
+          IconText(
+            tr('xp.note'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 13, color: Colors.black45),
+          ),
+        ],
+      ),
+    ),
+  );
 
   /// 계절 세트 완성: 레벨 업처럼 화면 가운데 축하 창.
   Future<void> _seasonSetDialog(int area, int style) => showDialog<void>(
@@ -1232,7 +1284,13 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 4),
       child: Row(
         children: [
-          _LevelBadge(level: game.level, progress: game.xp / game.xpToNext),
+          GestureDetector(
+            onTap: _xpInfo,
+            child: _LevelBadge(
+              level: game.level,
+              progress: game.xp / game.xpToNext,
+            ),
+          ),
           const SizedBox(width: 6),
           Expanded(
             child: FittedBox(
@@ -1388,6 +1446,13 @@ class _HomeScreenState extends State<HomeScreen> {
           art: ArtImage(Art.item(o.chain, o.level), size: 76),
           big: '${itemName(Chains.item(o.chain, o.level))} Lv${o.level}',
           note: tr('order.wantsNote', {'stars': o.stars}),
+          extra: IconText(
+            tr('order.reward', {
+              'stars': game.orderGivesStars(o) ? o.stars : 0,
+              'xp': Leveling.xpForOrder(o.level),
+            }),
+            style: const TextStyle(fontSize: 16, color: Color(0xFF7A5230)),
+          ),
         ),
         actionsAlignment: MainAxisAlignment.center,
         onClose: () => Navigator.pop(ctx, false),

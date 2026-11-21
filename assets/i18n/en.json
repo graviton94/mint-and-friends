@@ -639,7 +639,7 @@
   "menu.gifts": "Gifts",
   "order.deliverShort": "Give!",
   "order.wants": "{name}'s request",
-  "order.wantsNote": "Make it on the board for [[star]]{stars}",
+  "order.wantsNote": "Make it on the board",
   "order.changeFree": "Other request ({n} free)",
   "order.change": "Other request",
   "ctrl.boost.idle": "Ads · Diamonds",
@@ -688,5 +688,12 @@
   "discover.title": "New find!",
   "season.title": "New view!",
   "season.note": "{area} now shows its seasonal scenery\nGarden charm +{n}%",
-  "season.ok": "Take a look"
+  "season.ok": "Take a look",
+  "order.reward": "Reward [[star]]{stars}  XP+{xp}",
+  "xp.title": "XP",
+  "xp.progress": "Lv.{lv}  {xp} / {need}",
+  "xp.order": "[[friends]] Requests: higher tiers give more\n(Lv4 item +{a}, Lv7 item +{b})",
+  "xp.decor": "[[decorate]] Placing decor: more in later areas",
+  "xp.discover": "[[book]] New discovery +{n}",
+  "xp.note": "Merging alone doesn't give XP"
 }

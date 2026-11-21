@@ -134,7 +134,14 @@ class OrderDeliveredEvent extends GameEvent {
   final int stars;
   final double coins;
   final bool affectionUp;
-  OrderDeliveredEvent(this.friendId, this.stars, this.coins, this.affectionUp);
+  final int xp;
+  OrderDeliveredEvent(
+    this.friendId,
+    this.stars,
+    this.coins,
+    this.affectionUp, [
+    this.xp = 0,
+  ]);
 }
 
 class DecorPlacedEvent extends GameEvent {
@@ -1229,8 +1236,9 @@ class GameState extends ChangeNotifier {
       'order',
       '${o.friendId},${o.chain.name},${o.level},$gained,${c.round()}',
     );
-    _events.add(OrderDeliveredEvent(o.friendId, gained, c, up));
-    _gainXp(Leveling.xpForOrder(o.level));
+    final gx = Leveling.xpForOrder(o.level);
+    _events.add(OrderDeliveredEvent(o.friendId, gained, c, up, gx));
+    _gainXp(gx);
     notifyListeners();
     return true;
   }
