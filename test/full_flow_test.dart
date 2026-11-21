@@ -201,6 +201,7 @@ void main() {
         // 세션 끝: 시장 · 디자인 · 의상
         if (g.dailyShopOpen) {
           for (var i = 0; i < g.offers.length; i++) {
+            if (g.offers[i].kind >= 3) continue; // 다이아 · 광고 칸은 따로
             if (g.buyOffer(i) == BuyResult.ok) used.add('market');
           }
         }
@@ -224,7 +225,9 @@ void main() {
           g.grantQuotaAd(g.friends.first);
           used.add('quotaAd');
         }
-        if (g.gems > 60 && rng.nextDouble() < 0.03) {
+        if ((g.gems > 60 && rng.nextDouble() < 0.03) ||
+            (!used.contains('boost') &&
+                g.gems >= Boosts.gemCost[BoostKind.lucky]!)) {
           if (g.buyBoost(BoostKind.lucky)) used.add('boost');
         }
         if (g.gems > 70 && g.vaultOwned.length < 2) {

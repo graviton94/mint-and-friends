@@ -511,9 +511,14 @@ class _GardenSceneState extends State<GardenScene>
 
   // ---------------------------------------------------------------- L1 월드
 
+  /// 가로 위치: 가장자리 7% 안으로만 당긴다 (둥근 테두리에 장식 · 친구가 잘리지 않게,
+  /// 가운데 장식은 배경 그림과의 자리가 그대로).
+  static double gx(double x, double width) =>
+      x.clamp(0.08, 0.92).toDouble() * width;
+
   List<Widget> _worldLayer(AreaDef area, Size s) {
     final unit = min(s.width, s.height * 1.6);
-    Offset px(double x, double y) => Offset(x * s.width, y * s.height);
+    Offset px(double x, double y) => Offset(gx(x, s.width), y * s.height);
     final layers = <({double y, Widget child})>[];
 
     for (var i = 0; i < area.decor.length; i++) {
@@ -689,7 +694,7 @@ class _GardenSceneState extends State<GardenScene>
     final w = sz * 0.95 * widget.markerScale;
     // 캔버스 아래 끝에 걸린 자리는 표가 잘리지 않게 안쪽으로 올린다
     final y = min(d.y * s.height + sz * 0.36, s.height - w * 0.2);
-    return (c: Offset(d.x * s.width, y), w: w);
+    return (c: Offset(gx(d.x, s.width), y), w: w);
   }
 
   List<Widget> _markerLayer(AreaDef area, Size s) {
@@ -773,7 +778,7 @@ class _GardenSceneState extends State<GardenScene>
     for (var i = 0; i < game.orders.length; i++) {
       final wk = _walkers[game.orders[i].friendId];
       if (wk == null) continue;
-      final p = Offset(wk.pos.dx * s.width, wk.pos.dy * s.height);
+      final p = Offset(gx(wk.pos.dx, s.width), wk.pos.dy * s.height);
       items.add((
         i: i,
         fx: p.dx,
@@ -867,7 +872,7 @@ class _GardenSceneState extends State<GardenScene>
       if (wk.speechLeft <= 0) continue;
       // 홈 화면 정원 창(부탁 말풍선이 뜨는 곳)에서는 잡담 말풍선을 띄우지 않는다 (크게 보기에서만)
       if (widget.onOrderTap != null) continue;
-      final p = Offset(wk.pos.dx * s.width, wk.pos.dy * s.height);
+      final p = Offset(gx(wk.pos.dx, s.width), wk.pos.dy * s.height);
       out.add(
         Positioned(
           left: (p.dx - 90).clamp(

@@ -145,11 +145,12 @@ class GameConfig {
     AdKind.coinBag: 5,
     AdKind.refresh: 5,
     AdKind.quota: 6,
-    AdKind.gems: 5,
+    AdKind.gems: 3,
+    AdKind.market: 1,
   };
 
-  /// 광고 보고 다이아: 하루 5번 × 1개 (한 달 최대 150 ≈ 다이아 팩 ₩2,900어치, D-032).
-  static const int adGems = 1;
+  /// 광고 보고 다이아: 하루 3번 × 5개 (한 번 ≈ ₩95어치, 한 달 최대 450, D-034).
+  static const int adGems = 5;
 
   /// 하루 부탁 단계 보상: 오늘 N번째 부탁을 들어주면 다이아 (하루 최대 10, 한 달 300).
   static const List<int> orderMilestones = [10, 20, 30];
@@ -164,7 +165,7 @@ class GameConfig {
 }
 
 /// 하루 횟수 제한이 있는 보상형 광고 종류 (오프라인 2배·손님·비눗방울은 제한 없음).
-enum AdKind { energy, boost, coinBag, refresh, quota, gems }
+enum AdKind { energy, boost, coinBag, refresh, quota, gems, market }
 
 /// 시간제 부스트. coins = 코인 2배 (예전 '부스트'), energy = 바구니 에너지 무료, lucky = 행운 바구니.
 enum BoostKind { coins, energy, lucky }
@@ -998,6 +999,22 @@ class Gems {
     Tuning.refillBase + Tuning.refillStep * boughtToday,
   );
 
+  /// 코인 꾸러미 (다이아): 지금 시간당 수입의 1 · 3 · 8시간치, 최소값은 물가(바구니 등급)를 따른다.
+  /// 머지 장르 관례대로 가성비는 일부러 애매하게 — 초반에 막혔을 때 넘기기용.
+  static const List<(int gems, double hours, double floor)> coinPacks = [
+    (20, 1, 800),
+    (50, 3, 2500),
+    (120, 8, 7000),
+  ];
+
+  /// 계절 정원 효과 따로 사기.
+  static const int effectGems = 300;
+
+  /// 오늘의 시장: 다이아 칸 가격 · 단계(바구니 +4), 광고 칸 단계(바구니 +3).
+  static const int marketGemPrice = 12;
+  static const int marketGemLevelUp = 4;
+  static const int marketAdLevelUp = 3;
+
   /// 비눗방울 바로 열기: 남은 20초마다 1개, 최소 2개.
   static int bubbleCost(Duration left) => max(2, (left.inSeconds / 20).ceil());
 }
@@ -1070,11 +1087,16 @@ class Starter {
   static const int gems = 100;
   static const int energy = 100;
   static const Duration pass = Duration(days: 30);
+
+  /// 부스트 묶음 (보관 후 30분씩 꺼내 쓴다): 에너지 절약 2시간 · 행운 2시간 · 코인 꾸러미 3시간.
   static const Map<BoostKind, Duration> boosts = {
-    BoostKind.energy: Duration(minutes: 30),
-    BoostKind.lucky: Duration(minutes: 30),
-    BoostKind.coins: Duration(minutes: 60),
+    BoostKind.energy: Duration(minutes: 120),
+    BoostKind.lucky: Duration(minutes: 120),
+    BoostKind.coins: Duration(minutes: 180),
   };
+
+  /// 보관 부스트 한 번에 꺼내 쓰는 시간.
+  static const Duration boostUse = Duration(minutes: 30);
   static const String effect = 'seasons';
   static const String outfitFriend = 'bori';
   static const String outfit = 'starlight';

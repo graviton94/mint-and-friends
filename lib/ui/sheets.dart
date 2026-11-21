@@ -133,7 +133,7 @@ class _FriendLevelRow extends StatelessWidget {
                     ),
                   ),
                   IconText(
-                    '${tr('upgrade.hearts', {'n': hearts, 'max': Friends.maxAffection})}  ·  ${lv < Friends.starMilestone
+                    '${lv < hearts ? tr('upgrade.canLevel', {'n': hearts}) : tr('upgrade.needMore')}  ·  ${lv < Friends.starMilestone
                         ? tr('upgrade.milestone5', {'n': Friends.starMilestone})
                         : lv < Friends.boostMilestone
                         ? tr('upgrade.milestone10', {'n': Friends.boostMilestone})
@@ -1062,10 +1062,9 @@ Future<void> showShopSheet(
   GameState game, {
   Future<bool> Function(AdKind kind)? watchAd,
   bool adFree = false,
-}) => showGameSheet(
-  context,
-  Listenable.merge([billing, game]),
-  () => SheetFrame(
+}) => showGameSheet(context, Listenable.merge([billing, game]), () {
+  final ad = adFree ? '' : '[[ad]] ';
+  return SheetFrame(
     title: tr('shop.title'),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1081,31 +1080,39 @@ Future<void> showShopSheet(
           StarterCard(billing: billing, game: game),
           const SizedBox(height: 14),
         ],
+        // 오늘의 시장: 코인 4칸 + 다이아 1칸 + 광고 1칸 (3열 카드)
         if (game.dailyShopOpen) ...[
           _ShopHeader(tr('market.title')),
-          for (var i = 0; i < game.offers.length; i++)
-            _OfferRow(game: game, index: i),
+          _CardGrid([
+            for (var i = 0; i < game.offers.length; i++)
+              _offerCard(context, game, i, watchAd, ad),
+          ]),
           const SizedBox(height: 12),
         ],
+        // 다이아 충전: 광고 1칸 + 팩 5칸
         _ShopHeader(tr('shop.gems')),
-        if (watchAd != null)
-          _ShopRow(
-            icon: Art.icon('diamond'),
-            title: tr('shop.adGems', {'n': GameConfig.adGems}),
-            note: tr('energy.left', {'n': game.adsLeft(AdKind.gems)}),
-            button: game.gemAdAvailable
-                ? '${adFree ? '' : '[[ad]] '}[[diamond]]+${GameConfig.adGems}'
-                : tr('shop.adGemsDone'),
-            enabled: game.gemAdAvailable,
-            onTap: () async {
-              if (await watchAd(AdKind.gems)) {
-                game.grantGemAd();
-                sfx(Sfx.coin);
-              }
-            },
-          ),
-        for (var i = 0; i < Gems.packs.length; i++)
-          _GemPackRow(billing: billing, pack: Gems.packs[i], index: i),
+        _CardGrid([
+          if (watchAd != null)
+            _ShopCard(
+              icon: Art.icon('diamond'),
+              title: tr('shop.adGemsShort', {'n': GameConfig.adGems}),
+              note: tr('energy.left', {'n': game.adsLeft(AdKind.gems)}),
+              tag: tr('shop.freeTag'),
+              button: game.gemAdAvailable
+                  ? '$ad+${GameConfig.adGems}'
+                  : tr('shop.adGemsDone'),
+              ad: true,
+              enabled: game.gemAdAvailable,
+              onTap: () async {
+                if (await watchAd(AdKind.gems)) {
+                  game.grantGemAd();
+                  sfx(Sfx.coin);
+                }
+              },
+            ),
+          for (var i = 0; i < Gems.packs.length; i++)
+            _gemPackCard(billing, Gems.packs[i], i),
+        ]),
         if (!billing.available || billing.gemProducts.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 4, bottom: 8),
@@ -1116,17 +1123,53 @@ Future<void> showShopSheet(
             ),
           ),
         const SizedBox(height: 12),
+        // 다이아로 사기: 에너지 · 코인 꾸러미 3 · 부스트 3 · 계절 효과
         _ShopHeader(tr('shop.withGems')),
-        _ShopRow(
-          icon: Art.icon('energy_jar'),
-          title: tr('shop.refill', {'n': Gems.refillEnergy}),
-          note: tr('shop.refillNote'),
-          button: '[[diamond]] ${game.refillCost}',
-          enabled: game.gems >= game.refillCost,
-          onTap: () {
-            if (game.buyEnergyRefill()) sfx(Sfx.coin);
-          },
-        ),
+        _CardGrid([
+          _ShopCard(
+            icon: Art.icon('energy_jar'),
+            title: tr('shop.refillShort', {'n': Gems.refillEnergy}),
+            button: '[[diamond]] ${game.refillCost}',
+            enabled: game.gems >= game.refillCost,
+            onTap: () {
+              if (game.buyEnergyRefill()) sfx(Sfx.coin);
+            },
+          ),
+          for (var i = 0; i < Gems.coinPacks.length; i++)
+            _ShopCard(
+              icon: Art.icon(const ['coinbag', 'coinbag', 'coinbag'][i]),
+              iconScale: 0.8 + 0.15 * i,
+              title: '[[coin]] ${fmt(game.coinPackAmount(i))}',
+              note: tr('shop.coinPack.$i'),
+              button: '[[diamond]] ${Gems.coinPacks[i].$1}',
+              enabled: game.gems >= Gems.coinPacks[i].$1,
+              onTap: () {
+                if (game.buyCoinPack(i)) sfx(Sfx.coin);
+              },
+            ),
+          for (final k in BoostKind.values)
+            _ShopCard(
+              icon: Art.icon(boostIcon(k)),
+              title: tr('boost.${k.name}'),
+              note: tr('shop.boostTime', {'n': Boosts.perGems[k]!.inMinutes}),
+              button: '[[diamond]] ${Boosts.gemCost[k]}',
+              enabled: game.gems >= Boosts.gemCost[k]! && game.canAddBoostOf(k),
+              onTap: () {
+                if (game.buyBoost(k)) sfx(Sfx.coin);
+              },
+            ),
+          if (!game.effects.contains(Starter.effect))
+            _ShopCard(
+              icon: Art.icon('sparkle'),
+              title: tr('shop.effect'),
+              note: tr('shop.effectNote'),
+              button: '[[diamond]] ${Gems.effectGems}',
+              enabled: game.gems >= Gems.effectGems,
+              onTap: () {
+                if (game.buyEffect(Starter.effect)) sfx(Sfx.unlock);
+              },
+            ),
+        ]),
         const SizedBox(height: 12),
         _ShopHeader(tr('shop.adFreeTitle')),
         if (billing.adFree)
@@ -1139,6 +1182,7 @@ Future<void> showShopSheet(
           _ShopRow(
             icon: Art.icon('no_ads'),
             title: tr('shop.adFree'),
+            tag: tr('shop.passTag'),
             note: tr('shop.body', {
               'gems': OrderQuota.passDailyGems,
               'quota': OrderQuota.pass,
@@ -1156,8 +1200,220 @@ Future<void> showShopSheet(
         ),
       ],
     ),
-  ),
-);
+  );
+});
+
+/// 오늘의 시장 카드 하나.
+Widget _offerCard(
+  BuildContext context,
+  GameState game,
+  int index,
+  Future<bool> Function(AdKind kind)? watchAd,
+  String ad,
+) {
+  final o = game.offers[index];
+  final full = !o.sold && game.boardFull;
+  final coinUnit = UnitFmt.of([
+    for (final x in game.offers)
+      if (x.kind <= 2) x.price.toDouble(),
+  ]);
+  final button = o.sold
+      ? tr('market.sold')
+      : full
+      ? tr('market.boardFull')
+      : switch (o.kind) {
+          1 => tr('market.take'),
+          3 => '[[diamond]] ${o.price}',
+          4 => '$ad${tr('market.adTake')}',
+          _ => '[[coin]] ${coinUnit(o.price)}',
+        };
+  final enabled =
+      !o.sold &&
+      !full &&
+      switch (o.kind) {
+        3 => game.gems >= o.price,
+        4 => watchAd != null && game.canWatchAd(AdKind.market),
+        _ => game.coins >= o.price,
+      };
+  return _ShopCard(
+    icon: Art.item(o.chain, o.level),
+    title: itemName(Chains.item(o.chain, o.level)),
+    note: tr('market.level', {'n': o.level}),
+    tag: switch (o.kind) {
+      1 => tr('market.freeTag'),
+      2 => tr('market.helperTag'),
+      3 || 4 => tr('market.rareTag'),
+      _ => null,
+    },
+    ad: o.kind == 4,
+    button: button,
+    enabled: enabled,
+    onTap: () async {
+      var watched = false;
+      if (o.kind == 4) {
+        watched = await watchAd!(AdKind.market);
+        if (!watched) return;
+      }
+      if (game.buyOffer(index, adWatched: watched) == BuyResult.ok) {
+        sfx(Sfx.coin);
+      }
+    },
+  );
+}
+
+/// 다이아 팩 카드.
+Widget _gemPackCard(BillingService billing, GemPack pack, int index) {
+  final d = billing.gemProducts[pack.id];
+  return _ShopCard(
+    icon: Art.icon('dia_${index + 1}'),
+    title: '[[diamond]] ${fmtInt(pack.gems)}',
+    tag: pack.valueX >= 1.95
+        ? tr('shop.bonusX', {
+            'n': pack.valueX.toStringAsFixed(pack.valueX < 3.05 ? 0 : 1),
+          })
+        : pack.bonusPct > 0
+        ? tr('shop.bonus', {'n': pack.bonusPct})
+        : null,
+    button: d?.price ?? '₩${fmtInt(pack.krw)}',
+    enabled: d != null && !billing.purchasing,
+    onTap: () => billing.buyGems(pack),
+  );
+}
+
+/// 상점 카드 격자: 3열 (휴대폰 폭이 좁으면 2열).
+class _CardGrid extends StatelessWidget {
+  const _CardGrid(this.cards);
+  final List<Widget> cards;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, c) {
+      final cols = c.maxWidth < 330 ? 2 : 3;
+      const gap = 8.0;
+      final w = (c.maxWidth - gap * (cols - 1)) / cols;
+      return Wrap(
+        spacing: gap,
+        runSpacing: gap,
+        children: [for (final card in cards) SizedBox(width: w, child: card)],
+      );
+    },
+  );
+}
+
+/// 상점 카드: 위 그림 · 이름 · 짧은 설명 · 아래 버튼 (가격).
+class _ShopCard extends StatelessWidget {
+  const _ShopCard({
+    required this.icon,
+    required this.title,
+    required this.button,
+    required this.enabled,
+    required this.onTap,
+    this.note,
+    this.tag,
+    this.ad = false,
+    this.iconScale = 1,
+  });
+  final ArtRef icon;
+  final String title;
+  final String? note;
+  final String? tag;
+  final String button;
+  final bool enabled;
+  final bool ad;
+  final double iconScale;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 178,
+      padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2D3B5), width: 1.5),
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Column(
+            children: [
+              SizedBox(
+                height: 62,
+                child: Center(child: ArtImage(icon, size: 58 * iconScale)),
+              ),
+              const SizedBox(height: 2),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: IconText(
+                  title,
+                  maxLines: 1,
+                  style: const TextStyle(fontSize: 15),
+                ),
+              ),
+              SizedBox(
+                height: 18,
+                child: note == null
+                    ? null
+                    : FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: IconText(
+                          note!,
+                          maxLines: 1,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF8A7660),
+                          ),
+                        ),
+                      ),
+              ),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                height: 40,
+                child: FilledButton(
+                  style: framedButton(
+                    FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      backgroundColor: ad ? Palette.ad : null,
+                    ),
+                    ad ? 'button_purple' : 'button_green',
+                  ),
+                  onPressed: enabled ? onTap : null,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: IconText(
+                      button,
+                      maxLines: 1,
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (tag != null)
+            Positioned(
+              top: -12,
+              right: -4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0533D),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+                child: Text(
+                  tag!,
+                  style: const TextStyle(fontSize: 11, color: Colors.white),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
 
 /// 새싹 정원 패키지 카드 (상점 맨 위 · 팝업 공용).
 class StarterCard extends StatelessWidget {
@@ -1167,43 +1423,63 @@ class StarterCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget line(String icon, String text) => Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        children: [
-          ArtImage(Art.icon(icon), size: 26),
-          const SizedBox(width: 8),
-          Expanded(
-            child: IconText(
-              text,
-              style: const TextStyle(fontSize: 15, height: 1.25),
-            ),
-          ),
-        ],
-      ),
-    );
     final d = billing.starter;
     final price = d?.price ?? '₩${fmtInt(Starter.krw)}';
+    final hours =
+        Starter.boosts.values.fold(0, (a, b) => a + b.inMinutes) ~/ 60;
+    // 짧게 · 크게: 무엇이 들었는지 한눈에 (아이콘 + 두 글자)
+    final items = [
+      ('no_ads', tr('starter.passShort', {'d': Starter.pass.inDays})),
+      ('diamond', '${Starter.gems}'),
+      ('energy_jar', '${Starter.energy}'),
+      ('boost', tr('starter.boostShort', {'h': hours})),
+      ('sparkle', tr('starter.effectShort')),
+      ('outfit', tr('starter.outfitShort')),
+    ];
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFFFF4C9), Color(0xFFFFE3EC)],
+          colors: [Color(0xFFFFF1B8), Color(0xFFFFD9E6)],
         ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE0A21B), width: 2.5),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE0A21B), width: 3),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x33E0A21B),
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // 시한 상품임을 가장 먼저: 빨간 띠 + 남은 시간
+          if (game.starterOfferActive)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0533D),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: IconText(
+                tr('starter.timerBig', {
+                  't': fmtDuration(game.starterOfferLeft),
+                }),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 17, color: Colors.white),
+              ),
+            ),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
                 child: IconText(
                   tr('starter.title'),
-                  style: const TextStyle(fontSize: 20),
+                  style: const TextStyle(fontSize: 21),
                 ),
               ),
               Container(
@@ -1217,41 +1493,74 @@ class StarterCard extends StatelessWidget {
                 ),
                 child: Text(
                   tr('starter.deal'),
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 2),
-          IconText(
-            tr('starter.worth', {'w': fmtInt(Starter.worthKrw)}),
-            style: const TextStyle(fontSize: 13, color: Color(0xFF8A5A2B)),
-          ),
-          if (game.starterOfferActive)
-            IconText(
-              tr('starter.timer', {'t': fmtDuration(game.starterOfferLeft)}),
-              style: const TextStyle(fontSize: 13, color: Color(0xFFE0533D)),
-            ),
           const SizedBox(height: 8),
-          line('no_ads', tr('starter.pass', {'d': Starter.pass.inDays})),
-          line('diamond', tr('starter.gems', {'n': Starter.gems})),
-          line('energy_jar', tr('starter.energy', {'n': Starter.energy})),
-          line('boost', tr('starter.boosts')),
-          line('sparkle', tr('starter.effect')),
-          line('outfit', tr('starter.outfit')),
+          GridView.count(
+            crossAxisCount: 3,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 6,
+            crossAxisSpacing: 6,
+            childAspectRatio: 1.25,
+            children: [
+              for (final (icon, label) in items)
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xCCFFFFFF),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ArtImage(Art.icon(icon), size: 34),
+                      const SizedBox(height: 2),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: IconText(
+                          label,
+                          maxLines: 1,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
           const SizedBox(height: 10),
           FilledButton(
             style: framedButton(
-              FilledButton.styleFrom(minimumSize: const Size(0, 50)),
+              FilledButton.styleFrom(minimumSize: const Size(0, 54)),
               'button_green',
             ),
             onPressed: d == null || billing.purchasing
                 ? null
                 : billing.buyStarter,
-            child: IconText(
-              d == null ? tr('shop.connecting') : price,
-              style: const TextStyle(fontSize: 19),
-            ),
+            child: d == null
+                ? IconText(
+                    tr('shop.connecting'),
+                    style: const TextStyle(fontSize: 18),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '₩${fmtInt(Starter.worthKrw)}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xCCFFFFFF),
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(price, style: const TextStyle(fontSize: 21)),
+                    ],
+                  ),
           ),
         ],
       ),
@@ -1501,47 +1810,6 @@ class _BoostRow extends StatelessWidget {
   }
 }
 
-class _OfferRow extends StatelessWidget {
-  const _OfferRow({required this.game, required this.index});
-  final GameState game;
-  final int index;
-
-  @override
-  Widget build(BuildContext context) {
-    final o = game.offers[index];
-    final full = !o.sold && game.boardFull;
-    final need = o.kind == 2
-        ? game.orders
-              .where((x) => x.chain == o.chain && x.level == o.level + 1)
-              .firstOrNull
-        : null;
-    return _ShopRow(
-      icon: Art.item(o.chain, o.level),
-      title: itemName(Chains.item(o.chain, o.level)),
-      note: switch (o.kind) {
-        1 => tr('market.free'),
-        2 when need != null => tr('market.helper', {
-          'name': friendName(need.friendId),
-        }),
-        _ => tr('market.level', {'n': o.level}),
-      },
-      tag: o.kind == 1 ? tr('market.freeTag') : null,
-      // 판이 가득하면 버튼에 이유를 바로 보여 준다 (누르면 아무 일도 안 일어나는 것처럼 보이지 않게)
-      button: o.sold
-          ? tr('market.sold')
-          : full
-          ? tr('market.boardFull')
-          : o.price == 0
-          ? tr('market.take')
-          : '[[coin]] ${UnitFmt.of([for (final x in game.offers) x.price.toDouble()])(o.price)}',
-      enabled: !o.sold && !full && game.coins >= o.price,
-      onTap: () {
-        if (game.buyOffer(index) == BuyResult.ok) sfx(Sfx.coin);
-      },
-    );
-  }
-}
-
 class _ShopHeader extends StatelessWidget {
   const _ShopHeader(this.text);
   final String text;
@@ -1553,38 +1821,6 @@ class _ShopHeader extends StatelessWidget {
       style: const TextStyle(fontSize: 15, color: Color(0xFF6B5638)),
     ),
   );
-}
-
-class _GemPackRow extends StatelessWidget {
-  const _GemPackRow({
-    required this.billing,
-    required this.pack,
-    required this.index,
-  });
-  final BillingService billing;
-  final GemPack pack;
-  final int index;
-
-  @override
-  Widget build(BuildContext context) {
-    final d = billing.gemProducts[pack.id];
-    final price = d?.price ?? '₩${fmtInt(pack.krw)}';
-    return _ShopRow(
-      icon: Art.icon('dia_${index + 1}'),
-      title: tr('shop.pack.$index'),
-      note: '[[diamond]] ${fmtInt(pack.gems)}',
-      tag: pack.valueX >= 1.95
-          ? tr('shop.bonusX', {
-              'n': pack.valueX.toStringAsFixed(pack.valueX < 3.05 ? 0 : 1),
-            })
-          : pack.bonusPct > 0
-          ? tr('shop.bonus', {'n': pack.bonusPct})
-          : null,
-      button: price,
-      enabled: d != null && !billing.purchasing,
-      onTap: () => billing.buyGems(pack),
-    );
-  }
 }
 
 class _ShopRow extends StatelessWidget {

@@ -73,7 +73,7 @@ class ShopOffer {
   final int price;
   bool sold;
 
-  /// 0 보통 · 1 오늘의 무료 선물 · 2 부탁 도우미(지금 부탁의 한 단계 아래).
+  /// 0 보통 · 1 오늘의 무료 선물 · 2 부탁 도우미(지금 부탁의 한 단계 아래) · 3 다이아로 사는 고단계 · 4 광고 보고 받는 고단계.
   final int kind;
   ShopOffer(
     this.chain,
@@ -99,7 +99,7 @@ class ShopOffer {
   );
 }
 
-enum BuyResult { ok, noCoins, noSpace, sold }
+enum BuyResult { ok, noCoins, noGems, noSpace, sold, needAd }
 
 enum StyleResult { ok, noCoins, noGems, notPlaced }
 
@@ -1817,7 +1817,8 @@ class GameState extends ChangeNotifier {
   /// 낮은 단계만 팔던 때는 바구니 탭보다 나을 게 없어서, 진행에 실제로 도움이 되는 것을 판다.
   List<ShopOffer> get offers {
     final k = _dayKey(now);
-    if (k != _offersDay) {
+    // 예전 저장(다이아 · 광고 칸이 없던 목록)도 한 번 새로 만든다
+    if (k != _offersDay || !_offers.any((o) => o.kind >= 3)) {
       _offersDay = k;
       final chains = availableChains;
       Chain pick() => chains[_rng.nextInt(chains.length)];
@@ -1845,6 +1846,26 @@ class GameState extends ChangeNotifier {
         final c = pick();
         list.add(ShopOffer(c, l, DailyShop.price(c, l, level)));
       }
+      // 고단계 두 칸: 다이아로 사기 · 광고 보고 받기
+      list.add(
+        ShopOffer(
+          pick(),
+          min(
+            Chains.maxLevel(Chain.flower),
+            spawnLevel + Gems.marketGemLevelUp,
+          ),
+          Gems.marketGemPrice,
+          kind: 3,
+        ),
+      );
+      list.add(
+        ShopOffer(
+          pick(),
+          min(Chains.maxLevel(Chain.flower), spawnLevel + Gems.marketAdLevelUp),
+          0,
+          kind: 4,
+        ),
+      );
       _offers = list;
     }
     return _offers;
@@ -1854,13 +1875,20 @@ class GameState extends ChangeNotifier {
   bool get freeOfferReady =>
       dailyShopOpen && offers.any((o) => o.kind == 1 && !o.sold);
 
-  BuyResult buyOffer(int i) {
+  BuyResult buyOffer(int i, {bool adWatched = false}) {
     final o = offers[i];
     if (o.sold) return BuyResult.sold;
-    if (coins < o.price) return BuyResult.noCoins;
+    if (o.kind == 4 && !adWatched) return BuyResult.needAd;
+    if (o.kind == 3 ? gems < o.price : (o.kind != 4 && coins < o.price)) {
+      return o.kind == 3 ? BuyResult.noGems : BuyResult.noCoins;
+    }
     final cell = _emptyCell;
     if (cell == null) return BuyResult.noSpace;
-    coins -= o.price;
+    if (o.kind == 3) {
+      _spendGems(o.price);
+    } else if (o.kind != 4) {
+      coins -= o.price;
+    }
     o.sold = true;
     board[cell] = Item(_nextId++, o.chain, o.level);
     _bump(Stat.shopBuys);
@@ -2082,7 +2110,7 @@ class GameState extends ChangeNotifier {
   void grantBoost() => grantBoostAd(BoostKind.coins);
 
   /// 보관 부스트 한 묶음 크기(분)와 개수.
-  int boostTokenPack(BoostKind k) => Starter.boosts[k]!.inMinutes;
+  int boostTokenPack(BoostKind k) => Starter.boostUse.inMinutes;
   int boostTokenCount(BoostKind k) =>
       ((boostTokens[k] ?? 0) / boostTokenPack(k)).ceil();
 
@@ -2138,6 +2166,29 @@ class GameState extends ChangeNotifier {
     effectOn = Starter.effect;
     ownedOutfits.add('${Starter.outfitFriend}:${Starter.outfit}');
     _trace('starter', '${Starter.krw}');
+    notifyListeners();
+    return true;
+  }
+
+  /// 코인 꾸러미 (다이아).
+  double coinPackAmount(int i) {
+    final (_, hours, floor) = Gems.coinPacks[i];
+    return max(floor * inflation, incomePerSec * 3600 * hours).roundToDouble();
+  }
+
+  bool buyCoinPack(int i) {
+    if (!_spendGems(Gems.coinPacks[i].$1)) return false;
+    _earn(coinPackAmount(i));
+    _trace('coinPack', '$i');
+    notifyListeners();
+    return true;
+  }
+
+  /// 계절 정원 효과 따로 사기.
+  bool buyEffect(String id) {
+    if (effects.contains(id) || !_spendGems(Gems.effectGems)) return false;
+    effects.add(id);
+    effectOn = id;
     notifyListeners();
     return true;
   }

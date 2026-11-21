@@ -133,16 +133,19 @@ void main() {
     expect(g2.checkInReady, isFalse);
   });
 
-  test('오늘의 시장: Lv4부터, 하루 4칸, 한 번씩, 판에 놓인다, 다음 날 새로', () {
+  test('오늘의 시장: Lv4부터, 코인 4칸 + 다이아 · 광고 칸, 한 번씩, 판에 놓인다, 다음 날 새로', () {
     final g = make();
     g.level = 6;
     expect(g.dailyShopOpen, isTrue);
-    expect(g.offers.length, DailyShop.slots);
+    expect(g.offers.length, DailyShop.slots + 2);
+    expect(g.offers[DailyShop.slots].kind, 3); // 다이아로 사는 고단계
+    expect(g.offers[DailyShop.slots + 1].kind, 4); // 광고 보고 받는 고단계
+    expect(g.buyOffer(DailyShop.slots + 1), BuyResult.needAd);
     expect(g.offers.first.kind, 1); // 첫 칸은 무료 선물
     expect(g.offers.first.price, 0);
     expect(g.freeOfferReady, isTrue);
     g.coins = 0;
-    expect(g.buyOffer(g.offers.length - 1), BuyResult.noCoins);
+    expect(g.buyOffer(DailyShop.slots - 1), BuyResult.noCoins);
     g.coins = 100000;
     final before = g.board.whereType<Item>().length;
     expect(g.buyOffer(0), BuyResult.ok);
@@ -410,12 +413,18 @@ void main() {
     expect(g.ownsOutfit(Starter.outfitFriend, Starter.outfit), isTrue);
     expect(g.effectOn, Starter.effect);
     expect(g.useBoostToken(BoostKind.coins), isTrue);
-    expect(g.boostLeft(BoostKind.coins), const Duration(minutes: 60));
-    expect(g.boostTokens.containsKey(BoostKind.coins), isFalse);
+    expect(g.boostLeft(BoostKind.coins), Starter.boostUse); // 30분씩 꺼내 쓴다
+    expect(
+      g.boostTokens[BoostKind.coins],
+      Starter.boosts[BoostKind.coins]!.inMinutes - Starter.boostUse.inMinutes,
+    );
     final g2 = make()..loadJson(g.toJson());
     expect(g2.starterBought, isTrue);
     expect(g2.passActive, isTrue);
-    expect(g2.boostTokens[BoostKind.energy], 30);
+    expect(
+      g2.boostTokens[BoostKind.energy],
+      Starter.boosts[BoostKind.energy]!.inMinutes,
+    );
     now = now.add(const Duration(days: 31));
     expect(g.passActive, isFalse);
     // 한정 의상은 다이아로 살 수 없다
@@ -553,7 +562,7 @@ void main() {
     expect(g.nextOrderMilestone, (10, 2));
   });
 
-  test('광고 다이아: 하루 5번 · 1개씩', () {
+  test('광고 다이아: 하루 3번 · 5개씩', () {
     final g = make();
     final g0 = g.gems;
     var n = 0;
@@ -562,8 +571,8 @@ void main() {
       g.grantGemAd();
       n++;
     }
-    expect(n, 5);
-    expect(g.gems - g0, 5);
+    expect(n, 3);
+    expect(g.gems - g0, 15);
   });
 
   test('회차 별 보너스: 2회차부터 회차당 +5%, 최대 +50%', () {
