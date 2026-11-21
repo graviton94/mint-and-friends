@@ -12,13 +12,13 @@
  },
  "release": {
   "version": "1.0.0",
-  "versionCode": 1007,
+  "versionCode": 1009,
   "track": "비공개 테스트",
-  "aab": "MintAndFriends-1.0.0-1007.aab",
+  "aab": "MintAndFriends-1.0.0-1009.aab",
   "releaseUrl": "https://github.com/graviton94/mint-and-friends/releases",
-  "tag": "store-1.0.0-1007",
+  "tag": "store-1.0.0-1009",
   "built": "2026-11-21",
-  "signed": "업로드 키 서명 확인됨",
+  "signed": "업로드 키 서명 · 실광고 ID 확인됨",
   "notes": {
    "en-US": "Thanks for joining the Mint & Friends closed test!\nMerging, requests, garden decorating, upgrades, garden renewal, friends and daily gifts are all in.\nPlease send bugs or anything confusing through the contact email in Settings.",
    "ko-KR": "민트앤프렌즈 비공개 테스트에 와 주셔서 고마워요!\n합치기 · 부탁 · 정원 꾸미기 · 강화 · 정원 재단장 · 친구 · 출석까지 모두 들어 있어요.\n불편한 점이나 버그는 앱 설정의 문의 메일로 알려 주세요.",
@@ -318,7 +318,7 @@
   ],
   [
    "AdMob 실제 ID → GitHub 비밀값 3개 → AAB 다시 빌드",
-   false
+   true
   ],
   [
    "비공개 테스트 트랙에 AAB 업로드 · 출시 노트",
