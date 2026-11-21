@@ -106,60 +106,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: Stack(
                                   clipBehavior: Clip.none,
                                   children: [
-                                    // 양옆 뒤(곰 · 판다) → 양옆 앞(오리 · 고양이) → 가운데 맨 앞 민트(손 흔들기), 좌우 대칭
-                                    for (final (art, left, bottom, size) in [
-                                      (
-                                        Art.friend(
-                                          Friends.byId('dubu'),
-                                          happy: true,
-                                        ),
-                                        0.0,
-                                        30.0,
-                                        88.0,
-                                      ),
-                                      (
-                                        Art.friend(
-                                          Friends.byId('mochi'),
-                                          happy: true,
-                                        ),
-                                        242.0,
-                                        30.0,
-                                        88.0,
-                                      ),
-                                      (
-                                        Art.friend(Friends.byId('kwak')),
-                                        46.0,
-                                        4.0,
-                                        98.0,
-                                      ),
-                                      (
-                                        Art.friend(
-                                          Friends.byId('nabi'),
-                                          happy: true,
-                                        ),
-                                        186.0,
-                                        4.0,
-                                        98.0,
-                                      ),
-                                      (
-                                        const ArtRef(
-                                          'assets/art/friends/bori_wave.webp',
-                                          '',
-                                        ),
-                                        101.0,
-                                        -18.0,
-                                        128.0,
-                                      ),
+                                    // 첫 화면에서 아직 못 만난 친구 다섯: 손 흔들기 · 기뻐하기, 모두 발목까지 패널에 가려진다
+                                    for (final (id, pose, left, size) in const [
+                                      ('bogeul', 'wave', 0.0, 90.0),
+                                      ('pposong', 'wave', 240.0, 90.0),
+                                      ('dotori', 'happy', 46.0, 100.0),
+                                      ('kongtteok', 'happy', 184.0, 100.0),
+                                      ('danpung', 'wave', 107.0, 116.0),
                                     ])
                                       Positioned(
                                         left: left,
-                                        bottom: bottom,
+                                        bottom: -20,
                                         child: ArtImage(
-                                          art.available
-                                              ? art
-                                              : Art.friend(
-                                                  Friends.byId('bori'),
-                                                ),
+                                          _friendPose(id, pose),
                                           size: size,
                                         ),
                                       ),
@@ -341,6 +300,12 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+}
+
+/// 로그인 무대용 친구 그림: 포즈 그림이 없으면 기본 그림.
+ArtRef _friendPose(String id, String pose) {
+  final r = ArtRef('assets/art/friends/${id}_$pose.webp', '');
+  return r.available ? r : Art.friend(Friends.byId(id));
 }
 
 /// 공식 가이드 모양의 로그인 버튼 (로고 왼쪽 고정, 글자 가운데).

@@ -151,6 +151,9 @@ class DevLog extends ChangeNotifier {
     ].join(',');
   }
 
+  /// 자유 형식 한 줄 (예: 'audio,ready=true pool=6 ...').
+  void note(String type, String text) => _write(type, text);
+
   /// 상태 한 줄. [event]: start · pause · level · area · manual.
   void record(GameState g, String event) {
     _game = g;

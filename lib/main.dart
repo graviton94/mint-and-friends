@@ -161,7 +161,13 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     auth.addListener(_onAuthChanged);
     _start();
     DevLog.instance.record(game, 'start');
-    AudioService.instance.startMusic();
+    AudioService.instance.startMusic().then((_) {
+      final a = AudioService.instance;
+      DevLog.instance.note(
+        'audio',
+        '${a.status}${a.lastError == null ? '' : ' last=${a.lastError}'}',
+      );
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _onAuthChanged();
       _offerOffline();

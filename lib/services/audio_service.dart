@@ -95,34 +95,57 @@ class AudioService extends ChangeNotifier {
       _sfxOn = prefs.getBool(_sfxKey) ?? true;
       notifyListeners();
     } catch (_) {}
+    // 단계마다 따로 감싼다: 한 단계(저지연 모드 · 오디오 컨텍스트 · 미리 풀기)가 실패해도
+    // 나머지는 살아 있게 (예전엔 첫 실패에서 BGM 플레이어까지 만들지 못해 소리가 하나도 안 났다)
+    final errors = <String>[];
+    Future<void> step(String name, Future<void> Function() f) async {
+      try {
+        await f();
+      } catch (e) {
+        errors.add('$name:$e');
+      }
+    }
+
+    AudioContext? sfxCtx;
     try {
       // 효과음은 다른 소리(BGM·다른 앱)의 오디오 포커스를 뺏지 않게 한다.
-      final sfxCtx = AudioContextConfig(
-        focus: AudioContextConfigFocus.mixWithOthers,
-      ).build();
-      for (var i = 0; i < _poolSize; i++) {
-        final p = AudioPlayer(playerId: 'sfx_$i');
-        await p.setPlayerMode(PlayerMode.lowLatency);
-        await p.setReleaseMode(ReleaseMode.stop);
-        await p.setAudioContext(sfxCtx);
-        await p.setVolume(sfxVolume);
-        _pool.add(p);
+      sfxCtx = AudioContextConfig(focus: AudioContextConfigFocus.mixWithOthers)
+          .build();
+    } catch (e) {
+      errors.add('ctx:$e');
+    }
+    for (var i = 0; i < _poolSize; i++) {
+      final p = AudioPlayer(playerId: 'sfx_$i');
+      await step('mode', () => p.setPlayerMode(PlayerMode.lowLatency));
+      await step('release', () => p.setReleaseMode(ReleaseMode.stop));
+      if (sfxCtx != null) {
+        await step('context', () => p.setAudioContext(sfxCtx!));
       }
-      final m = AudioPlayer(playerId: 'bgm');
-      await m.setReleaseMode(ReleaseMode.loop);
-      await m.setVolume(musicVolume);
-      _music = m;
-      // 에셋을 임시 파일로 미리 풀어 둬서 첫 재생 지연을 줄인다.
-      await Future.wait([
+      await step('volume', () => p.setVolume(sfxVolume));
+      _pool.add(p);
+    }
+    final m = AudioPlayer(playerId: 'bgm');
+    await step('bgmLoop', () => m.setReleaseMode(ReleaseMode.loop));
+    await step('bgmVolume', () => m.setVolume(musicVolume));
+    _music = m;
+    _ready = _pool.isNotEmpty;
+    // 에셋을 임시 파일로 미리 풀어 둬서 첫 재생 지연을 줄인다 (실패해도 재생은 된다).
+    await step(
+      'preload',
+      () => Future.wait([
         AudioCache.instance.load(_bgmAsset),
         for (final s in Sfx.values)
           for (final a in s.assets) AudioCache.instance.load(a),
-      ]);
-      _ready = true;
-    } catch (_) {
-      _ready = _pool.isNotEmpty;
-    }
+      ]),
+    );
+    status =
+        'ready=$_ready pool=${_pool.length} music=$_musicOn sfx=$_sfxOn'
+        '${errors.isEmpty ? '' : ' errors=${errors.take(3).join(' | ')}'}';
+    notifyListeners();
   }
+
+  /// 마지막 초기화 결과 (성장 로그에 남긴다).
+  String status = 'not-init';
 
   Future<void> setMusic(bool on) async {
     if (_musicOn == on) return;
@@ -175,8 +198,21 @@ class AudioService extends ChangeNotifier {
         volume: sfxVolume,
         mode: PlayerMode.lowLatency,
       );
-    } catch (_) {}
+    } catch (e) {
+      // 저지연 모드가 안 되는 기기: 일반 모드로 다시
+      try {
+        await p.play(
+          AssetSource(asset),
+          volume: sfxVolume,
+          mode: PlayerMode.mediaPlayer,
+        );
+      } catch (e2) {
+        lastError = 'sfx:$e2';
+      }
+    }
   }
+
+  String? lastError;
 
   /// BGM 반복 재생 시작(음악이 꺼져 있으면 아무것도 안 함).
   Future<void> startMusic() async {
@@ -192,7 +228,9 @@ class AudioService extends ChangeNotifier {
       } else {
         await m.play(AssetSource(_bgmAsset), volume: musicVolume);
       }
-    } catch (_) {}
+    } catch (e) {
+      lastError = 'bgm:$e';
+    }
   }
 
   Future<void> _stopMusic() async {
