@@ -1,3 +1,4 @@
+// 밸런스 시뮬레이션 (14일, 플레이어 3유형). 실행: cp 후 flutter test, 또는 BALANCE_OUT=경로 BALANCE_DAYS=21
 // ignore_for_file: avoid_print
 // 밸런스 감사용 임시 시뮬레이션 (감사 후 삭제).
 import 'dart:io';
@@ -426,7 +427,7 @@ const profB = Profile(
 
 void main() {
   final out = Platform.environment['BALANCE_OUT'] ??
-      '/tmp/claude-0/-home-user/35666f21-7756-5f58-9f37-848482d076bb/scratchpad/balance/out.txt';
+      'build/balance.txt';
   final days = int.tryParse(Platform.environment['BALANCE_DAYS'] ?? '') ?? 14;
   final buf = StringBuffer();
 
