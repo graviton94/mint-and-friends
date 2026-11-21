@@ -616,8 +616,8 @@
   "boost.title": "ブースト",
   "boost.coins": "コイン2倍",
   "boost.coins.note": "コイン収益・報酬が2倍",
-  "boost.energy": "エネルギー無限",
-  "boost.energy.note": "かごを押しても[[energy]]が減らない (その間回復は止まる)",
+  "boost.energy": "エネルギー節約",
+  "boost.energy.note": "かごを押すと半分は[[energy]]がへりません",
   "boost.lucky": "ラッキーかご",
   "boost.lucky.note": "一段上のアイテムがよく出る",
   "boost.minutes": "{n}分",
@@ -707,5 +707,10 @@
   "upgrade.snackPower.short": "[[coin]]/時",
   "upgrade.milestone5": "Lv{n}: 星お願い +1",
   "upgrade.milestone10": "Lv{n}: 効果 ×1.5",
-  "upgrade.milestoneDone": "星お願い +1 · 効果 ×1.5"
+  "upgrade.milestoneDone": "星お願い +1 · 効果 ×1.5",
+  "board.gift": "[[heart]] プレゼント",
+  "gift.title": "だれにあげる?",
+  "gift.note": "最高段階のアイテムをあげるとハート +1 · [[coin]]{coins}",
+  "toast.gift2": "{emoji} 本当にありがとう! [[heart]]+1 [[coin]]+{coins}",
+  "toast.giftMaxStars": "{emoji} 本当にありがとう! [[star]]+{stars} [[coin]]+{coins}"
 }

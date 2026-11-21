@@ -616,8 +616,8 @@
   "boost.title": "Boosts",
   "boost.coins": "Coins x2",
   "boost.coins.note": "Double coin income and rewards",
-  "boost.energy": "Free energy",
-  "boost.energy.note": "Basket taps cost no [[energy]] (regen pauses meanwhile)",
+  "boost.energy": "Energy saver",
+  "boost.energy.note": "Half of your basket taps cost no [[energy]]",
   "boost.lucky": "Lucky basket",
   "boost.lucky.note": "Higher-level items come out more often",
   "boost.minutes": "{n} min",
@@ -707,5 +707,10 @@
   "upgrade.snackPower.short": "[[coin]]/h",
   "upgrade.milestone5": "Lv{n}: +1 star request",
   "upgrade.milestone10": "Lv{n}: effect ×1.5",
-  "upgrade.milestoneDone": "+1 star request · ×1.5"
+  "upgrade.milestoneDone": "+1 star request · ×1.5",
+  "board.gift": "[[heart]] Gift",
+  "gift.title": "Gift to whom?",
+  "gift.note": "Gift a max-tier item for a heart +1 · [[coin]]{coins}",
+  "toast.gift2": "{emoji} Thank you so much! [[heart]]+1 [[coin]]+{coins}",
+  "toast.giftMaxStars": "{emoji} Thank you so much! [[star]]+{stars} [[coin]]+{coins}"
 }

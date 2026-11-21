@@ -617,8 +617,8 @@
   "boost.title": "부스트",
   "boost.coins": "코인 2배",
   "boost.coins.note": "코인 수익 · 보상이 2배",
-  "boost.energy": "무한 에너지",
-  "boost.energy.note": "바구니를 눌러도 [[energy]]가 줄지 않아요 (그동안 회복은 멈춰요)",
+  "boost.energy": "에너지 절약",
+  "boost.energy.note": "바구니를 누를 때 절반은 [[energy]]가 들지 않아요",
   "boost.lucky": "행운 바구니",
   "boost.lucky.note": "한 단계 높은 아이템이 더 자주 나와요",
   "boost.minutes": "{n}분",
@@ -708,5 +708,10 @@
   "upgrade.snackPower.short": "[[coin]]/시간",
   "upgrade.milestone5": "Lv{n}: 별 부탁 +1",
   "upgrade.milestone10": "Lv{n}: 효과 ×1.5",
-  "upgrade.milestoneDone": "별 부탁 +1 · 효과 ×1.5"
+  "upgrade.milestoneDone": "별 부탁 +1 · 효과 ×1.5",
+  "board.gift": "[[heart]] 선물",
+  "gift.title": "누구에게 줄까?",
+  "gift.note": "최고 단계 아이템을 선물하면 하트 +1 · [[coin]]{coins}",
+  "toast.gift2": "{emoji} 정말 고마워! [[heart]]+1 [[coin]]+{coins}",
+  "toast.giftMaxStars": "{emoji} 정말 고마워! [[star]]+{stars} [[coin]]+{coins}"
 }

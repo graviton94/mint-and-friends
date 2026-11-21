@@ -403,4 +403,39 @@ void main() {
       );
     }
   });
+
+  test('에너지 절약 부스트: 대략 절반만 에너지를 쓴다', () {
+    final g = GameState(random: Random(7));
+    g.board.fillRange(0, g.board.length, null);
+    g.energy = 1000;
+    g.grantBoostAd(BoostKind.energy);
+    var taps = 0;
+    for (var i = 0; i < 200; i++) {
+      if (g.boardFull) g.board.fillRange(0, g.board.length, null);
+      if (g.tapSpawner() == TapResult.spawned) taps++;
+    }
+    final spent = 1000 - g.energy;
+    expect(taps, 200);
+    expect(spent, inInclusiveRange(70, 130));
+  });
+
+  test('최고 단계 아이템 선물: 하트 +1 · 코인, 하트가 차면 별', () {
+    final g = GameState(random: Random(1));
+    g.friends.add('dubu');
+    final max = Chains.maxLevel(Chain.tea);
+    g.board[0] = Item(900, Chain.tea, max);
+    final h = g.affection('dubu');
+    final c = g.coins;
+    expect(g.giftMaxItem(0, 'dubu'), isTrue);
+    expect(g.board[0], isNull);
+    expect(g.affection('dubu'), h + 1);
+    expect(g.coins, greaterThan(c));
+    g.board[1] = Item(901, Chain.tea, max - 1);
+    expect(g.giftMaxItem(1, 'dubu'), isFalse);
+    g.deliveries['dubu'] = 100;
+    final st = g.stars;
+    g.board[2] = Item(902, Chain.tea, max);
+    expect(g.giftMaxItem(2, 'dubu'), isTrue);
+    expect(g.stars, st + GameConfig.maxGiftStars);
+  });
 }

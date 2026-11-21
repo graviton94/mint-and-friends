@@ -185,6 +185,15 @@ class BubbleEvent extends GameEvent {
 class EnergyEmptyEvent extends GameEvent {}
 
 /// 계절 세트(한 구역 8종)를 다 모았다.
+class MaxGiftEvent extends GameEvent {
+  final String friendId;
+  final double coins;
+  final int stars;
+  final Chain chain;
+  final int level;
+  MaxGiftEvent(this.friendId, this.coins, this.stars, this.chain, this.level);
+}
+
 class SeasonSetEvent extends GameEvent {
   final int area;
   final int style;
@@ -763,8 +772,6 @@ class GameState extends ChangeNotifier {
   // ---------------------------------------------------------------- 에너지
 
   void _regenEnergy(double dt) {
-    // 무한 에너지 동안은 회복을 멈춘다 (부스트와 회복을 겹쳐 받지 않게)
-    if (boosted(BoostKind.energy)) return;
     if (energy >= GameConfig.energyCap) {
       energyProgress = 0;
       return;
@@ -785,7 +792,10 @@ class GameState extends ChangeNotifier {
   /// 바구니 탭: 에너지 1로 즉시 하나 생성. 결과를 돌려준다.
   TapResult tapSpawner() {
     if (boardFull) return TapResult.boardFull;
-    final free = boosted(BoostKind.energy);
+    // 에너지 절약 부스트: 바구니 한 번에 [Boosts.energySaveChance] 확률로 에너지가 들지 않는다
+    final free =
+        boosted(BoostKind.energy) &&
+        _rng.nextDouble() < Boosts.energySaveChance;
     if (!free && energy < GameConfig.energyPerTap) {
       if (!_emptyReported) {
         _emptyReported = true;
@@ -1011,6 +1021,37 @@ class GameState extends ChangeNotifier {
   }
 
   double sellPrice(Item it) => GameConfig.sellValueOf(it.level);
+
+  /// 최고 단계 아이템인가 (친구에게 선물할 수 있다).
+  bool isMaxItem(Item it) =>
+      !it.isBubble && it.level >= Chains.maxLevel(it.chain);
+
+  /// 하트가 아직 다 차지 않은 친구 (선물 받을 수 있는 친구).
+  List<String> get giftableFriends => [
+    for (final f in Friends.all)
+      if (friends.contains(f.id) && affection(f.id) < Friends.maxAffection)
+        f.id,
+  ];
+
+  /// 최고 단계 아이템을 친구에게 선물: 하트 +1 · 코인. 하트가 모두 찼으면 별로 바꿔 준다.
+  bool giftMaxItem(int cell, String friendId) {
+    final it = board[cell];
+    if (it == null || !isMaxItem(it) || !friends.contains(friendId)) {
+      return false;
+    }
+    board[cell] = null;
+    final full = affection(friendId) >= Friends.maxAffection;
+    deliveries[friendId] =
+        (deliveries[friendId] ?? 0) + Friends.deliveriesPerAffection;
+    final coins = GameConfig.maxGiftCoinsOf(it.level) * _coinMult;
+    _earn(coins);
+    final s = full ? GameConfig.maxGiftStars : 0;
+    stars += s;
+    _trace('gift', '${it.chain.name},${it.level},$friendId');
+    _events.add(MaxGiftEvent(friendId, coins, s, it.chain, it.level));
+    notifyListeners();
+    return true;
+  }
 
   /// 아이템 판매. 판매 금액을 돌려준다.
   double? sell(int cell) {

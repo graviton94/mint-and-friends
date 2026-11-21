@@ -46,6 +46,12 @@ class GameConfig {
   /// 최고 레벨 두 개를 합치면 사라지면서 지급되는 코인.
   static double maxMergePayoutOf(int level) => 20.0 * level;
 
+  /// 최고 단계 아이템을 친구에게 선물할 때 코인 (하트 +1 과 함께).
+  static double maxGiftCoinsOf(int level) => 300.0 * level;
+
+  /// 하트가 다 찬 친구에게 선물하면 대신 별.
+  static const int maxGiftStars = 30;
+
   /// 신규 아이템 발견 보너스 코인.
   static double discoveryBonusOf(int level) => 3.0 * level;
 
@@ -140,9 +146,12 @@ class Boosts {
   /// 광고 1번으로 얻는 시간.
   static const Map<BoostKind, Duration> perAd = {
     BoostKind.coins: Duration(minutes: 15),
-    BoostKind.energy: Duration(minutes: 3),
+    BoostKind.energy: Duration(minutes: 5),
     BoostKind.lucky: Duration(minutes: 5),
   };
+
+  /// 에너지 절약: 바구니 한 번에 에너지가 들지 않을 확률 (예전 '무한 에너지'는 한 판에 1,000번 넘게 무료라 폐지).
+  static const double energySaveChance = 0.5;
 
   /// 다이아로 사는 시간 · 가격.
   static const Map<BoostKind, Duration> perGems = {

@@ -148,6 +148,20 @@ class _HomeScreenState extends State<HomeScreen> {
             'name': friendName(friendId),
           }),
         );
+      case MaxGiftEvent(:final friendId, :final coins, :final stars):
+        sfx(Sfx.deliver);
+        _toast(
+          stars > 0
+              ? tr('toast.giftMaxStars', {
+                  'emoji': friendToken(friendId),
+                  'stars': stars,
+                  'coins': fmt(coins),
+                })
+              : tr('toast.gift2', {
+                  'emoji': friendToken(friendId),
+                  'coins': fmt(coins),
+                }),
+        );
       case SeasonSetEvent(:final area, :final style):
         sfx(Sfx.levelup);
         setState(() => _viewArea = area);
@@ -660,6 +674,84 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   bool _allDoneShown = false;
+
+  /// 최고 단계 아이템 선물: 친구를 고른다 (하트가 덜 찬 친구가 앞).
+  Future<void> _giftDialog(int cell) async {
+    final it = game.board[cell];
+    if (it == null) return;
+    final list = game.friends.toList()
+      ..sort((a, b) => game.affection(a).compareTo(game.affection(b)));
+    final pick = await showDialog<String>(
+      context: context,
+      builder: (ctx) => GameDialog(
+        banner: 'gold',
+        title: IconText(tr('gift.title'), textAlign: TextAlign.center),
+        onClose: () => Navigator.pop(ctx),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ArtImage(Art.item(it.chain, it.level), size: 64),
+            const SizedBox(height: 4),
+            IconText(
+              tr('gift.note', {
+                'coins': fmt(GameConfig.maxGiftCoinsOf(it.level)),
+              }),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: Color(0xFF6B5A44)),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                for (final id in list)
+                  GestureDetector(
+                    onTap: () => Navigator.pop(ctx, id),
+                    child: Container(
+                      width: 74,
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: const Color(0xFFE2D3B5),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          ArtImage(
+                            Art.friend(
+                              Friends.byId(id),
+                              outfit: game.outfitOf(id),
+                            ),
+                            size: 44,
+                          ),
+                          Text(
+                            friendName(id),
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          IconText(
+                            '[[heart]]${game.affection(id)}/${Friends.maxAffection}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+    if (pick == null) return;
+    if (game.giftMaxItem(cell, pick)) setState(() => _selected = null);
+  }
 
   /// 레벨 배지를 누르면: 경험치를 어떻게 얻는지.
   Future<void> _xpInfo() => showDialog<void>(
@@ -1603,6 +1695,23 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
+            if (game.isMaxItem(sel) && game.friends.isNotEmpty) ...[
+              FilledButton(
+                style: plainButton(
+                  FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFE8739A),
+                    minimumSize: const Size(40, 36),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                ),
+                onPressed: () => _giftDialog(idx),
+                child: IconText(
+                  tr('board.gift'),
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+              const SizedBox(width: 6),
+            ],
             FilledButton(
               style: plainButton(
                 FilledButton.styleFrom(
