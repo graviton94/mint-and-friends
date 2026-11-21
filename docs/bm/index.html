@@ -1,0 +1,177 @@
+<title>민트앤프렌즈 경제 카탈로그</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: 장부(ledger) — 위에 환산 기준, 아래로 재화 · 결제 · 다이아 소비 · 광고 네 장부를 표로 */
+:root {
+  --bg: #F3F6EF;
+  --panel: #FFFFFF;
+  --ink: #2F3A2C;
+  --muted: #6A7565;
+  --line: #DCE3D3;
+  --accent: #3F8A4E;
+  --accent-soft: #E3F0DF;
+  --gem: #2A9DB5;
+  --changed: #B86A12;
+  --changed-soft: #FCEBD3;
+  --new: #7A4FC0;
+  --new-soft: #EEE5FB;
+  --display: "Jua", "Noto Sans KR", system-ui, sans-serif;
+  --body: "Noto Sans KR", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161B15; --panel: #1F261D; --ink: #E4EBDF; --muted: #9AA594; --line: #323C2F;
+    --accent: #7CC58A; --accent-soft: #243A27; --gem: #6CCDE0;
+    --changed: #F0AC5C; --changed-soft: #3A2C17; --new: #B99CF0; --new-soft: #2E2540;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161B15; --panel: #1F261D; --ink: #E4EBDF; --muted: #9AA594; --line: #323C2F;
+  --accent: #7CC58A; --accent-soft: #243A27; --gem: #6CCDE0;
+  --changed: #F0AC5C; --changed-soft: #3A2C17; --new: #B99CF0; --new-soft: #2E2540;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 14px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+h1, h2 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap: balance; }
+h1 { font-size: 30px; }
+h2 { font-size: 22px; display: flex; align-items: baseline; gap: 10px; }
+h2 small { font-family: var(--body); font-size: 13px; color: var(--muted); font-weight: 400; }
+.head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px; }
+.head p { margin: 4px 0 0; color: var(--muted); }
+.ver { font-size: 12px; letter-spacing: .04em; color: var(--muted); }
+.basis { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.basis div { background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; }
+.basis b { display: block; font-family: var(--display); font-weight: 400; font-size: 20px; font-variant-numeric: tabular-nums; }
+.basis span { color: var(--muted); font-size: 12.5px; }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.tools input { flex: 1 1 220px; min-width: 0; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; }
+.tools input:focus-visible, .chipbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chipbtn { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.chipbtn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+section { display: flex; flex-direction: column; gap: 12px; }
+.tbl { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+table { width: 100%; border-collapse: collapse; min-width: 720px; }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+th { font-size: 11.5px; letter-spacing: .06em; color: var(--muted); font-weight: 500; background: var(--bg); position: sticky; top: 0; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.item { display: flex; gap: 10px; align-items: center; min-width: 170px; }
+.item img { width: 38px; height: 38px; object-fit: contain; flex: none; }
+.item b { display: block; font-weight: 700; }
+.item code { font-size: 11.5px; color: var(--muted); }
+.st { display: inline-block; font-size: 11.5px; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+.st.ok { background: var(--accent-soft); color: var(--accent); }
+.st.changed { background: var(--changed-soft); color: var(--changed); }
+.st.new { background: var(--new-soft); color: var(--new); }
+.note { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+ul.l { margin: 0; padding-left: 16px; }
+ul.l li { margin: 1px 0; }
+.grp td { background: var(--bg); font-family: var(--display); font-size: 15px; color: var(--muted); }
+.gem { color: var(--gem); font-weight: 700; }
+.empty { padding: 18px; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <div class="head">
+    <div>
+      <h1>민트앤프렌즈 경제 카탈로그</h1>
+      <p>재화 · 결제 상품 · 다이아 소비처 · 광고 보상을 한 장부로. 값은 게임 코드(config.dart) 기준.</p>
+    </div>
+    <div class="ver" id="ver">불러오는 중…</div>
+  </div>
+
+  <div class="basis" id="basis"></div>
+
+  <div class="tools">
+    <input id="q" type="search" placeholder="이름 · id · 효과로 찾기" aria-label="찾기">
+    <button class="chipbtn" id="f-all" aria-pressed="true" data-f="all">전체</button>
+    <button class="chipbtn" id="f-changed" aria-pressed="false" data-f="changed">이번에 바뀐 것</button>
+    <button class="chipbtn" id="f-new" aria-pressed="false" data-f="new">새로 추가</button>
+  </div>
+
+  <section id="s-cur"><h2>재화 <small>무엇으로 얻고 어디에 쓰나</small></h2><div class="tbl" id="cur"><div class="empty">재화 목록을 불러오는 중…</div></div></section>
+  <section id="s-iap"><h2>결제 상품 <small>Play Console 상품 id · 가격 · 가성비</small></h2><div class="tbl" id="iap"></div></section>
+  <section id="s-shop"><h2>다이아 소비처 <small>1 다이아 ≈ ₩19 · 에너지 1 ≈ 다이아 0.6</small></h2><div class="tbl" id="shop"></div></section>
+  <section id="s-ad"><h2>광고 보상 <small>하루 횟수 · 정원 패스는 광고 없이 받음</small></h2><div class="tbl" id="ad"></div></section>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const won = (n) => '₩' + Number(n).toLocaleString('ko-KR');
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ST = { ok: ['ok', '유지'], changed: ['changed', '변경'], new: ['new', '신규'] };
+let data = null, filter = 'all', query = '';
+
+function item(r) {
+  return `<div class="item"><img src="icons/${esc(r.icon)}.webp" alt="" loading="lazy"><div><b>${esc(r.name)}</b><code>${esc(r.id)}</code></div></div>`;
+}
+function st(s) { const [c, t] = ST[s || 'ok']; return `<span class="st ${c}">${t}</span>`; }
+function list(a) { return `<ul class="l">${(a || []).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`; }
+function keep(r) {
+  if (filter !== 'all' && (r.status || 'ok') !== filter) return false;
+  if (!query) return true;
+  return JSON.stringify(r).toLowerCase().includes(query);
+}
+function table(head, rows) {
+  if (!rows.length) return '<div class="empty">조건에 맞는 항목이 없어요.</div>';
+  return `<table><thead><tr>${head.map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
+}
+
+function render() {
+  const d = data;
+  $('ver').textContent = `기준 ${d.meta.version} · ${d.meta.updated}`;
+  $('basis').innerHTML = [
+    [`₩${d.meta.gemKrw}`, '다이아 1개 (기본 팩) · 가장 싼 팩 ₩' + d.meta.gemKrwBest],
+    [`${d.meta.energyGem} 다이아`, '에너지 1개 값 (그날 첫 충전 기준)'],
+    ['2^(단계−바구니)', '아이템 1개의 에너지값'],
+  ].map(([b, s]) => `<div><b>${b}</b><span>${s}</span></div>`).join('');
+
+  $('cur').innerHTML = table(['재화', '종류', '얻는 곳', '쓰는 곳', '메모'],
+    d.currencies.filter(keep).map((r) => `<tr><td>${item(r)}</td><td>${esc(r.kind)}${r.cap ? `<div class="note">상한 ${esc(r.cap)}</div>` : ''}</td><td>${list(r.sources)}</td><td>${list(r.sinks)}</td><td class="note">${esc(r.note)}</td></tr>`));
+
+  $('iap').innerHTML = table(['상품', '종류', '가격', '내용', '가성비', '상태'],
+    d.iap.filter(keep).map((r) => {
+      const v = r.valueX ? `<span class="gem">${r.valueX.toFixed(2)}배</span><div class="note">₩${r.krwPerGem}/다이아</div>`
+        : `<div>실가치 ~${won(r.worthKrw)}</div><div class="note">${(r.worthKrw / r.priceKrw).toFixed(1)}배${r.badge ? ' · 배지 ' + esc(r.badge) : ''}</div>`;
+      return `<tr><td>${item(r)}</td><td class="num">${esc(r.type)}</td><td class="num">${won(r.priceKrw)}</td><td>${esc(r.contents)}${r.note ? `<div class="note">${esc(r.note)}</div>` : ''}</td><td class="num">${v}</td><td>${st(r.status)}</td></tr>`;
+    }));
+
+  const groups = [...new Set(d.gemShop.map((r) => r.group))];
+  const shopRows = [];
+  for (const g of groups) {
+    const rs = d.gemShop.filter((r) => r.group === g && keep(r));
+    if (!rs.length) continue;
+    shopRows.push(`<tr class="grp"><td colspan="5">${esc(g)}</td></tr>`);
+    for (const r of rs) {
+      shopRows.push(`<tr><td>${item(r)}</td><td class="num"><span class="gem">${esc(r.price)}</span></td><td>${esc(r.effect)}${r.note ? `<div class="note">${esc(r.note)}</div>` : ''}</td><td>${esc(r.efficiency)}</td><td>${st(r.status)}</td></tr>`);
+    }
+  }
+  $('shop').innerHTML = table(['항목', '다이아', '효과', '효용 (환산)', '상태'], shopRows);
+
+  $('ad').innerHTML = table(['광고', '하루', '보상', '메모'],
+    d.adRewards.filter(keep).map((r) => `<tr><td>${item(r)}</td><td class="num">${esc(r.cap)}</td><td>${esc(r.reward)}</td><td class="note">${esc(r.note)}</td></tr>`));
+}
+
+for (const b of document.querySelectorAll('.chipbtn')) {
+  b.addEventListener('click', () => {
+    filter = b.dataset.f;
+    for (const x of document.querySelectorAll('.chipbtn')) x.setAttribute('aria-pressed', String(x === b));
+    if (data) render();
+  });
+}
+$('q').addEventListener('input', (e) => { query = e.target.value.trim().toLowerCase(); if (data) render(); });
+
+fetch('catalog.json').then((r) => r.json()).then((j) => { data = j; render(); })
+  .catch(() => { $('cur').innerHTML = '<div class="empty">catalog.json 을 읽지 못했어요. 새로고침해 보세요.</div>'; });
+</script>
