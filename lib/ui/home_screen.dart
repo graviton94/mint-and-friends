@@ -1792,14 +1792,14 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: game.openBaskets.length > 1 ? 4 : 10),
           _Spawner(
             key: _kSpawner,
             game: game,
             onTap: _onSpawnerTap,
             onLongPress: _energyDialog,
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: game.openBaskets.length > 1 ? 4 : 10),
           Expanded(
             child: _BarTile(
               key: _kBoost,
@@ -1920,7 +1920,34 @@ class _Spawner extends StatelessWidget {
     final icon = game.basket == 0
         ? Art.basket
         : Art.icon(Chains.basketIcon[game.basket]);
-    return GestureDetector(
+    final multi = open.length > 1;
+    // 지금 바구니로는 못 만드는 부탁이 다른 바구니에 있으면 그쪽 화살표를 반짝인다
+    int? wantDir;
+    if (multi) {
+      final cur = open.indexOf(game.basket);
+      for (var i = 0; i < game.orders.length; i++) {
+        final o = game.orders[i];
+        if (game.canDeliver(i) || !game.orderGivesStars(o)) continue;
+        final b = open.indexWhere((b) => Chains.baskets[b].contains(o.chain));
+        if (b < 0 || b == cur) continue;
+        final fwd = (b - cur + open.length) % open.length;
+        wantDir = fwd <= open.length - fwd ? 1 : -1;
+        break;
+      }
+    }
+    Widget arrow(int dir) {
+      final target = multi
+          ? open[(open.indexOf(game.basket) + dir + open.length) % open.length]
+          : 0;
+      return _BasketArrow(
+        dir: dir,
+        icon: target == 0 ? Art.basket : Art.icon(Chains.basketIcon[target]),
+        hot: wantDir == dir,
+        onTap: () => swipe(dir),
+      );
+    }
+
+    final ring = GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
       onHorizontalDragEnd: (d) {
@@ -1995,6 +2022,115 @@ class _Spawner extends StatelessWidget {
                 ),
               ),
           ],
+        ),
+      ),
+    );
+    if (!multi) return ring;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [arrow(-1), ring, arrow(1)],
+    );
+  }
+}
+
+/// 바구니 옆 작은 화살표: 누르면 옆 바구니로. 다음 바구니 그림이 살짝 보이고,
+/// 그 바구니가 필요한 부탁이 있으면 노랗게 통통 튄다.
+class _BasketArrow extends StatefulWidget {
+  const _BasketArrow({
+    required this.dir,
+    required this.icon,
+    required this.hot,
+    required this.onTap,
+  });
+  final int dir;
+  final ArtRef icon;
+  final bool hot;
+  final VoidCallback onTap;
+
+  @override
+  State<_BasketArrow> createState() => _BasketArrowState();
+}
+
+class _BasketArrowState extends State<_BasketArrow>
+    with SingleTickerProviderStateMixin {
+  late final _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 650),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.hot) _c.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(_BasketArrow old) {
+    super.didUpdateWidget(old);
+    if (widget.hot && !_c.isAnimating) {
+      _c.repeat(reverse: true);
+    } else if (!widget.hot && _c.isAnimating) {
+      _c.stop();
+      _c.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hot = widget.hot;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.onTap,
+      child: AnimatedBuilder(
+        animation: _c,
+        builder: (_, child) => Transform.translate(
+          offset: Offset(
+            widget.dir * 4 * Curves.easeOut.transform(_c.value),
+            0,
+          ),
+          child: child,
+        ),
+        child: SizedBox(
+          width: 24,
+          height: 70,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Opacity(
+                opacity: hot ? 1 : 0.75,
+                child: ArtImage(widget.icon, size: 18),
+              ),
+              Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: hot ? const Color(0xFFFFD45C) : Colors.white,
+                  border: Border.all(
+                    color: hot
+                        ? const Color(0xFFB57A12)
+                        : const Color(0x55000000),
+                    width: 1.5,
+                  ),
+                ),
+                child: Icon(
+                  widget.dir < 0
+                      ? Icons.chevron_left_rounded
+                      : Icons.chevron_right_rounded,
+                  size: 20,
+                  color: hot
+                      ? const Color(0xFF6B4300)
+                      : const Color(0xFF5E5242),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
