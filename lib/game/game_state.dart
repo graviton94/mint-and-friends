@@ -2204,6 +2204,43 @@ class GameState extends ChangeNotifier {
     return true;
   }
 
+  /// 오늘의 시장을 새로 들인다 (다이아). 오늘 무료 선물은 다시 주지 않는다.
+  bool refreshMarket() {
+    if (!dailyShopOpen) return false;
+    final freeTaken = offers.any((o) => o.kind == 1 && o.sold);
+    if (!_spendGems(Gems.marketRefreshGems)) return false;
+    _offers = [];
+    final fresh = offers;
+    if (freeTaken) {
+      for (final o in fresh) {
+        if (o.kind == 1) o.sold = true;
+      }
+    }
+    _trace('marketRefresh', '');
+    notifyListeners();
+    return true;
+  }
+
+  /// 깜짝 상자에서 나오는 단계.
+  int get surpriseLevel =>
+      min(Chains.maxLevel(Chain.flower), spawnLevel + Gems.surpriseLevelUp);
+
+  /// 깜짝 상자 (다이아): 높은 단계 아이템 하나를 빈 칸에.
+  bool buySurprise() {
+    final cell = _emptyCell;
+    if (cell == null || !_spendGems(Gems.surpriseGems)) return false;
+    final chains = availableChains;
+    final c = chains[_rng.nextInt(chains.length)];
+    board[cell] = Item(
+      _nextId++,
+      c,
+      surpriseLevel.clamp(1, Chains.maxLevel(c)),
+    );
+    _trace('surprise', c.name);
+    notifyListeners();
+    return true;
+  }
+
   /// 계절 정원 효과 따로 사기.
   bool buyEffect(String id) {
     if (effects.contains(id) || !_spendGems(Gems.effectGems)) return false;

@@ -1113,12 +1113,7 @@ Future<void> showShopSheet(
               },
             ),
           for (var i = 0; i < Gems.packs.length; i++)
-            _gemPackCard(
-              billing,
-              Gems.packs[i],
-              i,
-              best: i == Gems.packs.length - 1,
-            ),
+            _gemPackCard(billing, Gems.packs[i], i),
         ]),
         if (!billing.available || billing.gemProducts.isEmpty)
           Padding(
@@ -1164,18 +1159,44 @@ Future<void> showShopSheet(
                 if (game.buyBoost(k)) sfx(Sfx.coin);
               },
             ),
-          if (!game.effects.contains(Starter.effect))
+          _ShopCard(
+            icon: Art.gift,
+            title: tr('shop.surprise'),
+            note: tr('shop.surpriseNote', {'n': game.surpriseLevel}),
+            button: game.boardFull
+                ? tr('market.boardFull')
+                : '[[diamond]] ${Gems.surpriseGems}',
+            enabled: !game.boardFull && game.gems >= Gems.surpriseGems,
+            onTap: () {
+              if (game.buySurprise()) sfx(Sfx.unlock);
+            },
+          ),
+          if (game.dailyShopOpen)
             _ShopCard(
-              icon: Art.icon('season_fx'),
-              title: tr('shop.effect'),
-              note: tr('shop.effectNote'),
-              button: '[[diamond]] ${Gems.effectGems}',
-              enabled: game.gems >= Gems.effectGems,
+              icon: Art.icon('refresh'),
+              title: tr('shop.marketRefresh'),
+              note: tr('shop.marketRefreshNote'),
+              button: '[[diamond]] ${Gems.marketRefreshGems}',
+              enabled: game.gems >= Gems.marketRefreshGems,
               onTap: () {
-                if (game.buyEffect(Starter.effect)) sfx(Sfx.unlock);
+                if (game.refreshMarket()) sfx(Sfx.coin);
               },
             ),
         ]),
+        // 계절 정원 효과: 한 번 사면 끝 (다이아 칸 3×3 밖, 따로 한 줄)
+        if (!game.effects.contains(Starter.effect)) ...[
+          const SizedBox(height: 8),
+          _ShopRow(
+            icon: Art.icon('season_fx'),
+            title: tr('shop.effect'),
+            note: tr('shop.effectNote'),
+            button: '[[diamond]] ${Gems.effectGems}',
+            enabled: game.gems >= Gems.effectGems,
+            onTap: () {
+              if (game.buyEffect(Starter.effect)) sfx(Sfx.unlock);
+            },
+          ),
+        ],
         const SizedBox(height: 12),
         _ShopHeader(tr('shop.adFreeTitle')),
         if (billing.adFree)
@@ -1268,15 +1289,9 @@ Widget _offerCard(
 }
 
 /// 다이아 팩 카드.
-Widget _gemPackCard(
-  BillingService billing,
-  GemPack pack,
-  int index, {
-  bool best = false,
-}) {
+Widget _gemPackCard(BillingService billing, GemPack pack, int index) {
   final d = billing.gemProducts[pack.id];
   return _ShopCard(
-    best: best,
     icon: Art.icon('dia_${index + 1}'),
     title: '[[diamond]] ${fmtInt(pack.gems)}',
     tag: pack.valueX >= 1.95
@@ -1323,10 +1338,8 @@ class _ShopCard extends StatelessWidget {
     this.note,
     this.tag,
     this.ad = false,
-    this.best = false,
   });
   final ArtRef icon;
-  final bool best;
   final String title;
   final String? note;
   final String? tag;
@@ -1404,13 +1417,6 @@ class _ShopCard extends StatelessWidget {
               ),
             ],
           ),
-          // 가장 이득인 상품: 왼쪽 위 모서리에 금색 리본
-          if (best && Art.frame('corner_best').available)
-            Positioned(
-              top: -14,
-              left: -12,
-              child: Image.asset(Art.frame('corner_best').path, width: 50),
-            ),
           if (tag != null)
             Positioned(
               top: -12,
@@ -1516,26 +1522,26 @@ class StarterCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                // 한정 기간: 빨간 띠 + 남은 시간
+                // 한정 기간: 빨간 알약 띠 + 자명종 + 남은 시간 (그림 대신 깔끔하게 그린다)
                 Container(
-                  height: 46,
+                  height: 44,
                   alignment: Alignment.center,
-                  padding: const EdgeInsets.only(bottom: 4),
-                  decoration: Art.frame('ribbon_limited').available
-                      ? BoxDecoration(
-                          image: DecorationImage(
-                            image: AssetImage(Art.frame('ribbon_limited').path),
-                            // 양 끝 꼬리는 그대로, 가운데만 늘린다
-                            centerSlice: const Rect.fromLTRB(110, 40, 274, 123),
-                            scale: 163 / 46,
-                          ),
-                        )
-                      : BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFE0533D), Color(0xFFF0784F)],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFFF26B4F), Color(0xFFD8392A)],
+                    ),
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: Colors.white, width: 2.5),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x44B0301F),
+                        blurRadius: 6,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
+                  ),
                   child: IconText(
                     game.starterOfferActive
                         ? tr('starter.timerBig', {
