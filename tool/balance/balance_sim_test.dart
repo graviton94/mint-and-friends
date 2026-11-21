@@ -32,10 +32,18 @@ class Profile {
     this.focusZone = false,
     this.boostAds = true,
   });
-  Profile withSeed(int s) => Profile(name, sessionHours,
-      sessionMin: sessionMin, tapsPerMin: tapsPerMin, starterGems: starterGems,
-      spendGems: spendGems, buyStyles: buyStyles, seed: s,
-      focusZone: focusZone, boostAds: boostAds);
+  Profile withSeed(int s) => Profile(
+    name,
+    sessionHours,
+    sessionMin: sessionMin,
+    tapsPerMin: tapsPerMin,
+    starterGems: starterGems,
+    spendGems: spendGems,
+    buyStyles: buyStyles,
+    seed: s,
+    focusZone: focusZone,
+    boostAds: boostAds,
+  );
 }
 
 class Acc {
@@ -176,7 +184,7 @@ class Sim {
       final cands = <(double, String, void Function())>[];
       for (final t in UpgradeType.values) {
         if (g.canBuyUpgrade(t)) {
-          cands.add((g.upgradeCost(t), 'upgrade', () => g.buyUpgrade(t)));
+          cands.add((g.upgradeCost(t), 'up:${t.name}', () => g.buyUpgrade(t)));
         }
       }
       if (g.level >= g.nextCellLevel && g.coins >= g.nextCellCost) {
@@ -189,11 +197,7 @@ class Sim {
       }
       for (final f in g.friends) {
         if (g.canLevelFriend(f)) {
-          cands.add((
-            g.friendLevelCost(f),
-            'friend',
-            () => g.levelFriend(f),
-          ));
+          cands.add((g.friendLevelCost(f), 'friend', () => g.levelFriend(f)));
         }
       }
       if (p.buyStyles) {
@@ -210,12 +214,14 @@ class Sim {
       }
       if (cands.isEmpty) return;
       cands.sort((a, b) => a.$1.compareTo(b.$1));
-      final (_, cat, fn) = cands.first;
+      final (cost, cat, fn) = cands.first;
       final before = g.coins;
       buys++;
-      buysBy[cat] = (buysBy[cat] ?? 0) + 1;
+      final grp = cat.startsWith('up:') ? 'upgrade' : cat;
+      buysBy[grp] = (buysBy[grp] ?? 0) + 1;
+      audit(cat, cost);
       fn();
-      spend(cat, before);
+      spend(grp, before);
     }
   }
 
@@ -261,7 +267,9 @@ class Sim {
         g.grantBoostAd(BoostKind.energy);
       }
     }
-    if (g.isUnlocked(Feature.coinBag) && g.coinBagReady && _ad(AdKind.coinBag)) {
+    if (g.isUnlocked(Feature.coinBag) &&
+        g.coinBagReady &&
+        _ad(AdKind.coinBag)) {
       track('coinBag', () => g.grantCoinBag());
     }
     if (g.visitorVisible) track('visitor', () => g.claimVisitor(withAd: true));
@@ -331,6 +339,7 @@ class Sim {
   /// 세션 하나. 반환: 세션 동안 생성 수.
   int session(int day, double hour) {
     now = start.add(Duration(days: day, minutes: (hour * 60).round()));
+    curDay = day;
     final off = track('offline', () => g.computeOffline());
     if (off != null) track('offline', () => g.grantOffline(off, doubled: true));
     housekeeping();
@@ -349,6 +358,7 @@ class Sim {
         acc -= 1;
         tap();
       }
+      if (s % 60 == 0) _earnLog.add((now, g.lifetimeCoins));
       if (s % 5 == 0) {
         mergeAll();
         deliverAll();
@@ -391,13 +401,76 @@ class Sim {
     final got = g.renew(withAd: true);
     renews.add('D${day + 1}:+$got');
     for (var guard = 0; guard < 50; guard++) {
-      final c = [
-        for (final d in Renewal.perks)
-          if (g.canBuyPerk(d.perk)) d,
-      ]..sort((a, b) => a.costAt(g.perkLv(a.perk)).compareTo(b.costAt(g.perkLv(b.perk))));
+      final c =
+          [
+            for (final d in Renewal.perks)
+              if (g.canBuyPerk(d.perk)) d,
+          ]..sort(
+            (a, b) => a
+                .costAt(g.perkLv(a.perk))
+                .compareTo(b.costAt(g.perkLv(b.perk))),
+          );
       if (c.isEmpty) break;
       g.buyPerk(c.first.perk);
     }
+  }
+
+  // ---- 경제 감사: 살 때 값이 '최근 24시간 실제 수입'의 몇 시간치인가
+  final List<(DateTime, double)> _earnLog = [];
+
+  /// 최근 24시간(게임 시각) 동안 번 코인 ÷ 24 = 시간당 실수입.
+  double get earnPerHour {
+    final cut = now.subtract(const Duration(hours: 24));
+    final old = _earnLog.lastWhere(
+      (e) => !e.$1.isAfter(cut),
+      orElse: () => _earnLog.isEmpty ? (now, g.lifetimeCoins) : _earnLog.first,
+    );
+    final hrs = max(1.0, now.difference(old.$1).inMinutes / 60);
+    return max(1.0, (g.lifetimeCoins - old.$2) / hrs);
+  }
+
+  static String bucket(int day) => day <= 7
+      ? 'W1'
+      : day <= 30
+      ? 'M1'
+      : day <= 90
+      ? 'M3'
+      : 'Y1';
+  final Map<String, Map<String, List<double>>> auditH = {};
+  int curDay = 0;
+  void audit(String cat, double cost) {
+    final h = cost / earnPerHour;
+    auditH
+        .putIfAbsent(cat, () => {})
+        .putIfAbsent(bucket(curDay + 1), () => [])
+        .add(h);
+  }
+
+  String auditReport() {
+    String f(double h) => h < 1 / 60
+        ? '${(h * 3600).toStringAsFixed(0)}s'
+        : h < 1
+        ? '${(h * 60).toStringAsFixed(1)}m'
+        : '${h.toStringAsFixed(1)}h';
+    final b = StringBuffer(
+      'audit (cost in hours of real income; median [p10..p90] n):\n',
+    );
+    final keys = auditH.keys.toList()..sort();
+    for (final k in keys) {
+      final row = StringBuffer('  ${k.padRight(18)}');
+      for (final bk in ['W1', 'M1', 'M3', 'Y1']) {
+        final l = auditH[k]![bk];
+        if (l == null || l.isEmpty) {
+          row.write(' | $bk -');
+          continue;
+        }
+        l.sort();
+        double q(double p) => l[((l.length - 1) * p).round()];
+        row.write(' | $bk ${f(q(.5))} [${f(q(.1))}..${f(q(.9))}] ${l.length}');
+      }
+      b.writeln(row);
+    }
+    return b.toString();
   }
 
   int buys = 0;
@@ -408,7 +481,8 @@ class Sim {
     final rate = g.incomePerSec * 3600;
     final rateGrowth = _lastRate > 0 ? rate / _lastRate : 0;
     _lastRate = rate;
-    final buyStr = 'buys $buys ${buysBy.entries.map((e) => '${e.key}:${e.value}').join(',')} '
+    final buyStr =
+        'buys $buys ${buysBy.entries.map((e) => '${e.key}:${e.value}').join(',')} '
         'rate/h ${rate.toStringAsExponential(2)} x${rateGrowth.toStringAsFixed(2)} ';
     buys = 0;
     buysBy.clear();
@@ -436,10 +510,10 @@ class Sim {
   }
 
   String summary() {
-    String fmt(Acc a) => (a.m.entries.toList()
-          ..sort((x, y) => y.value.compareTo(x.value)))
-        .map((e) => '${e.key}=${e.value.round()}')
-        .join(' ');
+    String fmt(Acc a) =>
+        (a.m.entries.toList()..sort((x, y) => y.value.compareTo(x.value)))
+            .map((e) => '${e.key}=${e.value.round()}')
+            .join(' ');
     return [
       '== ${p.name} ==',
       ...rows,
@@ -451,14 +525,25 @@ class Sim {
       'coinsOut: ${fmt(coinsOut)}',
       'starsIn: ${fmt(starsIn)}',
       'ads: boost=$adsBoost other=$adsOther delivered=$delivered',
+      auditReport(),
     ].join('\n');
   }
 }
 
 const profA = Profile('A engaged free', [8, 12.5, 18, 22]);
-const profC = Profile('C focus-zone (designer-like, 4x12min)', [8, 12.5, 18, 22], focusZone: true);
+const profC = Profile('C focus-zone (designer-like, 4x12min)', [
+  8,
+  12.5,
+  18,
+  22,
+], focusZone: true);
 const profN = Profile('A-noBoostAds', [8, 12.5, 18, 22], boostAds: false);
-const profS = Profile('A-noStyles (coins only on functional sinks)', [8, 12.5, 18, 22], buyStyles: false);
+const profS = Profile('A-noStyles (coins only on functional sinks)', [
+  8,
+  12.5,
+  18,
+  22,
+], buyStyles: false);
 const profB = Profile(
   'B heavy',
   [7, 9, 11, 13, 15, 17, 19, 22],
@@ -467,8 +552,7 @@ const profB = Profile(
 );
 
 void main() {
-  final out = Platform.environment['BALANCE_OUT'] ??
-      'build/balance.txt';
+  final out = Platform.environment['BALANCE_OUT'] ?? 'build/balance.txt';
   final days = int.tryParse(Platform.environment['BALANCE_DAYS'] ?? '') ?? 14;
   final buf = StringBuffer();
 
@@ -480,8 +564,12 @@ void main() {
   });
 
   test('profiles', () {
+    final only = Platform.environment['BALANCE_PROFILES'];
+    final seeds = only == null ? [1, 2, 3] : [1];
     for (final p in [profA, profB, profC, profN, profS]) {
-      for (final seed in [1, 2, 3]) {
+      if (only != null && !only.split(',').contains(p.name.split(' ').first))
+        continue;
+      for (final seed in seeds) {
         final s = Sim(p.withSeed(seed));
         s.runDays(days);
         buf.writeln('seed $seed');
@@ -495,46 +583,57 @@ void main() {
     // 7일차 A 상태에서 같은 세션을 부스트 조건만 바꿔 돌린다
     final base = Sim(profA)..runDays(6);
     final saved = base.g.encode();
-    final lines = StringBuffer('\n== boost session test (day7 08:00, A state Lv${base.g.level}) ==\n');
+    final lines = StringBuffer(
+      '\n== boost session test (day7 08:00, A state Lv${base.g.level}) ==\n',
+    );
     for (final mode in ['none', 'cover(3 ads)', 'none30', 'stack6']) {
-     var tot = 0, totFree = 0;
-     for (var seed = 1; seed <= 10; seed++) {
-      final s = Sim(Profile('x', [8], buyStyles: true, seed: 7, sessionMin: mode == 'none30' || mode == 'stack6' ? 30 : 12));
-      s.now = s.start.add(const Duration(days: 6, hours: 7, minutes: 59));
-      s.g = GameState(random: Random(seed), clock: () => s.now);
-      s.g.load(saved);
-      // 광고 자동 부스트는 끈다: 모드별로 직접 준다
-      s.now = s.start.add(const Duration(days: 6, hours: 8));
-      final off = s.g.computeOffline();
-      if (off != null) s.g.grantOffline(off);
-      if (mode == 'cover(3 ads)' || mode == 'stack6') {
-        final n = mode == 'stack6' ? 6 : 3;
-        for (var i = 0; i < n; i++) {
-          s.g.grantBoostAd(BoostKind.energy);
-          s.g.recordAd(AdKind.boost);
+      var tot = 0, totFree = 0;
+      for (var seed = 1; seed <= 10; seed++) {
+        final s = Sim(
+          Profile(
+            'x',
+            [8],
+            buyStyles: true,
+            seed: 7,
+            sessionMin: mode == 'none30' || mode == 'stack6' ? 30 : 12,
+          ),
+        );
+        s.now = s.start.add(const Duration(days: 6, hours: 7, minutes: 59));
+        s.g = GameState(random: Random(seed), clock: () => s.now);
+        s.g.load(saved);
+        // 광고 자동 부스트는 끈다: 모드별로 직접 준다
+        s.now = s.start.add(const Duration(days: 6, hours: 8));
+        final off = s.g.computeOffline();
+        if (off != null) s.g.grantOffline(off);
+        if (mode == 'cover(3 ads)' || mode == 'stack6') {
+          final n = mode == 'stack6' ? 6 : 3;
+          for (var i = 0; i < n; i++) {
+            s.g.grantBoostAd(BoostKind.energy);
+            s.g.recordAd(AdKind.boost);
+          }
         }
-      }
-      for (var i = 0; i < 5; i++) {
-        s.g.recordAd(AdKind.energy);
-      }
-      s.g.claimAllAchievements();
-      s.g.claimAllMail();
-      s.g.energy = 100;
-      if (mode == 'none' || mode == 'none30') {
-        for (var i = 0; i < 6; i++) {
-          s.g.recordAd(AdKind.boost); // 광고 부스트 소진 처리
+        for (var i = 0; i < 5; i++) {
+          s.g.recordAd(AdKind.energy);
         }
+        s.g.claimAllAchievements();
+        s.g.claimAllMail();
+        s.g.energy = 100;
+        if (mode == 'none' || mode == 'none30') {
+          for (var i = 0; i < 6; i++) {
+            s.g.recordAd(AdKind.boost); // 광고 부스트 소진 처리
+          }
+        }
+        if (mode == 'gems15') {
+          s.g.grantGems(40);
+          s.g.buyBoost(BoostKind.energy);
+        }
+        final e0 = s.g.energy;
+        final n = s.session(6, 8.0 + 1 / 60);
+        tot += n;
+        totFree += s.freeSpawns;
+        if (seed == 1) lines.writeln('$mode seed1 startE=$e0 spawns=$n');
       }
-      if (mode == 'gems15') {
-        s.g.grantGems(40);
-        s.g.buyBoost(BoostKind.energy);
-      }
-      final e0 = s.g.energy;
-      final n = s.session(6, 8.0 + 1 / 60);
-      tot += n; totFree += s.freeSpawns;
-      if (seed == 1) lines.writeln('$mode seed1 startE=$e0 spawns=$n');
-     }
-     lines.writeln('$mode: mean spawns ${tot / 10} free ${totFree / 10}');
+      lines.writeln('$mode: mean spawns ${tot / 10} free ${totFree / 10}');
     }
     File(out).writeAsStringSync(lines.toString(), mode: FileMode.append);
   }, timeout: const Timeout(Duration(minutes: 10)));
