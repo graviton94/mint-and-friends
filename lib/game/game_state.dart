@@ -1944,6 +1944,14 @@ class GameState extends ChangeNotifier {
     return true;
   }
 
+  /// 에너지 한 병 (값이 오르지 않는 작은 충전).
+  bool buySmallEnergy() {
+    if (!_spendGems(Gems.smallEnergyGems)) return false;
+    energy += Gems.smallEnergy;
+    notifyListeners();
+    return true;
+  }
+
   int bubbleGemCost(int cell) {
     final it = board[cell];
     final until = it?.bubbleUntil;
@@ -2221,22 +2229,27 @@ class GameState extends ChangeNotifier {
     return true;
   }
 
-  /// 깜짝 상자에서 나오는 단계.
-  int get surpriseLevel =>
-      min(Chains.maxLevel(Chain.flower), spawnLevel + Gems.surpriseLevelUp);
+  /// 깜짝 상자에서 나오는 단계 (큰 상자는 더 높게).
+  int surpriseLevel({bool big = false}) => min(
+    Chains.maxLevel(Chain.flower),
+    spawnLevel + (big ? Gems.bigSurpriseLevelUp : Gems.surpriseLevelUp),
+  );
 
   /// 깜짝 상자 (다이아): 높은 단계 아이템 하나를 빈 칸에.
-  bool buySurprise() {
+  bool buySurprise({bool big = false}) {
     final cell = _emptyCell;
-    if (cell == null || !_spendGems(Gems.surpriseGems)) return false;
+    if (cell == null ||
+        !_spendGems(big ? Gems.bigSurpriseGems : Gems.surpriseGems)) {
+      return false;
+    }
     final chains = availableChains;
     final c = chains[_rng.nextInt(chains.length)];
     board[cell] = Item(
       _nextId++,
       c,
-      surpriseLevel.clamp(1, Chains.maxLevel(c)),
+      surpriseLevel(big: big).clamp(1, Chains.maxLevel(c)),
     );
-    _trace('surprise', c.name);
+    _trace(big ? 'bigSurprise' : 'surprise', c.name);
     notifyListeners();
     return true;
   }

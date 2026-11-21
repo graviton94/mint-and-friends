@@ -1021,6 +1021,14 @@ class Gems {
   static const int surpriseGems = 25;
   static const int surpriseLevelUp = 3;
 
+  /// 큰 깜짝 상자: 바구니보다 5단계 높은 아이템.
+  static const int bigSurpriseGems = 70;
+  static const int bigSurpriseLevelUp = 5;
+
+  /// 에너지 한 병: 값이 오르지 않는 작은 충전 (큰 충전보다 개당은 살짝 비싸다).
+  static const int smallEnergy = 30;
+  static const int smallEnergyGems = 25;
+
   /// 오늘의 시장: 다이아 칸 가격 · 단계(바구니 +4), 광고 칸 단계(바구니 +3).
   static const int marketGemPrice = 12;
   static const int marketGemLevelUp = 4;

@@ -1137,6 +1137,16 @@ Future<void> showShopSheet(
               if (game.buyEnergyRefill()) sfx(Sfx.coin);
             },
           ),
+          _ShopCard(
+            icon: Art.icon('energy_jar'),
+            title: tr('shop.smallEnergy', {'n': Gems.smallEnergy}),
+            note: tr('shop.smallEnergyNote'),
+            button: '[[diamond]] ${Gems.smallEnergyGems}',
+            enabled: game.gems >= Gems.smallEnergyGems,
+            onTap: () {
+              if (game.buySmallEnergy()) sfx(Sfx.coin);
+            },
+          ),
           for (var i = 0; i < Gems.coinPacks.length; i++)
             _ShopCard(
               icon: Art.icon(const ['coins_s', 'coins_m', 'coins_l'][i]),
@@ -1162,7 +1172,7 @@ Future<void> showShopSheet(
           _ShopCard(
             icon: Art.gift,
             title: tr('shop.surprise'),
-            note: tr('shop.surpriseNote', {'n': game.surpriseLevel}),
+            note: tr('shop.surpriseNote', {'n': game.surpriseLevel()}),
             button: game.boardFull
                 ? tr('market.boardFull')
                 : '[[diamond]] ${Gems.surpriseGems}',
@@ -1171,32 +1181,44 @@ Future<void> showShopSheet(
               if (game.buySurprise()) sfx(Sfx.unlock);
             },
           ),
-          if (game.dailyShopOpen)
-            _ShopCard(
-              icon: Art.icon('refresh'),
-              title: tr('shop.marketRefresh'),
-              note: tr('shop.marketRefreshNote'),
-              button: '[[diamond]] ${Gems.marketRefreshGems}',
-              enabled: game.gems >= Gems.marketRefreshGems,
-              onTap: () {
-                if (game.refreshMarket()) sfx(Sfx.coin);
-              },
-            ),
-        ]),
-        // 계절 정원 효과: 한 번 사면 끝 (다이아 칸 3×3 밖, 따로 한 줄)
-        if (!game.effects.contains(Starter.effect)) ...[
-          const SizedBox(height: 8),
-          _ShopRow(
+          _ShopCard(
+            icon: Art.icon('party'),
+            title: tr('shop.bigSurprise'),
+            note: tr('shop.surpriseNote', {'n': game.surpriseLevel(big: true)}),
+            button: game.boardFull
+                ? tr('market.boardFull')
+                : '[[diamond]] ${Gems.bigSurpriseGems}',
+            enabled: !game.boardFull && game.gems >= Gems.bigSurpriseGems,
+            onTap: () {
+              if (game.buySurprise(big: true)) sfx(Sfx.unlock);
+            },
+          ),
+          _ShopCard(
+            icon: Art.icon('refresh'),
+            title: tr('shop.marketRefresh'),
+            note: tr('shop.marketRefreshNote'),
+            button: '[[diamond]] ${Gems.marketRefreshGems}',
+            enabled: game.dailyShopOpen && game.gems >= Gems.marketRefreshGems,
+            onTap: () {
+              if (game.refreshMarket()) sfx(Sfx.coin);
+            },
+          ),
+          // 계절 효과: 사고 나면 '보유 중' 으로 남겨 3×4 칸을 지킨다
+          _ShopCard(
             icon: Art.icon('season_fx'),
             title: tr('shop.effect'),
             note: tr('shop.effectNote'),
-            button: '[[diamond]] ${Gems.effectGems}',
-            enabled: game.gems >= Gems.effectGems,
+            button: game.effects.contains(Starter.effect)
+                ? tr('shop.owned')
+                : '[[diamond]] ${Gems.effectGems}',
+            enabled:
+                !game.effects.contains(Starter.effect) &&
+                game.gems >= Gems.effectGems,
             onTap: () {
               if (game.buyEffect(Starter.effect)) sfx(Sfx.unlock);
             },
           ),
-        ],
+        ]),
         const SizedBox(height: 12),
         _ShopHeader(tr('shop.adFreeTitle')),
         if (billing.adFree)
