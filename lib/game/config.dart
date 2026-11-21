@@ -477,15 +477,15 @@ class UpgradeDef {
 class Upgrades {
   static const List<UpgradeDef> all = [
     // 바구니 등급: 바구니에서 나오는 기본 단계 +1 (부탁 · 수입이 한 단계씩 올라간다). 단계마다 가격 ×2.75
-    // (수입은 단계당 ×2.2 → 갈수록 오래 모아야 한다). Lv 4 · 6 · 8 …
+    // (수입은 단계당 ×2.2 → 갈수록 오래 모아야 한다). Lv 3 · 6 · 9 … (최고 단계 도달 약 6~9개월, 1년 시뮬)
     UpgradeDef(
       UpgradeType.basketTier,
       'basket',
       24,
       400,
       2.75,
-      gateStart: 4,
-      gateStep: 2,
+      gateStart: 3,
+      gateStep: 3,
     ),
     // 체인별 생산력: 끝없음, 단계당 +5% · 25단계마다 ×2, 가격 ×1.28
     UpgradeDef(
