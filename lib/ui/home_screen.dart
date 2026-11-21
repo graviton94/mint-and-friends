@@ -25,6 +25,7 @@ import '../game/tuning.dart';
 import '../services/analytics_service.dart';
 import 'widgets/icon_text.dart';
 import 'widgets/frame_box.dart';
+import 'widgets/top_toast.dart';
 
 /// 메인 화면. 배치(위→아래): HUD / 정원 창(남는 높이 전부) / 정원 도구줄 / 부탁 / 머지 보드 / 정보 줄 / 광고·바구니.
 /// 배너 광고는 두지 않는다 (보상형 · 전면만).
@@ -94,12 +95,11 @@ class _HomeScreenState extends State<HomeScreen> {
       case DiscoveryEvent(:final chain, :final level, :final bonus):
         sfx(Sfx.coin);
         final d = Chains.item(chain, level);
-        _toast(
-          tr('toast.discovery', {
-            'emoji': itemToken(d.chain, d.level),
-            'name': itemName(d),
-            'coins': fmt(bonus),
-          }),
+        TopToast.celebrate(
+          context,
+          art: ArtImage(Art.item(d.chain, d.level), size: 58),
+          title: tr('discover.title'),
+          sub: '${itemName(d)}  [[coin]]+${fmt(bonus)}',
         );
       case MaxMergeEvent(:final payout):
         sfx(Sfx.mergeBig);
@@ -124,6 +124,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   ? tr('toast.quotaDone', {'name': friendName(friendId)})
                   : ''),
         );
+        // 오늘 부탁이 모두 끝나면 한 번만 알려 준다 (이후엔 정원의 작은 아이콘)
+        if (!game.ordersDoneToday) _allDoneShown = false;
+        if (game.ordersDoneToday && !_allDoneShown) {
+          _allDoneShown = true;
+          Future.delayed(const Duration(milliseconds: 900), () {
+            if (mounted) _allDoneDialog();
+          });
+        }
       case DecorPlacedEvent(:final area, :final slot):
         sfx(Sfx.place);
         _tutorialEvent(e);
@@ -142,14 +150,10 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       case SeasonSetEvent(:final area, :final style):
         sfx(Sfx.levelup);
-        _toast(
-          tr('toast.seasonSet', {
-            'area': areaName(Garden.areaAt(area)),
-            'season': tr('style.$style'),
-            'n': (Garden.seasonSetBonus * 100).round(),
-          }),
-        );
         setState(() => _viewArea = area);
+        Future.delayed(const Duration(milliseconds: 600), () {
+          if (mounted) _seasonSetDialog(area, style);
+        });
       case AreaCompletedEvent(:final area):
         _toast(tr('toast.areaDone', {'name': areaName(Garden.areaAt(area))}));
         // 첫 구역 완성 직후: 새싹 정원 패키지 (한 번만)
@@ -589,7 +593,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onClose: () => Navigator.pop(ctx, false),
             actions: [
               if (canAd)
-                _DialogAdButton(
+                DialogAdButton(
                   label: tr('energy.watch', {'n': Tuning.energyAdAmount}),
                   sub: tr('energy.left', {'n': game.adsLeft(AdKind.energy)}),
                   adFree: adFree,
@@ -655,31 +659,80 @@ class _HomeScreenState extends State<HomeScreen> {
     return _quotaDialog(pool.first, allDone: true);
   }
 
+  bool _allDoneShown = false;
+
+  /// 계절 세트 완성: 레벨 업처럼 화면 가운데 축하 창.
+  Future<void> _seasonSetDialog(int area, int style) => showDialog<void>(
+    context: context,
+    builder: (ctx) => GameDialog(
+      banner: 'gold',
+      title: IconText(tr('season.title'), textAlign: TextAlign.center),
+      onClose: () => Navigator.pop(ctx),
+      content: PopupHero(
+        art: GlowHalo(
+          size: 170,
+          child: ArtImage(
+            Art.decor(Garden.areaAt(area).decor.first, style: style),
+            size: 110,
+          ),
+        ),
+        big: tr('style.$style'),
+        note: tr('season.note', {
+          'area': areaName(Garden.areaAt(area)),
+          'n': (Garden.seasonSetBonus * 100).round(),
+        }),
+      ),
+      actions: [
+        FilledButton(
+          style: framedButton(
+            FilledButton.styleFrom(
+              minimumSize: const Size(double.infinity, 56),
+            ),
+            'button_green',
+          ),
+          onPressed: () => Navigator.pop(ctx),
+          child: IconText(
+            tr('season.ok'),
+            style: const TextStyle(fontSize: 18),
+          ),
+        ),
+      ],
+    ),
+  );
+
   Future<void> _quotaDialog(String friendId, {bool allDone = false}) async {
     final f = Friends.byId(friendId);
     final watch = await showDialog<bool>(
       context: context,
       builder: (ctx) => GameDialog(
+        banner: 'gold',
         title: IconText(
-          allDone
-              ? tr('quota.allTitle')
-              : tr('quota.title', {'name': friendName(friendId)}),
+          allDone ? tr('quota.allTitle') : tr('quota.title'),
           textAlign: TextAlign.center,
         ),
         content: PopupHero(
-          art: ArtImage(Art.friend(f), size: 84),
-          big: '[[star]]0 / ${game.starOrderLimit(friendId)}',
+          art: GlowHalo(
+            child: ArtImage(
+              Art.friend(f, outfit: game.outfitOf(friendId)),
+              size: 92,
+            ),
+          ),
+          big:
+              '[[star]]${game.starOrderLimit(friendId)} / ${game.starOrderLimit(friendId)}',
           note: allDone
               ? tr('quota.allNote', {
                   'name': friendName(friendId),
                   'n': OrderQuota.perAd,
                 })
-              : tr('quota.note', {'n': OrderQuota.perAd}),
+              : tr('quota.note', {
+                  'name': friendName(friendId),
+                  'n': OrderQuota.perAd,
+                }),
         ),
         actionsAlignment: MainAxisAlignment.center,
         onClose: () => Navigator.pop(ctx, false),
         actions: [
-          _DialogAdButton(
+          DialogAdButton(
             label: tr('quota.watch', {'n': OrderQuota.perAd}),
             sub: tr('energy.left', {'n': game.adsLeft(AdKind.quota)}),
             adFree: adFree,
@@ -823,7 +876,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actionsAlignment: MainAxisAlignment.center,
         onClose: () => Navigator.pop(ctx),
         actions: [
-          _DialogAdButton(
+          DialogAdButton(
             label: tr('bubble.ad'),
             adFree: adFree,
             onTap: () => Navigator.pop(ctx, 'ad'),
@@ -855,39 +908,40 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _onVisitorTap() async {
+    final base = game.visitorCoins(withAd: false);
     final withAd = await showDialog<bool>(
       context: context,
       builder: (ctx) => GameDialog(
         banner: 'gold',
         title: IconText(tr('visitor.title'), textAlign: TextAlign.center),
+        onClose: () => Navigator.pop(ctx),
         content: PopupHero(
-          art: Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              ArtImage(Art.visitor(), size: 86),
-              ArtImage(Art.gift, size: 52),
-            ],
-          ),
-          big: '[[coin]]${fmt(game.visitorCoins(withAd: false))}',
-          note: tr('visitor.body'),
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: IconText(
-              tr('visitor.take'),
-              style: const TextStyle(fontSize: 17),
+          art: GlowHalo(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                ArtImage(Art.visitor(), size: 92),
+                ArtImage(Art.gift, size: 56),
+              ],
             ),
           ),
-          _DialogAdButton(
-            label: tr('visitor.takeBig', {
-              'coins': fmt(game.visitorCoins(withAd: true)),
-              'stars': GameConfig.visitorAdStars,
+          big: '[[coin]]${fmt(base)}',
+          note: tr('visitor.body'),
+        ),
+        actions: [
+          DialogAdButton(
+            label: tr('reward.times', {
+              'n': GameConfig.visitorAdMultiplier.toInt(),
             }),
+            sub:
+                '[[coin]]${fmt(game.visitorCoins(withAd: true))}  [[star]]${GameConfig.visitorAdStars}',
             adFree: adFree,
             onTap: () => Navigator.pop(ctx, true),
+          ),
+          DialogPlainButton(
+            label: '${tr('visitor.take')}  [[coin]]${fmt(base)}',
+            onTap: () => Navigator.pop(ctx, false),
           ),
         ],
       ),
@@ -1269,30 +1323,27 @@ class _HomeScreenState extends State<HomeScreen> {
         orderTopInset: 50,
         overlay: [
           Positioned(left: 8, top: 8, child: _areaPill()),
-          // 오늘 부탁이 모두 끝: 내일 또 와요 (광고로 별 부탁 더 받기)
+          // 오늘 부탁이 모두 끝: 작은 별 아이콘 (누르면 광고로 별 부탁 더 받기)
           if (game.ordersDoneToday && _viewArea == game.currentArea)
             Positioned(
-              left: 0,
-              right: 0,
+              left: 8,
               bottom: 10,
-              child: Center(
-                child: GestureDetector(
-                  onTap: _allDoneDialog,
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(14, 8, 16, 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xF2FFFBF0),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: const Color(0xFF7A5230),
-                        width: 2,
-                      ),
+              child: GestureDetector(
+                onTap: _allDoneDialog,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(8, 5, 10, 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xF2FFFBF0),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFF7A5230),
+                      width: 2,
                     ),
-                    child: IconText(
-                      '${tr('quota.allDone')}  ${adFree ? '' : '[[ad]]'}[[star]]+${OrderQuota.perAd}',
-                      iconScale: 1.1,
-                      style: const TextStyle(fontSize: 14),
-                    ),
+                  ),
+                  child: IconText(
+                    '${adFree ? '' : '[[ad]]'}[[star]]+${OrderQuota.perAd}',
+                    iconScale: 1.1,
+                    style: const TextStyle(fontSize: 14),
                   ),
                 ),
               ),
@@ -2079,48 +2130,6 @@ class _GardenTool extends StatelessWidget {
       ],
     ),
   );
-}
-
-class _DialogAdButton extends StatelessWidget {
-  const _DialogAdButton({
-    required this.label,
-    required this.onTap,
-    required this.adFree,
-    this.sub,
-  });
-  final String label;
-  final String? sub;
-  final bool adFree;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return FilledButton(
-      style: framedButton(
-        FilledButton.styleFrom(
-          backgroundColor: Palette.ad,
-          minimumSize: const Size(double.infinity, 56),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
-        ),
-        'button_purple',
-      ),
-      onPressed: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconText(
-            adFree ? label : '[[ad]] $label',
-            style: const TextStyle(fontSize: 19, color: Colors.white),
-          ),
-          if (sub != null)
-            IconText(
-              sub!,
-              style: const TextStyle(fontSize: 11.5, color: Color(0xE6FFFFFF)),
-            ),
-        ],
-      ),
-    );
-  }
 }
 
 class _RoundButton extends StatelessWidget {

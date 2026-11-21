@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:material_ui/material_ui.dart';
 
 import '../../art/art.dart';
+import '../theme.dart';
 import 'icon_text.dart';
 
 /// 프레임 그림(9-slice)이 있으면 그 그림을 배경으로, 없으면 [fallback] 장식으로 그린다.
@@ -571,6 +572,140 @@ class PopupHero extends StatelessWidget {
         ],
         if (extra != null) ...[const SizedBox(height: 10), extra!],
       ],
+    );
+  }
+}
+
+/// 보상 팝업의 광고 버튼: 위에 [[ad]] 큰 글씨, 아래에 받을 양.
+class DialogAdButton extends StatelessWidget {
+  const DialogAdButton({
+    super.key,
+    required this.label,
+    required this.onTap,
+    required this.adFree,
+    this.sub,
+  });
+  final String label;
+  final String? sub;
+  final bool adFree;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton(
+      style: framedButton(
+        FilledButton.styleFrom(
+          backgroundColor: Palette.ad,
+          minimumSize: const Size(double.infinity, 58),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+        ),
+        'button_purple',
+      ),
+      onPressed: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconText(
+            adFree ? label : '[[ad]] $label',
+            style: const TextStyle(fontSize: 19, color: Colors.white),
+          ),
+          if (sub != null)
+            IconText(
+              sub!,
+              style: const TextStyle(fontSize: 13, color: Color(0xF2FFFFFF)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 보상 팝업의 기본 버튼: 흰 프레임, 광고 버튼과 같은 높이.
+class DialogPlainButton extends StatelessWidget {
+  const DialogPlainButton({
+    super.key,
+    required this.label,
+    required this.onTap,
+  });
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => FilledButton(
+    style: framedButton(
+      FilledButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: Palette.text,
+        minimumSize: const Size(double.infinity, 58),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+      ),
+      'button_white',
+    ),
+    onPressed: onTap,
+    child: IconText(label, style: const TextStyle(fontSize: 18)),
+  );
+}
+
+/// 보상 그림 뒤의 은은한 햇살: 따뜻한 원형 빛 + 천천히 도는 빛줄기.
+class GlowHalo extends StatefulWidget {
+  const GlowHalo({super.key, required this.child, this.size = 150});
+  final Widget child;
+  final double size;
+
+  @override
+  State<GlowHalo> createState() => _GlowHaloState();
+}
+
+class _GlowHaloState extends State<GlowHalo>
+    with SingleTickerProviderStateMixin {
+  late final _spin = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 18),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _spin.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final s = widget.size;
+    final burst = Art.frame('levelup_burst');
+    return SizedBox(
+      width: s,
+      height: s * 0.8,
+      child: Stack(
+        alignment: Alignment.center,
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            width: s,
+            height: s,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  Color(0x66FFE08A),
+                  Color(0x22FFE9B0),
+                  Color(0x00FFF4D6),
+                ],
+                stops: [0, 0.6, 1],
+              ),
+            ),
+          ),
+          if (burst.available)
+            RotationTransition(
+              turns: _spin,
+              child: Opacity(
+                opacity: 0.35,
+                child: Image.asset(burst.path, width: s, height: s),
+              ),
+            ),
+          widget.child,
+        ],
+      ),
     );
   }
 }

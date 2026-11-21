@@ -288,30 +288,20 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
           textAlign: TextAlign.center,
         ),
         content: PopupHero(
-          art: ArtImage(Art.icon('moon'), size: 76),
+          art: GlowHalo(child: ArtImage(Art.icon('moon'), size: 84)),
           big: '[[coin]]${fmt(reward.coins)}',
           note: tr('offline.time', {'time': fmtDuration(reward.away)}),
         ),
-        actionsAlignment: MainAxisAlignment.center,
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: IconText(
-              tr('offline.take'),
-              style: const TextStyle(fontSize: 16),
-            ),
+          DialogAdButton(
+            label: tr('reward.times', {'n': 2}),
+            sub: '[[coin]]${fmt(reward.coins * 2)}',
+            adFree: adFree,
+            onTap: () => Navigator.pop(ctx, true),
           ),
-          FilledButton(
-            style: framedButton(
-              FilledButton.styleFrom(backgroundColor: Palette.ad),
-              'button_purple',
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: IconText(
-              adFree
-                  ? tr('offline.double')
-                  : tr('ctrl.ad', {'label': tr('offline.double')}),
-            ),
+          DialogPlainButton(
+            label: '${tr('offline.take')}  [[coin]]${fmt(reward.coins)}',
+            onTap: () => Navigator.pop(ctx, false),
           ),
         ],
       ),
