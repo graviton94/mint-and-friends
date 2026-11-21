@@ -208,6 +208,9 @@ void main() {
     addTearDown(() => Chains.ready = keep);
     expect(g.basketOpen(1), isFalse); // 아직 온실 구역 전
     g.currentArea = 2;
+    g.level = Leveling.areaLevel(2) - 1;
+    expect(g.basketOpen(1), isFalse); // 구역에 왔어도 그 구역 레벨 전에는 닫힘
+    g.level = Leveling.areaLevel(2);
     expect(g.openBaskets, [0, 1]);
     g.selectBasket(1);
     g.tapSpawner();
@@ -347,13 +350,10 @@ void main() {
     expect(g.freeRerollsLeft, OrderQuota.freeRerolls);
   });
 
-  test('부스트: 무한 에너지는 에너지를 안 쓰고, 다이아로 사면 시간이 쌓이고 60분을 넘지 않는다', () {
+  test('부스트: 다이아로 사면 시간이 쌓이고 60분을 넘지 않는다', () {
     final g = make();
     g.gems = 500;
     expect(g.buyBoost(BoostKind.energy), isTrue);
-    final e = g.energy;
-    g.tapSpawner();
-    expect(g.energy, e);
     expect(g.buyBoost(BoostKind.energy), isTrue);
     expect(g.boostLeft(BoostKind.energy), const Duration(minutes: 30));
     expect(g.buyBoost(BoostKind.energy), isTrue);
@@ -476,5 +476,27 @@ void main() {
     expect(g.completedSeasonSets, 1);
     await Future<void>.delayed(Duration.zero);
     expect(events.whereType<SeasonSetEvent>().length, 1);
+  });
+
+  test('충전식 바구니: 횟수를 다 쓰면 쉬고, 시간이 지나면 다시 찬다 (저장도)', () {
+    final g = make();
+    final keep = Chains.ready;
+    Chains.ready = (_) => true;
+    addTearDown(() => Chains.ready = keep);
+    g.currentArea = 2;
+    g.level = Leveling.areaLevel(2);
+    g.energy = 999;
+    g.selectBasket(1);
+    for (var i = 0; i < Chains.basketCharges[1]; i++) {
+      g.board.fillRange(0, g.board.length, null);
+      expect(g.tapSpawner(), TapResult.spawned);
+    }
+    g.board.fillRange(0, g.board.length, null);
+    expect(g.tapSpawner(), TapResult.basketEmpty);
+    expect(g.basketNextIn(1), greaterThan(Duration.zero));
+    g.tick(Chains.basketRechargeSec[1].toDouble() + 1);
+    expect(g.basketChargesLeft(1), 1);
+    final g2 = make()..loadJson(g.toJson());
+    expect(g2.basketChargesLeft(1), 1);
   });
 }

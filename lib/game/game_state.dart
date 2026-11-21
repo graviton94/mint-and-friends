@@ -111,7 +111,7 @@ class _Sale {
   _Sale(this.cell, this.item, this.price, this.at);
 }
 
-enum TapResult { spawned, noEnergy, boardFull }
+enum TapResult { spawned, noEnergy, boardFull, basketEmpty }
 
 enum MoveResult { none, moved, swapped, merged, maxMerged }
 
@@ -361,10 +361,40 @@ class GameState extends ChangeNotifier {
   /// 바구니(생성기) — 하단 바구니를 좌우로 넘겨 고른다 (바이블 D-013).
   int basket = 0;
 
+  /// 구역 바구니 남은 횟수 (충전식).
+  late final List<double> basketCharge = [
+    for (final c in Chains.basketCharges) c.toDouble(),
+  ];
+  bool basketReady(int b) =>
+      Chains.basketCharges[b] <= 0 || basketCharge[b] >= 1;
+  int basketChargesLeft(int b) => basketCharge[b].floor();
+
+  /// 다음 1회가 차기까지 남은 시간.
+  Duration basketNextIn(int b) {
+    final r = Chains.basketRechargeSec[b];
+    if (r <= 0 || basketCharge[b] >= Chains.basketCharges[b]) {
+      return Duration.zero;
+    }
+    final frac = basketCharge[b] - basketCharge[b].floor();
+    return Duration(seconds: ((1 - frac) * r).ceil());
+  }
+
+  void _rechargeBaskets(double dt) {
+    for (var b = 0; b < basketCharge.length; b++) {
+      final r = Chains.basketRechargeSec[b];
+      if (r <= 0) continue;
+      basketCharge[b] = min(
+        Chains.basketCharges[b].toDouble(),
+        basketCharge[b] + dt / r,
+      );
+    }
+  }
+
   bool basketOpen(int b) =>
       b == 0 ||
       (b < Chains.baskets.length &&
           currentArea >= Chains.basketArea[b] &&
+          level >= Leveling.areaLevel(Chains.basketArea[b]) &&
           Chains.baskets[b].every(Chains.ready));
 
   List<int> get openBaskets => [
@@ -729,6 +759,7 @@ class GameState extends ChangeNotifier {
     _maybeFriendGift();
     _earn(incomePerSec * dt);
     _regenEnergy(dt);
+    _rechargeBaskets(dt);
 
     final ami = autoMergeInterval;
     if (ami != null) {
@@ -792,8 +823,11 @@ class GameState extends ChangeNotifier {
   /// 바구니 탭: 에너지 1로 즉시 하나 생성. 결과를 돌려준다.
   TapResult tapSpawner() {
     if (boardFull) return TapResult.boardFull;
-    // 에너지 절약 부스트: 바구니 한 번에 [Boosts.energySaveChance] 확률로 에너지가 들지 않는다
+    if (!basketOpen(basket)) basket = 0;
+    if (!basketReady(basket)) return TapResult.basketEmpty;
+    // 에너지 절약 부스트: 에너지가 있을 때만, 바구니 한 번에 [Boosts.energySaveChance] 확률로 에너지가 들지 않는다
     final free =
+        energy >= GameConfig.energyPerTap &&
         boosted(BoostKind.energy) &&
         _rng.nextDouble() < Boosts.energySaveChance;
     if (!free && energy < GameConfig.energyPerTap) {
@@ -809,6 +843,7 @@ class GameState extends ChangeNotifier {
       energy -= GameConfig.energyPerTap;
       _bump(Stat.energySpent, GameConfig.energyPerTap);
     }
+    if (Chains.basketCharges[basket] > 0) basketCharge[basket] -= 1;
     _spawnOne();
     notifyListeners();
     return TapResult.spawned;
@@ -1931,6 +1966,7 @@ class GameState extends ChangeNotifier {
     final t = now;
     var away = t.difference(lastSeen);
     if (away < const Duration(minutes: 1)) return null;
+    _rechargeBaskets(away.inMilliseconds / 1000);
     _regenEnergy(away.inMilliseconds / 1000); // 에너지는 오프라인 상한 없이 찬다 (최대치까지)
     lastSeen = t;
     // 잠깐 나갔다 온 것은 보상 없음 (최소 시간), 길수록 효율이 줄어든다 (감쇄)
@@ -2004,6 +2040,7 @@ class GameState extends ChangeNotifier {
       'orders': [for (final o in orders) o.toJson()],
       'boost': boosts[BoostKind.coins]?.millisecondsSinceEpoch,
       'boostE': boosts[BoostKind.energy]?.millisecondsSinceEpoch,
+      'bCharge': basketCharge,
       'boostL': boosts[BoostKind.lucky]?.millisecondsSinceEpoch,
       'quotaDay': _quotaDay,
       'quotaUsed': starOrdersUsed,
@@ -2165,6 +2202,15 @@ class GameState extends ChangeNotifier {
     ]) {
       final t = ts(key);
       if (t != null) boosts[k] = t;
+    }
+    final bc = j['bCharge'] as List?;
+    for (var b = 0; b < basketCharge.length; b++) {
+      basketCharge[b] = bc != null && b < bc.length
+          ? (bc[b] as num)
+                .toDouble()
+                .clamp(0, Chains.basketCharges[b])
+                .toDouble()
+          : Chains.basketCharges[b].toDouble();
     }
     _quotaDay = j['quotaDay'] as String? ?? '';
     Map<String, int> ints(Object? m) => {

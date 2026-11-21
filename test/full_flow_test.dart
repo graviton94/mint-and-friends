@@ -107,7 +107,7 @@ void main() {
     }
 
     const sessions = [8, 12, 19, 22];
-    for (var day = 0; day < 60 && g.currentArea < 6; day++) {
+    for (var day = 0; day < 120 && g.currentArea < 6; day++) {
       for (final h in sessions) {
         now = start.add(Duration(days: day, hours: h));
         g = reload();
@@ -244,7 +244,7 @@ void main() {
       '다이아(${g.stat(Stat.daysPlayed)}일): 업적 $gAch 출석 $gCheck 쪽지 $gMail 레벨업 $gLevel 사용 ${g.stat(Stat.gemsSpent)}',
     );
     // 7구역(순환)까지 넘어가도 문제없다
-    expect(g.currentArea, greaterThanOrEqualTo(6), reason: '60일 안에 6구역을 못 끝냄');
+    expect(g.currentArea, greaterThanOrEqualTo(6), reason: '120일 안에 6구역을 못 끝냄');
     expect(Garden.areaAt(g.currentArea).decor.length, Garden.slotsPerArea);
     expect(g.friends.length, Friends.all.length, reason: '새 친구가 다 오지 않음');
     expect(stuckDays, 0, reason: '하루 종일 부탁을 하나도 못 들어준 날이 있음');

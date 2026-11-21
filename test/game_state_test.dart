@@ -404,7 +404,7 @@ void main() {
     }
   });
 
-  test('에너지 절약 부스트: 대략 절반만 에너지를 쓴다', () {
+  test('에너지 절약 부스트: 대략 3/4만 에너지를 쓴다', () {
     final g = GameState(random: Random(7));
     g.board.fillRange(0, g.board.length, null);
     g.energy = 1000;
@@ -416,7 +416,7 @@ void main() {
     }
     final spent = 1000 - g.energy;
     expect(taps, 200);
-    expect(spent, inInclusiveRange(70, 130));
+    expect(spent, inInclusiveRange(125, 175));
   });
 
   test('최고 단계 아이템 선물: 하트 +1 · 코인, 하트가 차면 별', () {

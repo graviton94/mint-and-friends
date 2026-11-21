@@ -19,7 +19,7 @@ class Tuning {
   static int marketPriceBase = 10;
 
   /// 구역 꾸미기 별 합계 배율 (구역 진행 속도 A/B).
-  static double areaStarScale = 1.0;
+  static double areaStarScale = 1.6;
 
   /// 서버 키 → (최소, 최대, 적용).
   static final Map<String, (num, num, void Function(num))> keys = {

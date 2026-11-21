@@ -47,7 +47,7 @@ class GameConfig {
   static double maxMergePayoutOf(int level) => 20.0 * level;
 
   /// 최고 단계 아이템을 친구에게 선물할 때 코인 (하트 +1 과 함께).
-  static double maxGiftCoinsOf(int level) => 300.0 * level;
+  static double maxGiftCoinsOf(int level) => 100.0 * level;
 
   /// 하트가 다 찬 친구에게 선물하면 대신 별.
   static const int maxGiftStars = 30;
@@ -106,7 +106,7 @@ class GameConfig {
   static const Duration visitorStay = Duration(seconds: 50);
   static double visitorCoinsOf(int playerLevel) =>
       10.0 + 3 * playerLevel; // 그냥 받기
-  static const double visitorAdMultiplier = 3; // 광고 보고 받기
+  static const double visitorAdMultiplier = 2; // 광고 보고 받기
   static const int visitorAdStars = 5;
 
   /// 구조 부탁(판에 막힌 고단계 아이템을 원하는 부탁) 최소 간격. 확률은 Tuning.rescueChance.
@@ -151,7 +151,7 @@ class Boosts {
   };
 
   /// 에너지 절약: 바구니 한 번에 에너지가 들지 않을 확률 (예전 '무한 에너지'는 한 판에 1,000번 넘게 무료라 폐지).
-  static const double energySaveChance = 0.5;
+  static const double energySaveChance = 0.25;
 
   /// 다이아로 사는 시간 · 가격.
   static const Map<BoostKind, Duration> perGems = {
@@ -393,6 +393,11 @@ class Chains {
     [Chain.stardust],
   ];
   static const List<int> basketArea = [0, 2, 3];
+
+  /// 구역 바구니(찻잎 · 별가루)는 충전식: 최대 횟수 · 1회 충전 초 (0 = 에너지만).
+  /// 짧은 체인(Lv10 = 1단계 512개)이 하루 만에 끝나지 않게 (밸런스 시뮬레이션: 최고 단계 2~3주).
+  static const List<int> basketCharges = [0, 40, 40];
+  static const List<int> basketRechargeSec = [0, 360, 450];
   static const List<String> basketIcon = ['basket', 'tea_basket', 'star_jar'];
 }
 

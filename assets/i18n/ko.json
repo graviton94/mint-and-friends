@@ -713,5 +713,7 @@
   "gift.title": "누구에게 줄까?",
   "gift.note": "최고 단계 아이템을 선물하면 하트 +1 · [[coin]]{coins}",
   "toast.gift2": "{emoji} 정말 고마워! [[heart]]+1 [[coin]]+{coins}",
-  "toast.giftMaxStars": "{emoji} 정말 고마워! [[star]]+{stars} [[coin]]+{coins}"
+  "toast.giftMaxStars": "{emoji} 정말 고마워! [[star]]+{stars} [[coin]]+{coins}",
+  "toast.basketEmpty": "이 바구니는 쉬는 중이에요 · {time} 뒤 1번 더",
+  "spawner.charges": "{n}번"
 }

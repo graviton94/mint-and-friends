@@ -564,6 +564,13 @@ class _HomeScreenState extends State<HomeScreen> {
       case TapResult.boardFull:
         sfx(Sfx.error);
         _toast(tr('toast.boardFull'));
+      case TapResult.basketEmpty:
+        sfx(Sfx.error);
+        _toast(
+          tr('toast.basketEmpty', {
+            'time': fmtDuration(game.basketNextIn(game.basket)),
+          }),
+        );
       default:
         sfx(Sfx.spawn);
     }
@@ -2110,6 +2117,37 @@ class _Spawner extends StatelessWidget {
                 ),
               ),
             ),
+            // 충전식 바구니: 남은 횟수 (0이면 다음 충전까지 시간)
+            if (Chains.basketCharges[game.basket] > 0)
+              Positioned(
+                top: -6,
+                right: -10,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: game.basketReady(game.basket)
+                        ? const Color(0xFF5FA05A)
+                        : const Color(0xFFB0A48C),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: Text(
+                    game.basketReady(game.basket)
+                        ? tr('spawner.charges', {
+                            'n': game.basketChargesLeft(game.basket),
+                          })
+                        : _shortLeft(game.basketNextIn(game.basket)),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Colors.white,
+                      height: 1.2,
+                    ),
+                  ),
+                ),
+              ),
             if (open.length > 1)
               Positioned(
                 bottom: -8,

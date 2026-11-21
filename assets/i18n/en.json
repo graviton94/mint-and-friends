@@ -712,5 +712,7 @@
   "gift.title": "Gift to whom?",
   "gift.note": "Gift a max-tier item for a heart +1 · [[coin]]{coins}",
   "toast.gift2": "{emoji} Thank you so much! [[heart]]+1 [[coin]]+{coins}",
-  "toast.giftMaxStars": "{emoji} Thank you so much! [[star]]+{stars} [[coin]]+{coins}"
+  "toast.giftMaxStars": "{emoji} Thank you so much! [[star]]+{stars} [[coin]]+{coins}",
+  "toast.basketEmpty": "This basket is resting · 1 more in {time}",
+  "spawner.charges": "{n} left"
 }

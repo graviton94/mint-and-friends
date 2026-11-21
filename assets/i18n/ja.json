@@ -712,5 +712,7 @@
   "gift.title": "だれにあげる?",
   "gift.note": "最高段階のアイテムをあげるとハート +1 · [[coin]]{coins}",
   "toast.gift2": "{emoji} 本当にありがとう! [[heart]]+1 [[coin]]+{coins}",
-  "toast.giftMaxStars": "{emoji} 本当にありがとう! [[star]]+{stars} [[coin]]+{coins}"
+  "toast.giftMaxStars": "{emoji} 本当にありがとう! [[star]]+{stars} [[coin]]+{coins}",
+  "toast.basketEmpty": "このかごはお休み中 · {time}後に1回",
+  "spawner.charges": "あと{n}"
 }
