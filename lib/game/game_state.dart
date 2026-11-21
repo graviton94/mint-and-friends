@@ -352,6 +352,8 @@ class GameState extends ChangeNotifier {
     seeds += got;
     renewCount += 1;
     for (var i = 0; i < board.length; i++) {
+      // 다이아로 산 보관 칸의 아이템은 남긴다
+      if (GameConfig.isVault(i)) continue;
       board[i] = null;
     }
     for (final t in [
@@ -369,7 +371,6 @@ class GameState extends ChangeNotifier {
     coins = lastRun * 0.01 * perkLv(SeedPerk.startCoins);
     runStartCoins = lifetimeCoins;
     orders.clear();
-    _offersDay = '';
     energy = max(energy, energyCap);
     _fillOrders();
     _trace('renew', '$renewCount,$got,${lastRun.round()}');
@@ -1220,6 +1221,10 @@ class GameState extends ChangeNotifier {
   bool isMaxItem(Item it) =>
       !it.isBubble && it.level >= Chains.maxLevel(it.chain);
 
+  /// 선물하면 받는 코인 (안내 창 표시용, 실제 지급과 같은 값).
+  double giftCoins(Item it) =>
+      GameConfig.maxGiftCoinsOf(it.chain, it.level) * _coinMult;
+
   /// 하트가 아직 다 차지 않은 친구 (선물 받을 수 있는 친구).
   List<String> get giftableFriends => [
     for (final f in Friends.all)
@@ -1237,7 +1242,7 @@ class GameState extends ChangeNotifier {
     final full = affection(friendId) >= Friends.maxAffection;
     deliveries[friendId] =
         (deliveries[friendId] ?? 0) + Friends.deliveriesPerAffection;
-    final coins = GameConfig.maxGiftCoinsOf(it.chain, it.level) * _coinMult;
+    final coins = giftCoins(it);
     _earn(coins);
     final s = full ? GameConfig.maxGiftStars : 0;
     stars += s;
@@ -1356,7 +1361,12 @@ class GameState extends ChangeNotifier {
     }
     // 친구 한 명당 부탁 하나 (정원에서 친구 머리 위 말풍선 하나)
     final slots = min(GameConfig.orderSlots, friends.length);
-    while (orders.length < slots && _askers.isNotEmpty) {
+    bool freeAsker() {
+      final busy = {for (final o in orders) o.friendId};
+      return _askers.any((f) => !busy.contains(f));
+    }
+
+    while (orders.length < slots && freeAsker()) {
       orders.add(_newOrder());
     }
   }
@@ -1819,6 +1829,9 @@ class GameState extends ChangeNotifier {
     final k = _dayKey(now);
     // 예전 저장(다이아 · 광고 칸이 없던 목록)도 한 번 새로 만든다
     if (k != _offersDay || !_offers.any((o) => o.kind >= 3)) {
+      // 같은 날 다시 만들 때(예전 저장 옮기기) 이미 받은 무료 선물은 그대로 받은 것으로
+      final freeTaken =
+          k == _offersDay && _offers.any((o) => o.kind == 1 && o.sold);
       _offersDay = k;
       final chains = availableChains;
       Chain pick() => chains[_rng.nextInt(chains.length)];
@@ -1842,8 +1855,11 @@ class GameState extends ChangeNotifier {
         );
       }
       while (list.length < DailyShop.slots) {
-        final l = max(spawnLevel + 1, center - 2 + _rng.nextInt(2));
         final c = pick();
+        final l = max(
+          spawnLevel + 1,
+          center - 2 + _rng.nextInt(2),
+        ).clamp(1, Chains.maxLevel(c));
         list.add(ShopOffer(c, l, DailyShop.price(c, l, level)));
       }
       // 고단계 두 칸: 다이아로 사기 · 광고 보고 받기
@@ -1866,6 +1882,7 @@ class GameState extends ChangeNotifier {
           kind: 4,
         ),
       );
+      if (freeTaken) list.first.sold = true;
       _offers = list;
     }
     return _offers;
@@ -2173,7 +2190,10 @@ class GameState extends ChangeNotifier {
   /// 코인 꾸러미 (다이아).
   double coinPackAmount(int i) {
     final (_, hours, floor) = Gems.coinPacks[i];
-    return max(floor * inflation, incomePerSec * 3600 * hours).roundToDouble();
+    return max(
+      floor * inflation * Tuning.coinScale,
+      incomePerSec * 3600 * hours,
+    ).roundToDouble();
   }
 
   bool buyCoinPack(int i) {
@@ -2389,7 +2409,8 @@ class GameState extends ChangeNotifier {
     _ordersToday = (j['ordToday'] as num?)?.toInt() ?? 0;
     seedsTotal = (j['seedsT'] as num?)?.toInt() ?? 0;
     seeds = (j['seeds'] as num?)?.toInt() ?? 0;
-    runStartCoins = (j['runStart'] as num?)?.toDouble() ?? 0;
+    // 예전 저장(재단장 전)은 지금까지 번 코인을 이번 회차로 치지 않는다 (씨앗 과지급 방지)
+    runStartCoins = (j['runStart'] as num?)?.toDouble() ?? lifetimeCoins;
     seedPerks.clear();
     for (final e in ((j['perks'] as Map?) ?? const {}).entries) {
       final k = SeedPerk.values.where((p) => p.name == e.key).firstOrNull;
@@ -2477,7 +2498,6 @@ class GameState extends ChangeNotifier {
           ),
       ];
     }
-    _fillOrders();
     boosts.clear();
     for (final (k, key) in [
       (BoostKind.coins, 'boost'),
@@ -2569,6 +2589,8 @@ class GameState extends ChangeNotifier {
     }
     savedAt = ts('savedAt');
     notifyListeners();
+    // 한도 · 친구 레벨 · 패스를 다 읽은 뒤에 부탁을 채운다
+    _fillOrders();
     return true;
   }
 

@@ -72,7 +72,11 @@ class NotifyService extends ChangeNotifier {
     if (v) await askOnce();
   }
 
+  /// 예약 세대: 예약 도중 앱이 다시 켜져 cancel 되면 남은 예약을 버린다.
+  int _gen = 0;
+
   Future<void> cancel() async {
+    _gen++;
     if (!_ready) return;
     try {
       await _plugin.cancelAll();
@@ -96,6 +100,7 @@ class NotifyService extends ChangeNotifier {
   Future<void> schedule(GameState g) async {
     if (!_ready) return;
     await cancel();
+    final gen = _gen;
     if (!_on) return;
     final now = DateTime.now();
     final rng = Random();
@@ -182,6 +187,7 @@ class NotifyService extends ChangeNotifier {
       ),
     );
     for (var i = 0; i < kept.length; i++) {
+      if (gen != _gen) return; // 그사이 앱이 다시 켜졌다
       final (t, title, body) = kept[i];
       try {
         await _plugin.zonedSchedule(

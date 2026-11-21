@@ -92,9 +92,14 @@ class RenewCard extends StatelessWidget {
                       IconText(
                         ready
                             ? tr('renew.preview', {'n': game.renewSeedsPreview})
-                            : tr('renew.need', {
+                            : tier < Renewal.needBasketTier
+                            ? tr('renew.need', {
                                 'n': Renewal.needBasketTier,
                                 'now': tier,
+                              })
+                            // 등급은 됐지만 이번 회차 코인이 모자라 씨앗이 0개
+                            : tr('renew.needCoins', {
+                                'n': fmt(Renewal.coinsPerSeedBase),
                               }),
                         style: const TextStyle(fontSize: 15),
                       ),

@@ -806,9 +806,9 @@
   "renew.open": "재단장 알아보기",
   "renew.multChange": "영구 수입 ×{a} → ×{b} (계속 유지)",
   "renew.resetTitle": "처음부터 다시",
-  "renew.resetBody": "판 위 아이템\n코인\n바구니 등급\n생산력 · 수익 강화",
+  "renew.resetBody": "판 위 아이템\n코인\n바구니 등급\n생산력 · 수익 강화\n자동 합치기 (기억 강화가 없으면)",
   "renew.keepTitle": "그대로 남아요",
-  "renew.keepBody": "정원 장식 · 구역\n친구 · 하트 · 레벨\n도감 · 업적\n다이아 · 의상\n에너지 · 오프라인 강화",
+  "renew.keepBody": "정원 장식 · 구역\n친구 · 하트 · 레벨\n도감 · 업적\n다이아 · 의상\n보관 칸 아이템\n에너지 · 오프라인 강화",
   "renew.do": "재단장하기",
   "renew.doneTitle": "{n}회차 시작!",
   "renew.doneNote": "새 씨앗으로 정원을 다시 가꿔요",
@@ -883,5 +883,6 @@
   "starter.hook": "첫 정원사 전용 · 계정당 딱 한 번!",
   "starter.once": "계정당 딱 한 번만 살 수 있어요",
   "starter.off": "할인",
-  "starter.buy": "지금 받기 {p}"
+  "starter.buy": "지금 받기 {p}",
+  "renew.needCoins": "이번 회차에 [[coin]]{n} 이상 벌면 씨앗이 나와요"
 }

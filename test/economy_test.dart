@@ -608,4 +608,34 @@ void main() {
       DateTime(2026, 11, 22, 8),
     );
   });
+
+  test('출시 전 점검: 친구당 부탁 하나 · 예전 저장 씨앗 · 시장 최고 단계', () {
+    // 한 친구만 별 한도가 남아도 부탁은 그 친구 하나만
+    final g = make();
+    g.friends.addAll(['dubu', 'kwak']);
+    g.currentArea = 1;
+    g.starOrderLimit('bori');
+    for (final f in ['dubu', 'kwak']) {
+      g.starOrdersUsed[f] = 99;
+    }
+    g.orders.clear();
+    g.tick(1);
+    final ids = [for (final o in g.orders) o.friendId];
+    expect(ids.toSet().length, ids.length, reason: '$ids');
+
+    // 재단장 키가 없는 예전 저장: 지금까지 번 코인은 이번 회차로 치지 않는다
+    final j = g.toJson()
+      ..remove('runStart')
+      ..['life'] = 1e13;
+    final g2 = make()..loadJson(j);
+    expect(g2.runCoins, 0);
+
+    // 시장 칸 단계는 체인 최고 단계를 넘지 않는다
+    final g3 = make();
+    g3.level = 60;
+    g3.upgrades[UpgradeType.basketTier] = 24;
+    for (final o in g3.offers) {
+      expect(o.level, lessThanOrEqualTo(Chains.maxLevel(o.chain)));
+    }
+  });
 }

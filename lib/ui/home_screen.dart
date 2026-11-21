@@ -80,12 +80,14 @@ class _HomeScreenState extends State<HomeScreen> {
     _viewArea = game.currentArea;
     _sub = game.events.listen(_onEvent);
     game.addListener(_checkNewTips);
+    game.addListener(_syncTutorial);
     _loadTutorial();
   }
 
   @override
   void dispose() {
     game.removeListener(_checkNewTips);
+    game.removeListener(_syncTutorial);
     _sub?.cancel();
     super.dispose();
   }
@@ -725,8 +727,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _renew() async {
     final pick = await showRenewConfirm(context, game, adFree: adFree);
     if (pick == null || !mounted) return;
-    final ad = pick && await widget.ads.showRewarded();
-    final got = game.renew(withAd: ad);
+    // 광고를 골랐는데 못 봤으면(로드 실패 · 취소) 재단장을 진행하지 않는다 (되돌릴 수 없는 동작)
+    if (pick && !await _rewarded()) return;
+    final got = game.renew(withAd: pick);
     if (got <= 0 || !mounted) return;
     Navigator.of(context).popUntil((r) => r.isFirst);
     setState(() {
@@ -754,9 +757,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ArtImage(Art.item(it.chain, it.level), size: 64),
             const SizedBox(height: 4),
             IconText(
-              tr('gift.note', {
-                'coins': fmt(GameConfig.maxGiftCoinsOf(it.chain, it.level)),
-              }),
+              tr('gift.note', {'coins': fmt(game.giftCoins(it))}),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 14, color: Color(0xFF6B5A44)),
             ),
@@ -1191,7 +1192,9 @@ class _HomeScreenState extends State<HomeScreen> {
     // 이미 한참 진행한 플레이어에게는 다시 보여 주지 않는다
     if (step == 0 && (game.level >= 3 || game.totalMerges > 20))
       step = _tutDone;
+    game.tutorial = step; // 판단한 단계를 저장에도 (리스너가 되돌리지 않게)
     if (mounted) setState(() => _tut = step);
+    _tutLoaded = true;
     await _baselineTips();
     _tipsReady = true;
     _quietUntil = DateTime.now().add(const Duration(seconds: 3));
@@ -1206,6 +1209,21 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() {});
     });
+  }
+
+  bool _tutLoaded = false;
+
+  /// 로그인 뒤 클라우드 저장을 불러오면 튜토리얼 단계도 그 계정 것으로 (재설치한 기존 유저에게 다시 보이지 않게).
+  void _syncTutorial() {
+    if (!_tutLoaded || !mounted) return;
+    final t = game.tutorial;
+    if (t >= 0 && t != _tut) {
+      setState(() => _tut = t);
+    } else if (_tut != _tutDone &&
+        _tut <= 1 &&
+        (game.level >= 3 || game.totalMerges > 20)) {
+      _setTutorial(_tutDone);
+    }
   }
 
   Future<void> _setTutorial(int step) async {
@@ -1605,7 +1623,7 @@ class _HomeScreenState extends State<HomeScreen> {
           extra: IconText(
             tr('order.reward', {
               'stars': game.orderGivesStars(o) ? o.stars : 0,
-              'xp': Leveling.xpForOrder(o.level),
+              'xp': Leveling.xpForOrder(game.relLevel(o.level)),
             }),
             style: const TextStyle(fontSize: 16, color: Color(0xFF7A5230)),
           ),

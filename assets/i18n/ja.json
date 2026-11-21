@@ -805,9 +805,9 @@
   "renew.open": "リニューアルを見る",
   "renew.multChange": "永久収入 ×{a} → ×{b} (ずっと続く)",
   "renew.resetTitle": "最初から",
-  "renew.resetBody": "ボードのアイテム\nコイン\nかごランク\n生産力・収益の強化",
+  "renew.resetBody": "ボードのアイテム\nコイン\nかごランク\n生産力・収益の強化\n自動合成 (記憶なしの場合)",
   "renew.keepTitle": "そのまま",
-  "renew.keepBody": "庭の飾り・エリア\n友だち・ハート・レベル\n図鑑・実績\nダイヤ・衣装\nエネルギー・オフライン強化",
+  "renew.keepBody": "庭の飾り・エリア\n友だち・ハート・レベル\n図鑑・実績\nダイヤ・衣装\n保管マスのアイテム\nエネルギー・オフライン強化",
   "renew.do": "リニューアル",
   "renew.doneTitle": "{n}周目スタート!",
   "renew.doneNote": "新しい種で庭をもう一度育てよう",
@@ -882,5 +882,6 @@
   "starter.hook": "新しい庭師さん限定 · 1回だけ!",
   "starter.once": "アカウントごとに1回だけ",
   "starter.off": "OFF",
-  "starter.buy": "今すぐ {p}"
+  "starter.buy": "今すぐ {p}",
+  "renew.needCoins": "今回[[coin]]{n}以上かせぐと種がもらえます"
 }

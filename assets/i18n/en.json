@@ -805,9 +805,9 @@
   "renew.open": "Learn about renewal",
   "renew.multChange": "Permanent income ×{a} → ×{b} (kept)",
   "renew.resetTitle": "Starts over",
-  "renew.resetBody": "Board items\nCoins\nBasket tier\nPower · income upgrades",
+  "renew.resetBody": "Board items\nCoins\nBasket tier\nPower · income upgrades\nAuto-merge (without memory)",
   "renew.keepTitle": "You keep",
-  "renew.keepBody": "Garden decor · areas\nFriends · hearts · levels\nBook · achievements\nDiamonds · outfits\nEnergy · offline upgrades",
+  "renew.keepBody": "Garden decor · areas\nFriends · hearts · levels\nBook · achievements\nDiamonds · outfits\nVault items\nEnergy · offline upgrades",
   "renew.do": "Renew",
   "renew.doneTitle": "Round {n} begins!",
   "renew.doneNote": "Grow your garden again with new seeds",
@@ -882,5 +882,6 @@
   "starter.hook": "New gardeners only · once per account!",
   "starter.once": "Only once per account",
   "starter.off": "OFF",
-  "starter.buy": "Get it {p}"
+  "starter.buy": "Get it {p}",
+  "renew.needCoins": "Earn [[coin]]{n}+ this round to get seeds"
 }

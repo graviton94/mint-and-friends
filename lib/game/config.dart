@@ -337,7 +337,8 @@ class Leveling {
 
 /// 칸 구매 비용 (지금까지 산 칸 수 기준, 살수록 비싸짐).
 /// n번째(0부터) 칸 구매 비용: 150 × 1.3^n (Merge Mansion 보관함 +20%/칸보다 조금 가파르게).
-double cellCost(int purchased) => 150 * pow(1.3, purchased).toDouble();
+double cellCost(int purchased) =>
+    150 * pow(1.3, purchased).toDouble() * Tuning.coinScale;
 
 /// 보관함: 판 밖에 아이템을 맡겨 두는 칸 (수익·부탁 대상 아님).
 /// 장르 기준(Travel Town·Merge Mansion): 처음 2칸, 칸마다 비용이 가파르게 오른다.
@@ -611,8 +612,10 @@ class Upgrades {
     Chain.stardust => UpgradeType.stardustPower,
   };
 
-  static double energyRegenSeconds(int lv) =>
-      max(100.0, Tuning.energyRegenSeconds - 2.5 * lv);
+  static double energyRegenSeconds(int lv) => max(
+    min(100.0, Tuning.energyRegenSeconds),
+    Tuning.energyRegenSeconds - 2.5 * lv,
+  );
 
   /// 전체 수익 배율: 단계당 +3%.
   static double incomeMultiplier(int lv) => 1 + 0.03 * lv;
@@ -953,7 +956,8 @@ class Garden {
   /// 시즌 장식: 한 개 · 구역 8종 세트 (할인).
   static const int seasonGems = 40;
   static const int seasonSetGems = 250;
-  static int styleCoins(int area, int slot) => decorCost(area, slot) * 120;
+  static int styleCoins(int area, int slot) =>
+      (decorCost(area, slot) * 120 * Tuning.coinScale).round();
   static int styleGems(int area) => 25 + 5 * min(area, 11);
 
   /// 부탁 1건의 별 보상: 에너지 10 이하(≤4단계) 1, 30 이하(5단계) 2, 그 이상 3.
