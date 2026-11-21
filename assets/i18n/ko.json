@@ -696,5 +696,14 @@
   "xp.order": "[[friends]] 부탁 들어주기: 높은 단계일수록 크게\n(Lv4 아이템 +{a}, Lv7 아이템 +{b})",
   "xp.decor": "[[decorate]] 장식 놓기: 구역이 뒤일수록 크게",
   "xp.discover": "[[book]] 새 아이템 발견 +{n}",
-  "xp.note": "합치기만으로는 경험치가 오르지 않아요"
+  "xp.note": "합치기만으로는 경험치가 오르지 않아요",
+  "unit.sec": "{n}초",
+  "unit.hour": "{n}시간",
+  "upgrade.energyRegen.short": "[[energy]]회복",
+  "upgrade.income.short": "수익",
+  "upgrade.autoMerge.short": "간격",
+  "upgrade.spawnLevel.short": "2단계 확률",
+  "upgrade.offlineCap.short": "최대",
+  "upgrade.flowerPower.short": "[[coin]]/시간",
+  "upgrade.snackPower.short": "[[coin]]/시간"
 }

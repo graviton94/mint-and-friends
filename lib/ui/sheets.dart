@@ -102,13 +102,18 @@ class _FriendLevelRow extends StatelessWidget {
                     '${friendName(def.id)}  Lv.$lv',
                     style: const TextStyle(fontSize: 17),
                   ),
-                  IconText(
-                    maxed
-                        ? buffText(def, lv)
-                        : '${lv == 0 ? tr('book.noEffect') : buffText(def, lv)} → ${buffText(def, lv + 1)}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF5E6B5E),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: IconText(
+                      maxed
+                          ? buffText(def, lv)
+                          : '${lv == 0 ? tr('book.noEffect') : buffText(def, lv)} → ${buffText(def, lv + 1)}',
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF5E6B5E),
+                      ),
                     ),
                   ),
                   IconText(
@@ -227,13 +232,16 @@ class _UpgradeRow extends StatelessWidget {
                       style: const TextStyle(fontSize: 17),
                     ),
                     const SizedBox(height: 2),
-                    IconText(
-                      maxed
-                          ? upgradeDescribe(t, lv)
-                          : '${upgradeDescribe(t, lv)} → ${upgradeDescribe(t, lv + 1)}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF5E6B5E),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: IconText(
+                        upgradeLine(t, lv, maxed: maxed),
+                        maxLines: 1,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF5E6B5E),
+                        ),
                       ),
                     ),
                   ],

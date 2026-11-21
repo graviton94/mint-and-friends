@@ -695,5 +695,14 @@
   "xp.order": "[[friends]] Requests: higher tiers give more\n(Lv4 item +{a}, Lv7 item +{b})",
   "xp.decor": "[[decorate]] Placing decor: more in later areas",
   "xp.discover": "[[book]] New discovery +{n}",
-  "xp.note": "Merging alone doesn't give XP"
+  "xp.note": "Merging alone doesn't give XP",
+  "unit.sec": "{n}s",
+  "unit.hour": "{n}h",
+  "upgrade.energyRegen.short": "[[energy]]Regen",
+  "upgrade.income.short": "Income",
+  "upgrade.autoMerge.short": "Every",
+  "upgrade.spawnLevel.short": "Lv.2 chance",
+  "upgrade.offlineCap.short": "Up to",
+  "upgrade.flowerPower.short": "[[coin]]/h",
+  "upgrade.snackPower.short": "[[coin]]/h"
 }

@@ -695,5 +695,14 @@
   "xp.order": "[[friends]] お願い: 高い段階ほど多く\n(Lv4 +{a}, Lv7 +{b})",
   "xp.decor": "[[decorate]] 飾りを置く: 後のエリアほど多く",
   "xp.discover": "[[book]] 新発見 +{n}",
-  "xp.note": "合成だけでは経験値は増えません"
+  "xp.note": "合成だけでは経験値は増えません",
+  "unit.sec": "{n}秒",
+  "unit.hour": "{n}時間",
+  "upgrade.energyRegen.short": "[[energy]]回復",
+  "upgrade.income.short": "収益",
+  "upgrade.autoMerge.short": "間隔",
+  "upgrade.spawnLevel.short": "Lv.2確率",
+  "upgrade.offlineCap.short": "最大",
+  "upgrade.flowerPower.short": "[[coin]]/時",
+  "upgrade.snackPower.short": "[[coin]]/時"
 }

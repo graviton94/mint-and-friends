@@ -20,36 +20,33 @@ String featureName(Feature f) => tr('feature.${f.name}');
 
 String upgradeTitle(UpgradeType t) => tr('upgrade.${t.name}');
 
-String upgradeDescribe(UpgradeType t, int lv) {
+/// 강화 효과 값만 (짧게): '150초', '×1.10', '8%' …
+String upgradeValue(UpgradeType t, int lv) {
   switch (t) {
     case UpgradeType.energyRegen:
-      return tr('upgrade.energyRegen.desc', {
-        'v': Upgrades.energyRegenSeconds(lv).toStringAsFixed(0),
-      });
+      return tr('unit.sec', {'n': Upgrades.energyRegenSeconds(lv).round()});
     case UpgradeType.income:
-      return tr('upgrade.income.desc', {
-        'v': Upgrades.incomeMultiplier(lv).toStringAsFixed(2),
-      });
+      return '×${Upgrades.incomeMultiplier(lv).toStringAsFixed(1)}';
     case UpgradeType.autoMerge:
       final i = Upgrades.autoMergeInterval(lv);
       return i == null
           ? tr('upgrade.autoMerge.off')
-          : tr('upgrade.autoMerge.desc', {'v': i.toStringAsFixed(1)});
+          : tr('unit.sec', {'n': i.round()});
     case UpgradeType.spawnLevel:
-      return tr('upgrade.spawnLevel.desc', {
-        'v': ((GameConfig.luckySpawnChance + Upgrades.qualityChance(lv)) * 100)
-            .round(),
-      });
+      return '${((GameConfig.luckySpawnChance + Upgrades.qualityChance(lv)) * 100).round()}%';
     case UpgradeType.offlineCap:
-      return tr('upgrade.offlineCap.desc', {
-        'v': fmtDuration(Upgrades.offlineCap(lv)),
-      });
+      return tr('unit.hour', {'n': Upgrades.offlineCap(lv).inHours});
     case UpgradeType.flowerPower:
     case UpgradeType.snackPower:
-      return tr('upgrade.${t.name}.desc', {
-        'v': Upgrades.chainPower(lv).toStringAsFixed(1),
-      });
+      return '×${Upgrades.chainPower(lv).toStringAsFixed(1)}';
   }
+}
+
+/// 강화 한 줄 설명: '[[energy]]회복 150초 → 144초'.
+String upgradeLine(UpgradeType t, int lv, {bool maxed = false}) {
+  final head = tr('upgrade.${t.name}.short');
+  final now = upgradeValue(t, lv);
+  return maxed ? '$head $now' : '$head $now → ${upgradeValue(t, lv + 1)}';
 }
 
 String buffText(FriendDef f, int level) {

@@ -720,8 +720,8 @@ class _GardenSceneState extends State<GardenScene>
     final unit = min(s.width, s.height * 1.6);
     final sz = unit * 0.15;
     final bw = max(
-      game.openBaskets.length > 1 ? 82.0 : 66.0,
-      unit * (game.openBaskets.length > 1 ? 0.24 : 0.19),
+      game.openBaskets.length > 1 ? 74.0 : 66.0,
+      unit * (game.openBaskets.length > 1 ? 0.21 : 0.19),
     );
     final bh = bw * 0.6;
     // 1) 친구 머리 위 자리
@@ -1144,20 +1144,38 @@ class _OrderBubble extends StatelessWidget {
           final h = c.maxHeight / 1.22;
           return Padding(
             padding: EdgeInsets.fromLTRB(
-              h * 0.16,
+              h * 0.2,
               h * 0.1,
-              h * 0.3,
+              h * 0.2,
               h * 0.1 + c.maxHeight - h,
             ),
+            // 바구니 · 아이템 · 별 묶음을 말풍선 한가운데에
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (basket != null)
-                  Padding(
-                    padding: EdgeInsets.only(right: h * 0.02),
-                    child: ArtImage(basket!, size: h * 0.42),
+                // 바구니는 아이템 왼쪽 위에 작은 딱지로 겹쳐 (묶음이 한가운데 오게)
+                SizedBox(
+                  width: h * (basket != null ? 0.86 : 0.74),
+                  height: h * 0.8,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: ArtImage(item, size: h * 0.74),
+                      ),
+                      if (basket != null)
+                        Positioned(
+                          left: 0,
+                          top: 0,
+                          child: ArtImage(basket!, size: h * 0.4),
+                        ),
+                    ],
                   ),
-                ArtImage(item, size: h * 0.74),
+                ),
+                SizedBox(width: h * 0.04),
                 Flexible(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
