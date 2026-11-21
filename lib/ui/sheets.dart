@@ -1429,145 +1429,254 @@ class StarterCard extends StatelessWidget {
     final price = d?.price ?? '₩${fmtInt(Starter.krw)}';
     final hours =
         Starter.boosts.values.fold(0, (a, b) => a + b.inMinutes) ~/ 60;
-    // 짧게 · 크게: 무엇이 들었는지 한눈에 (아이콘 + 두 글자)
+    final pct = (100 - 100 * Starter.krw / Starter.worthKrw).round();
+    // 무엇이 들었는지 한눈에: 큰 아이콘 + 큰 숫자
     final items = [
       ('no_ads', tr('starter.passShort', {'d': Starter.pass.inDays})),
-      ('diamond', '${Starter.gems}'),
-      ('energy_jar', '${Starter.energy}'),
+      ('diamond', '×${Starter.gems}'),
+      ('energy_jar', '×${Starter.energy}'),
       ('boost', tr('starter.boostShort', {'h': hours})),
       ('sparkle', tr('starter.effectShort')),
       ('outfit', tr('starter.outfitShort')),
     ];
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFFFFF1B8), Color(0xFFFFD9E6)],
-        ),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE0A21B), width: 3),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x33E0A21B),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Padding(
+      padding: const EdgeInsets.only(top: 14, right: 8),
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          // 시한 상품임을 가장 먼저: 빨간 띠 + 남은 시간
-          if (game.starterOfferActive)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE0533D),
-                borderRadius: BorderRadius.circular(12),
+          Container(
+            padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFFFF1B8), Color(0xFFFFD3E2)],
               ),
-              child: IconText(
-                tr('starter.timerBig', {
-                  't': fmtDuration(game.starterOfferLeft),
-                }),
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 17, color: Colors.white),
-              ),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: const Color(0xFFE0A21B), width: 3),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x44E0A21B),
+                  blurRadius: 14,
+                  offset: Offset(0, 5),
+                ),
+              ],
             ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: IconText(
-                  tr('starter.title'),
-                  style: const TextStyle(fontSize: 21),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 제목 + 한 줄 미끼 (배지 자리만큼 오른쪽을 비운다)
+                Padding(
+                  padding: const EdgeInsets.only(right: 70),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      IconText(
+                        tr('starter.title'),
+                        style: const TextStyle(
+                          fontSize: 22,
+                          color: Color(0xFF6B3A10),
+                        ),
+                      ),
+                      IconText(
+                        tr('starter.hook'),
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          color: Color(0xFFB0472E),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 3,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0533D),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  tr('starter.deal'),
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 6,
-            crossAxisSpacing: 6,
-            childAspectRatio: 1.25,
-            children: [
-              for (final (icon, label) in items)
+                const SizedBox(height: 8),
+                // 한정 기간: 빨간 띠 + 남은 시간
                 Container(
+                  padding: const EdgeInsets.symmetric(vertical: 7),
                   decoration: BoxDecoration(
-                    color: const Color(0xCCFFFFFF),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFE0533D), Color(0xFFF0784F)],
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ArtImage(Art.icon(icon), size: 34),
-                      const SizedBox(height: 2),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: IconText(
-                          label,
-                          maxLines: 1,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ),
-                    ],
+                  child: IconText(
+                    game.starterOfferActive
+                        ? tr('starter.timerBig', {
+                            't': _clock(game.starterOfferLeft),
+                          })
+                        : tr('starter.once'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 17, color: Colors.white),
                   ),
                 ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          FilledButton(
-            style: framedButton(
-              FilledButton.styleFrom(minimumSize: const Size(0, 54)),
-              'button_green',
-            ),
-            onPressed: d == null || billing.purchasing
-                ? null
-                : billing.buyStarter,
-            child: d == null
-                ? IconText(
-                    tr('shop.connecting'),
-                    style: const TextStyle(fontSize: 18),
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '₩${fmtInt(Starter.worthKrw)}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xCCFFFFFF),
-                          decoration: TextDecoration.lineThrough,
-                          decorationColor: Colors.white,
+                const SizedBox(height: 8),
+                GridView.count(
+                  crossAxisCount: 3,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 6,
+                  crossAxisSpacing: 6,
+                  childAspectRatio: 1.2,
+                  children: [
+                    for (final (icon, label) in items)
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xE6FFFFFF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFFF3D9A4),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ArtImage(Art.icon(icon), size: 38),
+                            const SizedBox(height: 2),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: IconText(
+                                label,
+                                maxLines: 1,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  color: Color(0xFF4A3A22),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(price, style: const TextStyle(fontSize: 21)),
-                    ],
+                  ],
+                ),
+                const SizedBox(height: 10),
+                // 가격: 정가 줄긋기 → 판매가, 버튼은 살짝 숨 쉬듯 커졌다 작아진다
+                _Pulse(
+                  child: FilledButton(
+                    style: framedButton(
+                      FilledButton.styleFrom(minimumSize: const Size(0, 58)),
+                      'button_green',
+                    ),
+                    onPressed: d == null || billing.purchasing
+                        ? null
+                        : billing.buyStarter,
+                    child: d == null
+                        ? IconText(
+                            tr('shop.connecting'),
+                            style: const TextStyle(fontSize: 18),
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '₩${fmtInt(Starter.worthKrw)}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xCCFFFFFF),
+                                  decoration: TextDecoration.lineThrough,
+                                  decorationColor: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                tr('starter.buy', {'p': price}),
+                                style: const TextStyle(fontSize: 21),
+                              ),
+                            ],
+                          ),
                   ),
+                ),
+              ],
+            ),
+          ),
+          // 할인 배지: 크게, 오른쪽 위 테두리에 걸쳐서 살짝 기울여
+          Positioned(
+            top: -16,
+            right: -12,
+            child: Transform.rotate(
+              angle: 0.18,
+              child: Container(
+                width: 82,
+                height: 82,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const RadialGradient(
+                    colors: [Color(0xFFFF6A4D), Color(0xFFD8392A)],
+                  ),
+                  border: Border.all(color: Colors.white, width: 3.5),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x55000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$pct%',
+                      style: const TextStyle(
+                        fontSize: 26,
+                        height: 1,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      tr('starter.off'),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        height: 1.1,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+/// 남은 시간 시계 표기: 47:59:12 (초까지 흘러가 보이게).
+String _clock(Duration d) {
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${d.inHours}:${two(d.inMinutes % 60)}:${two(d.inSeconds % 60)}';
+}
+
+/// 살짝 숨 쉬듯 커졌다 작아지는 강조 (구매 버튼).
+class _Pulse extends StatefulWidget {
+  const _Pulse({required this.child});
+  final Widget child;
+
+  @override
+  State<_Pulse> createState() => _PulseState();
+}
+
+class _PulseState extends State<_Pulse> with SingleTickerProviderStateMixin {
+  late final _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => ScaleTransition(
+    scale: Tween(
+      begin: 0.97,
+      end: 1.03,
+    ).animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut)),
+    child: widget.child,
+  );
 }
 
 /// 새싹 정원 패키지 팝업 (첫 구역 완성 직후 · 에너지가 떨어졌을 때 한 번 더).

@@ -878,5 +878,9 @@
   "notify.miss.body": "{name}が庭でお願いを持って待ってるよ!",
   "notify.miss3.title": "庭の友だちが待ってるよ",
   "notify.miss3.body": "花が満開だよ。みんな一緒に遊びたいって",
-  "market.titleRefresh": "今日のマーケット (毎日{h}時に入れ替え!)"
+  "market.titleRefresh": "今日のマーケット (毎日{h}時に入れ替え!)",
+  "starter.hook": "新しい庭師さん限定 · 1回だけ!",
+  "starter.once": "アカウントごとに1回だけ",
+  "starter.off": "OFF",
+  "starter.buy": "今すぐ {p}"
 }

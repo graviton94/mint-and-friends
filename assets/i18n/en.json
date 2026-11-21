@@ -878,5 +878,9 @@
   "notify.miss.body": "{name} is waiting in the garden with a request!",
   "notify.miss3.title": "Your friends are waiting",
   "notify.miss3.body": "The flowers are in bloom. Your friends want to play!",
-  "market.titleRefresh": "Today's market (new stock daily at {h}:00!)"
+  "market.titleRefresh": "Today's market (new stock daily at {h}:00!)",
+  "starter.hook": "New gardeners only · once per account!",
+  "starter.once": "Only once per account",
+  "starter.off": "OFF",
+  "starter.buy": "Get it {p}"
 }

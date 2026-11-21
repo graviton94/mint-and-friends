@@ -879,5 +879,9 @@
   "notify.miss.body": "{name}(이)가 정원에서 기다리고 있어요. 부탁도 하나 있대요!",
   "notify.miss3.title": "정원 친구들이 기다려요",
   "notify.miss3.body": "꽃이 활짝 피었어요. 친구들이 같이 놀고 싶대요",
-  "market.titleRefresh": "오늘의 시장 (매일 {h}시 갱신!)"
+  "market.titleRefresh": "오늘의 시장 (매일 {h}시 갱신!)",
+  "starter.hook": "첫 정원사 전용 · 계정당 딱 한 번!",
+  "starter.once": "계정당 딱 한 번만 살 수 있어요",
+  "starter.off": "할인",
+  "starter.buy": "지금 받기 {p}"
 }
