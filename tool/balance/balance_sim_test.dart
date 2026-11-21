@@ -427,12 +427,12 @@ class Sim {
     final fl = [for (final f in g.friends.toList()..sort()) g.friendLevel(f)];
     return 'D$day R${g.renewCount} seeds${g.seedsTotal} Lv${g.level} area${g.currentArea + 1}(${g.placed.length}/8) '
         'items f${h[Chain.flower]} s${h[Chain.snack]} t${h[Chain.tea]} d${h[Chain.stardust]} '
-        'coins earned ${earned.round()} spent ${spent.round()} '
+        'coins earned ${earned.toStringAsExponential(2)} spent ${spent.toStringAsExponential(2)} '
         '(sink ${(100 * spent / max(1, earned)).round()}% func ${(100 * funcSpent / max(1, earned)).round()}%) '
-        'bal ${g.coins.round()} stars ${g.stars} gems ${g.gems} '
+        'bal ${g.coins.toStringAsExponential(2)} stars ${g.stars} gems ${g.gems} '
         'spawns paid $paidSpawns free $freeSpawns '
         'upg[$up] cells ${g.cellsPurchased} friends ${fl.join(',')} '
-        'gifts $gifts sells $sells | $buyStr| in: $shareStr';
+        'gifts $gifts sells $sells orders ${g.stat(Stat.orders)} | $buyStr| in: $shareStr';
   }
 
   String summary() {

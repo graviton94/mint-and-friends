@@ -416,7 +416,8 @@ class Chains {
 
   /// 구역 바구니(찻잎 · 별가루)는 충전식: 최대 횟수 · 1회 충전 초 (0 = 에너지만).
   /// 짧은 체인(Lv10 = 1단계 512개)이 하루 만에 끝나지 않게 (밸런스 시뮬레이션: 최고 단계 2~3주).
-  static const List<int> basketCharges = [0, 40, 40];
+  /// D-031: 체인이 30단계가 되고 부탁이 바구니 등급을 따라가면서 충전식은 고단계 부탁을 막아 없앴다 (0 = 에너지만).
+  static const List<int> basketCharges = [0, 0, 0];
   static const List<int> basketRechargeSec = [0, 360, 450];
   static const List<String> basketIcon = ['basket', 'tea_basket', 'star_jar'];
 }

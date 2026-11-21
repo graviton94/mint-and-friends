@@ -478,26 +478,12 @@ void main() {
     expect(events.whereType<SeasonSetEvent>().length, 1);
   });
 
-  test('충전식 바구니: 횟수를 다 쓰면 쉬고, 시간이 지나면 다시 찬다 (저장도)', () {
+  test('구역 바구니는 충전 없이 에너지만 쓴다 (D-031)', () {
     final g = make();
-    final keep = Chains.ready;
-    Chains.ready = (_) => true;
-    addTearDown(() => Chains.ready = keep);
-    g.currentArea = 2;
-    g.level = Leveling.areaLevel(2);
-    g.energy = 999;
-    g.selectBasket(1);
-    for (var i = 0; i < Chains.basketCharges[1]; i++) {
-      g.board.fillRange(0, g.board.length, null);
-      expect(g.tapSpawner(), TapResult.spawned);
+    for (var b = 0; b < Chains.baskets.length; b++) {
+      expect(g.basketReady(b), isTrue);
+      expect(Chains.basketCharges[b], 0);
     }
-    g.board.fillRange(0, g.board.length, null);
-    expect(g.tapSpawner(), TapResult.basketEmpty);
-    expect(g.basketNextIn(1), greaterThan(Duration.zero));
-    g.tick(Chains.basketRechargeSec[1].toDouble() + 1);
-    expect(g.basketChargesLeft(1), 1);
-    final g2 = make()..loadJson(g.toJson());
-    expect(g2.basketChargesLeft(1), 1);
   });
 
   test('정원 재단장: 조건 · 씨앗 · 초기화 · 유지 · 저장', () {
