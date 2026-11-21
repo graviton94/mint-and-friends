@@ -438,4 +438,14 @@ void main() {
     expect(g.giftMaxItem(2, 'dubu'), isTrue);
     expect(g.stars, st + GameConfig.maxGiftStars);
   });
+
+  test('한 화면 단위 통일: 가장 큰 값 기준', () {
+    final u = UnitFmt.of([800, 2000, 12500]);
+    expect(u(800), '0.80K');
+    expect(u(2000), '2.00K');
+    expect(u(12500), '12.5K');
+    expect(u(125000), '125K');
+    expect(UnitFmt.of([300, 800])(300), '300');
+    expect(UnitFmt.of([300, 2.5e6])(2.5e6), '2.50M');
+  });
 }

@@ -41,3 +41,34 @@ String fmtInt(int v) {
   }
   return b.toString();
 }
+
+/// 한 화면 안의 비용을 같은 단위로 보여 준다.
+/// 가장 큰 값의 단위에 맞춘다: 큰 값이 1,000 미만이면 '800', 아니면 '0.80K' · '2.00K' · '12.5K' · '125K'.
+class UnitFmt {
+  UnitFmt(this.tier);
+  factory UnitFmt.of(Iterable<double> values) {
+    var top = 0.0;
+    for (final v in values) {
+      if (v.isFinite && v > top) top = v;
+    }
+    return UnitFmt(top < 1000 ? 0 : _tierOf(top));
+  }
+  final int tier;
+
+  static int _tierOf(double v) {
+    var t = (log(v) / ln10).floor() ~/ 3;
+    if (v / pow(10, t * 3) >= 999.995) t += 1;
+    return t;
+  }
+
+  String call(num value) {
+    final v = value.toDouble();
+    if (!v.isFinite) return '∞';
+    if (tier == 0) return v.floor().toString();
+    final scaled = v / pow(10, tier * 3);
+    // 너무 작아 0.00 이 되면 그 값만 제 단위로
+    if (scaled < 0.005) return fmt(v);
+    final digits = scaled >= 100 ? 0 : (scaled >= 10 ? 1 : 2);
+    return '${scaled.toStringAsFixed(digits)}${_unit(tier)}';
+  }
+}

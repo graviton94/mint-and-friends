@@ -41,15 +41,23 @@ Future<void> showGameSheet(
 // ---------------------------------------------------------------- 강화
 
 Future<void> showUpgradesSheet(BuildContext context, GameState game) =>
-    showGameSheet(
-      context,
-      game,
-      () => SheetFrame(
+    showGameSheet(context, game, () {
+      // 이 화면의 모든 비용은 같은 단위로 (가장 큰 값 기준)
+      final unit = UnitFmt.of([
+        for (final u in Upgrades.all)
+          if (!game.upgradeMaxed(u.type)) game.upgradeCost(u.type),
+        for (final f in Friends.all)
+          if (game.friends.contains(f.id) &&
+              game.friendLevel(f.id) < Friends.maxAffection)
+            Friends.levelCost(game.friendLevel(f.id)),
+      ]);
+      return SheetFrame(
         title: tr('upgrade.title'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            for (final u in Upgrades.all) _UpgradeRow(game: game, def: u),
+            for (final u in Upgrades.all)
+              _UpgradeRow(game: game, def: u, unit: unit),
             if (game.friends.isNotEmpty) ...[
               const SizedBox(height: 12),
               IconText(
@@ -63,17 +71,22 @@ Future<void> showUpgradesSheet(BuildContext context, GameState game) =>
               const SizedBox(height: 4),
               for (final f in Friends.all)
                 if (game.friends.contains(f.id))
-                  _FriendLevelRow(game: game, def: f),
+                  _FriendLevelRow(game: game, def: f, unit: unit),
             ],
           ],
         ),
-      ),
-    );
+      );
+    });
 
 class _FriendLevelRow extends StatelessWidget {
-  const _FriendLevelRow({required this.game, required this.def});
+  const _FriendLevelRow({
+    required this.game,
+    required this.def,
+    required this.unit,
+  });
   final GameState game;
   final FriendDef def;
+  final UnitFmt unit;
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +97,7 @@ class _FriendLevelRow extends StatelessWidget {
         ? tr('common.max')
         : lv >= hearts
         ? tr('upgrade.needHeart')
-        : '[[coin]] ${fmt(Friends.levelCost(lv))}';
+        : '[[coin]] ${unit(Friends.levelCost(lv))}';
     return Card(
       color: Colors.white,
       margin: const EdgeInsets.symmetric(vertical: 5),
@@ -128,11 +141,11 @@ class _FriendLevelRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            FilledButton(
+            CostButton(
+              label: button,
               onPressed: game.canLevelFriend(def.id)
                   ? () => game.levelFriend(def.id)
                   : null,
-              child: IconText(button),
             ),
           ],
         ),
@@ -191,9 +204,14 @@ Future<void> showWardrobePicker(BuildContext context, GameState game) =>
     );
 
 class _UpgradeRow extends StatelessWidget {
-  const _UpgradeRow({required this.game, required this.def});
+  const _UpgradeRow({
+    required this.game,
+    required this.def,
+    required this.unit,
+  });
   final GameState game;
   final UpgradeDef def;
+  final UnitFmt unit;
 
   @override
   Widget build(BuildContext context) {
@@ -211,7 +229,7 @@ class _UpgradeRow extends StatelessWidget {
     } else if (capped) {
       button = tr('upgrade.needLevel', {'n': game.upgradeLevelNeeded(t)});
     } else {
-      button = '[[coin]] ${fmt(game.upgradeCost(t))}';
+      button = '[[coin]] ${unit(game.upgradeCost(t))}';
     }
     return Opacity(
       opacity: featureLocked ? 0.55 : 1,
@@ -249,11 +267,11 @@ class _UpgradeRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              FilledButton(
+              CostButton(
+                label: button,
                 onPressed: game.canBuyUpgrade(t)
                     ? () => game.buyUpgrade(t)
                     : null,
-                child: IconText(button),
               ),
             ],
           ),
@@ -341,24 +359,33 @@ class _DecorRow extends StatelessWidget {
             : null,
         trailing: placed
             ? (Art.decorStyles(d).length > 1
-                  ? OutlinedButton(
-                      onPressed: () =>
-                          showStyleSheet(context, game, game.currentArea, slot),
-                      child: IconText(tr('style.change')),
+                  ? SizedBox(
+                      width: 108,
+                      height: 44,
+                      child: OutlinedButton(
+                        onPressed: () => showStyleSheet(
+                          context,
+                          game,
+                          game.currentArea,
+                          slot,
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: IconText(tr('style.change')),
+                        ),
+                      ),
                     )
                   : IconText(
                       tr('decor.done'),
                       style: const TextStyle(fontSize: 15),
                     ))
-            : FilledButton(
+            : CostButton(
+                label: game.areaLocked
+                    ? tr('common.lockedLevel', {'n': game.areaRequiredLevel})
+                    : '[[star]] ${UnitFmt.of([for (var i = 0; i < Garden.slotsPerArea; i++) game.decorCost(i).toDouble()])(game.decorCost(slot))}',
                 onPressed: game.canPlace(slot)
                     ? () => game.placeDecor(slot)
                     : null,
-                child: IconText(
-                  game.areaLocked
-                      ? tr('common.lockedLevel', {'n': game.areaRequiredLevel})
-                      : '[[star]] ${game.decorCost(slot)}',
-                ),
               ),
       ),
     );
@@ -475,7 +502,7 @@ class _StyleCard extends StatelessWidget {
     final label = owned
         ? (current ? tr('style.using') : tr('style.use'))
         : style == 1
-        ? '[[coin]] ${fmtInt(Garden.styleCoins(area, slot))}'
+        ? '[[coin]] ${fmt(Garden.styleCoins(area, slot).toDouble())}'
         : Garden.isSeasonStyle(style)
         ? '[[diamond]] ${Garden.seasonGems}'
         : '[[diamond]] ${Garden.styleGems(area)}';
@@ -1475,7 +1502,7 @@ class _OfferRow extends StatelessWidget {
           ? tr('market.boardFull')
           : o.price == 0
           ? tr('market.take')
-          : '[[coin]] ${fmtInt(o.price)}',
+          : '[[coin]] ${UnitFmt.of([for (final x in game.offers) x.price.toDouble()])(o.price)}',
       enabled: !o.sold && !full && game.coins >= o.price,
       onTap: () {
         if (game.buyOffer(index) == BuyResult.ok) sfx(Sfx.coin);
@@ -1606,23 +1633,7 @@ class _ShopRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 124),
-            child: FilledButton(
-              style: framedButton(
-                FilledButton.styleFrom(
-                  minimumSize: const Size(92, 42),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                ),
-                'button_green',
-              ),
-              onPressed: enabled ? onTap : null,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: IconText(button, style: const TextStyle(fontSize: 15)),
-              ),
-            ),
-          ),
+          CostButton(label: button, onPressed: enabled ? onTap : null),
         ],
       ),
     );

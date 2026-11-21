@@ -712,3 +712,43 @@ class _GlowHaloState extends State<GlowHalo>
     );
   }
 }
+
+/// 비용 버튼: 숫자 길이와 상관없이 같은 크기 (글자는 줄여 맞춤).
+class CostButton extends StatelessWidget {
+  const CostButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.width = 108,
+    this.height = 44,
+  });
+  final String label;
+  final VoidCallback? onPressed;
+  final double width;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: width,
+    height: height,
+    child: FilledButton(
+      style: framedButton(
+        FilledButton.styleFrom(
+          minimumSize: Size(width, height),
+          maximumSize: Size(width, height),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+        ),
+        'button_green',
+      ),
+      onPressed: onPressed,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: IconText(
+          label,
+          maxLines: 1,
+          style: const TextStyle(fontSize: 15),
+        ),
+      ),
+    ),
+  );
+}
