@@ -52,9 +52,35 @@ class RenewCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      IconText(
-                        '${tr('renew.title')}  ·  ${tr('renew.round', {'n': game.renewCount})}',
-                        style: const TextStyle(fontSize: 18),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: IconText(
+                              '${tr('renew.title')}  ·  ${tr('renew.round', {'n': game.renewCount})}',
+                              style: const TextStyle(fontSize: 18),
+                            ),
+                          ),
+                          if (game.renewRecommended) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8739A),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                tr('renew.recommend'),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       IconText(
                         tr('renew.runCoins', {'v': fmt(game.runCoins)}),
@@ -72,7 +98,20 @@ class RenewCard extends StatelessWidget {
                               }),
                         style: const TextStyle(fontSize: 15),
                       ),
-                      if (game.seedsTotal > 0)
+                      if (ready)
+                        IconText(
+                          tr('renew.multChangeShort', {
+                            'a': game.seedMultiplier.toStringAsFixed(1),
+                            'b': game.seedMultiplierAfterRenew.toStringAsFixed(
+                              1,
+                            ),
+                          }),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF7A5A22),
+                          ),
+                        )
+                      else if (game.seedsTotal > 0)
                         IconText(
                           tr('renew.mult', {
                             'v': game.seedMultiplier.toStringAsFixed(1),

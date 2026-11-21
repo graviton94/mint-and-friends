@@ -830,5 +830,10 @@
   "seeds.moonRest": "月光の休息",
   "seeds.moonRest.desc": "オフライン収益 +10%",
   "seeds.starWish": "星のお願い",
-  "seeds.starWish.desc": "お願いで星を多くもらう確率 +5%"
+  "seeds.starWish.desc": "お願いで星を多くもらう確率 +5%",
+  "milestone.title": "今日のお願い {n}回達成!",
+  "shop.adGems": "広告でダイヤ {n}個",
+  "shop.adGemsDone": "また明日",
+  "renew.multChangeShort": "収入 ×{a} → ×{b}",
+  "renew.recommend": "おすすめ"
 }

@@ -527,4 +527,45 @@ void main() {
     expect(g2.perkLv(SeedPerk.startBasket), 1);
     expect(g2.energyCap, GameConfig.energyCap);
   });
+
+  test('하루 부탁 단계 보상: 10 · 20 · 30번째에 다이아 2 · 3 · 5, 다음 날 다시', () {
+    final g = make();
+    g.friends.add('dubu');
+    final g0 = g.gems;
+    final l0 = g.level;
+    void deliverOne() {
+      g.orders = [Order(900 + g.ordersToday, 'dubu', Chain.flower, 3, 1)];
+      g.board[8] = Item(990 + g.ordersToday, Chain.flower, 3);
+      expect(g.deliver(0), isTrue);
+    }
+
+    for (var i = 0; i < 30; i++) {
+      deliverOne();
+    }
+    // 레벨업 다이아는 빼고
+    expect(g.gems - g0 - (g.level - l0) * Gems.levelUp, 10);
+    expect(g.nextOrderMilestone, isNull);
+    now = now.add(const Duration(days: 1));
+    expect(g.ordersToday, 0);
+    expect(g.nextOrderMilestone, (10, 2));
+  });
+
+  test('광고 다이아: 하루 5번 · 1개씩', () {
+    final g = make();
+    final g0 = g.gems;
+    var n = 0;
+    while (g.gemAdAvailable) {
+      g.recordAd(AdKind.gems);
+      g.grantGemAd();
+      n++;
+    }
+    expect(n, 5);
+    expect(g.gems - g0, 5);
+  });
+
+  test('회차 별 보너스: 2회차부터 회차당 +5%, 최대 +50%', () {
+    expect(GameConfig.roundStarBonus(1), 0);
+    expect(GameConfig.roundStarBonus(3), closeTo(0.10, 1e-9));
+    expect(GameConfig.roundStarBonus(30), 0.5);
+  });
 }

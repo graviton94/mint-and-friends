@@ -124,7 +124,11 @@ class _HomeScreenState extends State<HomeScreen> {
         final quota = done && stars > 0
             ? tr('toast.quotaDone', {'name': friendName(friendId)})
             : '';
-        _toast('$thanks  [[xp]]+$xp$heart$quota');
+        final ms = game.nextOrderMilestone;
+        final prog = ms == null
+            ? ''
+            : '  ·  ${game.ordersToday}/${ms.$1}[[diamond]]';
+        _toast('$thanks  [[xp]]+$xp$heart$quota$prog');
         // 오늘 부탁이 모두 끝나면 한 번만 알려 준다 (이후엔 정원의 작은 아이콘)
         if (!game.ordersDoneToday) _allDoneShown = false;
         if (game.ordersDoneToday && !_allDoneShown) {
@@ -162,6 +166,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   'emoji': friendToken(friendId),
                   'coins': fmt(coins),
                 }),
+        );
+      case OrderMilestoneEvent(:final count, :final gems):
+        sfx(Sfx.unlock);
+        TopToast.celebrate(
+          context,
+          art: ArtImage(Art.icon('diamond'), size: 52),
+          title: tr('milestone.title', {'n': count}),
+          sub: '[[diamond]] +$gems',
         );
       case RenewEvent():
         sfx(Sfx.levelup);
@@ -659,7 +671,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openShop() {
     sfx(Sfx.open);
-    showShopSheet(context, widget.billing, game);
+    showShopSheet(
+      context,
+      widget.billing,
+      game,
+      watchAd: _rewardedCapped,
+      adFree: adFree,
+    );
   }
 
   Future<void> _watchBoost() async {
@@ -1843,7 +1861,11 @@ class _HomeScreenState extends State<HomeScreen> {
               showUpgradesSheet(context, game, onRenew: _renew);
             }
           },
-          badge: Upgrades.all.any((u) => game.canBuyUpgrade(u.type)) ? -1 : 0,
+          badge:
+              game.renewRecommended ||
+                  Upgrades.all.any((u) => game.canBuyUpgrade(u.type))
+              ? -1
+              : 0,
         ),
         if (game.friends.any(
           (id) => Art.outfitsFor(Friends.byId(id)).isNotEmpty,

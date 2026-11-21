@@ -194,6 +194,12 @@ class MaxGiftEvent extends GameEvent {
   MaxGiftEvent(this.friendId, this.coins, this.stars, this.chain, this.level);
 }
 
+class OrderMilestoneEvent extends GameEvent {
+  final int count;
+  final int gems;
+  OrderMilestoneEvent(this.count, this.gems);
+}
+
 class RenewEvent extends GameEvent {
   final int round;
   final int seeds;
@@ -263,6 +269,52 @@ class GameState extends ChangeNotifier {
       lv(UpgradeType.basketTier) >= Renewal.needBasketTier &&
       Renewal.seedsFor(runCoins) > 0;
   int get renewSeedsPreview => Renewal.seedsFor(runCoins);
+
+  /// 재단장 추천: 받을 씨앗이 가진 씨앗의 절반(최소 3) 이상이거나, 살 수 있는 강화가 30분 넘게 없을 때.
+  double _noBuySecs = 0;
+  bool get renewRecommended =>
+      canRenew &&
+      (renewSeedsPreview >= max(3, seedsTotal ~/ 2) || _noBuySecs >= 1800);
+
+  /// 재단장하면 바뀌는 영구 수입 배율.
+  double get seedMultiplierAfterRenew =>
+      1 + Renewal.seedIncome * (seedsTotal + renewSeedsPreview);
+
+  // ---- 하루 부탁 단계 보상 (D-032)
+  String _ordersDay = '';
+  int _ordersToday = 0;
+  int get ordersToday {
+    _rollOrdersDay();
+    return _ordersToday;
+  }
+
+  void _rollOrdersDay() {
+    final k = _dayKey(now);
+    if (k == _ordersDay) return;
+    _ordersDay = k;
+    _ordersToday = 0;
+  }
+
+  /// 다음 단계 보상 (없으면 null): (목표 수, 다이아).
+  (int, int)? get nextOrderMilestone {
+    final n = ordersToday;
+    for (var i = 0; i < GameConfig.orderMilestones.length; i++) {
+      if (n < GameConfig.orderMilestones[i]) {
+        return (
+          GameConfig.orderMilestones[i],
+          GameConfig.orderMilestoneGems[i],
+        );
+      }
+    }
+    return null;
+  }
+
+  /// 광고 보고 다이아 (하루 5번).
+  bool get gemAdAvailable => canWatchAd(AdKind.gems);
+  void grantGemAd() {
+    gems += GameConfig.adGems;
+    notifyListeners();
+  }
 
   /// 최대 에너지 (씨앗 강화 '에너지 통'으로 +10씩).
   int get energyCap => GameConfig.energyCap + 10 * perkLv(SeedPerk.energyJar);
@@ -854,6 +906,7 @@ class GameState extends ChangeNotifier {
     _earn(incomePerSec * dt);
     _regenEnergy(dt);
     _rechargeBaskets(dt);
+    _noBuySecs = UpgradeType.values.any(canBuyUpgrade) ? 0 : _noBuySecs + dt;
 
     final ami = autoMergeInterval;
     if (ami != null) {
@@ -1404,6 +1457,19 @@ class GameState extends ChangeNotifier {
         _rng.nextDouble() <
             buff(FriendBuff.starBonus) + 0.05 * perkLv(SeedPerk.starWish)) {
       gained += max(1, o.stars ~/ 2);
+    }
+    // 2회차부터 회차 별 보너스
+    if (withStars && renewCount > 1) {
+      gained = (gained * (1 + GameConfig.roundStarBonus(renewCount))).round();
+    }
+    // 하루 부탁 단계 보상
+    _rollOrdersDay();
+    _ordersToday += 1;
+    final mi = GameConfig.orderMilestones.indexOf(_ordersToday);
+    if (mi >= 0) {
+      final g = GameConfig.orderMilestoneGems[mi];
+      gems += g;
+      _events.add(OrderMilestoneEvent(_ordersToday, g));
     }
     if (withStars && quotaActive) {
       starOrdersUsed[o.friendId] = (starOrdersUsed[o.friendId] ?? 0) + 1;
@@ -2137,6 +2203,8 @@ class GameState extends ChangeNotifier {
       'econ': econVersion,
       'life': lifetimeCoins,
       'renew': renewCount,
+      'ordDay': _ordersDay,
+      'ordToday': _ordersToday,
       'seedsT': seedsTotal,
       'seeds': seeds,
       'runStart': runStartCoins,
@@ -2243,6 +2311,8 @@ class GameState extends ChangeNotifier {
     _gemRefillsToday = (j['gemRefills'] as num?)?.toInt() ?? 0;
     lifetimeCoins = (j['life'] as num?)?.toDouble() ?? coins;
     renewCount = (j['renew'] as num?)?.toInt() ?? 1;
+    _ordersDay = j['ordDay'] as String? ?? '';
+    _ordersToday = (j['ordToday'] as num?)?.toInt() ?? 0;
     seedsTotal = (j['seedsT'] as num?)?.toInt() ?? 0;
     seeds = (j['seeds'] as num?)?.toInt() ?? 0;
     runStartCoins = (j['runStart'] as num?)?.toDouble() ?? 0;

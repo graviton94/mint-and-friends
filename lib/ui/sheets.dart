@@ -1047,8 +1047,10 @@ class _StorageBuySlot extends StatelessWidget {
 Future<void> showShopSheet(
   BuildContext context,
   BillingService billing,
-  GameState game,
-) => showGameSheet(
+  GameState game, {
+  Future<bool> Function(AdKind kind)? watchAd,
+  bool adFree = false,
+}) => showGameSheet(
   context,
   Listenable.merge([billing, game]),
   () => SheetFrame(
@@ -1074,6 +1076,22 @@ Future<void> showShopSheet(
           const SizedBox(height: 12),
         ],
         _ShopHeader(tr('shop.gems')),
+        if (watchAd != null)
+          _ShopRow(
+            icon: Art.icon('diamond'),
+            title: tr('shop.adGems', {'n': GameConfig.adGems}),
+            note: tr('energy.left', {'n': game.adsLeft(AdKind.gems)}),
+            button: game.gemAdAvailable
+                ? '${adFree ? '' : '[[ad]] '}[[diamond]]+${GameConfig.adGems}'
+                : tr('shop.adGemsDone'),
+            enabled: game.gemAdAvailable,
+            onTap: () async {
+              if (await watchAd(AdKind.gems)) {
+                game.grantGemAd();
+                sfx(Sfx.coin);
+              }
+            },
+          ),
         for (var i = 0; i < Gems.packs.length; i++)
           _GemPackRow(billing: billing, pack: Gems.packs[i], index: i),
         if (!billing.available || billing.gemProducts.isEmpty)

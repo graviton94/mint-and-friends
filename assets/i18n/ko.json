@@ -831,5 +831,10 @@
   "seeds.moonRest": "달빛 휴식",
   "seeds.moonRest.desc": "오프라인 수익 +10%",
   "seeds.starWish": "별 부탁",
-  "seeds.starWish.desc": "부탁 별을 더 받을 확률 +5%"
+  "seeds.starWish.desc": "부탁 별을 더 받을 확률 +5%",
+  "milestone.title": "오늘 부탁 {n}개 달성!",
+  "shop.adGems": "광고 보고 다이아 {n}개",
+  "shop.adGemsDone": "내일 또",
+  "renew.multChangeShort": "수입 ×{a} → ×{b}",
+  "renew.recommend": "추천"
 }

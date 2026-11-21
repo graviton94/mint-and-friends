@@ -830,5 +830,10 @@
   "seeds.moonRest": "Moonlit rest",
   "seeds.moonRest.desc": "Offline income +10%",
   "seeds.starWish": "Star wish",
-  "seeds.starWish.desc": "+5% chance of bonus stars on requests"
+  "seeds.starWish.desc": "+5% chance of bonus stars on requests",
+  "milestone.title": "{n} requests today!",
+  "shop.adGems": "Watch an ad for {n} diamond",
+  "shop.adGemsDone": "Tomorrow",
+  "renew.multChangeShort": "Income ×{a} → ×{b}",
+  "renew.recommend": "Now!"
 }

@@ -145,7 +145,18 @@ class GameConfig {
     AdKind.coinBag: 5,
     AdKind.refresh: 5,
     AdKind.quota: 6,
+    AdKind.gems: 5,
   };
+
+  /// 광고 보고 다이아: 하루 5번 × 1개 (한 달 최대 150 ≈ 다이아 팩 ₩2,900어치, D-032).
+  static const int adGems = 1;
+
+  /// 하루 부탁 단계 보상: 오늘 N번째 부탁을 들어주면 다이아 (하루 최대 10, 한 달 300).
+  static const List<int> orderMilestones = [10, 20, 30];
+  static const List<int> orderMilestoneGems = [2, 3, 5];
+
+  /// 2회차부터 부탁 별 보너스: 회차당 +5%, 최대 +50%.
+  static double roundStarBonus(int round) => min(0.5, 0.05 * (round - 1));
 
   /// 장식 1개 / 구역 완성 시 정원 매력도 (코인 배율) 증가.
   static const double decorIncomeBonus = 0.02;
@@ -153,7 +164,7 @@ class GameConfig {
 }
 
 /// 하루 횟수 제한이 있는 보상형 광고 종류 (오프라인 2배·손님·비눗방울은 제한 없음).
-enum AdKind { energy, boost, coinBag, refresh, quota }
+enum AdKind { energy, boost, coinBag, refresh, quota, gems }
 
 /// 시간제 부스트. coins = 코인 2배 (예전 '부스트'), energy = 바구니 에너지 무료, lucky = 행운 바구니.
 enum BoostKind { coins, energy, lucky }
@@ -643,8 +654,8 @@ class SeedPerkDef {
 /// 황금 씨앗을 받는다. 씨앗은 모은 만큼 영구 수입 +10%, 쓰면 영구 강화(씨앗을 써도 수입 배율은 그대로).
 class Renewal {
   static const int needBasketTier = 10;
-  static const double seedIncome = 0.10;
-  static const double coinsPerSeedBase = 1e9;
+  static double get seedIncome => Tuning.seedIncome;
+  static double get coinsPerSeedBase => Tuning.seedCoinBase;
   static const double adBonus = 1.5;
 
   /// 이번 회차에 번 코인으로 받을 씨앗: ⌊(코인 ÷ 10억)^(1/3)⌋.
