@@ -509,6 +509,15 @@ class _StyleCard extends StatelessWidget {
         : Garden.isSeasonStyle(style)
         ? '[[diamond]] ${Garden.seasonGems}'
         : '[[diamond]] ${Garden.styleGems(area)}';
+    // 살 수 없으면(코인 · 다이아 부족) 흐린 버튼
+    final affordable =
+        owned ||
+        (style == 1
+            ? game.coins >= game.styleCost(area, slot)
+            : game.gems >=
+                  (Garden.isSeasonStyle(style)
+                      ? Garden.seasonGems
+                      : Garden.styleGems(area)));
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
@@ -540,7 +549,7 @@ class _StyleCard extends StatelessWidget {
               ),
               current ? 'button_white' : 'button_green',
             ),
-            onPressed: current
+            onPressed: current || !affordable
                 ? null
                 : () {
                     switch (game.setStyle(area, slot, style)) {
@@ -663,10 +672,13 @@ class _OutfitCard extends StatelessWidget {
               ),
               current ? 'button_white' : 'button_green',
             ),
+            // 다이아가 모자라면 살 수 있는 것처럼 보이지 않게 (흐린 버튼)
             onPressed:
                 current ||
                     (!owned &&
-                        (outfit!.limited || !outfit!.onSaleIn(game.now.month)))
+                        (outfit!.limited ||
+                            !outfit!.onSaleIn(game.now.month) ||
+                            game.gems < outfit!.gems))
                 ? null
                 : () {
                     final r = game.wearOutfit(def.id, id);
@@ -1405,7 +1417,9 @@ class _BoostRow extends StatelessWidget {
                       style: const TextStyle(fontSize: 17),
                     ),
                     IconText(
-                      tr('boost.${kind.name}.note'),
+                      tr('boost.${kind.name}.note', {
+                        'n': (Boosts.energySaveChance * 100).round(),
+                      }),
                       style: const TextStyle(
                         fontSize: 13,
                         height: 1.3,

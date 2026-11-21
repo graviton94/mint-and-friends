@@ -1412,10 +1412,13 @@ class GameState extends ChangeNotifier {
       final chain = preferChain ?? chains[_rng.nextInt(chains.length)];
       // 피할 것이 많아 고를 게 없으면 단계 폭을 조금씩 넓힌다 (±1 → ±2 → ±3)
       final spread = 1.0 + min(1, attempt ~/ 15);
-      final lvl = (center + (_rng.nextDouble() * 2 - 1) * spread).round().clamp(
-        spawnLevel + 1,
-        Chains.maxLevel(chain),
-      );
+      // 3번에 1번은 낮은 단계(바구니 +1~2) 부탁: 판에 남는 낮은 아이템을 쓸 데가 생기게
+      final easy = attempt < 20 && _rng.nextDouble() < Tuning.easyOrderChance;
+      final lvl =
+          (easy
+                  ? spawnLevel + 1 + _rng.nextInt(2)
+                  : (center + (_rng.nextDouble() * 2 - 1) * spread).round())
+              .clamp(spawnLevel + 1, Chains.maxLevel(chain));
       final dup = orders.any((o) => o.chain == chain && o.level == lvl);
       // 같은 부탁을 연달아 받아 별을 쉽게 모으지 못하게: 최근 전달한 것 · 판에 이미 있는 것은 피한다
       // (부탁은 합쳐서 만들어야 하는 아이템이 기본 · 장르 표준)
@@ -1425,7 +1428,8 @@ class GameState extends ChangeNotifier {
           _recentOrders.isNotEmpty &&
           _recentOrders.last == '${chain.index}-$lvl';
       // 30번 안에 못 찾으면 '방금 전달한 것'만 피하고, 60번 넘으면 아무거나
-      if ((!dup && !recent && !onBoard) ||
+      // 낮은 단계 부탁은 판에 있는 것도 원한다 (별 1개짜리라 공짜 별 걱정이 작고, 칸을 비워 준다)
+      if ((!dup && !recent && (!onBoard || easy)) ||
           (attempt > 30 && !justGiven && !onBoard) ||
           attempt > 60) {
         return Order(

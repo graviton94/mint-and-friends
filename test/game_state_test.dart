@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:mint_and_friends/game/config.dart';
 import 'package:mint_and_friends/game/format.dart';
 import 'package:mint_and_friends/game/game_state.dart';
+import 'package:mint_and_friends/game/tuning.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -417,7 +418,10 @@ void main() {
     expect(fmt(1e15), '1.00aa');
   });
 
-  test('방금 전달한 부탁 · 판에 이미 있는 아이템은 새 부탁으로 바로 나오지 않는다', () {
+  test('방금 전달한 부탁 · 판에 이미 있는 아이템은 새 부탁으로 바로 나오지 않는다 (낮은 단계 부탁 제외)', () {
+    final keep = Tuning.easyOrderChance;
+    Tuning.easyOrderChance = 0;
+    addTearDown(() => Tuning.easyOrderChance = keep);
     final g = make();
     for (var round = 0; round < 30; round++) {
       final o = g.orders[0];

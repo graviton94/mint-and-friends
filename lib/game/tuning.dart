@@ -12,6 +12,9 @@ class Tuning {
   static int refillStep = 30;
   static int refillMax = 150;
 
+  /// 낮은 단계 부탁 확률 (판에 남는 낮은 아이템 소모처).
+  static double easyOrderChance = 0.33;
+
   /// 구조 부탁 확률.
   static double rescueChance = 0.25;
 
@@ -36,6 +39,7 @@ class Tuning {
     'refill_step': (0, 100, (v) => refillStep = v.toInt()),
     'refill_max': (10, 500, (v) => refillMax = v.toInt()),
     'rescue_chance': (0, 1, (v) => rescueChance = v.toDouble()),
+    'easy_order_chance': (0, 1, (v) => easyOrderChance = v.toDouble()),
     'market_price_base': (1, 100, (v) => marketPriceBase = v.toInt()),
     'area_star_scale': (0.3, 3, (v) => areaStarScale = v.toDouble()),
     'coin_scale': (0.1, 10, (v) => coinScale = v.toDouble()),
@@ -51,6 +55,7 @@ class Tuning {
     'refill_step': 30,
     'refill_max': 150,
     'rescue_chance': 0.25,
+    'easy_order_chance': 0.33,
     'market_price_base': 10,
     'area_star_scale': 1.6,
     'coin_scale': 1.0,
