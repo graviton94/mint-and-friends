@@ -194,6 +194,12 @@ class MaxGiftEvent extends GameEvent {
   MaxGiftEvent(this.friendId, this.coins, this.stars, this.chain, this.level);
 }
 
+class RenewEvent extends GameEvent {
+  final int round;
+  final int seeds;
+  RenewEvent(this.round, this.seeds);
+}
+
 class SeasonSetEvent extends GameEvent {
   final int area;
   final int style;
@@ -237,6 +243,80 @@ class GameState extends ChangeNotifier {
   double coins = 0;
   int stars = 0;
   double lifetimeCoins = 0;
+
+  // ---- 정원 재단장 (D-031)
+  /// 몇 번째 회차인가 (1부터).
+  int renewCount = 1;
+
+  /// 지금까지 받은 황금 씨앗 (영구 수입 배율) · 쓸 수 있는 씨앗.
+  int seedsTotal = 0;
+  int seeds = 0;
+
+  /// 이번 회차가 시작될 때의 누적 코인 (이번 회차에 번 코인 = lifetimeCoins − 이 값).
+  double runStartCoins = 0;
+  final Map<SeedPerk, int> seedPerks = {};
+  int perkLv(SeedPerk p) => seedPerks[p] ?? 0;
+
+  double get runCoins => max(0, lifetimeCoins - runStartCoins);
+  double get seedMultiplier => 1 + Renewal.seedIncome * seedsTotal;
+  bool get canRenew =>
+      lv(UpgradeType.basketTier) >= Renewal.needBasketTier &&
+      Renewal.seedsFor(runCoins) > 0;
+  int get renewSeedsPreview => Renewal.seedsFor(runCoins);
+
+  /// 최대 에너지 (씨앗 강화 '에너지 통'으로 +10씩).
+  int get energyCap => GameConfig.energyCap + 10 * perkLv(SeedPerk.energyJar);
+
+  bool canBuyPerk(SeedPerk p) {
+    final d = Renewal.of(p);
+    return perkLv(p) < d.maxLevel && seeds >= d.costAt(perkLv(p));
+  }
+
+  bool buyPerk(SeedPerk p) {
+    if (!canBuyPerk(p)) return false;
+    seeds -= Renewal.of(p).costAt(perkLv(p));
+    seedPerks[p] = perkLv(p) + 1;
+    notifyListeners();
+    return true;
+  }
+
+  /// 정원 재단장: 판 · 코인 · 바구니 등급 · 생산력/수익 강화를 처음부터, 씨앗을 받는다.
+  /// 정원 · 구역 · 친구 · 하트 · 레벨 · 도감 · 업적 · 다이아 · 의상 · 에너지/오프라인/품질 강화는 그대로.
+  int renew({bool withAd = false}) {
+    if (!canRenew) return 0;
+    final base = renewSeedsPreview;
+    final got = withAd ? (base * Renewal.adBonus).round() : base;
+    final lastRun = runCoins;
+    seedsTotal += got;
+    seeds += got;
+    renewCount += 1;
+    for (var i = 0; i < board.length; i++) {
+      board[i] = null;
+    }
+    for (final t in [
+      UpgradeType.flowerPower,
+      UpgradeType.snackPower,
+      UpgradeType.teaPower,
+      UpgradeType.stardustPower,
+      UpgradeType.income,
+    ]) {
+      upgrades.remove(t);
+    }
+    upgrades[UpgradeType.basketTier] = perkLv(SeedPerk.startBasket);
+    if (perkLv(SeedPerk.autoMemory) == 0)
+      upgrades.remove(UpgradeType.autoMerge);
+    coins = lastRun * 0.01 * perkLv(SeedPerk.startCoins);
+    runStartCoins = lifetimeCoins;
+    orders.clear();
+    _offersDay = '';
+    energy = max(energy, energyCap);
+    _fillOrders();
+    _trace('renew', '$renewCount,$got,${lastRun.round()}');
+    _events.add(RenewEvent(renewCount, got));
+    notifyListeners();
+    return got;
+  }
+
   int level = 1;
   int xp = 0;
   int energy = GameConfig.energyStart;
@@ -524,7 +604,8 @@ class GameState extends ChangeNotifier {
   /// 방치 수익 배율 (수익 강화 · 친구 버프). 정원 매력은 부탁 코인에만.
   double get _incomeMult =>
       Upgrades.incomeMultiplier(lv(UpgradeType.income)) *
-      (1 + buff(FriendBuff.income));
+      (1 + buff(FriendBuff.income)) *
+      seedMultiplier;
 
   bool boosted(BoostKind k) => boosts[k]?.isAfter(now) ?? false;
   Duration boostLeft(BoostKind k) =>
@@ -816,20 +897,19 @@ class GameState extends ChangeNotifier {
   // ---------------------------------------------------------------- 에너지
 
   void _regenEnergy(double dt) {
-    if (energy >= GameConfig.energyCap) {
+    if (energy >= energyCap) {
       energyProgress = 0;
       return;
     }
     energyProgress += dt;
-    while (energyProgress >= energyRegenSeconds &&
-        energy < GameConfig.energyCap) {
+    while (energyProgress >= energyRegenSeconds && energy < energyCap) {
       energyProgress -= energyRegenSeconds;
       energy++;
     }
   }
 
   /// 다음 에너지 1이 차기까지 남은 시간.
-  Duration get energyNextIn => energy >= GameConfig.energyCap
+  Duration get energyNextIn => energy >= energyCap
       ? Duration.zero
       : Duration(seconds: (energyRegenSeconds - energyProgress).ceil());
 
@@ -1320,7 +1400,9 @@ class GameState extends ChangeNotifier {
     final withStars = orderGivesStars(o);
     var gained = withStars ? o.stars : 0;
     // 단풍(별 보너스): 가끔 별을 반만큼 더
-    if (withStars && _rng.nextDouble() < buff(FriendBuff.starBonus)) {
+    if (withStars &&
+        _rng.nextDouble() <
+            buff(FriendBuff.starBonus) + 0.05 * perkLv(SeedPerk.starWish)) {
       gained += max(1, o.stars ~/ 2);
     }
     if (withStars && quotaActive) {
@@ -2014,7 +2096,8 @@ class GameState extends ChangeNotifier {
           baseIncomePerSec,
           away.inSeconds.toDouble(),
         ) *
-        (1 + buff(FriendBuff.offline));
+        (1 + buff(FriendBuff.offline)) *
+        (1 + 0.1 * perkLv(SeedPerk.moonRest));
     if (c <= 0) return null;
     return OfflineReward(away, c);
   }
@@ -2053,6 +2136,11 @@ class GameState extends ChangeNotifier {
       'gemRefills': _gemRefillsToday,
       'econ': econVersion,
       'life': lifetimeCoins,
+      'renew': renewCount,
+      'seedsT': seedsTotal,
+      'seeds': seeds,
+      'runStart': runStartCoins,
+      'perks': {for (final e in seedPerks.entries) e.key.name: e.value},
       'level': level,
       'xp': xp,
       'board': [for (final it in board) it?.toJson()],
@@ -2154,6 +2242,15 @@ class GameState extends ChangeNotifier {
     _offersDay = j['offersDay'] as String? ?? '';
     _gemRefillsToday = (j['gemRefills'] as num?)?.toInt() ?? 0;
     lifetimeCoins = (j['life'] as num?)?.toDouble() ?? coins;
+    renewCount = (j['renew'] as num?)?.toInt() ?? 1;
+    seedsTotal = (j['seedsT'] as num?)?.toInt() ?? 0;
+    seeds = (j['seeds'] as num?)?.toInt() ?? 0;
+    runStartCoins = (j['runStart'] as num?)?.toDouble() ?? 0;
+    seedPerks.clear();
+    for (final e in ((j['perks'] as Map?) ?? const {}).entries) {
+      final k = SeedPerk.values.where((p) => p.name == e.key).firstOrNull;
+      if (k != null) seedPerks[k] = (e.value as num).toInt();
+    }
     level = (j['level'] as num?)?.toInt() ?? 1;
     xp = (j['xp'] as num?)?.toInt() ?? 0;
     final b = j['board'] as List;

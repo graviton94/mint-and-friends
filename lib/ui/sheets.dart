@@ -13,6 +13,7 @@ import '../i18n/names.dart';
 import '../services/audio_service.dart';
 import '../services/billing_service.dart';
 import '../services/dev_log.dart';
+import 'renew_ui.dart';
 import 'theme.dart';
 import 'widgets/frame_box.dart';
 import 'widgets/icon_text.dart';
@@ -40,43 +41,45 @@ Future<void> showGameSheet(
 
 // ---------------------------------------------------------------- 강화
 
-Future<void> showUpgradesSheet(BuildContext context, GameState game) =>
-    showGameSheet(context, game, () {
-      // 이 화면의 모든 비용은 같은 단위로 (가장 큰 값 기준)
-      final unit = UnitFmt.of([
+Future<void> showUpgradesSheet(
+  BuildContext context,
+  GameState game, {
+  VoidCallback? onRenew,
+}) => showGameSheet(context, game, () {
+  // 이 화면의 모든 비용은 같은 단위로 (가장 큰 값 기준)
+  final unit = UnitFmt.of([
+    for (final u in Upgrades.all)
+      if (!game.upgradeMaxed(u.type)) game.upgradeCost(u.type),
+    for (final f in Friends.all)
+      if (game.friends.contains(f.id) &&
+          game.friendLevel(f.id) < Friends.maxAffection)
+        game.friendLevelCost(f.id),
+  ]);
+  return SheetFrame(
+    title: tr('upgrade.title'),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (onRenew != null && RenewCard.visible(game))
+          RenewCard(game: game, onOpen: onRenew),
         for (final u in Upgrades.all)
-          if (!game.upgradeMaxed(u.type)) game.upgradeCost(u.type),
-        for (final f in Friends.all)
-          if (game.friends.contains(f.id) &&
-              game.friendLevel(f.id) < Friends.maxAffection)
-            game.friendLevelCost(f.id),
-      ]);
-      return SheetFrame(
-        title: tr('upgrade.title'),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final u in Upgrades.all)
-              _UpgradeRow(game: game, def: u, unit: unit),
-            if (game.friends.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              IconText(
-                tr('upgrade.friends'),
-                style: const TextStyle(fontSize: 18),
-              ),
-              IconText(
-                tr('upgrade.friendsNote'),
-                style: const TextStyle(fontSize: 13, color: Colors.black54),
-              ),
-              const SizedBox(height: 4),
-              for (final f in Friends.all)
-                if (game.friends.contains(f.id))
-                  _FriendLevelRow(game: game, def: f, unit: unit),
-            ],
-          ],
-        ),
-      );
-    });
+          _UpgradeRow(game: game, def: u, unit: unit),
+        if (game.friends.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          IconText(tr('upgrade.friends'), style: const TextStyle(fontSize: 18)),
+          IconText(
+            tr('upgrade.friendsNote'),
+            style: const TextStyle(fontSize: 13, color: Colors.black54),
+          ),
+          const SizedBox(height: 4),
+          for (final f in Friends.all)
+            if (game.friends.contains(f.id))
+              _FriendLevelRow(game: game, def: f, unit: unit),
+        ],
+      ],
+    ),
+  );
+});
 
 class _FriendLevelRow extends StatelessWidget {
   const _FriendLevelRow({

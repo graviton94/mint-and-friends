@@ -18,6 +18,7 @@ import 'board/board_view.dart';
 import 'garden/garden_scene.dart';
 import 'garden/garden_screen.dart';
 import 'meta_ui.dart';
+import 'renew_ui.dart';
 import 'sheets.dart';
 import 'theme.dart';
 import 'tutorial.dart';
@@ -162,6 +163,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   'coins': fmt(coins),
                 }),
         );
+      case RenewEvent():
+        sfx(Sfx.levelup);
       case SeasonSetEvent(:final area, :final style):
         sfx(Sfx.levelup);
         setState(() => _viewArea = area);
@@ -312,7 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       Feature.energyAd => _Pill(
         icon: Art.icon('energy'),
-        text: '${game.energy}/${GameConfig.energyCap}',
+        text: '${game.energy}/${game.energyCap}',
         plus: true,
       ),
       Feature.upgrades => SizedBox(
@@ -583,7 +586,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (ctx) => ListenableBuilder(
         listenable: game,
         builder: (ctx, _) {
-          final full = game.energy >= GameConfig.energyCap;
+          final full = game.energy >= game.energyCap;
           return GameDialog(
             title: IconText(tr('energy.title'), textAlign: TextAlign.center),
             content: PopupHero(
@@ -593,7 +596,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     : Art.icon('energy'),
                 size: 84,
               ),
-              big: '${game.energy} / ${GameConfig.energyCap}',
+              big: '${game.energy} / ${game.energyCap}',
               note: full
                   ? tr('energy.fullNow')
                   : tr('energy.next', {'time': fmtDuration(game.energyNextIn)}),
@@ -681,6 +684,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   bool _allDoneShown = false;
+
+  /// 정원 재단장: 확인 → (광고) → 재단장 → 완료 창.
+  Future<void> _renew() async {
+    final pick = await showRenewConfirm(context, game, adFree: adFree);
+    if (pick == null || !mounted) return;
+    final ad = pick && await widget.ads.showRewarded();
+    final got = game.renew(withAd: ad);
+    if (got <= 0 || !mounted) return;
+    Navigator.of(context).popUntil((r) => r.isFirst);
+    setState(() {
+      _selected = null;
+      _viewArea = game.currentArea;
+    });
+    await showRenewDone(context, game, got);
+  }
 
   /// 최고 단계 아이템 선물: 친구를 고른다 (하트가 덜 찬 친구가 앞).
   Future<void> _giftDialog(int cell) async {
@@ -1821,7 +1839,9 @@ class _HomeScreenState extends State<HomeScreen> {
           game.isUnlocked(Feature.upgrades) ? 'upgrade' : 'lock',
           tr('menu.upgrade'),
           () {
-            if (_gate(Feature.upgrades)) showUpgradesSheet(context, game);
+            if (_gate(Feature.upgrades)) {
+              showUpgradesSheet(context, game, onRenew: _renew);
+            }
           },
           badge: Upgrades.all.any((u) => game.canBuyUpgrade(u.type)) ? -1 : 0,
         ),
@@ -2082,7 +2102,7 @@ class _Spawner extends StatelessWidget {
               height: 70,
               child: CircularProgressIndicator(
                 // 에너지 회복 진행 (가득이면 꽉 찬 고리)
-                value: full || game.energy >= GameConfig.energyCap
+                value: full || game.energy >= game.energyCap
                     ? 1
                     : (game.energyProgress / game.energyRegenSeconds).clamp(
                         0,

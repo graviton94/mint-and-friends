@@ -354,6 +354,7 @@ class Sim {
         deliverAll();
         handleMax();
         placeDecor();
+        maybeRenew(day);
         buyStuff();
         if (s % 60 == 0) market();
         housekeeping();
@@ -377,6 +378,25 @@ class Sim {
       }
       rows.add(dayRow(d + 1));
       afterDay?.call(d + 1);
+    }
+  }
+
+  final List<String> renews = [];
+
+  /// 재단장: 지금 받을 씨앗이 가진 씨앗의 절반(최소 3) 이상이면 한다 (흔한 환생 기준). 씨앗 강화는 싼 것부터.
+  void maybeRenew(int day) {
+    if (!g.canRenew) return;
+    final n = g.renewSeedsPreview;
+    if (n < max(3, g.seedsTotal ~/ 2)) return;
+    final got = g.renew(withAd: true);
+    renews.add('D${day + 1}:+$got');
+    for (var guard = 0; guard < 50; guard++) {
+      final c = [
+        for (final d in Renewal.perks)
+          if (g.canBuyPerk(d.perk)) d,
+      ]..sort((a, b) => a.costAt(g.perkLv(a.perk)).compareTo(b.costAt(g.perkLv(b.perk))));
+      if (c.isEmpty) break;
+      g.buyPerk(c.first.perk);
     }
   }
 
@@ -405,7 +425,7 @@ class Sim {
     final h = g.highest;
     final up = UpgradeType.values.map((t) => g.lv(t)).join('/');
     final fl = [for (final f in g.friends.toList()..sort()) g.friendLevel(f)];
-    return 'D$day Lv${g.level} area${g.currentArea + 1}(${g.placed.length}/8) '
+    return 'D$day R${g.renewCount} seeds${g.seedsTotal} Lv${g.level} area${g.currentArea + 1}(${g.placed.length}/8) '
         'items f${h[Chain.flower]} s${h[Chain.snack]} t${h[Chain.tea]} d${h[Chain.stardust]} '
         'coins earned ${earned.round()} spent ${spent.round()} '
         '(sink ${(100 * spent / max(1, earned)).round()}% func ${(100 * funcSpent / max(1, earned)).round()}%) '
@@ -425,6 +445,7 @@ class Sim {
       ...rows,
       'areaEnter(2..): $areaDay',
       'maxDay: ${maxDay.map((k, v) => MapEntry(k.name, v))}',
+      'renews(${renews.length}): ${renews.join(' ')}',
       'energyIn: ${fmt(energyIn)} | freeSpawns=$freeSpawns',
       'coinsIn: ${fmt(coinsIn)}',
       'coinsOut: ${fmt(coinsOut)}',

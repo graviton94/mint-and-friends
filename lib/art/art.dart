@@ -159,6 +159,12 @@ class Art {
 
   /// UI 아이콘. 발주서 "UI 아이콘 2·3" 시트로 받는다. 파일이 없으면 이모지로 대신 그린다.
   static const Map<String, String> iconFallback = {
+    'golden_seed': '🌰',
+    'renew': '🔄',
+    'seed_basket': '🧺',
+    'seed_coin': '🪙',
+    'seed_memory': '🫙',
+    'round_badge': '🏅',
     'xp': '🌱',
     'heart_level': '💗',
     'close': '✖️',

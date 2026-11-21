@@ -618,6 +618,50 @@ class Upgrades {
   static Duration offlineCap(int lv) => Duration(hours: 2 + min(lv, 10));
 }
 
+// ------------------------------------------------------------------ 정원 재단장 (환생, D-031)
+
+enum SeedPerk {
+  startBasket,
+  startCoins,
+  energyJar,
+  autoMemory,
+  moonRest,
+  starWish,
+}
+
+class SeedPerkDef {
+  final SeedPerk perk;
+  final String icon;
+  final int maxLevel;
+  final int baseCost; // 다음 단계 비용 = baseCost × (단계 + 1)
+  const SeedPerkDef(this.perk, this.icon, this.maxLevel, this.baseCost);
+  int costAt(int lv) => baseCost * (lv + 1);
+}
+
+/// 정원 재단장: 바구니 등급 Lv.10 이상이면 판 · 코인 · 바구니 등급 · 생산력/수익 강화를 처음부터 다시 하고
+/// 황금 씨앗을 받는다. 씨앗은 모은 만큼 영구 수입 +10%, 쓰면 영구 강화(씨앗을 써도 수입 배율은 그대로).
+class Renewal {
+  static const int needBasketTier = 10;
+  static const double seedIncome = 0.10;
+  static const double coinsPerSeedBase = 1e9;
+  static const double adBonus = 1.5;
+
+  /// 이번 회차에 번 코인으로 받을 씨앗: ⌊(코인 ÷ 10억)^(1/3)⌋.
+  static int seedsFor(double runCoins) => runCoins <= 0
+      ? 0
+      : (pow(runCoins / coinsPerSeedBase, 1 / 3) + 1e-9).floor();
+
+  static const List<SeedPerkDef> perks = [
+    SeedPerkDef(SeedPerk.startBasket, 'seed_basket', 5, 5),
+    SeedPerkDef(SeedPerk.startCoins, 'seed_coin', 5, 3),
+    SeedPerkDef(SeedPerk.energyJar, 'energy_jar', 10, 4),
+    SeedPerkDef(SeedPerk.autoMemory, 'seed_memory', 1, 8),
+    SeedPerkDef(SeedPerk.moonRest, 'moon', 5, 2),
+    SeedPerkDef(SeedPerk.starWish, 'star', 10, 6),
+  ];
+  static SeedPerkDef of(SeedPerk p) => perks.firstWhere((d) => d.perk == p);
+}
+
 // ------------------------------------------------------------------ 친구
 
 enum FriendBuff {

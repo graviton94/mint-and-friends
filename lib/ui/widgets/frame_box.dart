@@ -742,7 +742,11 @@ class CostButton extends StatelessWidget {
           maximumSize: Size(width, height),
           padding: const EdgeInsets.symmetric(horizontal: 10),
           backgroundColor: frame == 'button_white' ? Colors.white : null,
-          foregroundColor: frame == 'button_white' ? Palette.text : null,
+          foregroundColor: frame == 'button_white'
+              ? Palette.text
+              : frame == 'button_gold'
+              ? const Color(0xFF5A3A08)
+              : null,
         ),
         frame,
       ),

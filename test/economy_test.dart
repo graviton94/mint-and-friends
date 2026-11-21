@@ -499,4 +499,46 @@ void main() {
     final g2 = make()..loadJson(g.toJson());
     expect(g2.basketChargesLeft(1), 1);
   });
+
+  test('정원 재단장: 조건 · 씨앗 · 초기화 · 유지 · 저장', () {
+    final g = make();
+    g.friends.add('dubu');
+    g.placed = {0, 1};
+    g.gems = 77;
+    g.upgrades[UpgradeType.basketTier] = Renewal.needBasketTier - 1;
+    g.lifetimeCoins = 8e12;
+    expect(g.canRenew, isFalse); // 바구니 등급 부족
+    g.upgrades[UpgradeType.basketTier] = Renewal.needBasketTier;
+    g.upgrades[UpgradeType.flowerPower] = 40;
+    g.upgrades[UpgradeType.energyRegen] = 5;
+    g.board[8] = Item(1, Chain.flower, 12);
+    g.coins = 5e9;
+    expect(g.canRenew, isTrue);
+    expect(g.renewSeedsPreview, 20); // (8e12 / 1e9)^(1/3) = 20
+    final got = g.renew();
+    expect(got, 20);
+    expect(g.renewCount, 2);
+    expect(g.seeds, 20);
+    expect(g.seedMultiplier, closeTo(3.0, 1e-9));
+    // 초기화
+    expect(g.board.whereType<Item>(), isEmpty);
+    expect(g.coins, 0);
+    expect(g.lv(UpgradeType.basketTier), 0);
+    expect(g.lv(UpgradeType.flowerPower), 0);
+    expect(g.runCoins, 0);
+    // 유지
+    expect(g.lv(UpgradeType.energyRegen), 5);
+    expect(g.placed, {0, 1});
+    expect(g.friends, contains('dubu'));
+    expect(g.gems, 77);
+    // 씨앗 강화: 출발 바구니
+    expect(g.buyPerk(SeedPerk.startBasket), isTrue);
+    expect(g.seeds, 15);
+    expect(g.seedMultiplier, closeTo(3.0, 1e-9)); // 써도 배율은 그대로
+    final g2 = make()..loadJson(g.toJson());
+    expect(g2.renewCount, 2);
+    expect(g2.seedsTotal, 20);
+    expect(g2.perkLv(SeedPerk.startBasket), 1);
+    expect(g2.energyCap, GameConfig.energyCap);
+  });
 }
