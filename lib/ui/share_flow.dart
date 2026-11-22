@@ -161,3 +161,45 @@ class ShareButton extends StatelessWidget {
     ),
   );
 }
+
+/// 진단용 (빌드 옵션 SHARE_PROBE): 화면 없이 자랑 카드를 그려 공유를 단계별로 실행하고 결과를 로그에 남긴다.
+/// 에뮬레이터 워크플로(share-probe.yml)가 'SHAREPROBE' 줄을 모아 보여 준다.
+Future<void> runShareProbe(GameState game) async {
+  void log(String s) => print('SHAREPROBE $s'); // ignore: avoid_print
+  try {
+    log('render start');
+    final png = await ShareCard.render(kind: ShareKind.garden, game: game);
+    log('render ok ${png.length} bytes');
+    final dir = await getTemporaryDirectory();
+    log('temp ${dir.path}');
+    final f = File('${dir.path}/mint_and_friends_probe.png');
+    await f.writeAsBytes(png, flush: true);
+    log('file ok ${await f.length()}');
+    try {
+      final r = await SharePlus.instance
+          .share(
+            ShareParams(
+              files: [XFile(f.path, mimeType: 'image/png')],
+              text: 'probe text',
+            ),
+          )
+          .timeout(const Duration(seconds: 6));
+      log('share files result ${r.status} ${r.raw}');
+    } catch (e, st) {
+      log('share files ERROR $e');
+      log('stack ${st.toString().split('\n').take(6).join(' | ')}');
+    }
+    try {
+      final r = await SharePlus.instance
+          .share(ShareParams(text: 'probe text only'))
+          .timeout(const Duration(seconds: 6));
+      log('share text result ${r.status} ${r.raw}');
+    } catch (e) {
+      log('share text ERROR $e');
+    }
+  } catch (e, st) {
+    log('probe ERROR $e');
+    log('stack ${st.toString().split('\n').take(6).join(' | ')}');
+  }
+  log('done');
+}

@@ -94,6 +94,10 @@ Future<Widget> _boot(void Function(double) report) async {
 
   unawaited(billing.init());
   unawaited(ads.init());
+  // 진단 빌드: 공유를 단계별로 실행해 로그로 (share-probe.yml, 화면을 누르지 않아도 돈다)
+  if (const bool.fromEnvironment('SHARE_PROBE')) {
+    Future.delayed(const Duration(seconds: 6), () => runShareProbe(game));
+  }
   // 초대 링크로 설치했으면 친구 코드를 받아 둔다 (첫 실행 한 번, D-045)
   unawaited(InviteReferrer.capture(prefs));
   report(1);
