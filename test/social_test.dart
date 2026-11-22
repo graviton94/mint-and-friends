@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:mint_and_friends/ui/social_ui.dart';
 import 'package:mint_and_friends/game/config.dart';
 import 'package:mint_and_friends/game/game_state.dart';
+import 'package:mint_and_friends/services/invite_referrer.dart';
 import 'package:mint_and_friends/services/social_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -65,6 +66,13 @@ class FakeBackend implements SocialBackend {
   @override
   Future<void> removeFriendLink(String uid, String friendUid) =>
       _go(() => links[uid]?.remove(friendUid));
+  @override
+  Future<Map<String, Map<String, dynamic>>> invitees(String uid) => _go(
+    () => {
+      for (final e in profiles.entries)
+        if (e.value['invitedBy'] == uid) e.key: e.value,
+    },
+  );
   @override
   Future<Map<String, Map<String, dynamic>>> getProfiles(List<String> uids) =>
       _go(
@@ -150,6 +158,78 @@ void main() {
       expect(FriendCode.normalize('ABCDEFG1'), isNull);
       expect(FriendCode.display('ABCDEFGH'), 'ABCD-EFGH');
     });
+  });
+
+  test(
+    '초대: 새 계정이 코드를 넣으면 친구 + 환영 선물 50, 초대한 사람은 7일 · 5일 · Lv15 뒤 100 (최대 5명)',
+    () async {
+      final a = make('A');
+      final ga = game();
+      await a.ensureProfile(ga);
+      final codeA = a.me!.code;
+
+      final b = make('B');
+      final gb = game();
+      expect(gb.canBeInvited, isTrue);
+      expect(await b.applyInvite(codeA, gb), isTrue);
+      expect(gb.invitedBy, 'A');
+      expect(b.friends.map((f) => f.uid), contains('A'));
+      final welcome = gb.mail.firstWhere((m) => m.id == 'invite-welcome');
+      expect(welcome.reward.gems, Invite.welcomeGems);
+      // 두 번은 안 된다
+      expect(await b.applyInvite(codeA, gb), isFalse);
+      expect(server.profiles['B']!['invitedBy'], 'A');
+
+      // 아직 조건 전: 초대한 사람에게 보상 없음, 그래도 서로 친구가 된다
+      server.sender = 'A';
+      expect(await a.checkInvites(ga), 0);
+      expect(a.friends.map((f) => f.uid), contains('B'));
+      expect(a.invitees.single.uid, 'B');
+
+      // 7일 · 5일 · Lv15
+      server.profiles['B'] = {
+        ...server.profiles['B']!,
+        'level': Invite.needLevel,
+        'days': Invite.needDays,
+      };
+      now = now.add(Invite.wait);
+      expect(await a.checkInvites(ga), 1);
+      expect(
+        ga.mail.firstWhere((m) => m.id == 'invite-B').reward.gems,
+        Invite.rewardGems,
+      );
+      expect(await a.checkInvites(ga), 0); // 한 번만
+      // 상한
+      for (var i = 0; i < 10; i++) {
+        ga.grantInviteReward('X$i', 'x');
+      }
+      expect(ga.inviteRewarded.length, Invite.maxRewards);
+      // 레벨이 높은 계정은 초대 선물 대상이 아니다
+      final gc = game()..level = Invite.newPlayerMaxLevel + 1;
+      expect(await make('C').applyInvite(codeA, gc), isFalse);
+      // 저장 · 불러오기
+      final gb2 = game()..loadJson(gb.toJson());
+      expect(gb2.invitedBy, 'A');
+      expect(gb2.canBeInvited, isFalse);
+    },
+  );
+
+  test('설치 추천인: code=… 에서 코드만', () {
+    expect(InviteReferrer.parse('code=ABCD2345&utm_source=x'), 'ABCD2345');
+    expect(InviteReferrer.parse('code%3Dabcd2345'), 'ABCD2345');
+    expect(InviteReferrer.parse('utm_source=google-play'), isNull);
+    expect(InviteReferrer.parse(null), isNull);
+    expect(Invite.link('ABCD2345'), contains('referrer=code%3DABCD2345'));
+  });
+
+  test('공유 보상: 하루 한 번 에너지', () {
+    final g = game();
+    final e = g.energy;
+    expect(g.claimShareReward(), Invite.shareEnergy);
+    expect(g.energy, e + Invite.shareEnergy);
+    expect(g.claimShareReward(), 0);
+    now = now.add(const Duration(days: 1));
+    expect(g.claimShareReward(), Invite.shareEnergy);
   });
 
   test('닉네임 정리', () {
@@ -495,10 +575,14 @@ void main() {
       await open(tester, a, g);
       expect(find.text('민트'), findsOneWidget);
       expect(find.textContaining('social.gift'), findsWidgets);
+      await tester.ensureVisible(find.textContaining('social.gift').last);
+      await tester.pumpAndSettle();
       await tester.tap(find.textContaining('social.gift').last);
       await tester.pumpAndSettle();
       expect(g.stat(Stat.giftsSent), 1);
       expect(find.textContaining('social.giftDone'), findsOneWidget);
+      await tester.ensureVisible(find.textContaining('social.visit'));
+      await tester.pumpAndSettle();
       await tester.tap(find.textContaining('social.visit'));
       for (var i = 0; i < 10; i++) {
         await tester.pump(

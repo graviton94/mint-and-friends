@@ -452,6 +452,73 @@ class GameState extends ChangeNotifier {
   /// 새싹 정원 패키지: 샀는지 · 한정 타이머 끝 · 몇 번 보여 줬는지.
   bool starterBought = false;
 
+  /// 친구 초대 (D-045): 나를 초대한 사람 · 그때, 보상을 받은 초대 친구, 마지막으로 공유 보상을 받은 날.
+  String? invitedBy;
+  DateTime? invitedAt;
+  final Set<String> inviteRewarded = {};
+  String shareDay = '';
+
+  /// 초대 환영 선물을 받을 수 있는 새 계정인지.
+  bool get canBeInvited =>
+      invitedBy == null && level <= Invite.newPlayerMaxLevel;
+
+  /// 초대 코드로 시작: 환영 선물을 쪽지로 (계정당 한 번).
+  bool acceptInvite(String inviterUid, String inviterName) {
+    if (!canBeInvited || inviterUid.isEmpty) return false;
+    invitedBy = inviterUid;
+    invitedAt = now;
+    addMail(
+      Mail(
+        id: 'invite-welcome',
+        kind: MailKind.social,
+        from: inviterName,
+        titleKey: 'mail.inviteWelcome',
+        args: {'name': inviterName},
+        reward: const Reward(gems: Invite.welcomeGems),
+        at: now,
+      ),
+    );
+    _trace('invite', 'accepted');
+    notifyListeners();
+    return true;
+  }
+
+  /// 초대한 친구가 조건을 채웠다: 초대 보상 (친구마다 한 번, 최대 [Invite.maxRewards]명).
+  bool grantInviteReward(String friendUid, String friendName) {
+    if (inviteRewarded.contains(friendUid) ||
+        inviteRewarded.length >= Invite.maxRewards) {
+      return false;
+    }
+    inviteRewarded.add(friendUid);
+    addMail(
+      Mail(
+        id: 'invite-$friendUid',
+        kind: MailKind.social,
+        from: friendName,
+        titleKey: 'mail.inviteReward',
+        args: {'name': friendName},
+        reward: const Reward(gems: Invite.rewardGems),
+        at: now,
+      ),
+    );
+    _trace('invite', 'reward');
+    notifyListeners();
+    return true;
+  }
+
+  /// 오늘 공유 보상을 아직 받지 않았는지.
+  bool get shareRewardReady => shareDay != _dayKey(now);
+
+  /// 자랑하기: 하루 한 번 에너지. 받았으면 그 양.
+  int claimShareReward() {
+    if (!shareRewardReady) return 0;
+    shareDay = _dayKey(now);
+    energy += Invite.shareEnergy;
+    _trace('share', '+${Invite.shareEnergy}');
+    notifyListeners();
+    return Invite.shareEnergy;
+  }
+
   /// 한 번이라도 산 다이아 팩 (팩마다 첫 구매는 다이아 2배, D-042).
   final Set<String> boughtPacks = {};
   bool firstPackBonus(GemPack p) => !boughtPacks.contains(p.id);
@@ -2513,6 +2580,10 @@ class GameState extends ChangeNotifier {
       'passUntil': passUntil?.millisecondsSinceEpoch,
       'starter': starterBought,
       'packs': boughtPacks.toList(),
+      if (invitedBy != null) 'invitedBy': invitedBy,
+      if (invitedAt != null) 'invitedAt': invitedAt!.millisecondsSinceEpoch,
+      if (inviteRewarded.isNotEmpty) 'inviteRewarded': inviteRewarded.toList(),
+      if (shareDay.isNotEmpty) 'shareDay': shareDay,
       'starterUntil': starterOfferUntil?.millisecondsSinceEpoch,
       'starterShows': starterShows,
       'passNoticeSeen': passNoticeSeen,
@@ -2747,6 +2818,14 @@ class GameState extends ChangeNotifier {
     boughtPacks
       ..clear()
       ..addAll([for (final x in (j['packs'] as List? ?? const [])) '$x']);
+    invitedBy = j['invitedBy'] as String?;
+    invitedAt = ts('invitedAt');
+    inviteRewarded
+      ..clear()
+      ..addAll([
+        for (final x in (j['inviteRewarded'] as List? ?? const [])) '$x',
+      ]);
+    shareDay = j['shareDay'] as String? ?? '';
     starterOfferUntil = ts('starterUntil');
     starterShows = (j['starterShows'] as num?)?.toInt() ?? 0;
     // 예전 저장: 이미 끝난 패스는 '끝났어요' 창을 새로 띄우지 않는다

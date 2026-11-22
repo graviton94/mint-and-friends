@@ -65,6 +65,7 @@ class SaveService extends ChangeNotifier {
 
   SaveService(this._prefs);
   final SharedPreferences _prefs;
+  SharedPreferences get prefs => _prefs;
 
   String? uid; // 클라우드 저장 대상 (null 이면 기기에만 저장)
   SyncStatus status = SyncStatus.local;

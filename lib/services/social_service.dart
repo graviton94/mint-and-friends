@@ -12,6 +12,7 @@ import '../game/config.dart';
 import '../game/game_state.dart';
 import '../i18n/l10n.dart';
 import '../i18n/names.dart';
+import 'analytics_service.dart';
 import 'app_config.dart';
 
 /// 친구(소셜): 친구 코드로 추가, 하루 한 번 선물, 친구 정원 구경, 운영 공지.
@@ -122,6 +123,11 @@ class SocialProfile {
   final List<String> friends;
   final String avatar;
 
+  /// 플레이한 날 수 · 나를 초대한 사람 uid · 그때 (초대 보상 조건 확인용, D-045).
+  final int days;
+  final String invitedBy;
+  final int invitedAt;
+
   const SocialProfile({
     required this.uid,
     required this.name,
@@ -131,6 +137,9 @@ class SocialProfile {
     this.placed = const {},
     this.friends = const [],
     this.avatar = Friends.starter,
+    this.days = 0,
+    this.invitedBy = '',
+    this.invitedAt = 0,
   });
 
   static SocialProfile fromMap(String uid, Map<String, dynamic> m) {
@@ -150,6 +159,9 @@ class SocialProfile {
           if (ids.contains(f)) f as String,
       ],
       avatar: safeAvatar(m['avatar'] as String?),
+      days: max(0, (m['days'] as num?)?.toInt() ?? 0),
+      invitedBy: m['invitedBy'] is String ? m['invitedBy'] as String : '',
+      invitedAt: max(0, (m['invitedAt'] as num?)?.toInt() ?? 0),
     );
   }
 
@@ -162,6 +174,9 @@ class SocialProfile {
     'placed': placed.toList()..sort(),
     'friends': friends.toList()..sort(),
     'avatar': avatar,
+    'days': days,
+    'invitedBy': invitedBy,
+    'invitedAt': invitedAt,
   };
 
   SocialProfile copyWith({String? name, String? avatar}) => SocialProfile(
@@ -173,6 +188,9 @@ class SocialProfile {
     placed: placed,
     friends: friends,
     avatar: avatar ?? this.avatar,
+    days: days,
+    invitedBy: invitedBy,
+    invitedAt: invitedAt,
   );
 
   static SocialProfile ofGame(
@@ -190,7 +208,18 @@ class SocialProfile {
     placed: {...g.placed},
     friends: g.friends.toList(),
     avatar: avatar,
+    days: g.stat(Stat.daysPlayed),
+    invitedBy: g.invitedBy ?? '',
+    invitedAt: g.invitedAt?.millisecondsSinceEpoch ?? 0,
   );
+
+  /// 초대 보상 조건을 채웠는지 (초대 뒤 7일 · 서로 다른 5일 · Lv15).
+  bool inviteDone(DateTime now) =>
+      invitedAt > 0 &&
+      level >= Invite.needLevel &&
+      days >= Invite.needDays &&
+      now.difference(DateTime.fromMillisecondsSinceEpoch(invitedAt)) >=
+          Invite.wait;
 
   /// 친구 정원 구경용 일회용 게임 상태 (저장 · 진행 없음).
   GameState toVisitGame() {
@@ -371,6 +400,9 @@ abstract class SocialBackend {
 
   /// 서버(sendGift)가 친구 관계 · 하루 한 번을 확인한다. 이미 보냈으면 SocialException('already').
   Future<void> sendGift(String to, String day);
+
+  /// 나를 초대한 사람으로 적은 프로필들 (초대 친구 진행 · 보상 확인).
+  Future<Map<String, Map<String, dynamic>>> invitees(String uid);
 }
 
 class FirestoreSocialBackend implements SocialBackend {
@@ -434,6 +466,16 @@ class FirestoreSocialBackend implements SocialBackend {
   Future<void> report(Map<String, dynamic> data) => _db
       .collection('reports')
       .add({...data, 'at': FieldValue.serverTimestamp()});
+
+  @override
+  Future<Map<String, Map<String, dynamic>>> invitees(String uid) async {
+    final q = await _db
+        .collection('profiles')
+        .where('invitedBy', isEqualTo: uid)
+        .limit(20)
+        .get();
+    return {for (final d in q.docs) d.id: d.data()};
+  }
 
   @override
   Future<Map<String, Map<String, dynamic>>> getProfiles(
@@ -758,6 +800,11 @@ class SocialService extends ChangeNotifier {
     } on SocialException catch (e) {
       debugPrint('social profile: ${e.code}');
     }
+    try {
+      await checkInvites(game);
+    } on SocialException catch (e) {
+      debugPrint('invites: ${e.code}');
+    }
     for (final step in [
       () => pullInbox(game),
       () => pullNotices(game, force: force),
@@ -897,6 +944,67 @@ class SocialService extends ChangeNotifier {
       busy = false;
       notifyListeners();
     }
+  }
+
+  // ---------------------------------------------------------------- 초대 (D-045)
+
+  /// 내가 초대한 친구들 (진행 표시용, [checkInvites] 가 채운다).
+  List<SocialFriend> invitees = [];
+
+  /// 초대 코드로 시작 (설치 추천인 · 직접 입력). 새 계정이면 친구를 맺고 환영 선물.
+  /// 받았으면 true. 이미 친구면 친구 맺기는 건너뛴다.
+  Future<bool> applyInvite(String input, GameState game) async {
+    final u = _check();
+    if (u == null || !game.canBeInvited) return false;
+    final code = FriendCode.normalize(input);
+    if (code == null || code == me?.code) return false;
+    final fuid = await _net(backend.lookupCode(code));
+    if (fuid == null || fuid == u) return false;
+    final p = await _net(backend.getProfile(fuid));
+    if (p == null) return false;
+    final prof = SocialProfile.fromMap(fuid, p);
+    if (!friends.any((f) => f.uid == fuid) &&
+        friends.length < SocialConfig.maxFriends) {
+      await _net(backend.addFriendLink(u, fuid));
+      friends = [...friends, SocialFriend(fuid, prof)];
+    }
+    if (!game.acceptInvite(fuid, prof.name)) return false;
+    await ensureProfile(game);
+    await syncProfile(game, force: true);
+    notifyListeners();
+    return true;
+  }
+
+  /// 내가 초대한 친구들을 불러와 친구로 맺고 (서로 친구), 조건을 채운 친구는 초대 보상.
+  /// 새로 받은 보상 수.
+  Future<int> checkInvites(GameState game) async {
+    final u = _check();
+    if (u == null) return 0;
+    final data = await _net(backend.invitees(u));
+    final list = [
+      for (final e in data.entries)
+        SocialFriend(e.key, SocialProfile.fromMap(e.key, e.value)),
+    ]..sort((a, b) => a.profile.invitedAt.compareTo(b.profile.invitedAt));
+    invitees = list;
+    var got = 0;
+    for (final f in list) {
+      if (!friends.any((x) => x.uid == f.uid) &&
+          friends.length < SocialConfig.maxFriends) {
+        try {
+          await _net(backend.addFriendLink(u, f.uid));
+          friends = [...friends, f];
+        } on SocialException {
+          // 다음 기회에
+        }
+      }
+      if (f.profile.inviteDone(_clock()) &&
+          game.grantInviteReward(f.uid, f.profile.name)) {
+        got++;
+      }
+    }
+    if (got > 0) Analytics.instance.inviteReward(got);
+    notifyListeners();
+    return got;
   }
 
   /// 신고 이유 (Firestore 규칙과 같아야 한다).

@@ -19,6 +19,8 @@ import 'garden/garden_scene.dart';
 import 'garden/garden_screen.dart';
 import 'meta_ui.dart';
 import 'renew_ui.dart';
+import 'share_card.dart';
+import 'share_flow.dart';
 import 'sheets.dart';
 import 'theme.dart';
 import 'tutorial.dart';
@@ -105,6 +107,14 @@ class _HomeScreenState extends State<HomeScreen> {
           title: tr('discover.title'),
           sub: '${itemName(d)}  [[coin]]+${fmt(bonus)}',
         );
+        // 체인의 마지막 단계(전설 아이템)를 처음 만들었다: 자랑 카드
+        if (level >= Chains.maxLevel(chain)) {
+          Future.delayed(const Duration(milliseconds: 1200), () {
+            if (mounted) {
+              showShareDialog(context, game, ShareKind.legendary, chain: chain);
+            }
+          });
+        }
       case MaxMergeEvent(:final payout):
         sfx(Sfx.mergeBig);
         _toast(tr('toast.maxMerge', {'coins': fmt(payout)}));
@@ -193,16 +203,16 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       case AreaCompletedEvent(:final area):
         _toast(tr('toast.areaDone', {'name': areaName(Garden.areaAt(area))}));
-        // 첫 구역 완성 직후: 새싹 정원 패키지 (한 번만)
-        if (area == 0) {
-          Future.delayed(const Duration(seconds: 3), () {
-            if (mounted && game.showStarterOffer()) {
-              showStarterSheet(context, widget.billing, game);
-            }
-          });
-        }
-        Future.delayed(const Duration(milliseconds: 1500), () {
-          if (mounted) setState(() => _viewArea = game.currentArea);
+        // 완성한 구역 자랑 카드 (장식 · 친구가 모두 있는 정원) → 첫 구역이면 새싹 정원 패키지 (한 번만)
+        Future.delayed(const Duration(milliseconds: 1500), () async {
+          if (!mounted) return;
+          await showShareDialog(context, game, ShareKind.area, area: area);
+          if (!mounted) return;
+          setState(() => _viewArea = game.currentArea);
+          if (area == 0 && game.showStarterOffer()) {
+            await Future.delayed(const Duration(milliseconds: 600));
+            if (mounted) showStarterSheet(context, widget.billing, game);
+          }
         });
       case LevelUpEvent():
         sfx(Sfx.levelup);

@@ -38,7 +38,7 @@ service cloud.firestore {
     match /profiles/{uid} {
       allow read: if signedIn();
       allow create, update: if isMe(uid)
-        && request.resource.data.keys().hasOnly(['name', 'code', 'level', 'area', 'placed', 'friends', 'avatar', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['name', 'code', 'level', 'area', 'placed', 'friends', 'avatar', 'days', 'invitedBy', 'invitedAt', 'updatedAt'])
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 64
@@ -55,6 +55,14 @@ service cloud.firestore {
         && request.resource.data.friends.size() <= 16
         && request.resource.data.avatar is string
         && request.resource.data.avatar.size() <= 24
+        // 초대 (D-045): 플레이한 날 수 · 나를 초대한 사람 · 그때. 초대한 사람은 한 번 정하면 바꿀 수 없다.
+        && (!('days' in request.resource.data) || (request.resource.data.days is int && request.resource.data.days >= 0))
+        && (!('invitedBy' in request.resource.data) || (request.resource.data.invitedBy is string
+              && request.resource.data.invitedBy.size() <= 128
+              && request.resource.data.invitedBy != uid))
+        && (!('invitedAt' in request.resource.data) || request.resource.data.invitedAt is int)
+        && (resource == null || !('invitedBy' in resource.data) || resource.data.invitedBy == ''
+              || request.resource.data.get('invitedBy', '') == resource.data.invitedBy)
         && request.resource.data.updatedAt == request.time;
       allow delete: if false;
     }

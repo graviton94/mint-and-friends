@@ -6,7 +6,10 @@ import '../game/format.dart';
 import '../game/game_state.dart';
 import '../i18n/l10n.dart';
 import '../services/audio_service.dart';
+import 'share_card.dart';
+import 'share_flow.dart';
 import 'sheets.dart';
+import 'theme.dart';
 import 'widgets/frame_box.dart';
 import 'widgets/icon_text.dart';
 
@@ -333,6 +336,26 @@ Future<void> showRenewDone(BuildContext context, GameState game, int got) =>
           ],
         ),
         actions: [
+          // 자랑하기: n번째 재단장 카드
+          FilledButton(
+            style: framedButton(
+              FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, 52),
+                backgroundColor: Palette.primary,
+                foregroundColor: Colors.white,
+              ),
+              'button_green',
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              showShareDialog(context, game, ShareKind.renew, seeds: got);
+            },
+            child: IconText(
+              tr('share.button'),
+              style: const TextStyle(fontSize: 18),
+            ),
+          ),
+          const SizedBox(height: 8),
           FilledButton(
             style: framedButton(
               FilledButton.styleFrom(

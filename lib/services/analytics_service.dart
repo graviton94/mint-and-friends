@@ -105,4 +105,11 @@ class Analytics {
 
   /// 보상형 광고를 보려 했지만 준비된 광고가 없었다 (광고 채움률 확인용).
   void adUnavailable() => log('ad_unavailable');
+
+  // ---- 공유 · 초대 (D-045): 자랑하기 누름 → 공유창에서 보냄 · 초대 적용 · 초대 보상
+  void shareOpen(String kind) => log('share_open', {'kind': kind});
+  void shareDone(String kind, String to) =>
+      log('share_done', {'kind': kind, 'to': to});
+  void inviteApplied(String via) => log('invite_applied', {'via': via});
+  void inviteReward(int n) => log('invite_reward', {'n': n});
 }

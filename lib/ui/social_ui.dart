@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
@@ -8,10 +9,13 @@ import '../game/config.dart';
 import '../game/game_state.dart';
 import '../i18n/l10n.dart';
 import '../i18n/names.dart';
+import '../services/analytics_service.dart';
 import '../services/audio_service.dart';
 import '../services/social_service.dart';
 import 'garden/garden_scene.dart';
 import 'meta_ui.dart' show rewardText;
+import 'share_card.dart';
+import 'share_flow.dart';
 import 'sheets.dart';
 import 'theme.dart';
 import 'widgets/frame_box.dart';
@@ -130,6 +134,20 @@ class _FriendsBodyState extends State<_FriendsBody> {
 
   Future<void> _add() => _guard(() async {
     FocusScope.of(context).unfocus();
+    // 막 시작한 계정이 친구 코드를 넣으면 초대로 쳐서 환영 선물 (D-045)
+    if (game.canBeInvited) {
+      final before = social.friends.length;
+      if (await social.applyInvite(_code.text, game)) {
+        _code.clear();
+        sfx(Sfx.unlock);
+        Analytics.instance.inviteApplied('manual');
+        final name = social.friends.length > before
+            ? social.friends.last.profile.name
+            : '';
+        _show(tr('invite.accepted', {'name': name, 'n': Invite.welcomeGems}));
+        return;
+      }
+    }
     final f = await social.addFriendByCode(_code.text);
     _code.clear();
     sfx(Sfx.unlock);
@@ -231,6 +249,12 @@ class _FriendsBodyState extends State<_FriendsBody> {
           },
           onRename: _rename,
           onAvatar: _cycleAvatar,
+        ),
+        const SizedBox(height: 10),
+        _InviteCard(
+          social: social,
+          game: game,
+          onInvite: () => showShareDialog(context, game, ShareKind.garden),
         ),
         const SizedBox(height: 10),
         // 친구 추가
@@ -796,6 +820,119 @@ class _RenameDialogState extends State<_RenameDialog> {
           child: IconText(tr('common.ok')),
         ),
       ],
+    );
+  }
+}
+
+/// 친구 초대 칸 (D-045): 초대하기 버튼 + 받은 보상 n/5 + 초대한 친구들의 진행 (Lv · 접속한 날 · 남은 날).
+class _InviteCard extends StatelessWidget {
+  const _InviteCard({
+    required this.social,
+    required this.game,
+    required this.onInvite,
+  });
+  final SocialService social;
+  final GameState game;
+  final VoidCallback onInvite;
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF6E0),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2C48E), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              ArtImage(Art.icon('invite'), size: 52),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    IconText(
+                      tr('invite.title'),
+                      style: const TextStyle(fontSize: 17),
+                    ),
+                    IconText(
+                      tr('invite.note', {
+                        'gems': Invite.rewardGems,
+                        'welcome': Invite.welcomeGems,
+                        'done': game.inviteRewarded.length,
+                        'max': Invite.maxRewards,
+                      }),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF7A6248),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              FilledButton(
+                style: framedButton(
+                  FilledButton.styleFrom(minimumSize: const Size(72, 44)),
+                  'button_green',
+                ),
+                onPressed: onInvite,
+                child: IconText(tr('invite.button')),
+              ),
+            ],
+          ),
+          for (final f in social.invitees)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Row(
+                children: [
+                  ArtImage(
+                    Art.friend(Friends.byId(safeAvatar(f.profile.avatar))),
+                    size: 30,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      f.profile.name,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                  ),
+                  IconText(
+                    game.inviteRewarded.contains(f.uid)
+                        ? tr('invite.rewarded')
+                        : tr('invite.progress', {
+                            'lv': f.profile.level,
+                            'needLv': Invite.needLevel,
+                            'days': f.profile.days,
+                            'needDays': Invite.needDays,
+                            'left': max(
+                              0,
+                              Invite.wait.inDays -
+                                  now
+                                      .difference(
+                                        DateTime.fromMillisecondsSinceEpoch(
+                                          f.profile.invitedAt,
+                                        ),
+                                      )
+                                      .inDays,
+                            ),
+                          }),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF7A6248),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

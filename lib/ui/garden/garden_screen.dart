@@ -8,6 +8,8 @@ import '../../game/game_state.dart';
 import '../../i18n/l10n.dart';
 import '../../i18n/names.dart';
 import '../../services/audio_service.dart';
+import '../share_card.dart';
+import '../share_flow.dart';
 import '../theme.dart';
 import '../widgets/frame_box.dart';
 import '../sheets.dart' show showStyleSheet;
@@ -205,7 +207,20 @@ class _GardenScreenState extends State<GardenScreen> {
                                 icon: Icons.chevron_right_rounded,
                                 onTap: () => setState(() => _area++),
                               ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 6),
+                            // 자랑하기: 보고 있는 구역의 정원 카드 (완성한 구역이면 '구역 완성' 카드)
+                            ShareButton(
+                              size: 42,
+                              onTap: () => showShareDialog(
+                                context,
+                                game,
+                                _area < game.currentArea
+                                    ? ShareKind.area
+                                    : ShareKind.garden,
+                                area: _area,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 10,

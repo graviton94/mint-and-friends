@@ -16,6 +16,7 @@ import 'services/audio_service.dart';
 import 'services/notify_service.dart';
 import 'services/auth_service.dart';
 import 'services/billing_service.dart';
+import 'services/invite_referrer.dart';
 import 'services/save_service.dart';
 import 'services/social_service.dart';
 import 'ui/account_ui.dart';
@@ -28,6 +29,7 @@ import 'ui/widgets/frame_box.dart';
 import 'services/analytics_service.dart';
 import 'services/remote_tuning.dart';
 import 'services/dev_log.dart';
+import 'ui/share_flow.dart';
 import 'ui/start_screens.dart';
 import 'ui/widgets/top_toast.dart';
 
@@ -90,6 +92,8 @@ Future<Widget> _boot(void Function(double) report) async {
 
   unawaited(billing.init());
   unawaited(ads.init());
+  // 초대 링크로 설치했으면 친구 코드를 받아 둔다 (첫 실행 한 번, D-045)
+  unawaited(InviteReferrer.capture(prefs));
   report(1);
   return GameApp(
     game: game,
@@ -146,6 +150,9 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     game = widget.game;
     GameState.active = game;
     _bindGame();
+    // 자랑 카드에 넣는 내 친구 코드 · 정원 이름 (친구 기능을 쓸 수 있을 때만)
+    ShareInfo.code = () => social?.canUse == true ? social?.me?.code : null;
+    ShareInfo.name = () => social?.canUse == true ? social?.me?.name : null;
     WidgetsBinding.instance.addObserver(this);
     widget.billing.addListener(() => game.adFree = widget.billing.adFree);
     // 다이아 결제 → 지금 게임에 넣고 바로 저장 (계정 전환 뒤에도 현재 game 을 쓴다)
@@ -200,7 +207,29 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
   void _refreshSocial({bool force = false}) {
     final s = social;
     if (s == null || !auth.signedIn) return;
-    unawaited(s.refresh(game, force: force));
+    unawaited(s.refresh(game, force: force).then((_) => _applyPendingInvite()));
+  }
+
+  /// 초대 링크로 설치한 새 계정: 받아 둔 친구 코드로 친구 맺기 + 환영 선물 (한 번).
+  Future<void> _applyPendingInvite() async {
+    final s = social;
+    final prefs = widget.save.prefs;
+    final code = InviteReferrer.pending(prefs);
+    if (s == null || code == null || !s.canUse) return;
+    if (!game.canBeInvited) {
+      await InviteReferrer.clear(prefs);
+      return;
+    }
+    try {
+      if (await s.applyInvite(code, game)) {
+        Analytics.instance.inviteApplied('referrer');
+        widget.save.saveLocal(game);
+        unawaited(widget.save.upload(game));
+      }
+      await InviteReferrer.clear(prefs);
+    } on SocialException catch (e) {
+      debugPrint('invite: ${e.code}'); // 다음 기회에 다시
+    }
   }
 
   // ---------------------------------------------------------------- 로그인 ↔ 저장

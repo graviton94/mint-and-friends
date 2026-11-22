@@ -202,6 +202,34 @@ class Boosts {
 
 /// 친구 부탁 하루 한도: 친구마다 하루 [perFriend] 번까지 별을 준다.
 /// 한도가 끝나도 부탁은 계속 나오고 코인 · 경험치만 준다. 첫 구역을 끝낼 때까지는 한도 없음.
+/// 공유 · 친구 초대 (D-045).
+class Invite {
+  /// 초대받아 시작한 새 계정의 환영 선물.
+  static const int welcomeGems = 50;
+
+  /// 초대한 친구가 조건을 채우면 초대한 사람에게 (최대 [maxRewards]명).
+  static const int rewardGems = 100;
+  static const int maxRewards = 5;
+
+  /// '일주일쯤 제대로 플레이': 초대 뒤 7일 · 서로 다른 5일 접속 · Lv15.
+  static const int needLevel = 15;
+  static const int needDays = 5;
+  static const Duration wait = Duration(days: 7);
+
+  /// 초대(환영 선물)를 받을 수 있는 새 계정: 이 레벨 이하 · 아직 초대받은 적 없음.
+  static const int newPlayerMaxLevel = 10;
+
+  /// 하루 한 번, 자랑하기를 누르면 에너지.
+  static const int shareEnergy = 10;
+
+  static const String package = 'io.github.graviton94.mintandfriends';
+
+  /// 스토어 링크 + 설치 추천인 (설치 후 첫 실행 때 이 코드로 친구가 맺어진다).
+  static String link(String? code) =>
+      'https://play.google.com/store/apps/details?id=$package'
+      '${code == null || code.isEmpty ? '' : '&referrer=code%3D$code'}';
+}
+
 class OrderQuota {
   static const int perFriend = 4;
 
