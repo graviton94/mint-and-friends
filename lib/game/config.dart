@@ -986,8 +986,8 @@ class Garden {
     _ => 3,
   };
 
-  /// 계절 세트(한 구역 8종) 완성마다 정원 매력 보너스.
-  static const double seasonSetBonus = 0.05;
+  /// 계절 세트(한 구역 8종) 완성마다 정원 매력 보너스 (D-046: 고과금 쏠림을 줄여 +5% → +2%).
+  static const double seasonSetBonus = 0.02;
 
   /// 지금 달의 시즌 디자인 (그 시즌에만 살 수 있고, 산 것은 계속 쓴다).
   static int seasonStyleFor(int month) => switch (month) {
@@ -1002,12 +1002,58 @@ class Garden {
   static const int seasonSetGems = 250;
   static int styleCoins(int area, int slot) =>
       (decorCost(area, slot) * 120 * Tuning.coinScale).round();
-  static int styleGems(int area) => 25 + 5 * min(area, 11);
+
+  /// 특별 디자인 한 자리 (D-046): 80 + 40 × 구역 (앞마당 80 ~ 눈꽃 마을 280, 6구역 전부 8,640).
+  static int styleGems(int area) => 80 + 40 * min(area, DecorSets.areas - 1);
 
   /// 부탁 1건의 별 보상: 에너지 10 이하(≤4단계) 1, 30 이하(5단계) 2, 그 이상 3.
   static int orderStars(int level) => level <= 3
       ? 1
       : (pow(2, level - 1) / 4 * (1 + 0.05 * (level - 3))).round();
+}
+
+// ------------------------------------------------------------------ 꾸밈 점수 · 세트 효과 (D-046)
+
+/// 구역 세트 효과의 종류 (구역 순서대로).
+enum SetEffect {
+  energyCap,
+  energyRegen,
+  orderStars,
+  offline,
+  lucky,
+  visitorCoins,
+}
+
+/// 꾸밈 효과: 무과금(고급 · 코인)으로 완성하면 과금(특별 · 다이아) 완성의 40%.
+class DecorSets {
+  /// 세트 · 점수를 세는 구역 수 (6구역. 그 뒤 순환 구역은 세지 않는다: 끝없이 쌓이지 않게).
+  static const int areas = 6;
+
+  /// 꾸밈 점수: 특별 디자인 1점 · 고급 0.4점, 1점마다 영구 수입 +0.25%.
+  static const double specialPoint = 1.0;
+  static const double premiumPoint = 0.4;
+  static const double incomePerPoint = 0.0025;
+
+  /// 고급 세트 효과 = 특별 세트의 이 비율.
+  static const double premiumRatio = 0.4;
+
+  /// 구역 i 의 특별 세트 효과 (고급은 [premiumRatio] 배). 단위: 에너지 통 +칸 · 비율 · 분 · 확률.
+  static const List<SetEffect> effects = [
+    SetEffect.energyCap,
+    SetEffect.energyRegen,
+    SetEffect.orderStars,
+    SetEffect.offline,
+    SetEffect.lucky,
+    SetEffect.visitorCoins,
+  ];
+  static const Map<SetEffect, double> full = {
+    SetEffect.energyCap: 5,
+    SetEffect.energyRegen: 0.05,
+    SetEffect.orderStars: 0.05,
+    SetEffect.offline: 60,
+    SetEffect.lucky: 0.02,
+    SetEffect.visitorCoins: 0.10,
+  };
 }
 
 // ------------------------------------------------------------------ 다이아 (하드 통화)

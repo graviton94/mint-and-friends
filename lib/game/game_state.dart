@@ -345,7 +345,10 @@ class GameState extends ChangeNotifier {
   }
 
   /// 최대 에너지 (씨앗 강화 '에너지 통'으로 +10씩).
-  int get energyCap => GameConfig.energyCap + 10 * perkLv(SeedPerk.energyJar);
+  int get energyCap =>
+      GameConfig.energyCap +
+      10 * perkLv(SeedPerk.energyJar) +
+      setBonus(SetEffect.energyCap).round();
 
   bool canBuyPerk(SeedPerk p) {
     final d = Renewal.of(p);
@@ -687,7 +690,7 @@ class GameState extends ChangeNotifier {
   /// 에너지 1 회복에 걸리는 시간(초): 강화 + 친구 버프.
   double get energyRegenSeconds =>
       Upgrades.energyRegenSeconds(lv(UpgradeType.energyRegen)) /
-      (1 + buff(FriendBuff.energyRegen));
+      (1 + buff(FriendBuff.energyRegen) + setBonus(SetEffect.energyRegen));
 
   double? get autoMergeInterval {
     final i = Upgrades.autoMergeInterval(lv(UpgradeType.autoMerge));
@@ -705,8 +708,11 @@ class GameState extends ChangeNotifier {
       GameConfig.luckySpawnChance +
       Upgrades.qualityChance(lv(UpgradeType.spawnLevel)) +
       buff(FriendBuff.lucky) +
+      setBonus(SetEffect.lucky) +
       (boosted(BoostKind.lucky) ? Boosts.luckyBonus : 0);
-  Duration get offlineCap => Upgrades.offlineCap(lv(UpgradeType.offlineCap));
+  Duration get offlineCap =>
+      Upgrades.offlineCap(lv(UpgradeType.offlineCap)) +
+      Duration(minutes: setBonus(SetEffect.offline).round());
 
   bool isPlaced(int area, int slot) =>
       area < currentArea || (area == currentArea && placed.contains(slot));
@@ -721,7 +727,48 @@ class GameState extends ChangeNotifier {
       1 +
       decorCount * GameConfig.decorIncomeBonus +
       currentArea * GameConfig.areaIncomeBonus +
-      completedSeasonSets * Garden.seasonSetBonus;
+      completedSeasonSets * Garden.seasonSetBonus +
+      decorScore * DecorSets.incomePerPoint;
+
+  // ---------------------------------------------------------------- 꾸밈 점수 · 세트 (D-046)
+
+  /// 구역 세트 단계: 2 = 8자리 모두 특별, 1 = 8자리 모두 고급 이상, 0 = 아직.
+  int setTier(int area) {
+    if (area >= DecorSets.areas || area > currentArea) return 0;
+    var tier = 2;
+    for (var i = 0; i < Garden.slotsPerArea; i++) {
+      if (ownedStyles.contains('$area:$i:2')) continue;
+      if (ownedStyles.contains('$area:$i:1')) {
+        tier = 1;
+        continue;
+      }
+      return 0;
+    }
+    return tier;
+  }
+
+  /// 이 구역 세트로 받는 효과 크기 (특별 1 · 고급 0.4 · 없음 0) × 그 효과의 최대치.
+  double setBonus(SetEffect e) {
+    final i = DecorSets.effects.indexOf(e);
+    final t = setTier(i);
+    final k = t == 2 ? 1.0 : (t == 1 ? DecorSets.premiumRatio : 0.0);
+    return k * DecorSets.full[e]!;
+  }
+
+  /// 꾸밈 점수: 특별 디자인 1점 · 고급 0.4점 (6구역까지).
+  double get decorScore {
+    var n = 0.0;
+    for (var a = 0; a < DecorSets.areas && a <= currentArea; a++) {
+      for (var i = 0; i < Garden.slotsPerArea; i++) {
+        if (ownedStyles.contains('$a:$i:2')) {
+          n += DecorSets.specialPoint;
+        } else if (ownedStyles.contains('$a:$i:1')) {
+          n += DecorSets.premiumPoint;
+        }
+      }
+    }
+    return n;
+  }
 
   /// 이 구역의 이 시즌 장식 8종을 모두 가졌는지 (계절 세트 완성).
   bool seasonSetComplete(int area, int style) =>
@@ -1641,6 +1688,12 @@ class GameState extends ChangeNotifier {
     if (withStars && renewCount > 1) {
       gained = (gained * (1 + GameConfig.roundStarBonus(renewCount))).round();
     }
+    // 온실 세트: 부탁 별 +% (소수 부분은 확률로 한 개 더)
+    final sb = setBonus(SetEffect.orderStars);
+    if (withStars && sb > 0) {
+      final x = gained * (1 + sb);
+      gained = x.floor() + (_rng.nextDouble() < x - x.floor() ? 1 : 0);
+    }
     // 하루 부탁 단계 보상: 하루 한도가 걸리는 별 부탁만 센다 (첫 구역의 한도 없는 부탁으로 쉽게 채우지 않게)
     _rollOrdersDay();
     final counts = withStars && quotaActive;
@@ -1845,6 +1898,7 @@ class GameState extends ChangeNotifier {
   double visitorCoins({required bool withAd}) =>
       GameConfig.visitorCoinsOf(level, baseIncomePerSec) *
       _coinMult *
+      (1 + setBonus(SetEffect.visitorCoins)) *
       (withAd ? GameConfig.visitorAdMultiplier : 1);
 
   /// 깜짝 손님 선물 받기. 광고를 봤으면 더 크게.
