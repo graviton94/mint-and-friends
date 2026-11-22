@@ -115,6 +115,7 @@ class TitleLogo extends StatelessWidget {
     final size = width / max(5.5, name.length * 0.95);
     TextStyle s(Paint? fg, Color? c) => TextStyle(
       fontFamily: 'Jua',
+      fontFamilyFallback: const ['MochiyPop'],
       fontSize: size,
       height: 1.1,
       foreground: fg,

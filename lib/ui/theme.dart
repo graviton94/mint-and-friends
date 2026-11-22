@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../i18n/l10n.dart';
+
 import 'widgets/frame_box.dart';
 
 /// 아트가 들어오기 전 임시 팔레트. 3~50대 대상: 큰 글씨, 높은 대비, 부드러운 색.
@@ -17,9 +19,12 @@ class Palette {
 }
 
 ThemeData buildTheme() {
+  // 일본어는 Mochiy Pop One 이 기본, 다른 언어는 Jua (서로 없는 글자는 상대 글꼴로)
+  final ja = L10n.instance.lang == 'ja';
   final base = ThemeData(
     useMaterial3: true,
-    fontFamily: 'Jua',
+    fontFamily: ja ? 'MochiyPop' : 'Jua',
+    fontFamilyFallback: ja ? const ['Jua'] : const ['MochiyPop'],
     colorScheme: ColorScheme.fromSeed(
       seedColor: Palette.primary,
       brightness: Brightness.light,

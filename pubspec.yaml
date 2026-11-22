@@ -85,6 +85,10 @@ flutter:
     - family: Jua
       fonts:
         - asset: assets/fonts/Jua.ttf
+    # 일본어 (Mochiy Pop One, OFL) — 게임 문구에 쓰는 글자만 (tool/font_ja_subset.py)
+    - family: MochiyPop
+      fonts:
+        - asset: assets/fonts/MochiyPopOne-ja.ttf
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
