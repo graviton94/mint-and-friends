@@ -981,7 +981,7 @@
   "mail.deleteN": "Delete {n}",
   "mail.deleted": "Deleted {n} letters",
   "mail.autoDelete": "Read letters are removed after {d} days",
-  "patch.1.0.5": "• 6 garden landmarks: build one in the middle of each area with stars and grow it with coins. New look every 10 levels\n• Decorations rearranged and fewer friends crowding the garden\n• Share & invite: invited friends get 50 diamonds, you get 100\n• Decor set bonuses and decor score\n• \"Max\" button and x2 goal bars in upgrades\n• New-version alerts and in-game updates\n• Mailbox: notice details, select & delete, old read letters tidy up\n• Fixed sign-in, request limits, sharing and more\n\nHere is some energy as an update gift!",
+  "patch.1.0.5": "• 6 garden landmarks: build one in the middle of each area with stars and grow it with coins. New look every 10 levels\n• Decorations rearranged and fewer friends crowding the garden\n• Share & invite: invited friends get 50 diamonds, you get 100\n• Decor set bonuses and decor score\n• \"Max\" button and x2 goal bars in upgrades\n• New-version alerts and in-game updates\n• Mailbox: notice details, select & delete, old read letters tidy up\n• New friends screen: suggested friends, 3 gifts and 3 adds a day\n• Fixed missing sound, sharing, sign-in, request limits and more\n\nHere is some energy as an update gift!",
   "mail.pickAll": "Select all",
   "mail.deletedClaimed": "Collected the gifts, then deleted",
   "toast.mailFrom": "[[letter]] A letter from {name} arrived!",
