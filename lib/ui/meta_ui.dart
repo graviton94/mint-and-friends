@@ -13,6 +13,7 @@ import 'sheets.dart';
 import 'theme.dart';
 import 'widgets/frame_box.dart';
 import 'widgets/icon_text.dart';
+import 'widgets/sprout_scrollbar.dart';
 import 'widgets/top_toast.dart';
 
 /// 보상 한 칸을 아이콘 문구로: "[[coin]]50 [[energy]]10 [[star]]1".
@@ -516,16 +517,29 @@ Future<void> showMailDetail(BuildContext context, GameState game, Mail m) {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // 운영 쪽지는 큰 그림 (업데이트: 선물 상자 · 공지: 알림판), 나머지는 보낸 친구
+          if (isNotice)
+            Center(
+              child: ArtImage(
+                Art.frame(isUpdate ? 'mail_update' : 'mail_notice'),
+                size: 132,
+              ),
+            ),
           Row(
             children: [
-              ArtImage(_mailIcon(m), size: 52),
-              const SizedBox(width: 10),
+              if (!isNotice) ...[
+                ArtImage(_mailIcon(m), size: 52),
+                const SizedBox(width: 10),
+              ],
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: isNotice
+                      ? CrossAxisAlignment.center
+                      : CrossAxisAlignment.start,
                   children: [
                     IconText(
                       mailTitle(m),
+                      textAlign: isNotice ? TextAlign.center : TextAlign.start,
                       style: const TextStyle(fontSize: 18),
                     ),
                     Text(
@@ -541,29 +555,8 @@ Future<void> showMailDetail(BuildContext context, GameState game, Mail m) {
             ],
           ),
           if (body != null) ...[
-            const SizedBox(height: 10),
-            Container(
-              constraints: const BoxConstraints(maxHeight: 260),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFFBF0),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5DCC8), width: 1.5),
-              ),
-              child: Scrollbar(
-                thumbVisibility: true,
-                child: SingleChildScrollView(
-                  child: IconText(
-                    body,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      height: 1.5,
-                      color: Color(0xFF5C402C),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            const SizedBox(height: 8),
+            _LetterPaper(body: body),
           ],
           if (m.hasReward) ...[
             const SizedBox(height: 10),
@@ -606,6 +599,73 @@ Future<void> showMailDetail(BuildContext context, GameState game, Mail m) {
       ],
     ),
   );
+}
+
+/// 편지지 (mail_paper): 위쪽 꽃 · 우표는 그대로, 가운데만 늘린다. 본문은 새싹 손잡이로 스크롤.
+class _LetterPaper extends StatelessWidget {
+  const _LetterPaper({required this.body});
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final paper = Art.frame('mail_paper');
+    final text = SproutScrollbar(
+      builder: (c) => SingleChildScrollView(
+        controller: c,
+        padding: const EdgeInsets.only(right: 18),
+        child: IconText(
+          body,
+          style: const TextStyle(
+            fontSize: 15,
+            height: 1.5,
+            color: Color(0xFF5C402C),
+          ),
+        ),
+      ),
+    );
+    if (!paper.available) {
+      return Container(
+        constraints: const BoxConstraints(maxHeight: 260),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFBF0),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5DCC8), width: 1.5),
+        ),
+        child: text,
+      );
+    }
+    return LayoutBuilder(
+      builder: (context, box) {
+        final k = box.maxWidth / 523; // 원본 → 화면 배율
+        return ConstrainedBox(
+          constraints: BoxConstraints(minHeight: 200 * k + 60, maxHeight: 320),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: LayoutBuilder(
+                  builder: (context, b) => FittedBox(
+                    fit: BoxFit.fill,
+                    child: Image.asset(
+                      paper.path,
+                      width: 523,
+                      height: (b.maxHeight / k).clamp(540, double.infinity),
+                      centerSlice: const Rect.fromLTRB(70, 170, 450, 470),
+                      filterQuality: FilterQuality.medium,
+                    ),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(40 * k, 150 * k, 26 * k, 40 * k),
+                child: text,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
 
 // ---------------------------------------------------------------- 메뉴

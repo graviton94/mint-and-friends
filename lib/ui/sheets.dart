@@ -19,6 +19,7 @@ import 'renew_ui.dart';
 import 'theme.dart';
 import 'widgets/frame_box.dart';
 import 'widgets/icon_text.dart';
+import 'widgets/sprout_scrollbar.dart';
 
 /// 게임 공통 아래 시트 (패널 프레임, 언어 · 상태가 바뀌면 다시 그림).
 Future<void> showGameSheet(
@@ -2609,31 +2610,34 @@ class SheetFrame extends StatelessWidget {
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.85,
           ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.black26,
-                      borderRadius: BorderRadius.circular(3),
+          child: SproutScrollbar(
+            builder: (c) => SingleChildScrollView(
+              controller: c,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.black26,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                IconText(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 22),
-                ),
-                const SizedBox(height: 12),
-                child,
-              ],
+                  const SizedBox(height: 10),
+                  IconText(
+                    title,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 22),
+                  ),
+                  const SizedBox(height: 12),
+                  child,
+                ],
+              ),
             ),
           ),
         ),
