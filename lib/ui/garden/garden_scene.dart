@@ -68,6 +68,12 @@ class GardenScene extends StatefulWidget {
   /// 배경 그림 비율 (1536x1024). 씬 안의 모든 좌표는 이 비율의 캔버스 기준.
   static const double aspect = 1.5;
 
+  /// 장식 · 친구 크기 (장면 폭 대비). D-048: 18% · 15% → 15% · 12% (가운데 랜드마크 자리).
+  static const double decorK = 0.15, friendK = 0.12;
+
+  /// 정원에 동시에 보이는 친구 수 (부탁을 든 친구는 늘 보이고, 나머지는 시간마다 번갈아).
+  static const int maxFriends = 8;
+
   @override
   State<GardenScene> createState() => _GardenSceneState();
 }
@@ -143,6 +149,24 @@ class _GardenSceneState extends State<GardenScene>
 
   int? _walkArea;
 
+  /// 지금 정원에 나와 있는 친구: 부탁을 든 친구 먼저, 나머지는 한 시간마다 바뀌는 순서로 [GardenScene.maxFriends] 까지.
+  Set<String> _shownFriends() {
+    final all = game.friends.toList()..sort();
+    if (all.length <= GardenScene.maxFriends) return all.toSet();
+    final out = <String>{
+      for (final o in game.orders)
+        if (all.contains(o.friendId)) o.friendId,
+    };
+    final hour = DateTime.now().millisecondsSinceEpoch ~/ 3600000;
+    final rest = all.where((f) => !out.contains(f)).toList()
+      ..shuffle(Random(hour));
+    for (final f in rest) {
+      if (out.length >= GardenScene.maxFriends) break;
+      out.add(f);
+    }
+    return out;
+  }
+
   /// 부탁을 든 친구가 자기 자리에서 서성이는 범위 (씬 대비).
   static const double _orderRoam = 0.07;
 
@@ -203,13 +227,14 @@ class _GardenSceneState extends State<GardenScene>
         w.target = _randomSpot();
       }
     }
-    for (final id in game.friends) {
+    final shown = _shownFriends();
+    for (final id in shown) {
       _walkers.putIfAbsent(
         id,
         () => _Walker(_randomSpot(), _randomSpot(), _rng.nextDouble() * 2),
       );
     }
-    _walkers.removeWhere((id, _) => !game.friends.contains(id));
+    _walkers.removeWhere((id, _) => !shown.contains(id));
 
     _lifeTimer -= dt;
     if (_lifeTimer <= 0) {
@@ -545,7 +570,7 @@ class _GardenSceneState extends State<GardenScene>
     for (var i = 0; i < area.decor.length; i++) {
       final d = area.decor[i];
       final p = px(d.x, d.y);
-      final sz = unit * 0.18;
+      final sz = unit * GardenScene.decorK;
       Widget child;
       if (game.isPlaced(widget.area, i)) {
         child = TweenAnimationBuilder<double>(
@@ -585,7 +610,7 @@ class _GardenSceneState extends State<GardenScene>
       final f = Friends.byId(e.key);
       final wk = e.value;
       final p = px(wk.pos.dx, wk.pos.dy);
-      final sz = unit * 0.15;
+      final sz = unit * GardenScene.friendK;
       final walking = wk.pauseLeft <= 0 && wk.happyLeft <= 0;
       final inWater = area.water.any((w) => w.contains(wk.pos.dx, wk.pos.dy));
       // 물속에서는 통통 뛰지 않고 살랑살랑 떠 있는다
@@ -659,7 +684,7 @@ class _GardenSceneState extends State<GardenScene>
 
     if (game.visitorVisible) {
       final p = px(_visitorX, Garden.areaAt(widget.area).walk.first.y1 - 0.04);
-      final sz = unit * 0.15;
+      final sz = unit * GardenScene.friendK;
       final bounce = sin(_t * 6).abs() * sz * 0.1;
       layers.add((
         y: p.dy, // 발 위치
@@ -710,7 +735,7 @@ class _GardenSceneState extends State<GardenScene>
   ({Offset c, double w}) _slotGeom(AreaDef area, int i, Size s) {
     final unit = min(s.width, s.height * 1.6);
     final d = area.decor[i];
-    final sz = unit * 0.18;
+    final sz = unit * GardenScene.decorK;
     // 장식 그림의 바닥 (월드 정렬 기준과 같은 높이)
     final w = sz * 0.95 * widget.markerScale;
     // 캔버스 아래 끝에 걸린 자리는 표가 잘리지 않게 안쪽으로 올린다
@@ -788,7 +813,7 @@ class _GardenSceneState extends State<GardenScene>
 
   List<Widget> _orderLayer(Size s, Rect visible) {
     final unit = min(s.width, s.height * 1.6);
-    final sz = unit * 0.15;
+    final sz = unit * GardenScene.friendK;
     final bw = max(
       game.openBaskets.length > 1 ? 74.0 : 66.0,
       unit * (game.openBaskets.length > 1 ? 0.21 : 0.19),
@@ -900,7 +925,7 @@ class _GardenSceneState extends State<GardenScene>
             visible.left + 4,
             max(visible.left + 4, visible.right - 184),
           ),
-          top: (p.dy - unit * 0.13 * 2.1).clamp(
+          top: (p.dy - unit * GardenScene.friendK * 1.8).clamp(
             visible.top + 4,
             max(visible.top + 4, visible.bottom - 60),
           ),

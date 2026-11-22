@@ -839,6 +839,9 @@ class AreaDef {
   final int round; // 순환 회차 (1부터)
   final List<WalkZone> walk;
   final List<WaterZone> water;
+
+  /// 랜드마크(D-048)가 서는 자리: 가운데 x · 바닥 y (씬 대비 0~1). 구역마다 조금씩 다르게.
+  final double landmarkX, landmarkY;
   const AreaDef(
     this.id,
     this.emoji,
@@ -848,6 +851,8 @@ class AreaDef {
     this.round = 1,
     this.walk = const [WalkZone(0.08, 0.42, 0.92, 0.92)],
     this.water = const [],
+    this.landmarkX = 0.5,
+    this.landmarkY = 0.62,
   });
 
   String get key => 'area.$id';
@@ -857,75 +862,117 @@ class Garden {
   static const int slotsPerArea = 8;
 
   static const List<AreaDef> areas = [
-    AreaDef('yard', '🏡', 0xFFBFE6F7, 0xFFA8D88E, [
-      DecorDef('big_tree', '🌳', 0.11, 0.42),
-      DecorDef('bench', '🪑', 0.37, 0.40),
-      DecorDef('mailbox', '📮', 0.63, 0.36),
-      DecorDef('veggie_patch', '🥕', 0.62, 0.70, bringsFriend: 'dubu'),
-      DecorDef('lantern', '🏮', 0.10, 0.78),
-      DecorDef('bird_feeder', '🐦', 0.34, 0.74),
-      DecorDef('hut', '🛖', 0.89, 0.44),
-      DecorDef('fountain', '⛲', 0.88, 0.80),
-    ]),
+    AreaDef(
+      'yard',
+      '🏡',
+      0xFFBFE6F7,
+      0xFFA8D88E,
+      [
+        DecorDef('big_tree', '🌳', 0.10, 0.38),
+        DecorDef('bench', '🪑', 0.23, 0.36),
+        DecorDef('mailbox', '📮', 0.58, 0.42),
+        DecorDef('veggie_patch', '🥕', 0.18, 0.62, bringsFriend: 'dubu'),
+        DecorDef('lantern', '🏮', 0.63, 0.70),
+        DecorDef('bird_feeder', '🐦', 0.32, 0.80),
+        DecorDef('hut', '🛖', 0.69, 0.32),
+        DecorDef('fountain', '⛲', 0.86, 0.58),
+      ],
+      landmarkX: 0.42,
+      landmarkY: 0.66,
+    ),
     AreaDef(
       'pond',
       '🦆',
       0xFFC6E2FA,
       0xFF9CD3B0,
       [
-        DecorDef('stepping_stones', '🪨', 0.12, 0.64),
-        DecorDef('water_lily', '🪷', 0.50, 0.54, bringsFriend: 'kwak'),
-        DecorDef('fishing_spot', '🎣', 0.80, 0.44),
-        DecorDef('rowboat', '🛶', 0.72, 0.66),
-        DecorDef('reeds', '🌾', 0.10, 0.84),
-        DecorDef('log_chair', '🪵', 0.38, 0.82, bringsFriend: 'nabi'),
-        DecorDef('tent', '🏕️', 0.88, 0.82),
-        DecorDef('wooden_bridge', '🌉', 0.28, 0.46),
+        DecorDef('stepping_stones', '🪨', 0.70, 0.48),
+        DecorDef('water_lily', '🪷', 0.40, 0.50, bringsFriend: 'kwak'),
+        DecorDef('fishing_spot', '🎣', 0.85, 0.36),
+        DecorDef('rowboat', '🛶', 0.44, 0.66),
+        DecorDef('reeds', '🌾', 0.09, 0.80),
+        DecorDef('log_chair', '🪵', 0.30, 0.86, bringsFriend: 'nabi'),
+        DecorDef('tent', '🏕️', 0.88, 0.80),
+        DecorDef('wooden_bridge', '🌉', 0.18, 0.56),
       ],
       walk: [WalkZone(0.06, 0.44, 0.94, 0.94)],
       water: [WaterZone(0.52, 0.58, 0.46, 0.21)],
+      landmarkX: 0.62,
+      landmarkY: 0.90,
     ),
-    AreaDef('greenhouse', '🪴', 0xFFF6E3F0, 0xFFB9DFA0, [
-      DecorDef('glasshouse', '🪟', 0.11, 0.40),
-      DecorDef('cactus', '🌵', 0.36, 0.46),
-      DecorDef('mushroom_bed', '🍄', 0.86, 0.46, bringsFriend: 'dotori'),
-      DecorDef('watering_can', '🚿', 0.60, 0.46),
-      DecorDef('sunflower_field', '🌻', 0.14, 0.76),
-      DecorDef('tea_table', '🫖', 0.40, 0.78),
-      DecorDef('bamboo', '🎋', 0.64, 0.74, bringsFriend: 'mochi'),
-      DecorDef('wind_chime', '🎐', 0.88, 0.80),
-    ]),
-    AreaDef('starry_hill', '🌙', 0xFF2E3A6B, 0xFF6F9A6A, [
-      DecorDef('telescope', '🔭', 0.12, 0.46),
-      DecorDef('camp_tent', '⛺', 0.38, 0.44),
-      DecorDef('campfire', '🔥', 0.62, 0.48, bringsFriend: 'danpung'),
-      DecorDef('ferris_wheel', '🎡', 0.88, 0.50),
-      DecorDef('carousel', '🎠', 0.14, 0.78),
-      DecorDef('moon_statue', '🌙', 0.38, 0.76),
-      DecorDef('little_castle', '🏰', 0.63, 0.78, bringsFriend: 'kongtteok'),
-      DecorDef('fireworks', '🎆', 0.88, 0.80),
-    ]),
+    AreaDef(
+      'greenhouse',
+      '🪴',
+      0xFFF6E3F0,
+      0xFFB9DFA0,
+      [
+        DecorDef('glasshouse', '🪟', 0.10, 0.32),
+        DecorDef('cactus', '🌵', 0.27, 0.38),
+        DecorDef('mushroom_bed', '🍄', 0.80, 0.58, bringsFriend: 'dotori'),
+        DecorDef('watering_can', '🚿', 0.73, 0.38),
+        DecorDef('sunflower_field', '🌻', 0.19, 0.58),
+        DecorDef('tea_table', '🫖', 0.36, 0.84),
+        DecorDef('bamboo', '🎋', 0.92, 0.40, bringsFriend: 'mochi'),
+        DecorDef('wind_chime', '🎐', 0.66, 0.84),
+      ],
+      landmarkX: 0.5,
+      landmarkY: 0.62,
+    ),
+    AreaDef(
+      'starry_hill',
+      '🌙',
+      0xFF2E3A6B,
+      0xFF6F9A6A,
+      [
+        DecorDef('telescope', '🔭', 0.13, 0.30),
+        DecorDef('camp_tent', '⛺', 0.29, 0.40),
+        DecorDef('campfire', '🔥', 0.38, 0.55, bringsFriend: 'danpung'),
+        DecorDef('ferris_wheel', '🎡', 0.88, 0.33),
+        DecorDef('carousel', '🎠', 0.82, 0.58),
+        DecorDef('moon_statue', '🌙', 0.15, 0.64),
+        DecorDef('little_castle', '🏰', 0.36, 0.82, bringsFriend: 'kongtteok'),
+        DecorDef('fireworks', '🎆', 0.80, 0.82),
+      ],
+      landmarkX: 0.58,
+      landmarkY: 0.62,
+    ),
     // 5 · 6구역: 배경 · 장식 · 친구 그림이 모두 들어와야 열린다 (그 전에는 1~4구역 순환)
-    AreaDef('seaside', '🏖️', 0xFFBDE8F5, 0xFFF3E3B8, [
-      DecorDef('beach_hut', '🛖', 0.12, 0.42),
-      DecorDef('parasol', '⛱️', 0.37, 0.42),
-      DecorDef('lighthouse', '🗼', 0.88, 0.38),
-      DecorDef('sandcastle', '🏰', 0.62, 0.50, bringsFriend: 'bogeul'),
-      DecorDef('deck_chair', '🪑', 0.12, 0.78),
-      DecorDef('shell_fountain', '🐚', 0.37, 0.76),
-      DecorDef('surf_rack', '🏄', 0.88, 0.72),
-      DecorDef('seagull_post', '🪵', 0.62, 0.80),
-    ]),
-    AreaDef('snow_village', '❄️', 0xFFDDE9F5, 0xFFF4F7FA, [
-      DecorDef('chimney_cottage', '🏠', 0.12, 0.42),
-      DecorDef('winter_tree', '🎄', 0.37, 0.44),
-      DecorDef('snowman', '⛄', 0.62, 0.46),
-      DecorDef('igloo', '🛖', 0.88, 0.48),
-      DecorDef('sled', '🛷', 0.14, 0.78),
-      DecorDef('cocoa_stand', '☕', 0.39, 0.74),
-      DecorDef('ice_rink', '⛸️', 0.64, 0.80, bringsFriend: 'pposong'),
-      DecorDef('snow_lantern', '🏮', 0.88, 0.80),
-    ]),
+    AreaDef(
+      'seaside',
+      '🏖️',
+      0xFFBDE8F5,
+      0xFFF3E3B8,
+      [
+        DecorDef('beach_hut', '🛖', 0.10, 0.38),
+        DecorDef('parasol', '⛱️', 0.29, 0.42),
+        DecorDef('lighthouse', '🗼', 0.90, 0.28),
+        DecorDef('sandcastle', '🏰', 0.36, 0.72, bringsFriend: 'bogeul'),
+        DecorDef('deck_chair', '🪑', 0.18, 0.60),
+        DecorDef('shell_fountain', '🐚', 0.14, 0.82),
+        DecorDef('surf_rack', '🏄', 0.72, 0.40),
+        DecorDef('seagull_post', '🪵', 0.62, 0.76),
+      ],
+      landmarkX: 0.52,
+      landmarkY: 0.58,
+    ),
+    AreaDef(
+      'snow_village',
+      '❄️',
+      0xFFDDE9F5,
+      0xFFF4F7FA,
+      [
+        DecorDef('chimney_cottage', '🏠', 0.12, 0.36),
+        DecorDef('winter_tree', '🎄', 0.29, 0.36),
+        DecorDef('snowman', '⛄', 0.20, 0.62),
+        DecorDef('igloo', '🛖', 0.89, 0.44),
+        DecorDef('sled', '🛷', 0.58, 0.84),
+        DecorDef('cocoa_stand', '☕', 0.36, 0.72),
+        DecorDef('ice_rink', '⛸️', 0.73, 0.62, bringsFriend: 'pposong'),
+        DecorDef('snow_lantern', '🏮', 0.88, 0.80),
+      ],
+      landmarkX: 0.5,
+      landmarkY: 0.58,
+    ),
   ];
 
   static const int coreAreas = 4;
@@ -956,6 +1003,8 @@ class Garden {
       round: index ~/ list.length + 1,
       walk: base.walk,
       water: base.water,
+      landmarkX: base.landmarkX,
+      landmarkY: base.landmarkY,
     );
   }
 

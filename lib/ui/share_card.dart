@@ -11,6 +11,7 @@ import '../game/game_state.dart';
 import '../i18n/l10n.dart';
 import '../i18n/names.dart';
 import '../services/social_service.dart' show FriendCode;
+import 'garden/garden_scene.dart' show GardenScene;
 
 /// 자랑 카드 종류 (D-045).
 enum ShareKind { garden, area, renew, legendary }
@@ -198,7 +199,7 @@ class ShareCard {
       final d = a.decor[i];
       final img = await _img(Art.decor(d, style: g.styleOf(area, i)).path);
       if (img == null) continue;
-      final sz = unit * 0.18;
+      final sz = unit * GardenScene.decorK;
       final px = ox + d.x.clamp(0.08, 0.92) * sw, py = oy + d.y * sh;
       layers.add((
         py + sz * 0.44,
@@ -223,7 +224,7 @@ class ShareCard {
       if (img == null) continue;
       final fx = zone.x0 + 0.06 + rng.nextDouble() * (zone.x1 - zone.x0 - 0.12);
       final fy = zone.y0 + 0.15 + rng.nextDouble() * (zone.y1 - zone.y0 - 0.2);
-      final sz = unit * 0.15;
+      final sz = unit * GardenScene.friendK;
       final px = ox + fx * sw, py = oy + fy * sh;
       layers.add((py, img, Rect.fromLTWH(px - sz / 2, py - sz, sz, sz)));
     }
