@@ -91,4 +91,6 @@ flutter {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // Play 설치 추천인 (초대 링크, D-045)
+    implementation("com.android.installreferrer:installreferrer:2.2")
 }

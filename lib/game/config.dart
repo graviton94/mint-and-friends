@@ -953,7 +953,7 @@ class Garden {
         DecorDef('seagull_post', '🪵', 0.62, 0.76),
       ],
       landmarkX: 0.52,
-      landmarkY: 0.39,
+      landmarkY: 0.31,
     ),
     AreaDef(
       'snow_village',
