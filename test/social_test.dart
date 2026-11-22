@@ -465,6 +465,9 @@ void main() {
       expect(server.reports.first['code'], bMe.code);
       expect(server.reports.first['reason'], 'name');
       expect(a.friends.any((x) => x.uid == 'u2'), isFalse);
+      // 신고한 사람은 추천에도 다시 나오지 않는다
+      await a.loadRecommended(force: true);
+      expect(a.recommended.any((p) => p.uid == 'u2'), isFalse);
     });
 
     test('하루 한 번 선물: 보내면 완료, 업적 기록, 받는 쪽 쪽지 (중복 없음)', () async {

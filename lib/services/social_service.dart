@@ -1012,6 +1012,9 @@ class SocialService extends ChangeNotifier {
   /// 추천 친구: 최근 접속한 사람 중 나 · 이미 친구 · 신고한 사람을 빼고
   /// 레벨이 비슷한 순으로 [SocialConfig.recommendShow] 명. 하루 동안 같은 얼굴 (날짜로 섞는다).
   List<SocialProfile> recommended = [];
+
+  /// 내가 신고한 사람 (추천에서 뺀다).
+  Set<String> get reported => {...?prefs.getStringList(_k('reported'))};
   String _recommendDay = '';
 
   Future<void> loadRecommended({bool force = false}) async {
@@ -1023,7 +1026,7 @@ class SocialService extends ChangeNotifier {
         backend.recentProfiles(SocialConfig.recommendPool),
       );
       final mine = me?.level ?? 1;
-      final known = {u, for (final f in friends) f.uid};
+      final known = {u, for (final f in friends) f.uid, ...reported};
       final rng = Random(today.hashCode ^ u.hashCode);
       final pool = [
         for (final e in all.entries)
@@ -1114,6 +1117,8 @@ class SocialService extends ChangeNotifier {
   }) async {
     final u = _check();
     if (u == null) return;
+    // 신고한 사람은 추천 친구에 다시 나오지 않게 기억해 둔다
+    await prefs.setStringList(_k('reported'), [...reported, f.uid]);
     await _net(
       backend.report({
         'from': u,

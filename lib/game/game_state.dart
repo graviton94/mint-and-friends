@@ -610,7 +610,29 @@ class GameState extends ChangeNotifier {
 
   // ---------------------------------------------------------------- 파생 값
 
-  DateTime get now => _clock();
+  /// 게임 시각: 기기 시계를 뒤로 돌려도 거꾸로 가지 않는다 (시계 조작으로 방치 수익 ·
+  /// 하루 한도를 되풀이해 받지 못하게). 크게(3일 넘게) 뒤로 가면 기기 시계를 믿되
+  /// 방치 수익은 주지 않고, 하루 초기화는 이미 지난 날짜까지 다시 하지 않는다.
+  DateTime get now {
+    final t = _clock();
+    final m = _maxSeen;
+    if (m == null || !t.isBefore(m)) {
+      _maxSeen = t;
+      return t;
+    }
+    if (m.difference(t) > clockRollbackLimit) {
+      _maxSeen = t;
+      lastSeen = t;
+      return t;
+    }
+    return m;
+  }
+
+  static const Duration clockRollbackLimit = Duration(days: 3);
+  DateTime? _maxSeen;
+
+  /// 하루 초기화에 쓴 가장 늦은 날 (yyyymmdd). 날짜는 이보다 앞으로 돌아가지 않는다.
+  int _maxDay = 0;
 
   bool isUnlocked(Feature f) => level >= (Leveling.unlockLevel[f] ?? 1);
   int get xpToNext => Leveling.xpToNext(level);
@@ -1332,7 +1354,15 @@ class GameState extends ChangeNotifier {
 
   // ---------------------------------------------------------------- 광고 하루 상한
 
-  String _dayKey(DateTime t) => '${t.year}-${t.month}-${t.day}';
+  String _dayKey(DateTime t) {
+    var d = t.year * 10000 + t.month * 100 + t.day;
+    if (d < _maxDay) {
+      d = _maxDay;
+    } else {
+      _maxDay = d;
+    }
+    return '${d ~/ 10000}-${d ~/ 100 % 100}-${d % 100}';
+  }
 
   void _rollAdDay() {
     final k = _dayKey(now);
@@ -2906,6 +2936,7 @@ class GameState extends ChangeNotifier {
       'effectOn': effectOn,
       'bag': coinBagReadyAt?.millisecondsSinceEpoch,
       'seen': lastSeen.millisecondsSinceEpoch,
+      'maxDay': _maxDay,
       'visitorNext': nextVisitorAt.millisecondsSinceEpoch,
       'merges': totalMerges,
       'stats': {for (final e in stats.entries) e.key.name: e.value},
@@ -3167,7 +3198,10 @@ class GameState extends ChangeNotifier {
     effectOn = j['effectOn'] as String?;
     _migrateStorage();
     coinBagReadyAt = ts('bag');
+    _maxDay = (j['maxDay'] as num?)?.toInt() ?? 0;
     lastSeen = ts('seen') ?? now;
+    // 저장한 때보다 기기 시계가 뒤에 있으면 그때부터 (위 now 규칙과 같다)
+    if (_maxSeen == null || lastSeen.isAfter(_maxSeen!)) _maxSeen = lastSeen;
     nextVisitorAt = ts('visitorNext') ?? now.add(GameConfig.visitorMinGap);
     totalMerges = (j['merges'] as num?)?.toInt() ?? 0;
     stats.clear();
