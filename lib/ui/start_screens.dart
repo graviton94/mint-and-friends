@@ -103,9 +103,11 @@ class TitleLogo extends StatelessWidget {
     final lang = L10n.instance.lang;
     final art = ArtRef('assets/art/title/logo_$lang.webp', '');
     final ko = const ArtRef('assets/art/title/logo_ko.webp', '');
+    // 로고 그림이 없는 언어(스페인어 등)는 영어 로고 "Mint & Friends"
+    final en = const ArtRef('assets/art/title/logo_en.webp', '');
     final pick = art.available
         ? art
-        : (lang == 'ko' && ko.available ? ko : null);
+        : (lang == 'ko' && ko.available ? ko : (en.available ? en : null));
     if (pick != null) {
       return Image.asset(pick.path, width: width, fit: BoxFit.contain);
     }

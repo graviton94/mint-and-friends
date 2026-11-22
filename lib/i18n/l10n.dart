@@ -16,7 +16,8 @@ class L10n extends ChangeNotifier {
   L10n._();
   static final L10n instance = L10n._();
 
-  static const String fallbackLang = 'ko';
+  /// 기기 언어를 지원하지 않거나 문구가 빠졌을 때 쓰는 언어 (스토어 기본 언어와 같게 영어).
+  static const String fallbackLang = 'en';
   static const String _prefKey = 'lang';
 
   /// 지원 언어: 코드 → 해당 언어로 쓴 언어 이름 (언어 선택 화면에 그대로 표시).
