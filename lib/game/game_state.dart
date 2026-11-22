@@ -214,6 +214,14 @@ class SeasonSetEvent extends GameEvent {
 
 /// 보상형 광고를 끝까지 봤다.
 /// 다이아를 썼다 (어디에 · 얼마나) — 분석용.
+/// 랜드마크를 세웠거나 그림 단계가 올랐다 (D-048).
+class LandmarkEvent extends GameEvent {
+  final int area;
+  final int level;
+  final bool newStage;
+  LandmarkEvent(this.area, this.level, {required this.newStage});
+}
+
 /// 생산력 강화가 25단계 고비를 넘어 ×2 가 됐다 (D-048).
 class UpgradeMilestoneEvent extends GameEvent {
   final UpgradeType type;
@@ -735,7 +743,54 @@ class GameState extends ChangeNotifier {
       decorCount * GameConfig.decorIncomeBonus +
       currentArea * GameConfig.areaIncomeBonus +
       completedSeasonSets * Garden.seasonSetBonus +
-      decorScore * DecorSets.incomePerPoint;
+      decorScore * DecorSets.incomePerPoint +
+      landmarkCharm;
+
+  // ---------------------------------------------------------------- 랜드마크 (D-048)
+
+  /// 구역 → 랜드마크 레벨 (0 = 아직 안 세움). 재단장해도 남는다.
+  final Map<int, int> landmarks = {};
+  int landmarkLevel(int area) => landmarks[area] ?? 0;
+
+  /// 세울 수 있는 구역: 다 꾸민 구역 (처음 6구역).
+  bool landmarkOpen(int area) =>
+      area < Landmarks.ids.length && area < currentArea;
+
+  /// 다음 레벨 가격: 지금 시간당 수입 × 시간 (부스트 제외 기본 수입).
+  double landmarkCost(int area) =>
+      hourlyIncome * Landmarks.hoursAt(landmarkLevel(area));
+
+  bool canUpgradeLandmark(int area) =>
+      landmarkOpen(area) &&
+      landmarkLevel(area) < Landmarks.maxLevel &&
+      coins >= landmarkCost(area);
+
+  bool upgradeLandmark(int area) {
+    if (!canUpgradeLandmark(area)) return false;
+    coins -= landmarkCost(area);
+    final before = Landmarks.stageOf(landmarkLevel(area));
+    final lv = landmarkLevel(area) + 1;
+    landmarks[area] = lv;
+    final newStage = lv == 1 || Landmarks.stageOf(lv) != before;
+    _events.add(LandmarkEvent(area, lv, newStage: newStage));
+    _bump(Stat.upgradesBought);
+    _trace('landmark', '$area,$lv');
+    notifyListeners();
+    return true;
+  }
+
+  /// 일괄: 살 수 있는 만큼. 올린 레벨 수.
+  int upgradeLandmarkMax(int area) {
+    var n = 0;
+    while (n < Landmarks.maxLevel && upgradeLandmark(area)) {
+      n++;
+    }
+    return n;
+  }
+
+  /// 모든 랜드마크의 정원 매력 합.
+  double get landmarkCharm =>
+      landmarks.values.fold(0.0, (a, lv) => a + Landmarks.charm(lv));
 
   // ---------------------------------------------------------------- 꾸밈 점수 · 세트 (D-046)
 
@@ -1116,6 +1171,7 @@ class GameState extends ChangeNotifier {
     _fillOrders();
     _maybeFriendGift();
     _earn(incomePerSec * dt);
+    _sampleEarn(dt);
     _regenEnergy(dt);
     _rechargeBaskets(dt);
     _noBuySecs = UpgradeType.values.any(canBuyUpgrade) ? 0 : _noBuySecs + dt;
@@ -1153,11 +1209,30 @@ class GameState extends ChangeNotifier {
     return Duration(seconds: a + _rng.nextInt(b - a + 1));
   }
 
-  void _earn(double v) {
+  void _earn(double v, {bool live = true}) {
     coins += v;
     lifetimeCoins += v;
     _bump(Stat.coinsEarned, v.round());
+    if (live) _winCoins += v;
   }
+
+  /// 플레이하는 동안 실제로 버는 코인 속도 (시간당, 5분 창의 지수 평균. 오프라인 보상은 빼고).
+  /// 랜드마크처럼 '지금 수입 × 시간' 으로 값이 정해지는 것의 기준 (D-048).
+  double earnRate = 0;
+  double _winCoins = 0, _winSec = 0;
+
+  void _sampleEarn(double dt) {
+    _winSec += dt;
+    if (_winSec < 300) return;
+    final rate = _winCoins / _winSec * 3600;
+    earnRate = earnRate <= 0 ? rate : earnRate * 0.7 + rate * 0.3;
+    _winCoins = 0;
+    _winSec = 0;
+  }
+
+  /// 지금 시간당 수입 (재 본 값이 없으면 기본 수입의 10배로 어림).
+  double get hourlyIncome =>
+      max(100.0, earnRate > 0 ? earnRate : baseIncomePerSec * 3600 * 10);
 
   // ---------------------------------------------------------------- 에너지
 
@@ -2617,7 +2692,7 @@ class GameState extends ChangeNotifier {
   }
 
   void grantOffline(OfflineReward r, {bool doubled = false}) {
-    _earn(r.coins * (doubled ? 2 : 1));
+    _earn(r.coins * (doubled ? 2 : 1), live: false);
     notifyListeners();
   }
 
@@ -2702,6 +2777,9 @@ class GameState extends ChangeNotifier {
       if (invitedAt != null) 'invitedAt': invitedAt!.millisecondsSinceEpoch,
       if (inviteRewarded.isNotEmpty) 'inviteRewarded': inviteRewarded.toList(),
       if (shareDay.isNotEmpty) 'shareDay': shareDay,
+      if (earnRate > 0) 'earnRate': earnRate,
+      if (landmarks.isNotEmpty)
+        'landmarks': {for (final e in landmarks.entries) '${e.key}': e.value},
       'starterUntil': starterOfferUntil?.millisecondsSinceEpoch,
       'starterShows': starterShows,
       'passNoticeSeen': passNoticeSeen,
@@ -2944,6 +3022,17 @@ class GameState extends ChangeNotifier {
         for (final x in (j['inviteRewarded'] as List? ?? const [])) '$x',
       ]);
     shareDay = j['shareDay'] as String? ?? '';
+    earnRate = (j['earnRate'] as num?)?.toDouble() ?? 0;
+    landmarks
+      ..clear()
+      ..addAll({
+        for (final e in ((j['landmarks'] as Map?) ?? const {}).entries)
+          if (int.tryParse('${e.key}') != null && e.value is num)
+            int.parse('${e.key}'): (e.value as num).toInt().clamp(
+              0,
+              Landmarks.maxLevel,
+            ),
+      });
     starterOfferUntil = ts('starterUntil');
     starterShows = (j['starterShows'] as num?)?.toInt() ?? 0;
     // 예전 저장: 이미 끝난 패스는 '끝났어요' 창을 새로 띄우지 않는다

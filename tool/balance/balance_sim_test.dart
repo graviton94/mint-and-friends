@@ -224,6 +224,12 @@ class Sim {
           }
         }
       }
+      // 랜드마크 (D-048)
+      for (var a = 0; a < Landmarks.ids.length; a++) {
+        if (g.canUpgradeLandmark(a)) {
+          cands.add((g.landmarkCost(a), 'landmark', () => g.upgradeLandmark(a)));
+        }
+      }
       if (cands.isEmpty) return;
       cands.sort((a, b) => a.$1.compareTo(b.$1));
       final (cost, cat, fn) = cands.first;
@@ -523,7 +529,7 @@ class Sim {
         '(sink ${(100 * spent / max(1, earned)).round()}% func ${(100 * funcSpent / max(1, earned)).round()}%) '
         'bal ${g.coins.toStringAsExponential(2)} stars ${g.stars} gems ${g.gems} '
         'spawns paid $paidSpawns free $freeSpawns '
-        'upg[$up] cells ${g.cellsPurchased} friends ${fl.join(',')} '
+        'upg[$up] lm${[for (var a = 0; a < Landmarks.ids.length; a++) g.landmarkLevel(a)]} cells ${g.cellsPurchased} friends ${fl.join(',')} '
         'gifts $gifts sells $sells orders ${g.stat(Stat.orders)} | $buyStr| in: $shareStr';
   }
 
@@ -538,6 +544,7 @@ class Sim {
       'areaEnter(2..): $areaDay',
       'maxDay: ${maxDay.map((k, v) => MapEntry(k.name, v))}',
       'renews(${renews.length}): ${renews.join(' ')}',
+      'landmarks: ${[for (var a = 0; a < Landmarks.ids.length; a++) g.landmarkLevel(a)]} charm=${g.landmarkCharm.toStringAsFixed(2)}',
       'decor: score=${g.decorScore.toStringAsFixed(1)} tiers=${[for (var a = 0; a < DecorSets.areas; a++) g.setTier(a)]} gm=${g.gardenMultiplier.toStringAsFixed(2)} cap=${g.energyCap} luck=${g.luckyChance.toStringAsFixed(3)}',
       'energyIn: ${fmt(energyIn)} | freeSpawns=$freeSpawns',
       'coinsIn: ${fmt(coinsIn)}',

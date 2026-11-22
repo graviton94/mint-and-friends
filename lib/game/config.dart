@@ -1071,6 +1071,43 @@ class Garden {
       : (pow(2, level - 1) / 4 * (1 + 0.05 * (level - 3))).round();
 }
 
+// ------------------------------------------------------------------ 정원 랜드마크 (D-048)
+
+/// 구역마다 가운데 큰 조형물. 구역을 다 꾸미면 세울 수 있고, 코인으로 끝없이(최대 [maxLevel]) 키운다.
+/// 가격은 고정이 아니라 '지금 시간당 수입 × 시간' (언제 사도 같은 노력). 재단장해도 남는다.
+class Landmarks {
+  /// 구역 순서대로 (그림: `assets/art/landmarks/<id>_<단계>.webp`).
+  static const List<String> ids = [
+    'windmill',
+    'waterwheel',
+    'flowerclock',
+    'observatory',
+    'sailship',
+    'icepalace',
+  ];
+  static const int maxLevel = 50;
+
+  /// 그림 단계가 바뀌는 레벨 (1단계 · 2 · 3 · 4).
+  static const List<int> stageAt = [1, 10, 20, 30];
+  static int stageOf(int lv) {
+    var st = 1;
+    for (var i = 0; i < stageAt.length; i++) {
+      if (lv >= stageAt[i]) st = i + 1;
+    }
+    return st;
+  }
+
+  /// lv → lv+1 가격 = 지금 시간당 수입(플레이 중 실제로 버는 속도) × 이 시간:
+  /// Lv1 15분 · Lv20 약 3시간 · Lv40 약 1.4일 · Lv49 약 3.7일 (최대는 오래 걸리게, 1년 시뮬로 맞춤).
+  static double hoursAt(int lv) => 0.12 * pow(1.115, lv).toDouble();
+
+  /// 정원 매력 (수입 배율에 더함): 레벨당 +0.4%, 10레벨마다 +3% 더 → Lv50 하나 +35%.
+  static double charm(int lv) => 0.004 * lv + 0.03 * (lv ~/ 10);
+
+  /// 세운 랜드마크 높이 (장식 크기 대비).
+  static const double scale = 2.3;
+}
+
 // ------------------------------------------------------------------ 꾸밈 점수 · 세트 효과 (D-046)
 
 /// 구역 세트 효과의 종류 (구역 순서대로).

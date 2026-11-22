@@ -270,6 +270,12 @@ class Art {
   /// 9-slice 프레임 (버튼, 모달, 카드, 토스트, 말풍선…). 384x384 정사각, 가장자리 30% 는 늘어나지 않는다.
   static ArtRef frame(String id) => ArtRef('assets/art/frames/$id.webp', '');
 
+  /// 정원 랜드마크 그림 (D-048): 구역 · 레벨 → 그 레벨의 그림 단계. 레벨 0 이면 1단계(미리보기용).
+  static ArtRef landmark(int area, int lv) => ArtRef(
+    'assets/art/landmarks/${Landmarks.ids[area % Landmarks.ids.length]}_${Landmarks.stageOf(max(1, lv))}.webp',
+    '',
+  );
+
   /// 프레임 원본 크기 (assets/art/frames/frames.json, tool/import_art.py 가 만든다).
   static Map<String, Size> _frameSizes = {};
 

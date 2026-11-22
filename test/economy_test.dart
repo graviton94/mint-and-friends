@@ -579,6 +579,38 @@ void main() {
     });
   });
 
+  test('랜드마크 (D-048): 다 꾸민 구역만, 가격은 지금 수입 × 시간, 매력 · 재단장 유지 · 저장', () {
+    final g = make();
+    expect(g.landmarkOpen(0), isFalse);
+    g.currentArea = 2;
+    expect(g.landmarkOpen(0), isTrue);
+    expect(g.landmarkOpen(2), isFalse);
+    expect(
+      g.landmarkCost(0),
+      closeTo(g.hourlyIncome * Landmarks.hoursAt(0), 1e-6),
+    );
+    g.coins = 1e15;
+    final gm0 = g.gardenMultiplier;
+    expect(g.upgradeLandmark(0), isTrue);
+    expect(g.landmarkLevel(0), 1);
+    expect(g.gardenMultiplier, greaterThan(gm0));
+    final n = g.upgradeLandmarkMax(0);
+    expect(n, greaterThan(5));
+    expect(g.landmarkLevel(0), lessThanOrEqualTo(Landmarks.maxLevel));
+    expect(Landmarks.stageOf(1), 1);
+    expect(Landmarks.stageOf(10), 2);
+    expect(Landmarks.stageOf(29), 3);
+    expect(Landmarks.stageOf(50), 4);
+    // 재단장해도 남는다
+    final lv = g.landmarkLevel(0);
+    g.upgrades[UpgradeType.basketTier] = 10;
+    g.lifetimeCoins = 1e13;
+    if (g.canRenew) g.renew();
+    expect(g.landmarkLevel(0), lv);
+    final g2 = make()..loadJson(g.toJson());
+    expect(g2.landmarkLevel(0), lv);
+  });
+
   test('부탁 바꾸기: 하루 3번 무료', () {
     final g = make();
     for (var k = 0; k < OrderQuota.freeRerolls; k++) {

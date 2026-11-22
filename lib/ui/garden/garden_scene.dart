@@ -39,7 +39,11 @@ class GardenScene extends StatefulWidget {
     this.showEmptySlots = true,
     this.onOrderTap,
     this.orderTopInset = 0,
+    this.onLandmarkTap,
   });
+
+  /// 랜드마크를 누르면 (D-048). null 이면 보기만.
+  final void Function(int area)? onLandmarkTap;
 
   /// 부탁 말풍선이 올라가지 않을 위쪽 띠 (창 위에 겹친 버튼 · 이름표 자리).
   final double orderTopInset;
@@ -140,11 +144,34 @@ class _GardenSceneState extends State<GardenScene>
   /// 지금 보고 있는 구역의 걸을 수 있는 땅에서 무작위 지점.
   Offset _randomSpot() {
     final zones = Garden.areaAt(widget.area).walk;
-    final z = zones[_rng.nextInt(zones.length)];
-    return Offset(
-      z.x0 + _rng.nextDouble() * (z.x1 - z.x0),
-      z.y0 + _rng.nextDouble() * (z.y1 - z.y0),
-    );
+    var p = Offset.zero;
+    // 랜드마크 바닥은 피한다 (몇 번 다시 뽑기)
+    for (var i = 0; i < 8; i++) {
+      final z = zones[_rng.nextInt(zones.length)];
+      p = Offset(
+        z.x0 + _rng.nextDouble() * (z.x1 - z.x0),
+        z.y0 + _rng.nextDouble() * (z.y1 - z.y0),
+      );
+      if (!_inLandmark(p)) break;
+    }
+    return p;
+  }
+
+  /// 이 구역에 세운 랜드마크 그림 (안 세웠거나 그림이 없으면 null).
+  ArtRef? get _landmarkArt {
+    final lv = game.landmarkLevel(widget.area);
+    if (lv <= 0 || widget.area >= Landmarks.ids.length) return null;
+    final a = Art.landmark(widget.area, lv);
+    return a.available ? a : null;
+  }
+
+  /// 랜드마크 바닥 근처 (친구 · 부탁 자리가 들어가지 않는 곳).
+  bool _inLandmark(Offset p) {
+    if (_landmarkArt == null) return false;
+    final a = Garden.areaAt(widget.area);
+    return (p.dx - a.landmarkX).abs() < 0.11 &&
+        p.dy > a.landmarkY - 0.12 &&
+        p.dy < a.landmarkY + 0.03;
   }
 
   int? _walkArea;
@@ -206,10 +233,20 @@ class _GardenSceneState extends State<GardenScene>
           best = z;
         }
       }
-      out[ids[k]] = Offset(
+      var spot = Offset(
         x.clamp(best.x0, best.x1).toDouble(),
         best.y0 + (best.y1 - best.y0) * (0.45 + 0.1 * (k % 2)),
       );
+      if (_inLandmark(spot)) {
+        final a = Garden.areaAt(widget.area);
+        spot = Offset(
+          (spot.dx < a.landmarkX ? a.landmarkX - 0.13 : a.landmarkX + 0.13)
+              .clamp(best.x0, best.x1)
+              .toDouble(),
+          spot.dy,
+        );
+      }
+      out[ids[k]] = spot;
     }
     return out;
   }
@@ -566,6 +603,34 @@ class _GardenSceneState extends State<GardenScene>
     final unit = min(s.width, s.height * 1.6);
     Offset px(double x, double y) => Offset(gx(x, s.width), y * s.height);
     final layers = <({double y, Widget child})>[];
+
+    // 랜드마크 (D-048): 구역 가운데 큰 조형물, 바닥 높이로 다른 것들과 앞뒤를 정한다
+    final lm = _landmarkArt;
+    if (lm != null) {
+      final h = unit * GardenScene.decorK * Landmarks.scale;
+      final p = px(area.landmarkX, area.landmarkY);
+      layers.add((
+        y: p.dy,
+        child: Positioned(
+          key: ValueKey('landmark-${widget.area}'),
+          left: p.dx - h * 0.6,
+          top: p.dy - h,
+          width: h * 1.2,
+          height: h,
+          child: GestureDetector(
+            onTap: widget.onLandmarkTap == null
+                ? null
+                : () => widget.onLandmarkTap!(widget.area),
+            child: Image.asset(
+              lm.path,
+              fit: BoxFit.contain,
+              alignment: Alignment.bottomCenter,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      ));
+    }
 
     for (var i = 0; i < area.decor.length; i++) {
       final d = area.decor[i];

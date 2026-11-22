@@ -948,5 +948,19 @@
   "upgrade.max": "Máx. ×{n}",
   "upgrade.maxDone": "¡{name} Nv.{from} → {to}!",
   "upgrade.milestoneHit": "¡{name} ×2!",
-  "upgrade.milestoneSub": "Nv.{lv} alcanzado · producción ×2"
+  "upgrade.milestoneSub": "Nv.{lv} alcanzado · producción ×2",
+  "landmark.section": "Monumentos del jardín",
+  "landmark.sectionNote": "Una gran pieza central para cada zona terminada. Su precio sigue tus ingresos actuales y se queda tras renovar. Nuevo aspecto cada 10 niveles",
+  "landmark.windmill": "Molino de viento",
+  "landmark.waterwheel": "Molino de agua",
+  "landmark.flowerclock": "Torre del reloj de flores",
+  "landmark.observatory": "Observatorio",
+  "landmark.sailship": "Velero",
+  "landmark.icepalace": "Palacio de hielo",
+  "landmark.charm": "Encanto +{a}% → +{b}%",
+  "landmark.charmMax": "Encanto del jardín +{pct}%",
+  "landmark.nextLook": "Nuevo aspecto en Nv.{n}",
+  "landmark.build": "Construir",
+  "landmark.built": "¡{name} construido!",
+  "landmark.grew": "¡{name} se ve aún mejor!"
 }

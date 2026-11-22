@@ -227,6 +227,22 @@ class _HomeScreenState extends State<HomeScreen> {
       case MergedEvent(:final level):
         sfx(level >= 6 ? Sfx.mergeBig : Sfx.merge);
         _tutorialEvent(e);
+      case LandmarkEvent(:final area, :final level, :final newStage):
+        if (newStage) {
+          sfx(Sfx.levelup);
+          TopToast.celebrate(
+            context,
+            art: ArtImage(Art.landmark(area, level), size: 64),
+            title: tr(level == 1 ? 'landmark.built' : 'landmark.grew', {
+              'name': tr(
+                'landmark.${Landmarks.ids[area % Landmarks.ids.length]}',
+              ),
+            }),
+            sub: tr('landmark.charmMax', {
+              'pct': (Landmarks.charm(level) * 100).round(),
+            }),
+          );
+        }
       case UpgradeMilestoneEvent(:final type, :final level):
         sfx(Sfx.levelup);
         TopToast.celebrate(
@@ -1631,6 +1647,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       child: GardenScene(
         game: game,
+        onLandmarkTap: (a) => showLandmarkSheet(context, game, a),
         area: _viewArea,
         radius: 19,
         focusY: 1.0,

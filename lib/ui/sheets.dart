@@ -66,6 +66,20 @@ Future<void> showUpgradesSheet(
           RenewCard(game: game, onOpen: onRenew),
         for (final u in Upgrades.all)
           _UpgradeRow(game: game, def: u, unit: unit),
+        // 정원 랜드마크 (D-048): 다 꾸민 구역마다, 그림이 들어온 것만
+        if (landmarkAreas(game).isNotEmpty) ...[
+          const SizedBox(height: 12),
+          IconText(
+            tr('landmark.section'),
+            style: const TextStyle(fontSize: 18),
+          ),
+          IconText(
+            tr('landmark.sectionNote'),
+            style: const TextStyle(fontSize: 13, color: Colors.black54),
+          ),
+          const SizedBox(height: 4),
+          for (final a in landmarkAreas(game)) LandmarkRow(game: game, area: a),
+        ],
         if (game.friends.isNotEmpty) ...[
           const SizedBox(height: 12),
           IconText(tr('upgrade.friends'), style: const TextStyle(fontSize: 18)),
@@ -82,6 +96,164 @@ Future<void> showUpgradesSheet(
     ),
   );
 });
+
+/// 랜드마크를 세울 수 있고 그림이 있는 구역들.
+List<int> landmarkAreas(GameState game) => [
+  for (var a = 0; a < Landmarks.ids.length; a++)
+    if (game.landmarkOpen(a) && Art.landmark(a, 1).available) a,
+];
+
+/// 랜드마크 한 줄: 그림 · 이름 Lv · 정원 매력 지금 → 다음 · 다음 모습까지 · 올리기 / 최대.
+class LandmarkRow extends StatelessWidget {
+  const LandmarkRow({super.key, required this.game, required this.area});
+  final GameState game;
+  final int area;
+
+  @override
+  Widget build(BuildContext context) {
+    final lv = game.landmarkLevel(area);
+    final maxed = lv >= Landmarks.maxLevel;
+    final id = Landmarks.ids[area];
+    final now = Landmarks.charm(lv), next = Landmarks.charm(lv + 1);
+    final nextStage = Landmarks.stageAt.where((s) => s > lv).firstOrNull;
+    var bulk = 0;
+    {
+      // 살 수 있는 만큼 (가격은 수입 기준이라 올리면 수입과 함께 조금 오른다: 근사)
+      var c = game.coins;
+      var l = lv;
+      final hour = game.hourlyIncome;
+      while (l < Landmarks.maxLevel && bulk < 99) {
+        final cost = hour * Landmarks.hoursAt(l);
+        if (c < cost) break;
+        c -= cost;
+        l++;
+        bulk++;
+      }
+    }
+    return Card(
+      color: Colors.white,
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Row(
+          children: [
+            ArtImage(Art.landmark(area, lv), size: 56),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    lv == 0
+                        ? tr('landmark.$id')
+                        : '${tr('landmark.$id')}  Lv.$lv',
+                    style: const TextStyle(fontSize: 17),
+                  ),
+                  IconText(
+                    maxed
+                        ? tr('landmark.charmMax', {'pct': (now * 100).round()})
+                        : tr('landmark.charm', {
+                            'a': (now * 100).round(),
+                            'b': (next * 100).round(),
+                          }),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF5E6B5E),
+                    ),
+                  ),
+                  if (nextStage != null)
+                    IconText(
+                      tr('landmark.nextLook', {'n': nextStage}),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFFB0640A),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CostButton(
+                  label: maxed
+                      ? tr('common.max')
+                      : '${lv == 0 ? '${tr('landmark.build')} ' : '[[coin]] '}${fmt(game.landmarkCost(area))}',
+                  onPressed: game.canUpgradeLandmark(area)
+                      ? () => game.upgradeLandmark(area)
+                      : null,
+                ),
+                if (bulk >= 2) ...[
+                  const SizedBox(height: 4),
+                  CostButton(
+                    label: tr('upgrade.max', {'n': bulk}),
+                    height: 34,
+                    frame: 'button_gold',
+                    onPressed: () {
+                      final before = game.landmarkLevel(area);
+                      if (game.upgradeLandmarkMax(area) > 0) {
+                        sfx(Sfx.levelup);
+                        TopToast.celebrate(
+                          context,
+                          art: ArtImage(
+                            Art.landmark(area, game.landmarkLevel(area)),
+                            size: 56,
+                          ),
+                          title: tr('upgrade.maxDone', {
+                            'name': tr('landmark.$id'),
+                            'from': before,
+                            'to': game.landmarkLevel(area),
+                          }),
+                          sub: tr('landmark.charmMax', {
+                            'pct':
+                                (Landmarks.charm(game.landmarkLevel(area)) *
+                                        100)
+                                    .round(),
+                          }),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 랜드마크 창 (정원에서 랜드마크를 누르면).
+Future<void> showLandmarkSheet(
+  BuildContext context,
+  GameState game,
+  int area,
+) => showGameSheet(
+  context,
+  game,
+  () => SheetFrame(
+    title: tr('landmark.${Landmarks.ids[area]}'),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(
+          child: ArtImage(
+            Art.landmark(area, game.landmarkLevel(area)),
+            size: 160,
+          ),
+        ),
+        LandmarkRow(game: game, area: area),
+        IconText(
+          tr('landmark.sectionNote'),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 13, color: Colors.black54),
+        ),
+      ],
+    ),
+  ),
+);
 
 class _FriendLevelRow extends StatelessWidget {
   const _FriendLevelRow({

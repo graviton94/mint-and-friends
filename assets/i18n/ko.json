@@ -949,5 +949,19 @@
   "upgrade.max": "최대 ×{n}",
   "upgrade.maxDone": "{name} Lv.{from} → {to}!",
   "upgrade.milestoneHit": "{name} ×2!",
-  "upgrade.milestoneSub": "Lv.{lv} 달성 · 생산 2배"
+  "upgrade.milestoneSub": "Lv.{lv} 달성 · 생산 2배",
+  "landmark.section": "정원 랜드마크",
+  "landmark.sectionNote": "다 꾸민 구역 가운데에 세우는 큰 조형물. 지금 수입에 맞춰 값이 정해지고, 재단장해도 남아요. 10레벨마다 모습이 바뀌어요",
+  "landmark.windmill": "풍차",
+  "landmark.waterwheel": "물레방아",
+  "landmark.flowerclock": "꽃 시계탑",
+  "landmark.observatory": "천문대",
+  "landmark.sailship": "범선",
+  "landmark.icepalace": "얼음 궁전",
+  "landmark.charm": "정원 매력 +{a}% → +{b}%",
+  "landmark.charmMax": "정원 매력 +{pct}%",
+  "landmark.nextLook": "Lv.{n}에 새 모습",
+  "landmark.build": "세우기",
+  "landmark.built": "{name}을(를) 세웠어요!",
+  "landmark.grew": "{name}이(가) 더 멋져졌어요!"
 }

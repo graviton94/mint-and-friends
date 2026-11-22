@@ -948,5 +948,19 @@
   "upgrade.max": "Max ×{n}",
   "upgrade.maxDone": "{name} Lv.{from} → {to}!",
   "upgrade.milestoneHit": "{name} ×2!",
-  "upgrade.milestoneSub": "Reached Lv.{lv} · output doubled"
+  "upgrade.milestoneSub": "Reached Lv.{lv} · output doubled",
+  "landmark.section": "Garden landmarks",
+  "landmark.sectionNote": "A big centrepiece for each finished area. Its price follows your current income and it stays after renewals. New look every 10 levels",
+  "landmark.windmill": "Windmill",
+  "landmark.waterwheel": "Water mill",
+  "landmark.flowerclock": "Flower clock tower",
+  "landmark.observatory": "Observatory",
+  "landmark.sailship": "Sailing ship",
+  "landmark.icepalace": "Ice palace",
+  "landmark.charm": "Garden charm +{a}% → +{b}%",
+  "landmark.charmMax": "Garden charm +{pct}%",
+  "landmark.nextLook": "New look at Lv.{n}",
+  "landmark.build": "Build",
+  "landmark.built": "{name} built!",
+  "landmark.grew": "{name} looks even better!"
 }

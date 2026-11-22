@@ -12,7 +12,7 @@ import '../share_card.dart';
 import '../share_flow.dart';
 import '../theme.dart';
 import '../widgets/frame_box.dart';
-import '../sheets.dart' show showStyleSheet;
+import '../sheets.dart' show showStyleSheet, showLandmarkSheet;
 import '../widgets/icon_text.dart';
 import 'garden_scene.dart';
 
@@ -140,6 +140,8 @@ class _GardenScreenState extends State<GardenScreen> {
                               maxScale: 2.5,
                               child: GardenScene(
                                 game: game,
+                                onLandmarkTap: (a) =>
+                                    showLandmarkSheet(context, game, a),
                                 area: _area,
                                 radius: 0,
                                 focusY: 1,

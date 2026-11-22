@@ -948,5 +948,19 @@
   "upgrade.max": "最大 ×{n}",
   "upgrade.maxDone": "{name} Lv.{from} → {to}!",
   "upgrade.milestoneHit": "{name} ×2!",
-  "upgrade.milestoneSub": "Lv.{lv} 達成・生産2倍"
+  "upgrade.milestoneSub": "Lv.{lv} 達成・生産2倍",
+  "landmark.section": "お庭のランドマーク",
+  "landmark.sectionNote": "飾り終えたエリアのまん中に建てる大きなシンボル。値段はいまの収入に合わせて決まり、リニューアル後も残るよ。10レベルごとに見た目が変わるよ",
+  "landmark.windmill": "風車",
+  "landmark.waterwheel": "水車小屋",
+  "landmark.flowerclock": "花の時計台",
+  "landmark.observatory": "天文台",
+  "landmark.sailship": "帆船",
+  "landmark.icepalace": "氷の宮殿",
+  "landmark.charm": "お庭の魅力 +{a}% → +{b}%",
+  "landmark.charmMax": "お庭の魅力 +{pct}%",
+  "landmark.nextLook": "Lv.{n}で新しい姿",
+  "landmark.build": "建てる",
+  "landmark.built": "{name}を建てたよ!",
+  "landmark.grew": "{name}がもっとすてきになったよ!"
 }
