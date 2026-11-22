@@ -955,8 +955,9 @@ class Garden {
       max(1, (areaStars(area) * (2 + slot ~/ 2) / 28).round());
 
   /// 구역 하나를 다 꾸미는 데 드는 별 (하루 에너지 약 480 → 별 약 120 기준).
-  /// 1구역 첫 15~20분, 2구역 1~2일차, 3구역 4~5일차, 4구역 10일차, 5구역 20일차, 6구역 한 달.
-  static const List<int> _areaStars = [24, 160, 480, 1150, 2350, 4200];
+  /// 1구역 첫 15~20분, 2구역 1~2일차, 3구역 4~5일차, 4구역 11일차, 5구역 한 달, 6구역 완성 두 달 (D-047:
+  /// 새 그림 구역 6개를 6주 만에 다 쓰던 것을 늦춤. 나머지는 테스트 지표 · 원격 area_star_scale 로).
+  static const List<int> _areaStars = [24, 160, 480, 1600, 3900, 8000];
   static int areaStars(int area) =>
       ((area < _areaStars.length
                   ? _areaStars[area]
