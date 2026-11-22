@@ -876,6 +876,8 @@
   "pass.notice.later": "Later",
   "shop.featuredNote": "Lv.{n} · today's pick",
   "shop.featuredTag": "Pick",
+  "shop.firstTag": "1st buy ×2",
+  "shop.firstBonus": "+{n} on 1st buy",
   "shop.effectNote": "Petals · fireflies · leaves · snow",
   "market.adTake": "Get",
   "market.helperTag": "For request",

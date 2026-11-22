@@ -1,6 +1,6 @@
 {
  "meta": {
-  "version": "D-039",
+  "version": "D-042",
   "updated": "2026-11-21",
   "gemKrw": 19,
   "gemKrwBest": 5.6,
@@ -151,8 +151,8 @@
    "contents": "다이아 100",
    "valueX": 1.0,
    "krwPerGem": 19.0,
-   "status": "ok",
-   "note": ""
+   "status": "changed",
+   "note": "첫 구매 2배 (첫 구매 200개, 2.0배)"
   },
   {
    "id": "gems_430",
@@ -163,8 +163,8 @@
    "contents": "다이아 430",
    "valueX": 1.38,
    "krwPerGem": 13.7,
-   "status": "ok",
-   "note": ""
+   "status": "changed",
+   "note": "첫 구매 2배 (첫 구매 860개, 2.8배)"
   },
   {
    "id": "gems_900",
@@ -175,8 +175,8 @@
    "contents": "다이아 900",
    "valueX": 1.73,
    "krwPerGem": 11.0,
-   "status": "new",
-   "note": "Play Console 등록 필요"
+   "status": "changed",
+   "note": "Play Console 등록 필요 · 첫 구매 2배 (첫 구매 1,800개, 3.5배)"
   },
   {
    "id": "gems_2000",
@@ -187,8 +187,8 @@
    "contents": "다이아 2,000",
    "valueX": 2.0,
    "krwPerGem": 9.5,
-   "status": "ok",
-   "note": ""
+   "status": "changed",
+   "note": "첫 구매 2배 (첫 구매 4,000개, 4.0배)"
   },
   {
    "id": "gems_6000",
@@ -199,8 +199,8 @@
    "contents": "다이아 6,000",
    "valueX": 3.0,
    "krwPerGem": 6.3,
-   "status": "ok",
-   "note": ""
+   "status": "changed",
+   "note": "첫 구매 2배 (첫 구매 12,000개, 6.0배)"
   },
   {
    "id": "gems_14000",
@@ -211,8 +211,8 @@
    "contents": "다이아 14,000",
    "valueX": 3.37,
    "krwPerGem": 5.6,
-   "status": "ok",
-   "note": ""
+   "status": "changed",
+   "note": "첫 구매 2배 (첫 구매 28,000개, 6.7배)"
   },
   {
    "id": "starter_2900",

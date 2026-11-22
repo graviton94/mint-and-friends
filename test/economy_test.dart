@@ -324,6 +324,22 @@ void main() {
     expect(g5.passNoticeDue, isNull);
   });
 
+  test('다이아 팩: 팩마다 첫 구매는 2배, 두 번째부터는 그대로, 저장돼도 유지', () {
+    final g = make();
+    final p = Gems.packs[1];
+    final g0 = g.gems;
+    expect(g.firstPackBonus(p), isTrue);
+    expect(g.grantGemPack(p), p.gems * 2);
+    expect(g.gems, g0 + p.gems * 2);
+    expect(g.firstPackBonus(p), isFalse);
+    expect(g.grantGemPack(p), p.gems);
+    expect(g.firstPackBonus(Gems.packs[0]), isTrue);
+    final g2 = make();
+    expect(g2.loadJson(g.toJson()), isTrue);
+    expect(g2.firstPackBonus(p), isFalse);
+    expect(g2.firstPackBonus(Gems.packs[0]), isTrue);
+  });
+
   test('추천 아이템: 사기 전에 보여 준 아이템을 그대로 준다 (무작위 상품 아님)', () {
     final g = make();
     final s = g.spawnLevel;

@@ -155,8 +155,8 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
         save.upload(game);
       }
     };
-    widget.billing.onGems = (n) {
-      game.grantGems(n);
+    widget.billing.onGems = (pack) {
+      game.grantGemPack(pack);
       save.saveLocal(game);
       save.upload(game);
     };

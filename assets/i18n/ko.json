@@ -877,6 +877,8 @@
   "pass.notice.later": "다음에",
   "shop.featuredNote": "Lv.{n} · 오늘의 추천",
   "shop.featuredTag": "추천",
+  "shop.firstTag": "첫 구매 2배",
+  "shop.firstBonus": "첫 구매 +{n} 더",
   "shop.effectNote": "꽃잎 · 반딧불 · 낙엽 · 눈",
   "market.adTake": "받기",
   "market.helperTag": "부탁용",

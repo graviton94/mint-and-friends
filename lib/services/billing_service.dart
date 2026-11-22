@@ -27,7 +27,7 @@ class BillingService extends ChangeNotifier {
   final Map<String, ProductDetails> gemProducts = {};
 
   /// 다이아 결제가 끝나면 게임에 다이아를 넣는다 (main 이 연결).
-  void Function(int gems)? onGems;
+  void Function(GemPack pack)? onGems;
 
   /// 새싹 정원 패키지 (소모형으로 팔고, 한 번만 지급은 게임이 막는다).
   ProductDetails? starter;
@@ -83,7 +83,7 @@ class BillingService extends ChangeNotifier {
         // 소모형: 결제 완료 시 한 번만 지급 (autoConsume 이 소비 처리)
         if (p.status == PurchaseStatus.purchased) {
           Analytics.instance.purchase(p.productID);
-          onGems?.call(pack.gems);
+          onGems?.call(pack);
         }
         if (p.pendingCompletePurchase) await _iap.completePurchase(p);
         continue;

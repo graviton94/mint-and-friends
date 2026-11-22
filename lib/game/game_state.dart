@@ -444,6 +444,10 @@ class GameState extends ChangeNotifier {
 
   /// 새싹 정원 패키지: 샀는지 · 한정 타이머 끝 · 몇 번 보여 줬는지.
   bool starterBought = false;
+
+  /// 한 번이라도 산 다이아 팩 (팩마다 첫 구매는 다이아 2배, D-042).
+  final Set<String> boughtPacks = {};
+  bool firstPackBonus(GemPack p) => !boughtPacks.contains(p.id);
   DateTime? starterOfferUntil;
   int starterShows = 0;
 
@@ -1973,6 +1977,15 @@ class GameState extends ChangeNotifier {
   // ---------------------------------------------------------------- 다이아
 
   /// 결제 · 보상으로 받은 다이아.
+  /// 다이아 팩 결제 완료: 그 팩을 처음 사면 2배. 받은 다이아 수를 돌려준다.
+  int grantGemPack(GemPack p) {
+    final n = p.gems * (firstPackBonus(p) ? Gems.firstBuyMultiplier : 1);
+    boughtPacks.add(p.id);
+    _trace('gemPack', '${p.id} +$n');
+    grantGems(n);
+    return n;
+  }
+
   void grantGems(int n) {
     if (n <= 0) return;
     gems += n;
@@ -2462,6 +2475,7 @@ class GameState extends ChangeNotifier {
       'friendLv': friendLevels,
       'passUntil': passUntil?.millisecondsSinceEpoch,
       'starter': starterBought,
+      'packs': boughtPacks.toList(),
       'starterUntil': starterOfferUntil?.millisecondsSinceEpoch,
       'starterShows': starterShows,
       'passNoticeSeen': passNoticeSeen,
@@ -2693,6 +2707,9 @@ class GameState extends ChangeNotifier {
     if (econ < 3) coins = min(coins, coinCapFor(level));
     passUntil = ts('passUntil');
     starterBought = j['starter'] as bool? ?? false;
+    boughtPacks
+      ..clear()
+      ..addAll([for (final x in (j['packs'] as List? ?? const [])) '$x']);
     starterOfferUntil = ts('starterUntil');
     starterShows = (j['starterShows'] as num?)?.toInt() ?? 0;
     // 예전 저장: 이미 끝난 패스는 '끝났어요' 창을 새로 띄우지 않는다

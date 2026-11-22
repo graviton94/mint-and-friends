@@ -1116,7 +1116,7 @@ Future<void> showShopSheet(
           ),
         _CardGrid([
           for (var i = 0; i < Gems.packs.length; i++)
-            _gemPackCard(billing, Gems.packs[i], i),
+            _gemPackCard(billing, game, Gems.packs[i], i),
         ]),
         if (!billing.available || billing.gemProducts.isEmpty)
           Padding(
@@ -1285,15 +1285,29 @@ Widget _offerCard(
 }
 
 /// 다이아 팩 카드.
-Widget _gemPackCard(BillingService billing, GemPack pack, int index) {
+Widget _gemPackCard(
+  BillingService billing,
+  GameState game,
+  GemPack pack,
+  int index,
+) {
   final d = billing.gemProducts[pack.id];
+  final first = game.firstPackBonus(pack);
   return _ShopCard(
     // 팩 그림: 100 한 줌 · 430 바구니 · 900 주머니 · 2,000 상자 · 6,000 보물 상자 · 14,000 보물단지
     icon: Art.icon(
       const ['dia_1', 'dia_basket', 'dia_2', 'dia_3', 'dia_4', 'dia_5'][index],
     ),
     title: '[[diamond]] ${fmtInt(pack.gems)}',
-    tag: pack.valueX >= 1.95
+    // 첫 구매: 같은 만큼 더 (2배)
+    note: first
+        ? tr('shop.firstBonus', {
+            'n': fmtInt(pack.gems * (Gems.firstBuyMultiplier - 1)),
+          })
+        : null,
+    tag: first
+        ? tr('shop.firstTag')
+        : pack.valueX >= 1.95
         ? tr('shop.bonusX', {
             'n': pack.valueX.toStringAsFixed(pack.valueX < 3.05 ? 0 : 1),
           })
