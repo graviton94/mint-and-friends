@@ -13,6 +13,7 @@ import 'sheets.dart';
 import 'theme.dart';
 import 'widgets/frame_box.dart';
 import 'widgets/icon_text.dart';
+import 'widgets/top_toast.dart';
 
 /// 보상 한 칸을 아이콘 문구로: "[[coin]]50 [[energy]]10 [[star]]1".
 String rewardText(Reward r) => [
@@ -190,136 +191,418 @@ Future<void> showMailSheet(BuildContext context, GameState game) =>
       game,
       () => SheetFrame(
         title: tr('mail.title'),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (game.unreadMail > 0)
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    sfx(Sfx.coin);
-                    {
-                      final r = game.claimAllMail();
-                      if (rewardText(r).isNotEmpty) {
-                        RewardPopup.show(context, r, title: tr('reward.mail'));
-                      }
-                    }
-                  },
-                  child: Text(
-                    tr('mail.claimAll'),
-                    style: const TextStyle(fontSize: 15),
-                  ),
-                ),
-              ),
-            if (game.mail.isEmpty)
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  tr('mail.empty'),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.black45),
-                ),
-              ),
-            for (final m in game.mail) _MailRow(game: game, mail: m),
-          ],
-        ),
+        child: _MailBox(game: game),
       ),
     );
 
-class _MailRow extends StatelessWidget {
-  const _MailRow({required this.game, required this.mail});
+/// 보낸 이 이름 · 제목 · 본문 (번역 키 또는 원격 글).
+String mailFrom(Mail m) => Friends.all.any((f) => f.id == m.from)
+    ? friendName(m.from)
+    : m.from == 'team'
+    ? tr('mail.from.team')
+    : m.from;
+String mailTitle(Mail m) =>
+    m.text ?? tr(m.titleKey, {...m.args, 'name': mailFrom(m)});
+String? mailBody(Mail m) {
+  if (m.body != null && m.body!.trim().isNotEmpty) return m.body;
+  final k = m.bodyKey;
+  if (k == null) return null;
+  return L10n.instance.has(k) ? tr(k, m.args) : tr('mail.updateBody');
+}
+
+ArtRef _mailIcon(Mail m) {
+  if (Friends.all.any((f) => f.id == m.from)) {
+    return Art.friend(Friends.byId(m.from));
+  }
+  return Art.icon(switch (m.kind) {
+    MailKind.social => 'gift',
+    MailKind.notice when m.id.startsWith('update-') => 'party',
+    MailKind.notice when m.from == 'team' && m.id != 'welcome' => 'notice',
+    _ => 'letter',
+  });
+}
+
+/// 쪽지함: 모두 받기 · 선택 삭제 · 누르면 상세 · 읽은 쪽지는 14일 뒤 자동 삭제.
+class _MailBox extends StatefulWidget {
+  const _MailBox({required this.game});
   final GameState game;
-  final Mail mail;
+  @override
+  State<_MailBox> createState() => _MailBoxState();
+}
+
+class _MailBoxState extends State<_MailBox> {
+  bool _select = false;
+  final Set<String> _picked = {};
+
+  GameState get game => widget.game;
+
+  void _claimAll() {
+    sfx(Sfx.coin);
+    final r = game.claimAllMail();
+    if (rewardText(r).isNotEmpty) {
+      RewardPopup.show(context, r, title: tr('reward.mail'));
+    }
+  }
+
+  void _delete() {
+    final n = game.deleteMail(_picked);
+    sfx(Sfx.tap);
+    setState(() {
+      _picked.clear();
+      _select = false;
+    });
+    if (n > 0) TopToast.show(context, tr('mail.deleted', {'n': n}));
+  }
 
   @override
   Widget build(BuildContext context) {
-    final fromFriend = Friends.all.any((f) => f.id == mail.from);
-    final name = fromFriend
-        ? friendName(mail.from)
-        : mail.from == 'team'
-        ? tr('mail.from.team')
-        : mail.from;
-    final title = mail.text ?? tr(mail.titleKey, {...mail.args, 'name': name});
-    return Opacity(
-      opacity: mail.claimed ? 0.55 : 1,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE5DCC8), width: 1.5),
-        ),
-        child: Row(
+    final mails = game.mail;
+    final small = const TextStyle(fontSize: 15);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 위 도구 줄
+        Row(
           children: [
-            fromFriend
-                ? ArtImage(Art.friend(Friends.byId(mail.from)), size: 44)
-                : ArtImage(
-                    Art.icon(switch (mail.kind) {
-                      MailKind.social => 'gift',
-                      MailKind.notice
-                          when mail.from == 'team' && mail.id != 'welcome' =>
-                        'notice',
-                      _ => 'letter',
-                    }),
-                    size: 40,
-                  ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(fontSize: 12, color: Colors.black45),
-                  ),
-                  IconText(title, style: const TextStyle(fontSize: 15)),
-                  if (mail.hasReward)
-                    IconText(
-                      rewardText(mail.reward),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF7A5A12),
-                      ),
-                    ),
-                ],
+            if (!_select && game.unreadMail > 0)
+              TextButton(
+                onPressed: _claimAll,
+                child: Text(tr('mail.claimAll'), style: small),
               ),
-            ),
-            const SizedBox(width: 6),
-            mail.claimed
-                ? Text(
-                    tr('mail.claimed'),
-                    style: const TextStyle(fontSize: 13, color: Colors.black45),
-                  )
-                : FilledButton(
-                    style: framedButton(
-                      FilledButton.styleFrom(minimumSize: const Size(64, 40)),
-                      'button_green',
-                    ),
-                    onPressed: () {
-                      sfx(mail.hasReward ? Sfx.coin : Sfx.tap);
-                      {
-                        final r = game.claimMail(mail.id);
-                        if (r != null && rewardText(r).isNotEmpty) {
-                          RewardPopup.show(
-                            context,
-                            r,
-                            title: tr('reward.mail'),
-                          );
-                        }
-                      }
-                    },
-                    child: Text(
-                      tr('mail.claim'),
-                      style: const TextStyle(fontSize: 14),
-                    ),
+            const Spacer(),
+            if (_select) ...[
+              TextButton(
+                onPressed: () => setState(() {
+                  _picked
+                    ..clear()
+                    ..addAll([
+                      for (final m in mails)
+                        if (m.claimed) m.id,
+                    ]);
+                }),
+                child: Text(tr('mail.pickRead'), style: small),
+              ),
+              TextButton(
+                onPressed: _picked.isEmpty ? null : _delete,
+                child: Text(
+                  tr('mail.deleteN', {'n': _picked.length}),
+                  style: small.copyWith(
+                    color: _picked.isEmpty ? null : const Color(0xFFC0392B),
                   ),
+                ),
+              ),
+              TextButton(
+                onPressed: () => setState(() {
+                  _select = false;
+                  _picked.clear();
+                }),
+                child: Text(tr('common.cancel'), style: small),
+              ),
+            ] else if (mails.any((m) => m.claimed))
+              TextButton(
+                onPressed: () => setState(() => _select = true),
+                child: Text(tr('mail.select'), style: small),
+              ),
           ],
+        ),
+        if (mails.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              tr('mail.empty'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.black45),
+            ),
+          ),
+        for (final m in mails)
+          _MailRow(
+            game: game,
+            mail: m,
+            selecting: _select,
+            picked: _picked.contains(m.id),
+            onPick: m.claimed
+                ? () => setState(() {
+                    if (!_picked.remove(m.id)) _picked.add(m.id);
+                  })
+                : null,
+          ),
+        const SizedBox(height: 6),
+        IconText(
+          tr('mail.autoDelete', {'d': MailConfig.keepRead.inDays}),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 12, color: Colors.black45),
+        ),
+      ],
+    );
+  }
+}
+
+class _MailRow extends StatelessWidget {
+  const _MailRow({
+    required this.game,
+    required this.mail,
+    required this.selecting,
+    required this.picked,
+    required this.onPick,
+  });
+  final GameState game;
+  final Mail mail;
+  final bool selecting;
+  final bool picked;
+  final VoidCallback? onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    final isUpdate = mail.id.startsWith('update-');
+    final isNotice =
+        mail.kind == MailKind.notice &&
+        mail.from == 'team' &&
+        mail.id != 'welcome';
+    return GestureDetector(
+      onTap: selecting ? onPick : () => showMailDetail(context, game, mail),
+      child: Opacity(
+        opacity: mail.claimed ? 0.6 : 1,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: picked ? const Color(0xFFFFF1C9) : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: picked ? const Color(0xFFF2B33D) : const Color(0xFFE5DCC8),
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            children: [
+              if (selecting) ...[
+                _PickBox(on: picked, enabled: onPick != null),
+                const SizedBox(width: 8),
+              ],
+              ArtImage(_mailIcon(mail), size: 42),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        if (isNotice)
+                          Container(
+                            margin: const EdgeInsets.only(right: 6),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isUpdate
+                                  ? const Color(0xFF5BAE6A)
+                                  : const Color(0xFFE5793B),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              tr(
+                                isUpdate ? 'mail.tagUpdate' : 'mail.tagNotice',
+                              ),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        Flexible(
+                          child: Text(
+                            mailFrom(mail),
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black45,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconText(
+                      mailTitle(mail),
+                      maxLines: 2,
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                    if (mail.hasReward)
+                      IconText(
+                        rewardText(mail.reward),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF7A5A12),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              if (!mail.claimed)
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE5533B),
+                    shape: BoxShape.circle,
+                  ),
+                )
+              else
+                Text(
+                  tr(mail.hasReward ? 'mail.claimed' : 'mail.read'),
+                  style: const TextStyle(fontSize: 12, color: Colors.black45),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// 선택 상자 (체크 표시).
+class _PickBox extends StatelessWidget {
+  const _PickBox({required this.on, required this.enabled});
+  final bool on;
+  final bool enabled;
+  @override
+  Widget build(BuildContext context) => Opacity(
+    opacity: enabled ? 1 : 0.3,
+    child: Container(
+      width: 26,
+      height: 26,
+      decoration: BoxDecoration(
+        color: on ? const Color(0xFF6CC58A) : const Color(0xFFFFFBF0),
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: const Color(0xFF7A5230), width: 2),
+      ),
+      child: on
+          ? const Icon(Icons.check_rounded, size: 18, color: Colors.white)
+          : null,
+    ),
+  );
+}
+
+/// 쪽지 상세: 보낸 이 · 날짜 · 제목 · 본문 · 보상 → 받기 / 확인.
+Future<void> showMailDetail(BuildContext context, GameState game, Mail m) {
+  final body = mailBody(m);
+  final isUpdate = m.id.startsWith('update-');
+  final isNotice =
+      m.kind == MailKind.notice && m.from == 'team' && m.id != 'welcome';
+  final d = m.at;
+  final date =
+      '${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')}';
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => GameDialog(
+      banner: isNotice ? 'gold' : 'green',
+      title: IconText(
+        isUpdate
+            ? tr('mail.tagUpdate')
+            : isNotice
+            ? tr('mail.tagNotice')
+            : tr('mail.letter'),
+        textAlign: TextAlign.center,
+      ),
+      onClose: () {
+        game.readMail(m.id);
+        Navigator.pop(ctx);
+      },
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              ArtImage(_mailIcon(m), size: 52),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    IconText(
+                      mailTitle(m),
+                      style: const TextStyle(fontSize: 18),
+                    ),
+                    Text(
+                      '${mailFrom(m)} · $date',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black45,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (body != null) ...[
+            const SizedBox(height: 10),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 260),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBF0),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5DCC8), width: 1.5),
+              ),
+              child: Scrollbar(
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  child: IconText(
+                    body,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      height: 1.5,
+                      color: Color(0xFF5C402C),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+          if (m.hasReward) ...[
+            const SizedBox(height: 10),
+            IconText(
+              rewardText(m.reward),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 17, color: Color(0xFF7A5A12)),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        FilledButton(
+          style: framedButton(
+            FilledButton.styleFrom(
+              minimumSize: const Size(double.infinity, 52),
+              backgroundColor: Palette.primary,
+              foregroundColor: Colors.white,
+            ),
+            'button_green',
+          ),
+          onPressed: () {
+            Navigator.pop(ctx);
+            if (m.hasReward && !m.claimed) {
+              sfx(Sfx.coin);
+              final r = game.claimMail(m.id);
+              if (r != null && rewardText(r).isNotEmpty) {
+                RewardPopup.show(context, r, title: tr('reward.mail'));
+              }
+            } else {
+              sfx(Sfx.tap);
+              game.readMail(m.id);
+            }
+          },
+          child: IconText(
+            tr(m.hasReward && !m.claimed ? 'mail.claim' : 'common.ok'),
+            style: const TextStyle(fontSize: 18),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 // ---------------------------------------------------------------- 메뉴

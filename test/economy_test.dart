@@ -618,6 +618,44 @@ void main() {
     expect(g2.landmarkLevel(0), lv);
   });
 
+  test('쪽지: 업데이트 안내(한 번) · 읽음 · 선택 삭제(받은 것만) · 읽은 지 14일 뒤 자동 삭제', () {
+    final g = make();
+    // 처음 설치: 안내 없음
+    expect(g.addUpdateMail(1019, '1.0.4'), isFalse);
+    g.level = 10;
+    expect(g.addUpdateMail(1020, '1.0.5'), isTrue);
+    expect(g.addUpdateMail(1020, '1.0.5'), isFalse);
+    final m = g.mail.firstWhere((x) => x.id == 'update-1020');
+    expect(m.bodyKey, 'patch.1.0.5');
+    expect(m.reward.energy, MailConfig.updateGiftEnergy);
+    // 안 받은 보상 쪽지는 지워지지 않는다
+    expect(g.deleteMail([m.id]), 0);
+    g.claimMail(m.id);
+    expect(m.readAt, isNotNull);
+    expect(g.deleteMail([m.id]), 1);
+    // 보상 없는 쪽지: 열면 읽음
+    g.addMail(
+      Mail(
+        id: 'n1',
+        kind: MailKind.notice,
+        from: 'team',
+        titleKey: '',
+        text: 'hi',
+        body: 'body',
+        at: now,
+      ),
+    );
+    g.readMail('n1');
+    expect(g.mail.firstWhere((x) => x.id == 'n1').claimed, isTrue);
+    // 14일 뒤 다음 날 첫 tick 에 지워진다
+    now = now.add(MailConfig.keepRead + const Duration(days: 1));
+    g.tick(1);
+    expect(g.mail.any((x) => x.id == 'n1'), isFalse);
+    // 저장 · 불러오기
+    final g2 = make()..loadJson(g.toJson());
+    expect(g2.addUpdateMail(1020, '1.0.5'), isFalse);
+  });
+
   test('부탁 바꾸기: 하루 3번 무료', () {
     final g = make();
     for (var k = 0; k < OrderQuota.freeRerolls; k++) {

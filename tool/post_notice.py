@@ -6,6 +6,7 @@
 예)
   python3 tool/post_notice.py --key sa.json --ko "점검 보상" --en "Maintenance gift" --ja "メンテナンスのお詫び" \
       --coins 500 --energy 20 --days 7
+  python3 tool/post_notice.py --key sa.json --ko "11월 점검 안내" --body-ko "11/30 02:00~04:00 점검해요.\\n점검 뒤 에너지를 보내요." --energy 30
   python3 tool/post_notice.py --key sa.json --list
   python3 tool/post_notice.py --key sa.json --delete <id>
 
@@ -23,10 +24,14 @@ def main() -> int:
     ap.add_argument('--ko', help='title (Korean, default language)')
     ap.add_argument('--en', help='title (English)')
     ap.add_argument('--ja', help='title (Japanese)')
+    ap.add_argument('--es', help='title (Spanish)')
     ap.add_argument('--body', help='optional body text (all languages)')
+    for l in ('ko', 'en', 'ja', 'es'):
+        ap.add_argument(f'--body-{l}', dest=f'body_{l}', help=f'body text ({l}), shown in the notice detail; \\n for new lines')
     ap.add_argument('--coins', type=int, default=0)
     ap.add_argument('--energy', type=int, default=0)
     ap.add_argument('--stars', type=int, default=0)
+    ap.add_argument('--gems', type=int, default=0)
     ap.add_argument('--start', help='start time, ISO (default: now, UTC if no offset)')
     ap.add_argument('--days', type=float, default=7, help='how long it stays active (default 7)')
     ap.add_argument('--list', action='store_true', help='list notices and exit')
@@ -65,9 +70,15 @@ def main() -> int:
         doc['title_en'] = a.en
     if a.ja:
         doc['title_ja'] = a.ja
+    if a.es:
+        doc['title_es'] = a.es
     if a.body:
-        doc['body'] = a.body
-    reward = {k: v for k, v in (('c', a.coins), ('e', a.energy), ('s', a.stars)) if v > 0}
+        doc['body'] = a.body.replace('\\n', '\n')
+    for l in ('ko', 'en', 'ja', 'es'):
+        b = getattr(a, f'body_{l}')
+        if b:
+            doc[f'body_{l}'] = b.replace('\\n', '\n')
+    reward = {k: v for k, v in (('c', a.coins), ('e', a.energy), ('s', a.stars), ('g', a.gems)) if v > 0}
     if reward:
         doc['reward'] = reward
     nid = a.id or now.strftime('%Y%m%d-%H%M%S')

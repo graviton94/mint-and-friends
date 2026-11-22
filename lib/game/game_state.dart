@@ -1193,7 +1193,9 @@ class GameState extends ChangeNotifier {
 
   void tick(double dt) {
     if (dt <= 0) return;
+    final day0 = _playDay;
     _rollPlayDay();
+    if (_playDay != day0) _expireMail();
     _passDaily();
     // 날이 바뀌어 한도가 다시 차거나 친구가 새로 오면 부탁을 채운다
     _fillOrders();
@@ -2321,10 +2323,66 @@ class GameState extends ChangeNotifier {
   }
 
   /// 쪽지 열기 · 보상 받기. 받은 보상을 돌려준다.
+  /// 보상 없는 쪽지를 열어 봤다 (읽음).
+  void readMail(String id) {
+    final m = mail.where((x) => x.id == id).firstOrNull;
+    if (m == null || m.claimed || m.hasReward) return;
+    m.claimed = true;
+    m.readAt = now;
+    notifyListeners();
+  }
+
+  /// 읽은 쪽지 지우기 (안 받은 보상이 있는 쪽지는 지우지 않는다). 지운 수.
+  int deleteMail(Iterable<String> ids) {
+    final set = ids.toSet();
+    final before = mail.length;
+    mail.removeWhere((m) => set.contains(m.id) && m.claimed);
+    final n = before - mail.length;
+    if (n > 0) notifyListeners();
+    return n;
+  }
+
+  /// 읽은 지 [MailConfig.keepRead] 지난 쪽지를 지운다 (오래된 것부터).
+  void _expireMail() {
+    final cut = now.subtract(MailConfig.keepRead);
+    mail.removeWhere((m) => m.claimed && (m.readAt ?? m.at).isBefore(cut));
+  }
+
+  /// 새 버전으로 처음 열었을 때 업데이트 안내 쪽지 (그 버전의 바뀐 점 + 작은 선물). 한 번만.
+  bool addUpdateMail(int versionCode, String versionName) {
+    final id = 'update-$versionCode';
+    if (versionCode <= 0 ||
+        mail.any((m) => m.id == id) ||
+        _updateSeen >= versionCode) {
+      return false;
+    }
+    // 처음 설치한 사람(진행이 거의 없음)에게는 '업데이트' 안내를 보내지 않는다
+    final fresh = _updateSeen == 0 && level <= 1;
+    _updateSeen = versionCode;
+    if (fresh) return false;
+    addMail(
+      Mail(
+        id: id,
+        kind: MailKind.notice,
+        from: 'team',
+        titleKey: 'mail.updateTitle',
+        args: {'version': versionName},
+        bodyKey: 'patch.$versionName',
+        reward: const Reward(energy: MailConfig.updateGiftEnergy),
+        at: now,
+      ),
+    );
+    return true;
+  }
+
+  /// 마지막으로 업데이트 안내를 확인한 버전 코드.
+  int _updateSeen = 0;
+
   Reward? claimMail(String id) {
     final m = mail.where((x) => x.id == id).firstOrNull;
     if (m == null || m.claimed) return null;
     m.claimed = true;
+    m.readAt = now;
     _applyReward(m.reward);
     _bump(Stat.mailClaimed);
     notifyListeners();
@@ -2821,6 +2879,7 @@ class GameState extends ChangeNotifier {
       'stats': {for (final e in stats.entries) e.key.name: e.value},
       'ach': achClaimed,
       'mail': [for (final m in mail) m.toJson()],
+      if (_updateSeen > 0) 'updateSeen': _updateSeen,
       'fgNext': nextFriendGiftAt?.millisecondsSinceEpoch,
       'playDay': _playDay,
       'welcome': _welcomeSent,
@@ -3101,6 +3160,8 @@ class GameState extends ChangeNotifier {
     _playDay = j['playDay'] as String? ?? '';
     _welcomeSent = j['welcome'] as bool? ?? mail.isNotEmpty;
     _sendWelcome();
+    _updateSeen = (j['updateSeen'] as num?)?.toInt() ?? 0;
+    _expireMail();
     final sh = (j['seenHi'] as Map?)?.cast<String, dynamic>() ?? {};
     for (final c in Chain.values) {
       seenHighest[c] = (sh[c.name] as num?)?.toInt() ?? (highest[c] ?? 1);

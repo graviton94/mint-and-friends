@@ -971,5 +971,17 @@
   "update.readyBody": "다시 열면 새 버전으로 바뀌어요.\n진행은 그대로 저장돼 있어요.",
   "update.restart": "다시 열기",
   "update.pill": "업데이트 받는 중 {pct}%",
-  "update.pillReady": "업데이트 준비 완료 · 다시 열기"
+  "update.pillReady": "업데이트 준비 완료 · 다시 열기",
+  "mail.updateTitle": "업데이트 {version} 안내",
+  "mail.updateBody": "새 버전이 나왔어요! 더 즐거운 정원을 위해 여러 가지를 다듬었어요.",
+  "mail.tagUpdate": "업데이트",
+  "mail.tagNotice": "공지",
+  "mail.letter": "쪽지",
+  "mail.read": "읽음",
+  "mail.select": "선택",
+  "mail.pickRead": "읽은 쪽지 모두",
+  "mail.deleteN": "삭제 {n}",
+  "mail.deleted": "쪽지 {n}통을 지웠어요",
+  "mail.autoDelete": "읽은 쪽지는 {d}일 뒤 자동으로 지워져요",
+  "patch.1.0.5": "• 정원 랜드마크 6종: 구역 가운데에 별로 세우고 코인으로 키워요. 10레벨마다 모습이 바뀌어요\n• 장식 배치를 새로 정리하고 친구들이 덜 붐비게 했어요\n• 자랑하기 · 친구 초대: 초대받은 친구는 다이아 50, 초대한 친구는 다이아 100\n• 꾸밈 세트 효과와 꾸밈 점수\n• 강화 창 \"최대\" 버튼과 ×2 목표 막대\n• 새 버전 알림과 게임 안 업데이트\n• 쪽지함: 공지 상세 보기 · 선택 삭제 · 읽은 쪽지 자동 정리\n• 로그인 · 부탁 한도 · 공유 등 여러 문제를 고쳤어요\n\n업데이트 선물로 에너지를 보내요!"
 }

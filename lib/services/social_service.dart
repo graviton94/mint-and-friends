@@ -363,14 +363,16 @@ class Notice {
 }
 
 Mail? noticeToMail(Notice n, String lang, DateTime now) {
-  final text = n.text(lang);
-  if (text.isEmpty || !n.isActive(now)) return null;
+  final title = Notice._pick(n.titles, lang).trim();
+  final body = Notice._pick(n.bodies, lang).trim();
+  if ((title.isEmpty && body.isEmpty) || !n.isActive(now)) return null;
   return Mail(
     id: 'notice-${n.id}',
     kind: MailKind.notice,
     from: 'team',
     titleKey: '',
-    text: text,
+    text: title.isEmpty ? body.split('\n').first : title,
+    body: body.isEmpty ? null : body,
     reward: n.reward,
     at: n.startAt ?? now,
   );

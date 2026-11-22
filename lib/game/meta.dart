@@ -334,11 +334,20 @@ class Mail {
   final String titleKey;
   final Map<String, String> args;
 
-  /// 원격 공지처럼 번역 키가 없는 글.
+  /// 원격 공지처럼 번역 키가 없는 글 (제목).
   final String? text;
+
+  /// 본문: 원격 공지 본문, 또는 번역 키(bodyKey). 상세 창에 보인다.
+  final String? body;
+  final String? bodyKey;
   final Reward reward;
   final DateTime at;
+
+  /// 읽음 / 받음 (보상이 있으면 받았을 때, 없으면 열어 봤을 때).
   bool claimed;
+
+  /// 읽은 때 (읽은 쪽지는 [MailConfig.keepRead] 뒤 자동으로 지운다).
+  DateTime? readAt;
 
   Mail({
     required this.id,
@@ -347,9 +356,12 @@ class Mail {
     required this.titleKey,
     this.args = const {},
     this.text,
+    this.body,
+    this.bodyKey,
     this.reward = const Reward(),
     required this.at,
     this.claimed = false,
+    this.readAt,
   });
 
   bool get hasReward => !reward.isEmpty;
@@ -361,6 +373,9 @@ class Mail {
     't': titleKey,
     if (args.isNotEmpty) 'a': args,
     if (text != null) 'x': text,
+    if (body != null) 'b': body,
+    if (bodyKey != null) 'bk': bodyKey,
+    if (readAt != null) 'ra': readAt!.millisecondsSinceEpoch,
     if (!reward.isEmpty) 'r': reward.toJson(),
     'at': at.millisecondsSinceEpoch,
     if (claimed) 'c': true,
@@ -373,6 +388,11 @@ class Mail {
     titleKey: j['t'] as String? ?? '',
     args: ((j['a'] as Map?) ?? {}).map((k, v) => MapEntry('$k', '$v')),
     text: j['x'] as String?,
+    body: j['b'] as String?,
+    bodyKey: j['bk'] as String?,
+    readAt: j['ra'] == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch((j['ra'] as num).toInt()),
     reward: Reward.fromJson((j['r'] as Map?)?.cast<String, dynamic>()),
     at: DateTime.fromMillisecondsSinceEpoch((j['at'] as num).toInt()),
     claimed: j['c'] == true,
@@ -387,4 +407,10 @@ class MailConfig {
 
   /// 쪽지 보관 개수 (오래된 받은 쪽지부터 지운다).
   static const int keep = 60;
+
+  /// 읽은 쪽지는 이만큼 지나면 오래된 것부터 지운다.
+  static const Duration keepRead = Duration(days: 14);
+
+  /// 업데이트 안내 쪽지에 담는 작은 선물.
+  static const int updateGiftEnergy = 30;
 }

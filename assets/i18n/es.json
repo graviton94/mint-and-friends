@@ -970,5 +970,17 @@
   "update.readyBody": "Vuelve a abrir para usar la nueva versión.\nTu progreso está guardado.",
   "update.restart": "Volver a abrir",
   "update.pill": "Descargando actualización {pct}%",
-  "update.pillReady": "Lista · toca para reabrir"
+  "update.pillReady": "Lista · toca para reabrir",
+  "mail.updateTitle": "Actualización {version}",
+  "mail.updateBody": "¡Hay una nueva versión! Hemos pulido muchas cosas para un jardín más bonito.",
+  "mail.tagUpdate": "Actualización",
+  "mail.tagNotice": "Aviso",
+  "mail.letter": "Carta",
+  "mail.read": "Leída",
+  "mail.select": "Elegir",
+  "mail.pickRead": "Todas las leídas",
+  "mail.deleteN": "Borrar {n}",
+  "mail.deleted": "{n} cartas borradas",
+  "mail.autoDelete": "Las cartas leídas se borran tras {d} días",
+  "patch.1.0.5": "• 6 monumentos del jardín: constrúyelos en el centro de cada zona con estrellas y hazlos crecer con monedas. Nuevo aspecto cada 10 niveles\n• Decoraciones reordenadas y menos amigos amontonados\n• Compartir e invitar: tu amigo invitado recibe 50 diamantes y tú 100\n• Bonos de sets de decoración y puntos de decoración\n• Botón \"Máx.\" y barras de objetivo ×2 en mejoras\n• Avisos de nueva versión y actualización dentro del juego\n• Buzón: detalles de avisos, borrar seleccionadas y limpieza automática\n• Arreglos en inicio de sesión, límites de pedidos, compartir y más\n\n¡Te enviamos energía como regalo de actualización!"
 }

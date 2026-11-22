@@ -172,6 +172,9 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     auth.addListener(_onAuthChanged);
     _start();
     DevLog.instance.record(game, 'start');
+    // 새 버전으로 처음 열었으면 업데이트 안내 쪽지 (바뀐 점 + 작은 선물)
+    final vName = widget.version.split(' ').first;
+    if (game.addUpdateMail(_versionCode, vName)) save.saveLocal(game);
     // 새 버전 확인 (D-049): 게임 화면이 뜨고 조금 뒤, 다 받으면 '다시 열기' 창
     UpdateService.instance.addListener(_onUpdate);
     Future.delayed(const Duration(seconds: 4), _checkUpdate);

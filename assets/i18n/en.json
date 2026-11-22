@@ -970,5 +970,17 @@
   "update.readyBody": "Reopen to switch to the new version.\nYour progress is saved.",
   "update.restart": "Reopen",
   "update.pill": "Downloading update {pct}%",
-  "update.pillReady": "Update ready · tap to reopen"
+  "update.pillReady": "Update ready · tap to reopen",
+  "mail.updateTitle": "Update {version}",
+  "mail.updateBody": "A new version is here! We polished lots of things for a lovelier garden.",
+  "mail.tagUpdate": "Update",
+  "mail.tagNotice": "Notice",
+  "mail.letter": "Letter",
+  "mail.read": "Read",
+  "mail.select": "Select",
+  "mail.pickRead": "All read",
+  "mail.deleteN": "Delete {n}",
+  "mail.deleted": "Deleted {n} letters",
+  "mail.autoDelete": "Read letters are removed after {d} days",
+  "patch.1.0.5": "• 6 garden landmarks: build one in the middle of each area with stars and grow it with coins. New look every 10 levels\n• Decorations rearranged and fewer friends crowding the garden\n• Share & invite: invited friends get 50 diamonds, you get 100\n• Decor set bonuses and decor score\n• \"Max\" button and x2 goal bars in upgrades\n• New-version alerts and in-game updates\n• Mailbox: notice details, select & delete, old read letters tidy up\n• Fixed sign-in, request limits, sharing and more\n\nHere is some energy as an update gift!"
 }
