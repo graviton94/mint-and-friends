@@ -217,7 +217,7 @@
 
 | 항목 | 상태 | 남은 일 (사용자) |
 |---|---|---|
-| 다이아 팩 6종 · 새싹 정원 패키지 | 코드 완료 | Play Console 관리형 상품 등록 — **`gems_900` 새로** |
+| 다이아 팩 6종 · 새싹 정원 패키지 | 코드 완료 | Play Console 관리형 상품 등록 — **`gems_900` 새로**, 이름 · 설명 4개 언어는 `docs/store/PRODUCTS.md` |
 | 정원 패스 월 구독 ₩5,900 | 코드 완료 | Play Console 구독 `garden_pass_1m` 등록, 라이선스 테스트로 실제 결제 확인 |
 | 광고 (AdMob) | ✅ 실제 앱 ID · 광고 단위 2개 연결 (AAB 1008~) | GDPR 메시지 게시, 출시 뒤 스토어 연결 · app-ads.txt 확인 |
 | app-ads.txt · 소개 · 이용약관 | ✅ 작성 (graviton94.github.io PR #17) | PR 병합, Play 웹사이트 `https://graviton94.github.io` |

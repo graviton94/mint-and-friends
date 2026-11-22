@@ -143,7 +143,7 @@ td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const LIM = { title: 30, short: 80, full: 4000 };
+const LIM = { title: 30, short: 80, full: 4000, pname: 55, pdesc: 200, pben: 40, psub: 80 };
 let data = null, cur = null;
 
 function copyBtn(key) { return `<button class="copy" data-copy="${key}">복사</button>`; }
@@ -151,6 +151,23 @@ function field(label, key, text, big, full) {
   const n = [...text].length, lim = LIM[key];
   const cnt = lim ? `<span class="count ${n > lim ? 'over' : ''}">${n} / ${lim}</span>` : '';
   return `<div class="field"><div class="flabel">${label} ${cnt}${copyBtn(key)}</div><div class="val ${big ? 'big' : ''} ${full ? 'full' : ''}" data-val="${key}">${esc(text)}</div></div>`;
+}
+
+function productFields(code) {
+  const t = data.productText;
+  if (!t) return '';
+  let out = '<h3 style="margin-top:22px">인앱 상품 문구 (Play Console → 제품)</h3>';
+  for (const [pid, d] of Object.entries(t.oneTime)) {
+    const v = d[code]; if (!v) continue;
+    out += `<div class="note" style="margin-top:14px"><code>${esc(pid)}</code></div>` + field('이름', 'pname', v[0]) + field('설명', 'pdesc', v[1]);
+  }
+  const s = t.subscription[code];
+  if (s) {
+    out += `<div class="note" style="margin-top:14px"><code>${esc(t.subscription.id)}</code> · 정기 결제</div>` + field('이름', 'pname', s.name);
+    s.benefits.forEach((b, i) => { out += field(`혜택 ${i + 1}`, 'pben', b); });
+    out += field('설명', 'psub', s.desc);
+  }
+  return out;
 }
 
 function renderLang() {
@@ -161,7 +178,8 @@ function renderLang() {
     field('앱 이름', 'title', l.title, true) +
     field('간단한 설명', 'short', l.short) +
     field('자세한 설명', 'full', l.full, false, true) +
-    field('출시 노트 (1.0.0)', 'notes', data.release.notes[l.code] || '');
+    field('출시 노트 (1.0.0)', 'notes', data.release.notes[l.code] || '') +
+    productFields(l.shots);
   const cap = l.shots;
   $('shotnote').textContent = `· ${l.label} 8장`;
   $('feat').src = `feature/${cap}.png`;
