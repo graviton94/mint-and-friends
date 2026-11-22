@@ -214,6 +214,12 @@ class SeasonSetEvent extends GameEvent {
 
 /// 보상형 광고를 끝까지 봤다.
 /// 다이아를 썼다 (어디에 · 얼마나) — 분석용.
+/// 새 쪽지가 왔다 (게임 안 '편지가 도착했어요' 알림).
+class MailEvent extends GameEvent {
+  final Mail mail;
+  MailEvent(this.mail);
+}
+
 /// 랜드마크를 세웠거나 그림 단계가 올랐다 (D-048).
 class LandmarkEvent extends GameEvent {
   final int area;
@@ -2313,6 +2319,7 @@ class GameState extends ChangeNotifier {
   void addMail(Mail m) {
     if (mail.any((x) => x.id == m.id)) return;
     mail.insert(0, m);
+    _events.add(MailEvent(m));
     // 오래된 받은 쪽지부터 정리
     while (mail.length > MailConfig.keep) {
       final i = mail.lastIndexWhere((x) => x.claimed);
@@ -2332,14 +2339,24 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 읽은 쪽지 지우기 (안 받은 보상이 있는 쪽지는 지우지 않는다). 지운 수.
-  int deleteMail(Iterable<String> ids) {
+  /// 쪽지 지우기: 안 받은 보상은 먼저 받고(읽음 → 받기 → 지우기) 지운다. 지운 수 · 받은 보상.
+  ({int count, Reward reward}) deleteMail(Iterable<String> ids) {
     final set = ids.toSet();
+    var c = 0, e = 0, st = 0, g = 0;
+    for (final m
+        in mail.where((x) => set.contains(x.id) && !x.claimed).toList()) {
+      final r = claimMail(m.id);
+      if (r == null) continue;
+      c += r.coins;
+      e += r.energy;
+      st += r.stars;
+      g += r.gems;
+    }
     final before = mail.length;
-    mail.removeWhere((m) => set.contains(m.id) && m.claimed);
+    mail.removeWhere((m) => set.contains(m.id));
     final n = before - mail.length;
     if (n > 0) notifyListeners();
-    return n;
+    return (count: n, reward: Reward(coins: c, energy: e, stars: st, gems: g));
   }
 
   /// 읽은 지 [MailConfig.keepRead] 지난 쪽지를 지운다 (오래된 것부터).

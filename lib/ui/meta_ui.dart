@@ -245,13 +245,21 @@ class _MailBoxState extends State<_MailBox> {
   }
 
   void _delete() {
-    final n = game.deleteMail(_picked);
-    sfx(Sfx.tap);
+    final d = game.deleteMail(_picked);
     setState(() {
       _picked.clear();
       _select = false;
     });
-    if (n > 0) TopToast.show(context, tr('mail.deleted', {'n': n}));
+    if (rewardText(d.reward).isNotEmpty) {
+      // 안 받은 선물은 받고 지웠다
+      sfx(Sfx.coin);
+      RewardPopup.show(context, d.reward, title: tr('mail.deletedClaimed'));
+    } else {
+      sfx(Sfx.tap);
+      if (d.count > 0) {
+        TopToast.show(context, tr('mail.deleted', {'n': d.count}));
+      }
+    }
   }
 
   @override
@@ -275,12 +283,9 @@ class _MailBoxState extends State<_MailBox> {
                 onPressed: () => setState(() {
                   _picked
                     ..clear()
-                    ..addAll([
-                      for (final m in mails)
-                        if (m.claimed) m.id,
-                    ]);
+                    ..addAll([for (final m in mails) m.id]);
                 }),
-                child: Text(tr('mail.pickRead'), style: small),
+                child: Text(tr('mail.pickAll'), style: small),
               ),
               TextButton(
                 onPressed: _picked.isEmpty ? null : _delete,
@@ -298,7 +303,7 @@ class _MailBoxState extends State<_MailBox> {
                 }),
                 child: Text(tr('common.cancel'), style: small),
               ),
-            ] else if (mails.any((m) => m.claimed))
+            ] else if (mails.isNotEmpty)
               TextButton(
                 onPressed: () => setState(() => _select = true),
                 child: Text(tr('mail.select'), style: small),
@@ -320,11 +325,9 @@ class _MailBoxState extends State<_MailBox> {
             mail: m,
             selecting: _select,
             picked: _picked.contains(m.id),
-            onPick: m.claimed
-                ? () => setState(() {
-                    if (!_picked.remove(m.id)) _picked.add(m.id);
-                  })
-                : null,
+            onPick: () => setState(() {
+              if (!_picked.remove(m.id)) _picked.add(m.id);
+            }),
           ),
         const SizedBox(height: 6),
         IconText(

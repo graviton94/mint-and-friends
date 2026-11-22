@@ -628,11 +628,12 @@ void main() {
     final m = g.mail.firstWhere((x) => x.id == 'update-1020');
     expect(m.bodyKey, 'patch.1.0.5');
     expect(m.reward.energy, MailConfig.updateGiftEnergy);
-    // 안 받은 보상 쪽지는 지워지지 않는다
-    expect(g.deleteMail([m.id]), 0);
-    g.claimMail(m.id);
-    expect(m.readAt, isNotNull);
-    expect(g.deleteMail([m.id]), 1);
+    // 안 받은 보상 쪽지를 지우면 먼저 받고 지운다
+    final e0 = g.energy;
+    final del = g.deleteMail([m.id]);
+    expect(del.count, 1);
+    expect(del.reward.energy, MailConfig.updateGiftEnergy);
+    expect(g.energy, e0 + MailConfig.updateGiftEnergy);
     // 보상 없는 쪽지: 열면 읽음
     g.addMail(
       Mail(

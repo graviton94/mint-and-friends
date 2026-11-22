@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../game/config.dart';
 import '../game/game_state.dart';
 import '../i18n/l10n.dart';
 import '../i18n/names.dart';
@@ -142,6 +143,23 @@ class NotifyService extends ChangeNotifier {
         gift,
         tr('notify.gift.title'),
         tr('notify.gift.body', {'name': friend()}),
+      ));
+    }
+    // 3-1) 안 읽은 편지 (3시간 뒤): 친구 편지면 그 친구 이름으로, 여럿이면 개수로
+    final unread = g.mail.where((m) => !m.claimed).toList();
+    if (unread.isNotEmpty) {
+      final fromFriend = unread
+          .where((m) => Friends.all.any((f) => f.id == m.from))
+          .firstOrNull;
+      final v = rng.nextInt(2);
+      plans.add((
+        now.add(const Duration(hours: 3)),
+        unread.length > 1
+            ? tr('notify.mailMany.title', {'n': unread.length})
+            : fromFriend != null
+            ? tr('notify.mailFrom.title', {'name': friendName(fromFriend.from)})
+            : tr('notify.mail.title'),
+        tr('notify.mail.body.$v'),
       ));
     }
     // 4) 내일 출석 선물 (09시 무렵)

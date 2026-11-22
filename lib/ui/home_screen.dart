@@ -96,6 +96,35 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // ---------------------------------------------------------------- 이벤트
 
+  // 새 쪽지 알림: 잠깐 모아서 한 번에 ('~의 편지가 도착했어요' / '새 쪽지가 n통 왔어요')
+  final List<Mail> _newMail = [];
+  void _mailArrived(Mail m) {
+    _newMail.add(m);
+    if (_newMail.length > 1) return;
+    Future.delayed(const Duration(milliseconds: 900), () {
+      if (!mounted) return;
+      final list = [..._newMail];
+      _newMail.clear();
+      if (list.isEmpty) return;
+      sfx(Sfx.unlock);
+      if (list.length > 1) {
+        _toast(tr('toast.mailMany', {'n': list.length}));
+        return;
+      }
+      final m = list.single;
+      final friend = Friends.all.any((f) => f.id == m.from);
+      _toast(
+        m.id.startsWith('update-')
+            ? tr('toast.mailUpdate')
+            : m.kind == MailKind.notice && m.from == 'team'
+            ? tr('toast.mailNotice')
+            : tr('toast.mailFrom', {
+                'name': friend ? friendName(m.from) : m.from,
+              }),
+      );
+    });
+  }
+
   void _onEvent(GameEvent e) {
     switch (e) {
       case DiscoveryEvent(:final chain, :final level, :final bonus):
@@ -227,6 +256,8 @@ class _HomeScreenState extends State<HomeScreen> {
       case MergedEvent(:final level):
         sfx(level >= 6 ? Sfx.mergeBig : Sfx.merge);
         _tutorialEvent(e);
+      case MailEvent(:final mail):
+        _mailArrived(mail);
       case LandmarkEvent(:final area, :final level, :final newStage):
         if (newStage) {
           sfx(Sfx.levelup);
