@@ -1,11 +1,13 @@
 """스토어 스크린샷 합성: 미리보기 원본(raw_dir/<lang>_<n>.png) + 제목 · 부제 + 친구 일러스트 → docs/store/screenshots/<lang>/<n>.jpg
-python3 tool/store_shots.py <raw_dir> <store.json> <lang> [<lang> ...]"""
+python3 tool/store_shots.py <raw_dir> <store.json> <lang> [<lang> ...]
+일본어 제목은 게임용으로 줄인 글꼴에 없는 한자가 있을 수 있어, 환경 변수 JA_FONT 로 원본 Mochiy Pop One 을 주면 그것을 쓴다."""
 import json
 import sys
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 raw, store, langs = sys.argv[1].rstrip('/') + '/', json.load(open(sys.argv[2])), sys.argv[3:]
-FONT = {'ja': 'assets/fonts/MochiyPopOne-ja.ttf'}
+import os
+FONT = {'ja': os.environ.get('JA_FONT', 'assets/fonts/MochiyPopOne-ja.ttf')}
 F = 'assets/art/friends/'
 PAIRS = {1: ('bori_happy', 'dubu_wave'), 2: ('kwak_summer_wave', 'nabi_summer_happy'), 3: ('mochi_picnic_happy', 'pposong_wave'),
          4: ('dotori_happy', 'kongtteok_wave'), 5: ('bogeul_happy', 'danpung_happy'), 6: ('nabi_wave', 'kwak_happy'),
