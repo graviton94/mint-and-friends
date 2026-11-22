@@ -49,6 +49,7 @@ void main() {
     var stuckDays = 0;
     var gAch = 0, gCheck = 0, gMail = 0, gLevel = 0;
     var dayOrders = 0;
+    final starDeliveries = <String, int>{};
 
     void check(String where) {
       final r = '$where (Lv${g.level}, 구역 ${g.currentArea})';
@@ -148,7 +149,20 @@ void main() {
           // 플레이어가 직접 합친다 (같은 아이템 한 쌍, 부탁에 걸린 것은 남긴다)
           manualMerge(g);
           for (var i = 0; i < g.orders.length; i++) {
-            if (g.deliver(i)) used.add('deliver');
+            final o = g.orders[i];
+            final starred = g.quotaActive && g.orderGivesStars(o);
+            if (g.deliver(i)) {
+              used.add('deliver');
+              if (starred) {
+                final k = '${now.year}-${now.month}-${now.day}:${o.friendId}';
+                starDeliveries[k] = (starDeliveries[k] ?? 0) + 1;
+                expect(
+                  starDeliveries[k]! <= g.starOrderLimit(o.friendId),
+                  isTrue,
+                  reason: '하루 별 부탁 한도 넘음 $k',
+                );
+              }
+            }
           }
           // 비눗방울: 다이아가 넉넉하면 가끔 연다
           for (var c = 0; c < g.board.length; c++) {

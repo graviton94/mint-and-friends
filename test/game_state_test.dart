@@ -423,7 +423,7 @@ void main() {
     Tuning.easyOrderChance = 0;
     addTearDown(() => Tuning.easyOrderChance = keep);
     final g = make();
-    for (var round = 0; round < 30; round++) {
+    for (var round = 0; round < OrderQuota.freeOrders - 2; round++) {
       final o = g.orders[0];
       final cell = g.board.indexWhere((it) => it == null);
       if (cell < 0) break;

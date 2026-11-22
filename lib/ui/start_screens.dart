@@ -558,15 +558,13 @@ class _EnterViewState extends State<EnterView>
                         ),
                       ),
                       const SizedBox(height: 14),
-                      // 친구들이 정원 길을 따라 걸어간다 (통통 걸음)
+                      // 친구들 행렬: 제자리에서 살짝 통통 (좌우로 미끄러지지 않게)
                       AnimatedBuilder(
                         animation: _go,
                         builder: (_, child) => Transform.translate(
                           offset: Offset(
-                            (Curves.easeInOut.transform(_go.value) - 0.5) *
-                                w *
-                                0.22,
-                            -(sin(_go.value * pi * 10).abs()) * 5,
+                            0,
+                            -(sin(_go.value * pi * 8).abs()) * 6,
                           ),
                           child: child,
                         ),

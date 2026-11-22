@@ -501,6 +501,16 @@ void main() {
     expect(g2.starOrdersUsed, g.starOrdersUsed);
   });
 
+  test('첫 구역에서도 부탁 20번 뒤부터는 하루 한도 (별을 쓰지 않고 머물며 무한히 모으지 못하게)', () {
+    final g = make();
+    expect(g.currentArea, 0);
+    expect(g.quotaActive, isFalse);
+    g.stats[Stat.orders] = OrderQuota.freeOrders;
+    expect(g.quotaActive, isTrue);
+    final f = g.orders[0].friendId;
+    expect(g.starOrdersLeft(f), lessThanOrEqualTo(OrderQuota.perFriend + 1));
+  });
+
   test('부탁 바꾸기: 하루 3번 무료', () {
     final g = make();
     for (var k = 0; k < OrderQuota.freeRerolls; k++) {

@@ -851,13 +851,31 @@ class GameState extends ChangeNotifier {
   // ---------------------------------------------------------------- 진행
 
   /// 오늘 별 부탁이 남은 친구를 먼저 고른다 (다 썼으면 아무나).
+  /// 방금 부탁을 들어준 친구가 다시 부탁하기까지 쉬는 시간 (같은 친구가 연달아 부탁하지 않게).
+  static const Duration orderRest = Duration(seconds: 45);
+  final Map<String, DateTime> _restUntil = {};
+
+  /// 쉬는 중인 친구 (친구가 셋 이상일 때만: 초반 한두 명일 때는 부탁이 끊기지 않게).
+  bool _resting(String f) {
+    if (friends.length < 3) return false;
+    final t = _restUntil[f];
+    return t != null && now.isBefore(t);
+  }
+
   String _pickFriend(List<String> pool) {
-    // 지금 다른 부탁을 들고 있지 않은 친구 먼저 (정원에서 한 친구 머리 위에 말풍선이 겹치지 않게)
+    // 지금 다른 부탁을 들고 있지 않은 친구 먼저 (정원에서 한 친구 머리 위에 말풍선이 겹치지 않게),
+    // 그중에서도 방금 부탁을 들어준 친구는 빼고
     final busy = {for (final o in orders) o.friendId};
-    final free = [
+    final rested = [
       for (final f in pool)
-        if (!busy.contains(f)) f,
+        if (!busy.contains(f) && !_resting(f)) f,
     ];
+    final free = rested.isNotEmpty
+        ? rested
+        : [
+            for (final f in pool)
+              if (!busy.contains(f)) f,
+          ];
     final base = free.isEmpty ? pool : free;
     final left = [
       for (final f in base)
@@ -905,8 +923,10 @@ class GameState extends ChangeNotifier {
     rerollsToday = 0;
   }
 
-  /// 첫 구역을 끝낸 뒤부터 한도가 걸린다.
-  bool get quotaActive => currentArea >= 1;
+  /// 하루 별 부탁 한도: 첫 구역을 끝냈거나, 첫 구역에서도 부탁을 [OrderQuota.freeOrders]번 들어준 뒤부터.
+  /// (첫 구역에서 별을 쓰지 않고 머물며 한도 없이 별을 모으던 구멍을 막는다. 튜토리얼 흐름은 그대로)
+  bool get quotaActive =>
+      currentArea >= 1 || (stats[Stat.orders] ?? 0) >= OrderQuota.freeOrders;
   int starOrderLimit(String friendId) {
     _rollQuotaDay();
     return OrderQuota.perFriend +
@@ -1410,7 +1430,7 @@ class GameState extends ChangeNotifier {
     final slots = min(GameConfig.orderSlots, friends.length);
     bool freeAsker() {
       final busy = {for (final o in orders) o.friendId};
-      return _askers.any((f) => !busy.contains(f));
+      return _askers.any((f) => !busy.contains(f) && !_resting(f));
     }
 
     while (orders.length < slots && freeAsker()) {
@@ -1578,6 +1598,7 @@ class GameState extends ChangeNotifier {
     _recentOrders.add('${o.chain.index}-${o.level}');
     if (_recentOrders.length > 3) _recentOrders.removeAt(0);
     orders.removeAt(orderIndex);
+    _restUntil[o.friendId] = now.add(orderRest);
     _fillOrders();
     _trace(
       'order',

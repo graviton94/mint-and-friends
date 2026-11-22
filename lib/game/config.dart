@@ -204,6 +204,9 @@ class Boosts {
 /// 한도가 끝나도 부탁은 계속 나오고 코인 · 경험치만 준다. 첫 구역을 끝낼 때까지는 한도 없음.
 class OrderQuota {
   static const int perFriend = 4;
+
+  /// 처음 이만큼은 한도 없이 (튜토리얼 · 첫 구역 초반).
+  static const int freeOrders = 20;
   static const int perAd = 2;
   static const int pass = 2;
 
