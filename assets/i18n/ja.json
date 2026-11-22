@@ -932,5 +932,16 @@
   "invite.progress": "Lv{lv}/{needLv}・{days}/{needDays}日・あと{left}日",
   "invite.accepted": "{name}さんの招待で友だちになったよ! メールに[[diamond]]{n}のプレゼント",
   "mail.inviteWelcome": "{name}さんの招待で来てくれてありがとう! ウェルカムプレゼントだよ",
-  "mail.inviteReward": "招待した{name}さんが1週間遊んでくれたよ! 招待プレゼントだよ"
+  "mail.inviteReward": "招待した{name}さんが1週間遊んでくれたよ! 招待プレゼントだよ",
+  "set.title": "{area} セット効果",
+  "set.special": "特別セット",
+  "set.premium": "高級セット",
+  "set.score": "飾りスコア {score}・収入 +{pct}% (特別 1・高級 0.4)",
+  "set.effect.energyCap": "エネルギー上限 +{v}",
+  "set.effect.energyRegen": "エネルギー回復 +{v}%",
+  "set.effect.orderStars": "お願いの星 +{v}%",
+  "set.effect.offline": "オフライン最大 +{v}分",
+  "set.effect.lucky": "ラッキー +{v}%p",
+  "set.effect.visitorCoins": "お客さんのコイン +{v}%",
+  "social.levelAreaScore": "Lv.{n}・{area}・飾りスコア {score}"
 }

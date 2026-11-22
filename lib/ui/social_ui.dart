@@ -615,10 +615,14 @@ Future<void> showVisitSheet(
               const SizedBox(width: 8),
               Flexible(
                 child: IconText(
-                  tr('social.levelArea', {
-                    'n': p.level,
-                    'area': areaName(Garden.areaAt(area)),
-                  }),
+                  tr(
+                    p.score > 0 ? 'social.levelAreaScore' : 'social.levelArea',
+                    {
+                      'n': p.level,
+                      'area': areaName(Garden.areaAt(area)),
+                      'score': (p.score / 10).toStringAsFixed(1),
+                    },
+                  ),
                   style: const TextStyle(fontSize: 16),
                 ),
               ),

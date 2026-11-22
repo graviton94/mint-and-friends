@@ -933,5 +933,16 @@
   "invite.progress": "Lv{lv}/{needLv} · {days}/{needDays}일 · {left}일 남음",
   "invite.accepted": "{name} 님의 초대로 친구가 됐어요! 쪽지에 [[diamond]]{n} 환영 선물",
   "mail.inviteWelcome": "{name} 님의 초대로 오신 걸 환영해요! 환영 선물이에요",
-  "mail.inviteReward": "초대한 {name} 님이 일주일을 함께했어요! 초대 선물이에요"
+  "mail.inviteReward": "초대한 {name} 님이 일주일을 함께했어요! 초대 선물이에요",
+  "set.title": "{area} 세트 효과",
+  "set.special": "특별 세트",
+  "set.premium": "고급 세트",
+  "set.score": "꾸밈 점수 {score} · 수입 +{pct}% (특별 1점 · 고급 0.4점)",
+  "set.effect.energyCap": "에너지 통 +{v}",
+  "set.effect.energyRegen": "에너지 회복 +{v}%",
+  "set.effect.orderStars": "부탁 별 +{v}%",
+  "set.effect.offline": "오프라인 최대 +{v}분",
+  "set.effect.lucky": "행운 +{v}%p",
+  "set.effect.visitorCoins": "손님 코인 +{v}%",
+  "social.levelAreaScore": "Lv.{n} · {area} · 꾸밈 점수 {score}"
 }

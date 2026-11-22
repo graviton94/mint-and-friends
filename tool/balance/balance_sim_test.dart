@@ -20,6 +20,9 @@ class Profile {
   final int seed;
   final bool focusZone; // 가장 새 바구니만 쓴다 (디자이너처럼)
   final bool boostAds;
+
+  /// 고과금 수집가: 놓은 장식마다 특별 디자인을 바로 가진다 (D-046 비교용).
+  final bool ownSpecial;
   const Profile(
     this.name,
     this.sessionHours, {
@@ -31,6 +34,7 @@ class Profile {
     this.seed = 1,
     this.focusZone = false,
     this.boostAds = true,
+    this.ownSpecial = false,
   });
   Profile withSeed(int s) => Profile(
     name,
@@ -43,6 +47,7 @@ class Profile {
     seed: s,
     focusZone: focusZone,
     boostAds: boostAds,
+    ownSpecial: ownSpecial,
   );
 }
 
@@ -198,6 +203,13 @@ class Sim {
       for (final f in g.friends) {
         if (g.canLevelFriend(f)) {
           cands.add((g.friendLevelCost(f), 'friend', () => g.levelFriend(f)));
+        }
+      }
+      if (p.ownSpecial) {
+        for (var a = 0; a <= g.currentArea; a++) {
+          for (var s = 0; s < Garden.slotsPerArea; s++) {
+            if (g.isPlaced(a, s)) g.ownedStyles.add('$a:$s:2');
+          }
         }
       }
       if (p.buyStyles) {
@@ -526,6 +538,7 @@ class Sim {
       'areaEnter(2..): $areaDay',
       'maxDay: ${maxDay.map((k, v) => MapEntry(k.name, v))}',
       'renews(${renews.length}): ${renews.join(' ')}',
+      'decor: score=${g.decorScore.toStringAsFixed(1)} tiers=${[for (var a = 0; a < DecorSets.areas; a++) g.setTier(a)]} gm=${g.gardenMultiplier.toStringAsFixed(2)} cap=${g.energyCap} luck=${g.luckyChance.toStringAsFixed(3)}',
       'energyIn: ${fmt(energyIn)} | freeSpawns=$freeSpawns',
       'coinsIn: ${fmt(coinsIn)}',
       'coinsOut: ${fmt(coinsOut)}',
@@ -551,6 +564,11 @@ const profS = Profile('A-noStyles (coins only on functional sinks)', [
   18,
   22,
 ], buyStyles: false);
+const profW = Profile(
+  'W whale-collector (A + all special designs)',
+  [8, 12.5, 18, 22],
+  ownSpecial: true,
+);
 const profB = Profile(
   'B heavy',
   [7, 9, 11, 13, 15, 17, 19, 22],
@@ -573,7 +591,7 @@ void main() {
   test('profiles', () {
     final only = Platform.environment['BALANCE_PROFILES'];
     final seeds = only == null ? [1, 2, 3] : [1];
-    for (final p in [profA, profB, profC, profN, profS]) {
+    for (final p in [profA, profB, profC, profN, profS, profW]) {
       if (only != null && !only.split(',').contains(p.name.split(' ').first))
         continue;
       for (final seed in seeds) {

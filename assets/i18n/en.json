@@ -932,5 +932,16 @@
   "invite.progress": "Lv{lv}/{needLv} · {days}/{needDays} days · {left}d left",
   "invite.accepted": "You're friends with {name} now! [[diamond]]{n} welcome gift in your mail",
   "mail.inviteWelcome": "Welcome! {name} invited you. Here is a welcome gift",
-  "mail.inviteReward": "{name}, who you invited, has played for a week! Here is your gift"
+  "mail.inviteReward": "{name}, who you invited, has played for a week! Here is your gift",
+  "set.title": "{area} set bonus",
+  "set.special": "Special set",
+  "set.premium": "Deluxe set",
+  "set.score": "Decor score {score} · income +{pct}% (special 1 · deluxe 0.4)",
+  "set.effect.energyCap": "Energy max +{v}",
+  "set.effect.energyRegen": "Energy refill +{v}%",
+  "set.effect.orderStars": "Request stars +{v}%",
+  "set.effect.offline": "Offline max +{v} min",
+  "set.effect.lucky": "Lucky +{v}%p",
+  "set.effect.visitorCoins": "Visitor coins +{v}%",
+  "social.levelAreaScore": "Lv.{n} · {area} · Decor {score}"
 }

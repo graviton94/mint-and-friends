@@ -747,6 +747,20 @@ class GameState extends ChangeNotifier {
     return tier;
   }
 
+  /// 이 구역에서 특별 디자인을 가진 자리 수 · 고급 이상을 가진 자리 수.
+  ({int special, int premium}) setProgress(int area) {
+    var sp = 0, pr = 0;
+    for (var i = 0; i < Garden.slotsPerArea; i++) {
+      if (ownedStyles.contains('$area:$i:2')) {
+        sp++;
+        pr++;
+      } else if (ownedStyles.contains('$area:$i:1')) {
+        pr++;
+      }
+    }
+    return (special: sp, premium: pr);
+  }
+
   /// 이 구역 세트로 받는 효과 크기 (특별 1 · 고급 0.4 · 없음 0) × 그 효과의 최대치.
   double setBonus(SetEffect e) {
     final i = DecorSets.effects.indexOf(e);

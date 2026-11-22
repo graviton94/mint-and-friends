@@ -932,5 +932,16 @@
   "invite.progress": "Nv{lv}/{needLv} · {days}/{needDays} días · faltan {left} d",
   "invite.accepted": "¡Ya eres amigo de {name}! [[diamond]]{n} de bienvenida en tu correo",
   "mail.inviteWelcome": "¡Bienvenido! {name} te invitó. Aquí tienes un regalo de bienvenida",
-  "mail.inviteReward": "¡{name}, a quien invitaste, ya jugó una semana! Aquí tienes tu regalo"
+  "mail.inviteReward": "¡{name}, a quien invitaste, ya jugó una semana! Aquí tienes tu regalo",
+  "set.title": "Bono del set de {area}",
+  "set.special": "Set especial",
+  "set.premium": "Set de lujo",
+  "set.score": "Puntos de decoración {score} · ingresos +{pct}% (especial 1 · lujo 0,4)",
+  "set.effect.energyCap": "Energía máx. +{v}",
+  "set.effect.energyRegen": "Recarga de energía +{v}%",
+  "set.effect.orderStars": "Estrellas de pedidos +{v}%",
+  "set.effect.offline": "Máx. sin conexión +{v} min",
+  "set.effect.lucky": "Suerte +{v} pp",
+  "set.effect.visitorCoins": "Monedas de visitas +{v}%",
+  "social.levelAreaScore": "Nv.{n} · {area} · Decoración {score}"
 }

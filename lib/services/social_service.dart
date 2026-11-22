@@ -128,6 +128,9 @@ class SocialProfile {
   final String invitedBy;
   final int invitedAt;
 
+  /// 꾸밈 점수 × 10 (D-046, 친구에게 보인다).
+  final int score;
+
   const SocialProfile({
     required this.uid,
     required this.name,
@@ -140,6 +143,7 @@ class SocialProfile {
     this.days = 0,
     this.invitedBy = '',
     this.invitedAt = 0,
+    this.score = 0,
   });
 
   static SocialProfile fromMap(String uid, Map<String, dynamic> m) {
@@ -162,6 +166,7 @@ class SocialProfile {
       days: max(0, (m['days'] as num?)?.toInt() ?? 0),
       invitedBy: m['invitedBy'] is String ? m['invitedBy'] as String : '',
       invitedAt: max(0, (m['invitedAt'] as num?)?.toInt() ?? 0),
+      score: max(0, (m['score'] as num?)?.toInt() ?? 0),
     );
   }
 
@@ -177,6 +182,7 @@ class SocialProfile {
     'days': days,
     'invitedBy': invitedBy,
     'invitedAt': invitedAt,
+    'score': score,
   };
 
   SocialProfile copyWith({String? name, String? avatar}) => SocialProfile(
@@ -191,6 +197,7 @@ class SocialProfile {
     days: days,
     invitedBy: invitedBy,
     invitedAt: invitedAt,
+    score: score,
   );
 
   static SocialProfile ofGame(
@@ -211,6 +218,7 @@ class SocialProfile {
     days: g.stat(Stat.daysPlayed),
     invitedBy: g.invitedBy ?? '',
     invitedAt: g.invitedAt?.millisecondsSinceEpoch ?? 0,
+    score: (g.decorScore * 10).round(),
   );
 
   /// 초대 보상 조건을 채웠는지 (초대 뒤 7일 · 서로 다른 5일 · Lv15).

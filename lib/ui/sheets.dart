@@ -477,6 +477,7 @@ Future<void> showStyleSheet(
               ),
             ),
           ),
+        if (area < DecorSets.areas) _SetEffectBox(game: game, area: area),
         IconText(
           tr('style.note'),
           textAlign: TextAlign.center,
@@ -486,6 +487,84 @@ Future<void> showStyleSheet(
     ),
   );
 });
+
+/// 세트 효과 글자: 에너지 통 +5 · 에너지 회복 +5% · 오프라인 최대 +60분 …
+String setEffectText(SetEffect e, double v) {
+  final n = switch (e) {
+    SetEffect.energyCap => '${v.round()}',
+    SetEffect.offline => '${v.round()}',
+    _ => (v * 100).toStringAsFixed(v * 100 % 1 == 0 ? 0 : 1),
+  };
+  return tr('set.effect.${e.name}', {'v': n});
+}
+
+/// 구역 세트 효과 (D-046): 특별 세트 · 고급 세트(40%) 진행과 꾸밈 점수.
+class _SetEffectBox extends StatelessWidget {
+  const _SetEffectBox({required this.game, required this.area});
+  final GameState game;
+  final int area;
+
+  @override
+  Widget build(BuildContext context) {
+    final e = DecorSets.effects[area];
+    final full = DecorSets.full[e]!;
+    final p = game.setProgress(area);
+    final tier = game.setTier(area);
+    Widget row(String label, double v, int have, bool on) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Expanded(
+            child: IconText(
+              '$label  ${setEffectText(e, v)}',
+              style: TextStyle(
+                fontSize: 15,
+                color: on ? Palette.primary : const Color(0xFF6B5A44),
+              ),
+            ),
+          ),
+          IconText(
+            on ? '[[check]]' : '$have/${Garden.slotsPerArea}',
+            style: const TextStyle(fontSize: 15, color: Color(0xFF6B5A44)),
+          ),
+        ],
+      ),
+    );
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF6E0),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2C48E), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          IconText(
+            tr('set.title', {'area': areaName(Garden.areaAt(area))}),
+            style: const TextStyle(fontSize: 16),
+          ),
+          row(tr('set.special'), full, p.special, tier == 2),
+          row(
+            tr('set.premium'),
+            full * DecorSets.premiumRatio,
+            p.premium,
+            tier >= 1,
+          ),
+          IconText(
+            tr('set.score', {
+              'score': game.decorScore.toStringAsFixed(1),
+              'pct': (game.decorScore * DecorSets.incomePerPoint * 100)
+                  .toStringAsFixed(1),
+            }),
+            style: const TextStyle(fontSize: 13, color: Colors.black54),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _StyleCard extends StatelessWidget {
   const _StyleCard({

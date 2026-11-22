@@ -511,6 +511,53 @@ void main() {
     expect(g.starOrdersLeft(f), lessThanOrEqualTo(OrderQuota.perFriend + 1));
   });
 
+  test('꾸밈 세트 (D-046): 고급 세트 = 특별 세트의 40%, 높은 쪽 하나만, 꾸밈 점수 수입', () {
+    final g = make();
+    g.currentArea = 6;
+    final cap0 = g.energyCap, regen0 = g.energyRegenSeconds;
+    final off0 = g.offlineCap, luck0 = g.luckyChance, gm0 = g.gardenMultiplier;
+    // 앞마당 고급 세트 (8자리 모두 고급)
+    for (var i = 0; i < Garden.slotsPerArea; i++) {
+      g.ownedStyles.add('0:$i:1');
+    }
+    expect(g.setTier(0), 1);
+    expect(g.energyCap - cap0, 2);
+    expect(g.decorScore, closeTo(8 * 0.4, 1e-9));
+    // 특별로 다 바꾸면 효과는 특별 하나만 (+5, 겹치지 않음)
+    for (var i = 0; i < Garden.slotsPerArea; i++) {
+      g.ownedStyles.add('0:$i:2');
+    }
+    expect(g.setTier(0), 2);
+    expect(g.energyCap - cap0, 5);
+    expect(g.decorScore, closeTo(8.0, 1e-9));
+    // 한 자리라도 빠지면 세트가 아니다
+    g.ownedStyles.remove('0:7:2');
+    expect(g.setTier(0), 1);
+    g.ownedStyles.add('0:7:2');
+    // 6구역 특별 세트 전부
+    for (var a = 1; a < DecorSets.areas; a++) {
+      for (var i = 0; i < Garden.slotsPerArea; i++) {
+        g.ownedStyles.add('$a:$i:2');
+      }
+    }
+    expect(g.energyRegenSeconds, lessThan(regen0));
+    expect(g.offlineCap - off0, const Duration(minutes: 60));
+    expect(g.luckyChance - luck0, closeTo(0.02, 1e-9));
+    expect(g.decorScore, 48);
+    expect(g.gardenMultiplier - gm0, closeTo(48 * 0.0025, 1e-9));
+    // 7번째 구역(순환)은 세지 않는다
+    for (var i = 0; i < Garden.slotsPerArea; i++) {
+      g.ownedStyles.add('6:$i:2');
+    }
+    expect(g.decorScore, 48);
+    // 가격: 80 + 40 × 구역, 6구역 전부 8,640
+    var total = 0;
+    for (var a = 0; a < DecorSets.areas; a++) {
+      total += Garden.styleGems(a) * Garden.slotsPerArea;
+    }
+    expect(total, 8640);
+  });
+
   test('부탁 바꾸기: 하루 3번 무료', () {
     final g = make();
     for (var k = 0; k < OrderQuota.freeRerolls; k++) {
