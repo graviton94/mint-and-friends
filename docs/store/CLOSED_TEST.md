@@ -21,7 +21,7 @@
 | 광고 | **예, 광고 포함** (보상형 + 장식 설치 뒤 가끔 전면, 정원 패스는 없음) |
 | 콘텐츠 등급 | IARC 설문: LISTING.md "콘텐츠 등급" 답안 그대로 |
 | 타깃층 | 13세 이상 (아동 대상 아님) |
-| 데이터 보안 | LISTING.md "데이터 보안" 표 그대로 |
+| 데이터 보안 | [DATA_SAFETY.md](DATA_SAFETY.md) (화면 순서 그대로) |
 | 계정 삭제 | 앱 안 삭제 있음 + 웹 주소 `https://graviton94.github.io/mintandfriends/privacy/#delete` |
 | 정부 앱 · 금융 기능 · 건강 | 모두 아님 |
 
