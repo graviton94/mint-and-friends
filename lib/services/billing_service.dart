@@ -70,6 +70,11 @@ class BillingService extends ChangeNotifier {
 
   Future<void> _onPurchases(List<PurchaseDetails> list) async {
     for (final p in list) {
+      if (p.status == PurchaseStatus.canceled) {
+        Analytics.instance.iapCancel(p.productID);
+      } else if (p.status == PurchaseStatus.error) {
+        Analytics.instance.iapError(p.productID, p.error?.code ?? 'unknown');
+      }
       if (p.productID == Starter.productId) {
         if (p.status == PurchaseStatus.purchased) {
           Analytics.instance.purchase(p.productID);
@@ -123,6 +128,7 @@ class BillingService extends ChangeNotifier {
     if (p == null || purchasing) return;
     purchasing = true;
     notifyListeners();
+    Analytics.instance.iapBegin(p.id);
     try {
       await _iap.buyNonConsumable(
         purchaseParam: PurchaseParam(productDetails: p),
@@ -138,6 +144,7 @@ class BillingService extends ChangeNotifier {
     if (d == null || purchasing) return;
     purchasing = true;
     notifyListeners();
+    Analytics.instance.iapBegin(d.id);
     try {
       await _iap.buyConsumable(purchaseParam: PurchaseParam(productDetails: d));
     } catch (_) {
@@ -151,6 +158,7 @@ class BillingService extends ChangeNotifier {
     if (d == null || purchasing) return;
     purchasing = true;
     notifyListeners();
+    Analytics.instance.iapBegin(d.id);
     try {
       await _iap.buyConsumable(purchaseParam: PurchaseParam(productDetails: d));
     } catch (_) {

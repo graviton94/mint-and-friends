@@ -11,6 +11,7 @@ import '../game/game_state.dart';
 import '../i18n/l10n.dart';
 import '../i18n/names.dart';
 import '../services/audio_service.dart';
+import '../services/analytics_service.dart';
 import '../services/billing_service.dart';
 import '../services/dev_log.dart';
 import '../services/notify_service.dart';
@@ -1063,6 +1064,18 @@ Future<void> showShopSheet(
   GameState game, {
   Future<bool> Function(AdKind kind)? watchAd,
   bool adFree = false,
+}) {
+  Analytics.instance.shopOpen(game, starter: game.starterVisible);
+  if (game.starterVisible) Analytics.instance.starterView(game, 'shop');
+  return _shopSheet(context, billing, game, watchAd: watchAd, adFree: adFree);
+}
+
+Future<void> _shopSheet(
+  BuildContext context,
+  BillingService billing,
+  GameState game, {
+  Future<bool> Function(AdKind kind)? watchAd,
+  bool adFree = false,
 }) => showGameSheet(context, Listenable.merge([billing, game]), () {
   final ad = adFree ? '' : '[[ad]] ';
   // 추천 아이템: 화면에 그린 상품 그대로 산다 (그사이 날이 바뀌면 사지 않고 새 상품을 보여 준다)
@@ -1806,6 +1819,15 @@ class _PulseState extends State<_Pulse> with SingleTickerProviderStateMixin {
 
 /// 새싹 정원 패키지 팝업 (첫 구역 완성 직후 · 에너지가 떨어졌을 때 한 번 더).
 Future<void> showStarterSheet(
+  BuildContext context,
+  BillingService billing,
+  GameState game,
+) {
+  Analytics.instance.starterView(game, 'popup');
+  return _starterSheet(context, billing, game);
+}
+
+Future<void> _starterSheet(
   BuildContext context,
   BillingService billing,
   GameState game,

@@ -217,7 +217,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case MergedEvent(:final level):
         sfx(level >= 6 ? Sfx.mergeBig : Sfx.merge);
         _tutorialEvent(e);
-      case EnergyEmptyEvent() || AdRewardEvent():
+      case EnergyEmptyEvent() || AdRewardEvent() || GemsSpentEvent():
         break; // 지표용 (Analytics)
     }
   }
@@ -565,7 +565,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<bool> _rewarded() async {
     final ok = await widget.ads.showRewarded();
-    if (!ok) _toast(tr('toast.adLoading'));
+    if (!ok) {
+      _toast(tr('toast.adLoading'));
+      Analytics.instance.adUnavailable();
+    }
     return ok;
   }
 

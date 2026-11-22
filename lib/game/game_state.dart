@@ -213,6 +213,13 @@ class SeasonSetEvent extends GameEvent {
 }
 
 /// 보상형 광고를 끝까지 봤다.
+/// 다이아를 썼다 (어디에 · 얼마나) — 분석용.
+class GemsSpentEvent extends GameEvent {
+  final int amount;
+  final String what;
+  GemsSpentEvent(this.amount, this.what);
+}
+
 class AdRewardEvent extends GameEvent {
   final String kind;
   AdRewardEvent(this.kind);
@@ -787,7 +794,7 @@ class GameState extends ChangeNotifier {
   bool buyVault(int i) {
     if (!GameConfig.isVault(i) || vaultOwned.contains(i)) return false;
     final cost = vaultCostNext;
-    if (!_spendGems(cost)) return false;
+    if (!_spendGems(cost, 'vault')) return false;
     vaultOwned.add(i);
     _trace('vault', '$i,$cost');
     notifyListeners();
@@ -1653,13 +1660,15 @@ class GameState extends ChangeNotifier {
       if (Garden.isSeasonStyle(style)) {
         // 시즌 디자인은 그 시즌에만 판다
         if (style != seasonStyleNow) return StyleResult.notPlaced;
-        if (!_spendGems(Garden.seasonGems)) return StyleResult.noGems;
+        if (!_spendGems(Garden.seasonGems, 'season_decor'))
+          return StyleResult.noGems;
       } else if (style == 1) {
         final c = styleCost(area, slot);
         if (coins < c) return StyleResult.noCoins;
         coins -= c;
       } else {
-        if (!_spendGems(Garden.styleGems(area))) return StyleResult.noGems;
+        if (!_spendGems(Garden.styleGems(area), 'style'))
+          return StyleResult.noGems;
       }
       ownedStyles.add('$area:$slot:$style');
       _bump(Stat.stylesBought);
@@ -1686,7 +1695,8 @@ class GameState extends ChangeNotifier {
   StyleResult buySeasonSet(int area, Iterable<int> slots) {
     final s = seasonStyleNow;
     if (ownsSeasonSet(area, slots)) return StyleResult.ok;
-    if (!_spendGems(Garden.seasonSetGems)) return StyleResult.noGems;
+    if (!_spendGems(Garden.seasonSetGems, 'season_set'))
+      return StyleResult.noGems;
     for (final i in slots) {
       ownedStyles.add('$area:$i:$s');
       if (isPlaced(area, i)) decorStyle['$area:$i'] = s;
@@ -1714,7 +1724,7 @@ class GameState extends ChangeNotifier {
         if (o.limited) return StyleResult.notPlaced; // 한정 의상은 패키지로만
         if (!o.onSaleIn(now.month))
           return StyleResult.notPlaced; // 계절 의상은 그 계절에만
-        if (!_spendGems(o.gems)) return StyleResult.noGems;
+        if (!_spendGems(o.gems, 'outfit')) return StyleResult.noGems;
         ownedOutfits.add('$friendId:$outfit');
         _bump(Stat.stylesBought);
       }
@@ -1962,7 +1972,7 @@ class GameState extends ChangeNotifier {
     final cell = _emptyCell;
     if (cell == null) return BuyResult.noSpace;
     if (o.kind == 3) {
-      _spendGems(o.price);
+      _spendGems(o.price, 'market');
     } else if (o.kind != 4) {
       coins -= o.price;
     }
@@ -1993,11 +2003,12 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool _spendGems(int n) {
+  bool _spendGems(int n, [String what = 'other']) {
     if (gems < n) return false;
     gems -= n;
     _bump(Stat.gemsSpent, n);
-    _trace('gems', '-$n');
+    _trace('gems', '-$n $what');
+    _events.add(GemsSpentEvent(n, what));
     return true;
   }
 
@@ -2006,7 +2017,7 @@ class GameState extends ChangeNotifier {
   /// 다이아로 에너지 100 충전 (상한을 넘어도 된다).
   bool buyEnergyRefill() {
     _rollAdDay();
-    if (!_spendGems(refillCost)) return false;
+    if (!_spendGems(refillCost, 'energy_refill')) return false;
     _gemRefillsToday++;
     energy += Gems.refillEnergy;
     notifyListeners();
@@ -2023,7 +2034,7 @@ class GameState extends ChangeNotifier {
 
   bool popBubbleWithGems(int cell) {
     final cost = bubbleGemCost(cell);
-    if (cost <= 0 || !_spendGems(cost)) return false;
+    if (cost <= 0 || !_spendGems(cost, 'bubble')) return false;
     return popBubble(cell);
   }
 
@@ -2194,7 +2205,7 @@ class GameState extends ChangeNotifier {
   /// 다이아로 부스트.
   bool buyBoost(BoostKind k) {
     if (!canAddBoostOf(k)) return false;
-    if (!_spendGems(Boosts.gemCost[k]!)) return false;
+    if (!_spendGems(Boosts.gemCost[k]!, 'boost_${k.name}')) return false;
     _addBoost(k, Boosts.perGems[k]!);
     _trace('boost', '${k.name},gems');
     return true;
@@ -2277,7 +2288,7 @@ class GameState extends ChangeNotifier {
   }
 
   bool buyCoinPack(int i) {
-    if (!_spendGems(Gems.coinPacks[i].$1)) return false;
+    if (!_spendGems(Gems.coinPacks[i].$1, 'coin_pack_$i')) return false;
     _earn(coinPackAmount(i));
     _trace('coinPack', '$i');
     notifyListeners();
@@ -2339,7 +2350,7 @@ class GameState extends ChangeNotifier {
       notifyListeners();
       return false;
     }
-    if (!_spendGems(surpriseGems)) return false;
+    if (!_spendGems(surpriseGems, 'featured')) return false;
     board[cell] = Item(_nextId++, c, l);
     _trace('featured', '${c.name}$l');
     _featured = null;
@@ -2349,7 +2360,8 @@ class GameState extends ChangeNotifier {
 
   /// 계절 정원 효과 따로 사기.
   bool buyEffect(String id) {
-    if (effects.contains(id) || !_spendGems(Gems.effectGems)) return false;
+    if (effects.contains(id) || !_spendGems(Gems.effectGems, 'season_effect'))
+      return false;
     effects.add(id);
     effectOn = id;
     notifyListeners();

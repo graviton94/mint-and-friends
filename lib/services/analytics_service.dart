@@ -49,6 +49,25 @@ class Analytics {
           log('max_merge');
         case EnergyEmptyEvent():
           log('energy_empty', {'level': game.level});
+        case GemsSpentEvent():
+          // 다이아 소비처: Firebase 표준 이벤트 + 우리 이름
+          if (_on) {
+            unawaited(
+              _fa
+                  .logSpendVirtualCurrency(
+                    itemName: e.what,
+                    virtualCurrencyName: 'diamond',
+                    value: e.amount,
+                  )
+                  .catchError((Object _) {}),
+            );
+          }
+          log('gems_spend', {
+            'what': e.what,
+            'amount': e.amount,
+            'left': game.gems,
+            'level': game.level,
+          });
         case AdRewardEvent():
           log('ad_reward', {'kind': e.kind, 'level': game.level});
         default:
@@ -67,4 +86,23 @@ class Analytics {
 
   void purchase(String productId) =>
       log('iap_purchase', {'product': productId});
+
+  // ---- 상점 · 결제 퍼널 (D-044): 상점 열기 → 상품 누르기 → 결제 성공 · 취소 · 오류
+  void shopOpen(GameState g, {required bool starter}) => log('shop_open', {
+    'gems': g.gems,
+    'level': g.level,
+    'starter': starter ? 1 : 0,
+  });
+  void starterView(GameState g, String from) => log('starter_view', {
+    'from': from,
+    'level': g.level,
+    'shows': g.starterShows,
+  });
+  void iapBegin(String productId) => log('iap_begin', {'product': productId});
+  void iapCancel(String productId) => log('iap_cancel', {'product': productId});
+  void iapError(String productId, String code) =>
+      log('iap_error', {'product': productId, 'code': code});
+
+  /// 보상형 광고를 보려 했지만 준비된 광고가 없었다 (광고 채움률 확인용).
+  void adUnavailable() => log('ad_unavailable');
 }
