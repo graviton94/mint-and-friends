@@ -56,7 +56,7 @@ class _StartAppState extends State<StartApp> {
     if (_stage != _Stage.title) return;
     sfx(Sfx.open);
     setState(() => _stage = _Stage.enter);
-    Future.delayed(const Duration(milliseconds: 1100), () {
+    Future.delayed(EnterView.duration, () {
       if (mounted) setState(() => _stage = _Stage.game);
     });
   }
@@ -462,86 +462,221 @@ class EnterView extends StatefulWidget {
   const EnterView({super.key, required this.tip});
   final int tip;
 
+  /// 이 화면이 떠 있는 시간.
+  static const Duration duration = Duration(milliseconds: 1700);
+
   @override
   State<EnterView> createState() => _EnterViewState();
 }
 
 class _EnterViewState extends State<EnterView>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _hop = AnimationController(
+  /// 화면이 떠 있는 동안 0 → 1 (친구들 행렬이 걸어가고 덩굴 진행바가 자란다).
+  late final AnimationController _go = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 700),
-  )..repeat();
+    duration: EnterView.duration,
+  )..forward();
 
   @override
   void dispose() {
-    _hop.dispose();
+    _go.dispose();
     super.dispose();
+  }
+
+  Widget _art(String id, {double? width, double? height, bool flip = false}) {
+    final img = Image.asset(
+      Art.frame(id).path,
+      width: width,
+      height: height,
+      fit: BoxFit.contain,
+      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+    );
+    return flip
+        ? Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.diagonal3Values(-1, 1, 1),
+            child: img,
+          )
+        : img;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF7BC98F),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedBuilder(
-              animation: _hop,
-              builder: (_, child) => Transform.translate(
-                offset: Offset(0, -18 * sin(_hop.value * pi)),
-                child: child,
+      body: LayoutBuilder(
+        builder: (context, c) {
+          final w = min(c.maxWidth, 520.0);
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              // 정원 배경을 옅게 (타이틀과 같은 세계)
+              Image.asset('assets/art/areas/yard_bg.webp', fit: BoxFit.cover),
+              Container(color: const Color(0xB3FFF8EA)),
+              Positioned(
+                left: 0,
+                top: 0,
+                child: _art('orn_corner_flowers', width: w * 0.36),
               ),
-              child: ArtImage(
-                Art.friend(Friends.byId('kongtteok'), happy: true),
-                size: 140,
+              Positioned(
+                right: 0,
+                top: 0,
+                child: _art('orn_corner_flowers', width: w * 0.36, flip: true),
               ),
-            ),
-            const SizedBox(height: 18),
-            Text(
-              tr('start.entering'),
-              style: const TextStyle(
-                fontSize: 26,
-                color: Colors.white,
-                shadows: [
-                  Shadow(color: Color(0xFF3A6B45), offset: Offset(0, 3)),
-                ],
+              Positioned(
+                left: -w * 0.04,
+                bottom: 0,
+                child: _art('orn_bush', width: w * 0.42),
               ),
-            ),
-            const SizedBox(height: 18),
-            Container(
-              width: 300,
-              padding: const EdgeInsets.fromLTRB(18, 12, 18, 14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFFBF0),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFF7A5230), width: 3),
+              Positioned(
+                right: -w * 0.04,
+                bottom: 0,
+                child: _art('orn_bush', width: w * 0.42, flip: true),
               ),
-              child: Column(
-                children: [
-                  Text(
-                    tr('start.tipTitle'),
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Color(0xFF7A5230),
-                    ),
+              AnimatedBuilder(
+                animation: _go,
+                builder: (_, child) => Positioned(
+                  right: w * 0.06,
+                  top: c.maxHeight * 0.16 + sin(_go.value * pi * 3) * 10,
+                  child: child!,
+                ),
+                child: _art('orn_butterflies', width: w * 0.22),
+              ),
+              Center(
+                child: SizedBox(
+                  width: w * 0.9,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        tr('start.entering'),
+                        style: const TextStyle(
+                          fontSize: 28,
+                          color: Color(0xFF5C402C),
+                          shadows: [
+                            Shadow(color: Colors.white, offset: Offset(0, 2)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      // 친구들이 정원 길을 따라 걸어간다 (통통 걸음)
+                      AnimatedBuilder(
+                        animation: _go,
+                        builder: (_, child) => Transform.translate(
+                          offset: Offset(
+                            (Curves.easeInOut.transform(_go.value) - 0.5) *
+                                w *
+                                0.22,
+                            -(sin(_go.value * pi * 10).abs()) * 5,
+                          ),
+                          child: child,
+                        ),
+                        child: _art('loading_parade', width: w * 0.82),
+                      ),
+                      const SizedBox(height: 14),
+                      _VineBar(progress: _go, width: w * 0.78),
+                      const SizedBox(height: 18),
+                      // 팁: 나무 팻말 카드
+                      SizedBox(
+                        width: w * 0.86,
+                        child: AspectRatio(
+                          aspectRatio: 652 / 519,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              _art('tip_card'),
+                              Padding(
+                                padding: EdgeInsets.fromLTRB(
+                                  w * 0.12,
+                                  w * 0.22,
+                                  w * 0.12,
+                                  w * 0.08,
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      tr('start.tipTitle'),
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        color: Color(0xFF7A5230),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      tr('start.tip.${widget.tip}'),
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 17,
+                                        height: 1.45,
+                                        color: Palette.text,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    tr('start.tip.${widget.tip}'),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      height: 1.45,
-                      color: Palette.text,
-                    ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// 나무 틀 안에서 덩굴이 자라는 진행바 (덩굴 그림을 왼쪽부터 보여 준다).
+class _VineBar extends StatelessWidget {
+  const _VineBar({required this.progress, required this.width});
+  final Animation<double> progress;
+  final double width;
+
+  @override
+  Widget build(BuildContext context) {
+    final h = width * 157 / 645;
+    return SizedBox(
+      width: width,
+      height: h,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Image.asset(Art.frame('loading_bar').path, fit: BoxFit.fill),
+          ),
+          Positioned(
+            left: width * 0.06,
+            right: width * 0.06,
+            top: h * 0.05,
+            bottom: h * 0.05,
+            child: AnimatedBuilder(
+              animation: progress,
+              builder: (_, child) => Align(
+                alignment: Alignment.centerLeft,
+                child: ClipRect(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    widthFactor:
+                        (0.08 + 0.92 * Curves.easeOut.transform(progress.value))
+                            .clamp(0.0, 1.0),
+                    child: child,
                   ),
-                ],
+                ),
+              ),
+              child: SizedBox(
+                width: width * 0.88,
+                height: h * 0.9,
+                child: Image.asset(
+                  Art.frame('loading_vine').path,
+                  fit: BoxFit.fill,
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
