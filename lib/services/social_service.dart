@@ -361,6 +361,9 @@ abstract class SocialBackend {
   Future<List<FriendLink>> friendLinks(String uid);
   Future<void> addFriendLink(String uid, String friendUid);
   Future<void> removeFriendLink(String uid, String friendUid);
+
+  /// 신고 남기기 (쓰기만, 읽기는 운영자가 Firebase 콘솔에서).
+  Future<void> report(Map<String, dynamic> data);
   Future<Map<String, Map<String, dynamic>>> getProfiles(List<String> uids);
   Future<List<InboxItem>> inbox(String uid);
   Future<void> deleteInbox(String uid, List<String> ids);
@@ -426,6 +429,11 @@ class FirestoreSocialBackend implements SocialBackend {
   @override
   Future<void> removeFriendLink(String uid, String friendUid) =>
       _friends(uid).doc(friendUid).delete();
+
+  @override
+  Future<void> report(Map<String, dynamic> data) => _db
+      .collection('reports')
+      .add({...data, 'at': FieldValue.serverTimestamp()});
 
   @override
   Future<Map<String, Map<String, dynamic>>> getProfiles(
@@ -889,6 +897,29 @@ class SocialService extends ChangeNotifier {
       busy = false;
       notifyListeners();
     }
+  }
+
+  /// 신고 이유 (Firestore 규칙과 같아야 한다).
+  static const List<String> reportReasons = ['name', 'harass', 'other'];
+
+  /// 친구 신고: 정원 이름 · 코드를 함께 남긴다. [alsoRemove] 면 친구에서도 뺀다 (차단).
+  Future<void> reportFriend(
+    SocialFriend f,
+    String reason, {
+    bool alsoRemove = true,
+  }) async {
+    final u = _check();
+    if (u == null) return;
+    await _net(
+      backend.report({
+        'from': u,
+        'target': f.uid,
+        'name': f.profile.name,
+        'code': f.profile.code,
+        'reason': reason,
+      }),
+    );
+    if (alsoRemove) await removeFriend(f.uid);
   }
 
   Future<void> removeFriend(String friendUid) async {

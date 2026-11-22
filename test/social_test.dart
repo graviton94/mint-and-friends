@@ -58,6 +58,10 @@ class FakeBackend implements SocialBackend {
   @override
   Future<void> addFriendLink(String uid, String friendUid) =>
       _go(() => (links[uid] ??= {})[friendUid] = null);
+  final List<Map<String, dynamic>> reports = [];
+  @override
+  Future<void> report(Map<String, dynamic> data) =>
+      _go(() => reports.add(data));
   @override
   Future<void> removeFriendLink(String uid, String friendUid) =>
       _go(() => links[uid]?.remove(friendUid));
@@ -311,6 +315,21 @@ void main() {
         () => a.addFriendByCode('HHHHHHHH'),
         throwsA(isA<SocialException>().having((e) => e.code, 'code', 'full')),
       );
+    });
+
+    test('신고: 이름 · 코드 · 이유를 남기고, 원하면 친구에서도 뺀다', () async {
+      final b = make('u2', seed: 2);
+      final bMe = await b.ensureProfile(game());
+      final a = make('u1', name: '민트');
+      await a.ensureProfile(game());
+      final f = await a.addFriendByCode(bMe.code);
+      await a.reportFriend(f, 'name');
+      expect(server.reports.length, 1);
+      expect(server.reports.first['from'], 'u1');
+      expect(server.reports.first['target'], 'u2');
+      expect(server.reports.first['code'], bMe.code);
+      expect(server.reports.first['reason'], 'name');
+      expect(a.friends.any((x) => x.uid == 'u2'), isFalse);
     });
 
     test('하루 한 번 선물: 보내면 완료, 업적 기록, 받는 쪽 쪽지 (중복 없음)', () async {

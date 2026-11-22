@@ -16,6 +16,7 @@ import 'sheets.dart';
 import 'theme.dart';
 import 'widgets/frame_box.dart';
 import 'widgets/icon_text.dart';
+import 'widgets/top_toast.dart';
 
 /// 친구 화면: 내 코드 · 닉네임, 코드로 친구 추가, 친구 목록 (선물 · 구경).
 Future<void> showFriendsSheet(
@@ -638,10 +639,111 @@ Future<void> showVisitSheet(
               textAlign: TextAlign.center,
               style: _sub,
             ),
+          const SizedBox(height: 4),
+          // 신고: 정원 이름이 불쾌하거나 괴롭힘 · 사칭이면 (Play 사용자 제작 콘텐츠 정책)
+          Center(
+            child: TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.black45),
+              onPressed: () => _report(context, social, friend),
+              child: IconText(
+                tr('social.report'),
+                style: const TextStyle(fontSize: 13),
+              ),
+            ),
+          ),
         ],
       ),
     ),
   );
+}
+
+Future<void> _report(
+  BuildContext context,
+  SocialService social,
+  SocialFriend friend,
+) async {
+  final pick = await showDialog<(String, bool)>(
+    context: context,
+    builder: (_) => _ReportDialog(name: friend.profile.name),
+  );
+  if (pick == null || !context.mounted) return;
+  try {
+    await social.reportFriend(friend, pick.$1, alsoRemove: pick.$2);
+    if (!context.mounted) return;
+    TopToast.show(context, tr('social.reportDone'));
+    if (pick.$2) Navigator.of(context).maybePop();
+  } catch (_) {
+    if (context.mounted) TopToast.show(context, tr('social.reportFail'));
+  }
+}
+
+class _ReportDialog extends StatefulWidget {
+  const _ReportDialog({required this.name});
+  final String name;
+
+  @override
+  State<_ReportDialog> createState() => _ReportDialogState();
+}
+
+class _ReportDialogState extends State<_ReportDialog> {
+  String _reason = SocialService.reportReasons.first;
+  bool _remove = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return GameDialog(
+      title: IconText(tr('social.report'), textAlign: TextAlign.center),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          IconText(
+            tr('social.reportAbout', {'name': widget.name}),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 15),
+          ),
+          const SizedBox(height: 6),
+          RadioGroup<String>(
+            groupValue: _reason,
+            onChanged: (v) => setState(() => _reason = v ?? _reason),
+            child: Column(
+              children: [
+                for (final r in SocialService.reportReasons)
+                  RadioListTile<String>(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    value: r,
+                    title: IconText(tr('social.reportReason.$r')),
+                  ),
+              ],
+            ),
+          ),
+          CheckboxListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            value: _remove,
+            onChanged: (v) => setState(() => _remove = v ?? true),
+            title: IconText(tr('social.reportRemove')),
+          ),
+        ],
+      ),
+      actionsAlignment: MainAxisAlignment.center,
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: IconText(tr('common.cancel')),
+        ),
+        FilledButton(
+          style: plainButton(
+            FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+          ),
+          onPressed: () => Navigator.pop(context, (_reason, _remove)),
+          child: IconText(tr('social.reportSend')),
+        ),
+      ],
+    );
+  }
 }
 
 class _RenameDialog extends StatefulWidget {
