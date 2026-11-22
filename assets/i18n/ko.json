@@ -944,5 +944,10 @@
   "set.effect.offline": "오프라인 최대 +{v}분",
   "set.effect.lucky": "행운 +{v}%p",
   "set.effect.visitorCoins": "손님 코인 +{v}%",
-  "social.levelAreaScore": "Lv.{n} · {area} · 꾸밈 점수 {score}"
+  "social.levelAreaScore": "Lv.{n} · {area} · 꾸밈 점수 {score}",
+  "upgrade.nextX2": "×2까지 {n}",
+  "upgrade.max": "최대 ×{n}",
+  "upgrade.maxDone": "{name} Lv.{from} → {to}!",
+  "upgrade.milestoneHit": "{name} ×2!",
+  "upgrade.milestoneSub": "Lv.{lv} 달성 · 생산 2배"
 }

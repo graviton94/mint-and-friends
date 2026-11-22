@@ -227,6 +227,8 @@ class _UpgradeRow extends StatelessWidget {
     final featureLocked = game.upgradeFeatureLocked(t);
     final maxed = game.upgradeMaxed(t);
     final capped = game.upgradeCapped(t);
+    final every = Upgrades.milestoneEvery(t);
+    final bulk = featureLocked ? 0 : game.affordableUpgrades(t);
     final featureLevel = Leveling.unlockLevel[def.feature ?? Feature.upgrades]!;
     String button;
     if (featureLocked) {
@@ -272,15 +274,77 @@ class _UpgradeRow extends StatelessWidget {
                         ),
                       ),
                     ),
+                    // 다음 ×2 고비까지 (생산력 4종, D-048)
+                    if (every != null && !featureLocked) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(5),
+                              child: LinearProgressIndicator(
+                                value: (lv % every) / every,
+                                minHeight: 8,
+                                backgroundColor: const Color(0xFFEDE3CC),
+                                color: const Color(0xFFF2B53A),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          IconText(
+                            tr('upgrade.nextX2', {'n': every - lv % every}),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFFB0640A),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              CostButton(
-                label: button,
-                onPressed: game.canBuyUpgrade(t)
-                    ? () => game.buyUpgrade(t)
-                    : null,
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CostButton(
+                    label: button,
+                    onPressed: game.canBuyUpgrade(t)
+                        ? () => game.buyUpgrade(t)
+                        : null,
+                  ),
+                  // 일괄 강화: 살 수 있는 만큼 한 번에
+                  if (bulk >= 2) ...[
+                    const SizedBox(height: 4),
+                    CostButton(
+                      label: tr('upgrade.max', {'n': bulk}),
+                      height: 34,
+                      frame: 'button_gold',
+                      onPressed: () {
+                        final before = lv;
+                        final n = game.buyUpgradeMax(t);
+                        if (n > 0) {
+                          sfx(Sfx.levelup);
+                          TopToast.celebrate(
+                            context,
+                            art: ArtImage(IconText.resolve(def.icon), size: 52),
+                            title: tr('upgrade.maxDone', {
+                              'name': upgradeTitle(t),
+                              'from': before,
+                              'to': game.lv(t),
+                            }),
+                            sub: upgradeLine(
+                              t,
+                              game.lv(t),
+                              maxed: game.upgradeMaxed(t),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                ],
               ),
             ],
           ),

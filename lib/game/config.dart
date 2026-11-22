@@ -642,6 +642,15 @@ class Upgrades {
 
   static UpgradeDef of(UpgradeType t) => all.firstWhere((u) => u.type == t);
 
+  /// 25단계마다 ×2 가 붙는 강화면 그 간격 (생산력 4종).
+  static int? milestoneEvery(UpgradeType t) => switch (t) {
+    UpgradeType.flowerPower ||
+    UpgradeType.snackPower ||
+    UpgradeType.teaPower ||
+    UpgradeType.stardustPower => 25,
+    _ => null,
+  };
+
   /// 체인별 생산력: 단계당 +5%, 25단계마다 ×2.
   static double chainPower(int lv) =>
       (1 + 0.05 * lv) * pow(2, lv ~/ 25).toDouble();

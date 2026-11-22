@@ -943,5 +943,10 @@
   "set.effect.offline": "オフライン最大 +{v}分",
   "set.effect.lucky": "ラッキー +{v}%p",
   "set.effect.visitorCoins": "お客さんのコイン +{v}%",
-  "social.levelAreaScore": "Lv.{n}・{area}・飾りスコア {score}"
+  "social.levelAreaScore": "Lv.{n}・{area}・飾りスコア {score}",
+  "upgrade.nextX2": "×2まで{n}",
+  "upgrade.max": "最大 ×{n}",
+  "upgrade.maxDone": "{name} Lv.{from} → {to}!",
+  "upgrade.milestoneHit": "{name} ×2!",
+  "upgrade.milestoneSub": "Lv.{lv} 達成・生産2倍"
 }

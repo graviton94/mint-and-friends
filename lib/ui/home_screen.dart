@@ -227,6 +227,14 @@ class _HomeScreenState extends State<HomeScreen> {
       case MergedEvent(:final level):
         sfx(level >= 6 ? Sfx.mergeBig : Sfx.merge);
         _tutorialEvent(e);
+      case UpgradeMilestoneEvent(:final type, :final level):
+        sfx(Sfx.levelup);
+        TopToast.celebrate(
+          context,
+          art: ArtImage(IconText.resolve(Upgrades.of(type).icon), size: 56),
+          title: tr('upgrade.milestoneHit', {'name': upgradeTitle(type)}),
+          sub: tr('upgrade.milestoneSub', {'lv': level}),
+        );
       case EnergyEmptyEvent() || AdRewardEvent() || GemsSpentEvent():
         break; // 지표용 (Analytics)
     }

@@ -214,6 +214,13 @@ class SeasonSetEvent extends GameEvent {
 
 /// 보상형 광고를 끝까지 봤다.
 /// 다이아를 썼다 (어디에 · 얼마나) — 분석용.
+/// 생산력 강화가 25단계 고비를 넘어 ×2 가 됐다 (D-048).
+class UpgradeMilestoneEvent extends GameEvent {
+  final UpgradeType type;
+  final int level;
+  UpgradeMilestoneEvent(this.type, this.level);
+}
+
 class GemsSpentEvent extends GameEvent {
   final int amount;
   final String what;
@@ -2332,13 +2339,56 @@ class GameState extends ChangeNotifier {
       coins >= upgradeCost(t);
 
   bool buyUpgrade(UpgradeType t) {
+    if (!_buyUpgradeOnce(t)) return false;
+    notifyListeners();
+    return true;
+  }
+
+  bool _buyUpgradeOnce(UpgradeType t) {
     if (!canBuyUpgrade(t)) return false;
     coins -= upgradeCost(t);
     upgrades[t] = lv(t) + 1;
     if (t == UpgradeType.basketTier) _refreshOrdersForTier();
     _bump(Stat.upgradesBought);
-    notifyListeners();
+    final every = Upgrades.milestoneEvery(t);
+    if (every != null && lv(t) % every == 0) {
+      _events.add(UpgradeMilestoneEvent(t, lv(t)));
+    }
     return true;
+  }
+
+  /// '최대' 강화를 쓸 수 있는 강화 (바구니 등급은 한 단계씩: 부탁 단계가 함께 오른다).
+  bool bulkUpgradable(UpgradeType t) => t != UpgradeType.basketTier;
+
+  /// 지금 코인으로 한 번에 살 수 있는 단계 수 (최대 [cap]).
+  int affordableUpgrades(UpgradeType t, {int cap = 999}) {
+    if (!bulkUpgradable(t) || !canBuyUpgrade(t))
+      return canBuyUpgrade(t) ? 1 : 0;
+    final d = Upgrades.of(t);
+    final mul = d.maxLevel == Upgrades.endless ? inflation : 1.0;
+    var c = coins, l = lv(t), n = 0;
+    while (n < cap && l < d.maxLevel && level >= d.levelFor(l)) {
+      final cost = d.costAt(l) * mul;
+      if (c < cost) break;
+      c -= cost;
+      l++;
+      n++;
+    }
+    return n;
+  }
+
+  /// 일괄 강화 (D-048): 살 수 있는 만큼 한 번에. 산 단계 수.
+  int buyUpgradeMax(UpgradeType t) {
+    if (!bulkUpgradable(t)) return buyUpgrade(t) ? 1 : 0;
+    var n = 0;
+    while (n < 999 && _buyUpgradeOnce(t)) {
+      n++;
+    }
+    if (n > 0) {
+      _trace('upgradeMax', '${t.name},$n');
+      notifyListeners();
+    }
+    return n;
   }
 
   // ---------------------------------------------------------------- 광고 보상

@@ -943,5 +943,10 @@
   "set.effect.offline": "Máx. sin conexión +{v} min",
   "set.effect.lucky": "Suerte +{v} pp",
   "set.effect.visitorCoins": "Monedas de visitas +{v}%",
-  "social.levelAreaScore": "Nv.{n} · {area} · Decoración {score}"
+  "social.levelAreaScore": "Nv.{n} · {area} · Decoración {score}",
+  "upgrade.nextX2": "{n} para ×2",
+  "upgrade.max": "Máx. ×{n}",
+  "upgrade.maxDone": "¡{name} Nv.{from} → {to}!",
+  "upgrade.milestoneHit": "¡{name} ×2!",
+  "upgrade.milestoneSub": "Nv.{lv} alcanzado · producción ×2"
 }

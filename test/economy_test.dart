@@ -558,6 +558,27 @@ void main() {
     expect(total, 8640);
   });
 
+  test('일괄 강화 (D-048): 살 수 있는 만큼 한 번에, 25단계마다 ×2 알림, 바구니 등급은 한 단계씩', () {
+    final g = make();
+    g.level = 99;
+    g.coins = 1e12;
+    final t = UpgradeType.flowerPower;
+    final n = g.affordableUpgrades(t);
+    expect(n, greaterThan(25));
+    final events = <GameEvent>[];
+    final sub = g.events.listen(events.add);
+    final before = g.coins;
+    expect(g.buyUpgradeMax(t), n);
+    expect(g.lv(t), n);
+    expect(g.coins, lessThan(before));
+    expect(g.canBuyUpgrade(t), isFalse);
+    expect(g.bulkUpgradable(UpgradeType.basketTier), isFalse);
+    return Future.delayed(Duration.zero, () {
+      sub.cancel();
+      expect(events.whereType<UpgradeMilestoneEvent>().length, n ~/ 25);
+    });
+  });
+
   test('부탁 바꾸기: 하루 3번 무료', () {
     final g = make();
     for (var k = 0; k < OrderQuota.freeRerolls; k++) {

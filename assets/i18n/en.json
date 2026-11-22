@@ -943,5 +943,10 @@
   "set.effect.offline": "Offline max +{v} min",
   "set.effect.lucky": "Lucky +{v}%p",
   "set.effect.visitorCoins": "Visitor coins +{v}%",
-  "social.levelAreaScore": "Lv.{n} · {area} · Decor {score}"
+  "social.levelAreaScore": "Lv.{n} · {area} · Decor {score}",
+  "upgrade.nextX2": "{n} to ×2",
+  "upgrade.max": "Max ×{n}",
+  "upgrade.maxDone": "{name} Lv.{from} → {to}!",
+  "upgrade.milestoneHit": "{name} ×2!",
+  "upgrade.milestoneSub": "Reached Lv.{lv} · output doubled"
 }
