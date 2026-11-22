@@ -1676,7 +1676,11 @@ class GameState extends ChangeNotifier {
     final slots = min(GameConfig.orderSlots, friends.length);
     bool freeAsker() {
       final busy = {for (final o in orders) o.friendId};
-      return _askers.any((f) => !busy.contains(f) && !_resting(f));
+      // 쉬는 시간은 다른 친구가 부탁할 수 있을 때만 지킨다:
+      // 부탁이 하나도 없으면 쉬는 친구라도 바로 부탁한다 (정원이 비어 보이지 않게)
+      return _askers.any(
+        (f) => !busy.contains(f) && (orders.isEmpty || !_resting(f)),
+      );
     }
 
     while (orders.length < slots && freeAsker()) {
