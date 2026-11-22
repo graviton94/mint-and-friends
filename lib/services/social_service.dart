@@ -107,6 +107,14 @@ class SocialConfig {
   /// 친구 선물 하나의 에너지 (함수 sendGift 와 같은 값).
   static const int giftEnergy = 5;
 
+  /// 하루 제한: 선물 보내기 · 친구 추가(코드 · 추천) 각 3번 (초대 수락은 제외).
+  static const int giftsPerDay = 3;
+  static const int addsPerDay = 3;
+
+  /// 추천 친구: 최근 접속한 사람 중 이만큼 보여 준다.
+  static const int recommendShow = 3;
+  static const int recommendPool = 40;
+
   /// 프로필은 바뀌었을 때만, 그래도 최소 이 간격으로.
   static const Duration profileMinGap = Duration(minutes: 2);
   static const Duration profileRefresh = Duration(hours: 12);
@@ -416,6 +424,9 @@ abstract class SocialBackend {
 
   /// 나를 초대한 사람으로 적은 프로필들 (초대 친구 진행 · 보상 확인).
   Future<Map<String, Map<String, dynamic>>> invitees(String uid);
+
+  /// 최근에 프로필을 올린(=최근 접속한) 사람들 (추천 친구 후보).
+  Future<Map<String, Map<String, dynamic>>> recentProfiles(int n);
 }
 
 class FirestoreSocialBackend implements SocialBackend {
@@ -486,6 +497,16 @@ class FirestoreSocialBackend implements SocialBackend {
         .collection('profiles')
         .where('invitedBy', isEqualTo: uid)
         .limit(20)
+        .get();
+    return {for (final d in q.docs) d.id: d.data()};
+  }
+
+  @override
+  Future<Map<String, Map<String, dynamic>>> recentProfiles(int n) async {
+    final q = await _db
+        .collection('profiles')
+        .orderBy('updatedAt', descending: true)
+        .limit(n)
         .get();
     return {for (final d in q.docs) d.id: d.data()};
   }
@@ -930,33 +951,95 @@ class SocialService extends ChangeNotifier {
     }
   }
 
-  /// 친구 코드로 추가.
+  /// 친구 코드로 추가 (하루 [SocialConfig.addsPerDay] 번).
   Future<SocialFriend> addFriendByCode(String input) async {
     final u = _check();
     if (u == null) throw SocialException('signIn');
     final code = FriendCode.normalize(input);
     if (code == null) throw SocialException('invalidCode');
     if (code == me?.code) throw SocialException('self');
-    if (friends.length >= SocialConfig.maxFriends) {
-      throw SocialException('full');
-    }
+    _checkAdd();
     busy = true;
     notifyListeners();
     try {
       final fuid = await _net(backend.lookupCode(code));
       if (fuid == null) throw SocialException('notFound');
-      if (fuid == u) throw SocialException('self');
-      if (friends.any((f) => f.uid == fuid)) throw SocialException('already');
-      final p = await _net(backend.getProfile(fuid));
-      if (p == null) throw SocialException('notFound');
-      await _net(backend.addFriendLink(u, fuid));
-      final f = SocialFriend(fuid, SocialProfile.fromMap(fuid, p));
-      friends = [...friends, f];
+      return await _link(u, fuid);
+    } finally {
+      busy = false;
+      notifyListeners();
+    }
+  }
+
+  /// 추천 친구 추가 (코드 추가와 같은 하루 횟수).
+  Future<SocialFriend> addRecommended(SocialProfile p) async {
+    final u = _check();
+    if (u == null) throw SocialException('signIn');
+    _checkAdd();
+    busy = true;
+    notifyListeners();
+    try {
+      final f = await _link(u, p.uid);
+      recommended = recommended.where((r) => r.uid != p.uid).toList();
       return f;
     } finally {
       busy = false;
       notifyListeners();
     }
+  }
+
+  void _checkAdd() {
+    if (friends.length >= SocialConfig.maxFriends) {
+      throw SocialException('full');
+    }
+    if (addsLeft <= 0) throw SocialException('addLimit');
+  }
+
+  Future<SocialFriend> _link(String u, String fuid) async {
+    if (fuid == u) throw SocialException('self');
+    if (friends.any((f) => f.uid == fuid)) throw SocialException('already');
+    final p = await _net(backend.getProfile(fuid));
+    if (p == null) throw SocialException('notFound');
+    await _net(backend.addFriendLink(u, fuid));
+    await _bumpToday(_k('addN'));
+    final f = SocialFriend(fuid, SocialProfile.fromMap(fuid, p));
+    friends = [...friends, f];
+    return f;
+  }
+
+  // ---------------------------------------------------------------- 추천 친구
+
+  /// 추천 친구: 최근 접속한 사람 중 나 · 이미 친구 · 신고한 사람을 빼고
+  /// 레벨이 비슷한 순으로 [SocialConfig.recommendShow] 명. 하루 동안 같은 얼굴 (날짜로 섞는다).
+  List<SocialProfile> recommended = [];
+  String _recommendDay = '';
+
+  Future<void> loadRecommended({bool force = false}) async {
+    final u = _check();
+    if (u == null) return;
+    if (!force && _recommendDay == today && recommended.isNotEmpty) return;
+    try {
+      final all = await _net(
+        backend.recentProfiles(SocialConfig.recommendPool),
+      );
+      final mine = me?.level ?? 1;
+      final known = {u, for (final f in friends) f.uid};
+      final rng = Random(today.hashCode ^ u.hashCode);
+      final pool = [
+        for (final e in all.entries)
+          if (!known.contains(e.key) && (e.value['name'] ?? '') != '')
+            SocialProfile.fromMap(e.key, e.value),
+      ]..shuffle(rng);
+      // 레벨 차이가 작은 사람 먼저 (같은 차이면 섞인 순서)
+      pool.sort(
+        (a, b) => (a.level - mine).abs().compareTo((b.level - mine).abs()),
+      );
+      recommended = pool.take(SocialConfig.recommendShow).toList();
+      _recommendDay = today;
+    } on SocialException {
+      // 추천은 없어도 된다
+    }
+    notifyListeners();
   }
 
   // ---------------------------------------------------------------- 초대 (D-045)
@@ -1057,8 +1140,33 @@ class SocialService extends ChangeNotifier {
 
   int get giftableCount => friends.where((f) => !giftSentToday(f)).length;
 
+  // 하루 횟수 (기기에 날짜와 함께 기록, 선물은 서버도 하루 3번으로 막는다)
+  int _countToday(String key) {
+    final v = prefs.getString(key) ?? '';
+    final i = v.indexOf('|');
+    if (i < 0 || v.substring(0, i) != today) return 0;
+    return int.tryParse(v.substring(i + 1)) ?? 0;
+  }
+
+  Future<void> _bumpToday(String key) =>
+      prefs.setString(key, '$today|${_countToday(key) + 1}');
+
+  /// 오늘 남은 선물 · 친구 추가 횟수.
+  int get giftsLeft => max(
+    0,
+    SocialConfig.giftsPerDay -
+        max(
+          _countToday(_k('giftN')),
+          friends.where((f) => giftSentToday(f)).length,
+        ),
+  );
+  int get addsLeft => max(0, SocialConfig.addsPerDay - _countToday(_k('addN')));
+
+  /// 이 친구에게 지금 선물할 수 있나.
+  bool canGift(SocialFriend f) => !giftSentToday(f) && giftsLeft > 0;
+
   /// 메뉴 빨간 점: 오늘 선물할 수 있는 친구가 있다.
-  bool get badge => canUse && giftableCount > 0;
+  bool get badge => canUse && giftableCount > 0 && giftsLeft > 0;
 
   final Set<String> _sending = {};
   bool isSending(SocialFriend f) => _sending.contains(f.uid);
@@ -1067,11 +1175,13 @@ class SocialService extends ChangeNotifier {
   Future<void> sendGift(SocialFriend f, GameState game) async {
     if (_check() == null) throw SocialException('signIn');
     if (giftSentToday(f) || _sending.contains(f.uid)) return;
+    if (giftsLeft <= 0) throw SocialException('limit');
     final day = today;
     _sending.add(f.uid);
     notifyListeners();
     try {
       await _net(backend.sendGift(f.uid, day));
+      await _bumpToday(_k('giftN'));
       game.recordGiftSent();
       f.lastGiftSentDay = day;
       _markGift(f.uid);

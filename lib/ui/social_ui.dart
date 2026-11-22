@@ -47,8 +47,10 @@ Future<void> showFriendsSheet(
   );
 }
 
-String socialErrorText(String code) =>
-    tr('social.err.$code', {'max': SocialConfig.maxFriends});
+String socialErrorText(String code) => tr('social.err.$code', {
+  'max': SocialConfig.maxFriends,
+  'n': code == 'addLimit' ? SocialConfig.addsPerDay : SocialConfig.giftsPerDay,
+});
 
 const _sub = TextStyle(fontSize: 13, color: Color(0xFF5E6B5E));
 
@@ -75,7 +77,6 @@ class _FriendsBodyState extends State<_FriendsBody> {
   bool _starting = true;
   String? _startError;
   int _tab = 0; // 0 친구 목록 · 1 추가 · 초대
-  bool _giftingAll = false;
 
   SocialService get social => widget.social;
   GameState get game => widget.game;
@@ -162,28 +163,11 @@ class _FriendsBodyState extends State<_FriendsBody> {
     _show(tr('social.giftSent', {'name': f.profile.name}));
   });
 
-  /// 오늘 아직 안 보낸 친구 모두에게 선물.
-  Future<void> _giftAll() async {
-    if (_giftingAll) return;
-    setState(() => _giftingAll = true);
-    var n = 0;
-    for (final f in [...social.friends]) {
-      if (social.giftSentToday(f)) continue;
-      try {
-        await social.sendGift(f, game);
-        n++;
-      } on SocialException catch (e) {
-        if (n == 0) _show(socialErrorText(e.code), bad: true);
-        break;
-      }
-    }
-    if (!mounted) return;
-    setState(() => _giftingAll = false);
-    if (n > 0) {
-      sfx(Sfx.coin);
-      _show(tr('social.giftAllDone', {'n': n, 'e': SocialConfig.giftEnergy}));
-    }
-  }
+  Future<void> _addRec(SocialProfile p) => _guard(() async {
+    final f = await social.addRecommended(p);
+    sfx(Sfx.unlock);
+    _show(tr('social.added', {'name': f.profile.name}));
+  });
 
   Future<void> _rename() async {
     final name = await showDialog<String>(
@@ -278,7 +262,7 @@ class _FriendsBodyState extends State<_FriendsBody> {
               ),
             ),
     );
-    final left = social.giftableCount;
+    final left = social.giftsLeft;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -297,6 +281,7 @@ class _FriendsBodyState extends State<_FriendsBody> {
             sfx(Sfx.tap);
             FocusScope.of(context).unfocus();
             setState(() => _tab = i);
+            if (i == 1) social.loadRecommended();
           },
         ),
         _TabPanel(
@@ -316,9 +301,12 @@ class _FriendsBodyState extends State<_FriendsBody> {
                                 : left > 0
                                 ? tr('social.giftLeft', {
                                     'n': left,
+                                    'max': SocialConfig.giftsPerDay,
                                     'e': SocialConfig.giftEnergy,
                                   })
-                                : tr('social.giftAllSent'),
+                                : tr('social.giftAllSent', {
+                                    'max': SocialConfig.giftsPerDay,
+                                  }),
                             style: _sub,
                           ),
                         ),
@@ -329,37 +317,6 @@ class _FriendsBodyState extends State<_FriendsBody> {
                               width: 16,
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          ),
-                        if (left > 0)
-                          Flexible(
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: FilledButton(
-                                style: framedButton(
-                                  FilledButton.styleFrom(
-                                    minimumSize: const Size(84, 38),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                    ),
-                                    backgroundColor: const Color(0xFFF2C14E),
-                                    foregroundColor: const Color(0xFF5A3A08),
-                                  ),
-                                  'button_gold',
-                                ),
-                                onPressed: _giftingAll || social.busy
-                                    ? null
-                                    : _giftAll,
-                                child: _giftingAll
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : IconText(tr('social.giftAll')),
-                              ),
                             ),
                           ),
                       ],
@@ -382,7 +339,10 @@ class _FriendsBodyState extends State<_FriendsBody> {
                                     ),
                                     'button_green',
                                   ),
-                                  onPressed: () => setState(() => _tab = 1),
+                                  onPressed: () {
+                                    setState(() => _tab = 1);
+                                    social.loadRecommended();
+                                  },
                                   child: IconText(tr('social.goAdd')),
                                 ),
                                 const SizedBox(height: 8),
@@ -394,6 +354,7 @@ class _FriendsBodyState extends State<_FriendsBody> {
                         _FriendRow(
                           friend: f,
                           sent: social.giftSentToday(f),
+                          outOfGifts: left <= 0,
                           sending: social.isSending(f),
                           onGift: () => _gift(f),
                           onVisit: () =>
@@ -473,7 +434,40 @@ class _FriendsBodyState extends State<_FriendsBody> {
                         ),
                       ],
                     ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: IconText(
+                        tr('social.addLeft', {
+                          'n': social.addsLeft,
+                          'max': SocialConfig.addsPerDay,
+                        }),
+                        style: _sub,
+                      ),
+                    ),
                     note,
+                    const _VineDivider(),
+                    IconText(
+                      tr('social.recTitle'),
+                      style: const TextStyle(fontSize: 17),
+                    ),
+                    IconText(tr('social.recNote'), style: _sub),
+                    const SizedBox(height: 6),
+                    if (social.recommended.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: IconText(
+                          tr('social.recEmpty'),
+                          textAlign: TextAlign.center,
+                          style: _sub,
+                        ),
+                      )
+                    else
+                      for (final r in social.recommended)
+                        _RecRow(
+                          profile: r,
+                          enabled: !social.busy && social.addsLeft > 0,
+                          onAdd: () => _addRec(r),
+                        ),
                     const _VineDivider(),
                     _InviteCard(
                       social: social,
@@ -808,6 +802,7 @@ class _FriendRow extends StatelessWidget {
   const _FriendRow({
     required this.friend,
     required this.sent,
+    this.outOfGifts = false,
     required this.sending,
     required this.onGift,
     required this.onVisit,
@@ -815,6 +810,7 @@ class _FriendRow extends StatelessWidget {
   });
   final SocialFriend friend;
   final bool sent;
+  final bool outOfGifts;
   final bool sending;
   final VoidCallback onGift;
   final VoidCallback onVisit;
@@ -884,6 +880,12 @@ class _FriendRow extends StatelessWidget {
                     label: tr('social.sentShort'),
                     color: const Color(0xFFEDE6D6),
                   )
+                : outOfGifts
+                ? _RoundButton(
+                    icon: Art.icon('gift'),
+                    label: tr('social.tomorrow'),
+                    color: const Color(0xFFEDE6D6),
+                  )
                 : _RoundButton(
                     icon: Art.icon('gift'),
                     label: tr('social.giftShort'),
@@ -896,6 +898,68 @@ class _FriendRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 추천 친구 한 줄: 얼굴 · Lv · 이름 · 구역 · 추가.
+class _RecRow extends StatelessWidget {
+  const _RecRow({
+    required this.profile,
+    required this.enabled,
+    required this.onAdd,
+  });
+  final SocialProfile profile;
+  final bool enabled;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(bottom: 8),
+    padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+    decoration: _card(),
+    child: Row(
+      children: [
+        _Avatar(id: safeAvatar(profile.avatar), size: 42),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  _LevelChip(level: profile.level),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      profile.name,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 15),
+                    ),
+                  ),
+                ],
+              ),
+              IconText(
+                areaName(Garden.areaAt(profile.area)),
+                maxLines: 1,
+                style: _sub,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 6),
+        FilledButton(
+          style: framedButton(
+            FilledButton.styleFrom(
+              minimumSize: const Size(60, 38),
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+            ),
+            'button_green',
+          ),
+          onPressed: enabled ? onAdd : null,
+          child: IconText(tr('social.add')),
+        ),
+      ],
+    ),
+  );
 }
 
 /// 친구 얼굴: 민트 동그라미 위에.

@@ -74,6 +74,9 @@ class FakeBackend implements SocialBackend {
     },
   );
   @override
+  Future<Map<String, Map<String, dynamic>>> recentProfiles(int n) =>
+      _go(() => Map.fromEntries(profiles.entries.take(n)));
+  @override
   Future<Map<String, Map<String, dynamic>>> getProfiles(List<String> uids) =>
       _go(
         () => {
@@ -380,6 +383,58 @@ void main() {
       expect(server.links['u1']!.keys, ['u2']);
     });
 
+    test('하루 제한: 친구 추가 3번 · 선물 3번, 다음 날 다시', () async {
+      final a = make('u1');
+      await a.ensureProfile(game());
+      for (var i = 0; i < 5; i++) {
+        server.codes['HHHHHHH${'JKMNP'[i]}'] = 'f$i';
+        server.profiles['f$i'] = {
+          'name': 'f$i',
+          'code': 'HHHHHHH${'JKMNP'[i]}',
+        };
+      }
+      for (var i = 0; i < SocialConfig.addsPerDay; i++) {
+        await a.addFriendByCode('HHHHHHH${'JKMNP'[i]}');
+      }
+      expect(a.addsLeft, 0);
+      expect(
+        () => a.addFriendByCode('HHHHHHHP'),
+        throwsA(
+          isA<SocialException>().having((e) => e.code, 'code', 'addLimit'),
+        ),
+      );
+      server.sender = 'u1';
+      final g = game();
+      for (final f in [...a.friends]) {
+        await a.sendGift(f, g);
+      }
+      expect(a.giftsLeft, 0);
+      expect(a.badge, isFalse);
+      now = now.add(const Duration(days: 1));
+      expect(a.addsLeft, SocialConfig.addsPerDay);
+      expect(a.giftsLeft, SocialConfig.giftsPerDay);
+    });
+
+    test('추천 친구: 나 · 이미 친구 빼고 레벨 비슷한 순 3명, 추가하면 목록에서 빠진다', () async {
+      final a = make('u1');
+      await a.ensureProfile(game()); // 레벨 1
+      for (var i = 0; i < 6; i++) {
+        server.profiles['r$i'] = {
+          'name': 'r$i',
+          'code': 'RRRRRRR$i',
+          'level': 1 + i * 5,
+        };
+      }
+      server.links['u1'] = {'r0': null};
+      await a.loadFriends(force: true);
+      await a.loadRecommended(force: true);
+      expect(a.recommended.map((p) => p.uid), ['r1', 'r2', 'r3']);
+      await a.addRecommended(a.recommended.first);
+      expect(a.friends.any((f) => f.uid == 'r1'), isTrue);
+      expect(a.recommended.map((p) => p.uid), ['r2', 'r3']);
+      expect(a.addsLeft, SocialConfig.addsPerDay - 1);
+    });
+
     test('친구는 최대 50명', () async {
       final a = make('u1');
       await a.ensureProfile(game());
@@ -579,14 +634,12 @@ void main() {
       expect(find.text('민트'), findsOneWidget);
       await tester.tap(find.textContaining('social.tabFriends'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('social.giftAll'), findsOneWidget);
       await tester.ensureVisible(find.textContaining('social.giftShort'));
       await tester.pumpAndSettle();
       await tester.tap(find.textContaining('social.giftShort'));
       await tester.pumpAndSettle();
       expect(g.stat(Stat.giftsSent), 1);
       expect(find.textContaining('social.sentShort'), findsOneWidget);
-      expect(find.textContaining(RegExp(r'social\.giftAll$')), findsNothing);
       await tester.ensureVisible(find.textContaining('social.visitShort'));
       await tester.pumpAndSettle();
       await tester.tap(find.textContaining('social.visitShort'));

@@ -124,7 +124,7 @@ def _delete_social(db, uid: str) -> None:
 # ---------------------------------------------------------------- 친구 선물
 
 GIFT_REWARD = {'e': 5}
-GIFT_DAILY_MAX = 50  # 한 사람이 하루에 보낼 수 있는 선물 수 (친구 최대 50명)
+GIFT_DAILY_MAX = 3  # 한 사람이 하루에 보낼 수 있는 선물 수 (앱 SocialConfig.giftsPerDay 와 같게)
 _DAY = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 
 
