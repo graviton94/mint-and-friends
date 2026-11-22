@@ -54,7 +54,7 @@ Play 에 올린 앱은 Google 이 **앱 서명 키**로 다시 서명한다. 이
 2. Firebase 콘솔 → 프로젝트 설정 → Android 앱 → **디지털 지문 추가** → SHA-1 · SHA-256 둘 다
    → 새 `google-services.json` 은 받지 않아도 됨 (지문은 서버 쪽 설정)
 3. 카카오: SHA-1 을 Claude 에게 주면 **키 해시**(Base64)로 바꿔 줌 → Kakao Developers → 내 애플리케이션 → 플랫폼 → Android → 키 해시 추가
-   (직접 바꾸려면: `echo <SHA1 콜론 포함> | xxd -r -p | openssl base64`)
+   (직접 바꾸려면 `.claude/skills/play-console-launch/SKILL.md` 5번의 한 줄 명령)
 
 **Play 앱 서명 키 (2026-11-22 받음)** — 공개해도 되는 지문 값
 - SHA-1: `96:61:D1:EB:A2:55:E4:AB:8A:50:FD:D6:54:2A:7B:C3:46:36:E0:E4`

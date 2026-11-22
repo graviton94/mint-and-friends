@@ -2,6 +2,8 @@
 
 > 바로 가져오기: [data_safety_import.csv](data_safety_import.csv) (Play Console 데이터 보안 → 가져오기 · 내보내기 → CSV 가져오기). 아래 표와 같은 내용.
 
+> 다른 앱에 다시 쓰는 법: `.claude/skills/play-console-launch/` (프로필 JSON → `make_data_safety_csv.py` 로 이 CSV 를 만든다)
+
 Play Console → 앱 콘텐츠 → 데이터 보안. 위에서부터 화면에 나오는 순서 그대로 적었다.
 
 ## 1단계: 데이터 수집 및 보안

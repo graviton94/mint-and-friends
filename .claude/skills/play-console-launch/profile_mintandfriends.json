@@ -1,0 +1,17 @@
+{
+  "_comment": "민트앤프렌즈 (Flutter + Firebase Auth/Firestore/Analytics + AdMob + Kakao/Google 로그인, 게스트 익명 계정) 실제 제출 답안. 새 앱은 이 파일을 복사해 고친다.",
+  "collects": true,
+  "encrypted_in_transit": true,
+  "account_methods": ["PSL_ACM_OAUTH"],
+  "account_deletion_url": "https://graviton94.github.io/mintandfriends/privacy/#delete",
+  "data_deletion_url": "https://graviton94.github.io/mintandfriends/privacy/#delete",
+  "types": {
+    "PSL_NAME":                    {"cat": "PSL_DATA_TYPES_PERSONAL",        "shared": false, "optional": true,  "collect": ["PSL_APP_FUNCTIONALITY","PSL_ACCOUNT_MANAGEMENT"], "share": []},
+    "PSL_USER_ACCOUNT":            {"cat": "PSL_DATA_TYPES_PERSONAL",        "shared": false, "optional": false, "collect": ["PSL_APP_FUNCTIONALITY","PSL_ACCOUNT_MANAGEMENT"], "share": []},
+    "PSL_APPROX_LOCATION":         {"cat": "PSL_DATA_TYPES_LOCATION",        "shared": true,  "optional": false, "collect": ["PSL_ANALYTICS","PSL_FRAUD_PREVENTION_SECURITY","PSL_ADVERTISING"], "share": ["PSL_ANALYTICS","PSL_FRAUD_PREVENTION_SECURITY","PSL_ADVERTISING"]},
+    "PSL_PERFORMANCE_DIAGNOSTICS": {"cat": "PSL_DATA_TYPES_APP_PERFORMANCE", "shared": true,  "optional": false, "collect": ["PSL_ANALYTICS","PSL_FRAUD_PREVENTION_SECURITY"], "share": ["PSL_ANALYTICS","PSL_FRAUD_PREVENTION_SECURITY"]},
+    "PSL_USER_INTERACTION":        {"cat": "PSL_DATA_TYPES_APP_ACTIVITY",    "shared": true,  "optional": false, "collect": ["PSL_APP_FUNCTIONALITY","PSL_ANALYTICS","PSL_FRAUD_PREVENTION_SECURITY","PSL_ADVERTISING"], "share": ["PSL_ANALYTICS","PSL_FRAUD_PREVENTION_SECURITY","PSL_ADVERTISING"]},
+    "PSL_USER_GENERATED_CONTENT":  {"cat": "PSL_DATA_TYPES_APP_ACTIVITY",    "shared": false, "optional": false, "collect": ["PSL_APP_FUNCTIONALITY"], "share": []},
+    "PSL_DEVICE_ID":               {"cat": "PSL_DATA_TYPES_IDENTIFIERS",     "shared": true,  "optional": false, "collect": ["PSL_ANALYTICS","PSL_FRAUD_PREVENTION_SECURITY","PSL_ADVERTISING"], "share": ["PSL_ANALYTICS","PSL_FRAUD_PREVENTION_SECURITY","PSL_ADVERTISING"]}
+  }
+}
