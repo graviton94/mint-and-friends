@@ -231,7 +231,7 @@ class Invite {
 }
 
 class OrderQuota {
-  static const int perFriend = 4;
+  static int get perFriend => Tuning.orderQuotaPerFriend; // 원격 조정 가능
 
   /// 처음 이만큼은 한도 없이 (튜토리얼 · 첫 구역 초반).
   static const int freeOrders = 20;
