@@ -1065,6 +1065,8 @@ Future<void> showShopSheet(
   bool adFree = false,
 }) => showGameSheet(context, Listenable.merge([billing, game]), () {
   final ad = adFree ? '' : '[[ad]] ';
+  // 추천 아이템: 화면에 그린 상품 그대로 산다 (그사이 날이 바뀌면 사지 않고 새 상품을 보여 준다)
+  final feat = game.featuredItem;
   return SheetFrame(
     title: tr('shop.title'),
     child: Column(
@@ -1163,18 +1165,16 @@ Future<void> showShopSheet(
           ),
           // 추천 아이템: 무엇이 들었는지 그림 · 이름 · 단계를 그대로 보여 준다 (무작위 상품 아님)
           _ShopCard(
-            icon: Art.item(game.featuredItem.$1, game.featuredItem.$2),
-            title: itemName(
-              Chains.item(game.featuredItem.$1, game.featuredItem.$2),
-            ),
-            note: tr('shop.featuredNote', {'n': game.featuredItem.$2}),
+            icon: Art.item(feat.$1, feat.$2),
+            title: itemName(Chains.item(feat.$1, feat.$2)),
+            note: tr('shop.featuredNote', {'n': feat.$2}),
             tag: tr('shop.featuredTag'),
             button: game.boardFull
                 ? tr('market.boardFull')
                 : '[[diamond]] ${game.surpriseGems}',
             enabled: !game.boardFull && game.gems >= game.surpriseGems,
             onTap: () {
-              if (game.buySurprise()) sfx(Sfx.unlock);
+              if (game.buySurprise(shown: feat)) sfx(Sfx.unlock);
             },
           ),
           // 계절 효과: 사고 나면 '보유 중' 으로 남겨 3×3 을 지킨다

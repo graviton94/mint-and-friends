@@ -286,8 +286,10 @@ class GameState extends ChangeNotifier {
   int get renewSeedsPreview => max(0, seedsEntitled - seedsClaimed);
 
   /// 다음 씨앗 1개까지 더 벌어야 하는 코인.
-  double get coinsToNextSeed =>
-      max(0, Renewal.coinsForSeeds(seedsEntitled + 1) - lifetimeCoins);
+  double get coinsToNextSeed => max(
+    0,
+    Renewal.coinsForSeeds(max(seedsEntitled, seedsClaimed) + 1) - lifetimeCoins,
+  );
 
   /// 재단장 추천: 받을 씨앗이 가진 씨앗의 절반(최소 3) 이상이거나, 살 수 있는 강화가 30분 넘게 없을 때.
   double _noBuySecs = 0;
@@ -381,6 +383,7 @@ class GameState extends ChangeNotifier {
       upgrades.remove(UpgradeType.autoMerge);
     coins = lastRun * 0.01 * perkLv(SeedPerk.startCoins);
     runStartCoins = lifetimeCoins;
+    _featured = null;
     orders.clear();
     energy = max(energy, energyCap);
     _fillOrders();
@@ -1411,7 +1414,10 @@ class GameState extends ChangeNotifier {
   void _refreshOrdersForTier() {
     for (var i = 0; i < orders.length; i++) {
       final o = orders[i];
-      if (o.level <= spawnLevel && !canDeliverOrder(o)) {
+      final inStorage = storage.any(
+        (it) => it != null && it.chain == o.chain && it.level == o.level,
+      );
+      if (o.level < spawnLevel && !canDeliverOrder(o) && !inStorage) {
         final n = _newOrder();
         orders[i] = Order(n.id, o.friendId, n.chain, n.level, n.stars);
       } else {
@@ -2280,13 +2286,19 @@ class GameState extends ChangeNotifier {
   String _featuredDay = '';
   (Chain, int) get featuredItem {
     final f = _featured;
-    if (f == null || _featuredDay != _dayKey(now) || f.$2 <= spawnLevel) {
+    if (f == null ||
+        _featuredDay != _dayKey(now) ||
+        f.$2 <= spawnLevel ||
+        f.$2 > spawnLevel + Gems.featuredMaxAbove) {
       final chains = availableChains;
       final c = chains[_rng.nextInt(chains.length)];
-      final l = (surpriseMin + _rng.nextInt(surpriseMax - surpriseMin + 1))
-          .clamp(1, Chains.maxLevel(c));
+      final hi = min(surpriseMax, spawnLevel + Gems.featuredMaxAbove);
+      final lo = min(surpriseMin, hi);
+      final l = (lo + _rng.nextInt(hi - lo + 1)).clamp(1, Chains.maxLevel(c));
       _featured = (c, l);
       _featuredDay = _dayKey(now);
+      // 화면을 그리는 중에 정해질 수 있으니, 저장은 다음 틈에 (껐다 켜도 같은 상품)
+      scheduleMicrotask(notifyListeners);
     }
     return _featured!;
   }
@@ -2301,10 +2313,15 @@ class GameState extends ChangeNotifier {
   }
 
   /// 추천 아이템 사기: 보여 준 그 아이템을 빈 칸에.
-  bool buySurprise() {
+  /// [shown] = 화면에 보여 준 상품. 그사이 날이 바뀌어 상품이 달라졌으면 사지 않는다 (본 적 없는 값을 받지 않게).
+  bool buySurprise({(Chain, int)? shown}) {
     final cell = _emptyCell;
     if (cell == null) return false;
     final (c, l) = featuredItem;
+    if (shown != null && shown != (c, l)) {
+      notifyListeners();
+      return false;
+    }
     if (!_spendGems(surpriseGems)) return false;
     board[cell] = Item(_nextId++, c, l);
     _trace('featured', '${c.name}$l');
@@ -2521,13 +2538,18 @@ class GameState extends ChangeNotifier {
     _ordersDay = j['ordDay'] as String? ?? '';
     _ordersToday = (j['ordToday'] as num?)?.toInt() ?? 0;
     seedsTotal = (j['seedsT'] as num?)?.toInt() ?? 0;
-    seedsClaimed = (j['seedsC'] as num?)?.toInt() ?? seedsTotal;
+    // 예전 저장(회차 코인 공식)은 '이번 회차 시작 때까지 번 코인'의 몫을 받은 것으로 본다 (광고 덤 · 옛 공식의 차이로 재단장이 오래 막히지 않게)
+    seedsClaimed =
+        (j['seedsC'] as num?)?.toInt() ??
+        min(
+          seedsTotal,
+          Renewal.seedsFor((j['runStart'] as num?)?.toDouble() ?? 0),
+        );
     final fe = j['featured'];
     if (fe is List && fe.length == 3) {
-      _featured = (
-        Chain.values[(fe[0] as num).toInt().clamp(0, Chain.values.length - 1)],
-        (fe[1] as num).toInt(),
-      );
+      final fc = Chain
+          .values[(fe[0] as num).toInt().clamp(0, Chain.values.length - 1)];
+      _featured = (fc, (fe[1] as num).toInt().clamp(1, Chains.maxLevel(fc)));
       _featuredDay = fe[2] as String? ?? '';
     } else {
       _featured = null;
@@ -2673,7 +2695,10 @@ class GameState extends ChangeNotifier {
     starterBought = j['starter'] as bool? ?? false;
     starterOfferUntil = ts('starterUntil');
     starterShows = (j['starterShows'] as num?)?.toInt() ?? 0;
-    passNoticeSeen = (j['passNoticeSeen'] as num?)?.toInt() ?? 0;
+    // 예전 저장: 이미 끝난 패스는 '끝났어요' 창을 새로 띄우지 않는다
+    passNoticeSeen =
+        (j['passNoticeSeen'] as num?)?.toInt() ??
+        (passUntil != null && !passUntil!.isAfter(now) ? 3 : 0);
     boostTokens.clear();
     for (final e in ((j['boostTokens'] as Map?) ?? const {}).entries) {
       final k = BoostKind.values.where((b) => b.name == e.key).firstOrNull;

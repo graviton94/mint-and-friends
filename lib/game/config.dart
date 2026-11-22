@@ -1035,6 +1035,9 @@ class Gems {
   static const int surpriseMinGems = 10;
   static const int surpriseMaxGems = 600;
 
+  /// 추천 아이템은 바구니보다 최대 이만큼 높게 (재단장 직후 보관 칸의 높은 아이템 때문에 값만 상한에 걸린 지름길이 되지 않게).
+  static const int featuredMaxAbove = 8;
+
   /// 오늘의 시장: 다이아 칸 가격 · 단계(바구니 +4), 광고 칸 단계(바구니 +3).
   static const int marketGemPrice = 12;
   static const int marketGemLevelUp = 4;

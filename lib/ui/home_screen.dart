@@ -1222,7 +1222,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final stage = game.passNoticeDue;
     if (stage == null) return;
     game.markPassNotice(stage);
-    final days = game.passLeft.inHours ~/ 24 + 1;
+    final days = (game.passLeft.inHours + 23) ~/ 24;
     final b = widget.billing;
     await showDialog<void>(
       context: context,

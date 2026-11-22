@@ -288,6 +288,42 @@ void main() {
     expect(g.inflation, greaterThan(10));
   });
 
+  test('리뷰 수정: 예전 저장 씨앗 이전 · 추천 아이템 상한/재단장 · 날 바뀜 · 끝난 패스', () {
+    // 예전 저장 (seedsC 없음): 이번 회차 시작 때까지 번 코인의 몫만 받은 것으로
+    final g = make();
+    g.seedsTotal = 5;
+    g.runStartCoins = Renewal.coinsForSeeds(3);
+    g.lifetimeCoins = Renewal.coinsForSeeds(4);
+    final j = g.toJson()..remove('seedsC');
+    final g2 = make();
+    expect(g2.loadJson(j), isTrue);
+    expect(g2.seedsClaimed, 3);
+    expect(g2.renewSeedsPreview, 1);
+    // 추천 아이템은 바구니 +8 까지, 재단장하면 새로
+    final g3 = make();
+    g3.board[g3.board.indexWhere((x) => x == null)] = Item(
+      9002,
+      Chain.flower,
+      g3.spawnLevel + 20,
+    );
+    expect(
+      g3.featuredItem.$2,
+      lessThanOrEqualTo(g3.spawnLevel + Gems.featuredMaxAbove),
+    );
+    // 보여 준 상품과 다르면 사지 않는다
+    g3.gems = 9999;
+    final other = (g3.featuredItem.$1, g3.featuredItem.$2 - 1);
+    expect(g3.buySurprise(shown: other), isFalse);
+    expect(g3.gems, 9999);
+    // 이미 끝난 패스가 있는 예전 저장은 '끝났어요' 창을 띄우지 않는다
+    final g4 = make();
+    g4.passUntil = now.subtract(const Duration(days: 40));
+    final j4 = g4.toJson()..remove('passNoticeSeen');
+    final g5 = make();
+    expect(g5.loadJson(j4), isTrue);
+    expect(g5.passNoticeDue, isNull);
+  });
+
   test('추천 아이템: 사기 전에 보여 준 아이템을 그대로 준다 (무작위 상품 아님)', () {
     final g = make();
     final s = g.spawnLevel;
