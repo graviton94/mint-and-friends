@@ -744,8 +744,13 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     if (watch == 'gems') {
+      if (!mounted) return;
       if (game.buyEnergyRefill()) {
-        sfx(Sfx.coin);
+        RewardPopup.show(
+          context,
+          const Reward(energy: Gems.refillEnergy),
+          title: tr('reward.bought'),
+        );
       } else {
         _toast(tr('shop.notEnough'));
         _openShop();
@@ -754,6 +759,13 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     if (watch == true && await _rewardedCapped(AdKind.energy)) {
       game.grantEnergyAd();
+      if (mounted) {
+        RewardPopup.show(
+          context,
+          Reward(energy: Tuning.energyAdAmount),
+          title: tr('reward.ad'),
+        );
+      }
     }
   }
 
@@ -1017,7 +1029,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     if (watch == true && await _rewardedCapped(AdKind.quota)) {
       game.grantQuotaAd(friendId);
-      sfx(Sfx.coin);
+      if (mounted) {
+        RewardPopup.show(
+          context,
+          const Reward(),
+          title: tr('reward.ad'),
+          art: Art.friend(Friends.byId(friendId), happy: true),
+          sub: tr('reward.quotaAd', {
+            'name': friendName(friendId),
+            'n': OrderQuota.perAd,
+          }),
+        );
+      }
     }
   }
 
@@ -1063,8 +1086,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _watchCoinBag() async {
     if (!_gate(Feature.coinBag)) return;
     if (await _rewardedCapped(AdKind.coinBag)) {
-      sfx(Sfx.coin);
-      _toast(tr('toast.coins', {'coins': fmt(game.grantCoinBag())}));
+      final c = game.grantCoinBag();
+      if (mounted) {
+        RewardPopup.show(
+          context,
+          Reward(coins: c.round()),
+          title: tr('reward.ad'),
+        );
+      }
     }
   }
 
@@ -1170,7 +1199,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     if (pick == 'ad') {
-      if (await _rewarded()) game.popBubble(cell);
+      if (await _rewarded() && game.popBubble(cell)) sfx(Sfx.unlock);
     } else if (pick == 'gems') {
       if (game.popBubbleWithGems(cell)) {
         sfx(Sfx.unlock);

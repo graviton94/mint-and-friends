@@ -1009,5 +1009,12 @@
   "social.recTitle": "おすすめフレンド",
   "social.recNote": "最近遊びに来た、レベルの近いプレイヤーです",
   "social.recEmpty": "今はおすすめできるフレンドがいません",
-  "social.tomorrow": "明日"
+  "social.tomorrow": "明日",
+  "reward.ad": "広告のごほうび!",
+  "reward.purchase": "ご購入ありがとう!",
+  "reward.quotaAd": "{name}の星のお願い +{n}回",
+  "reward.boostAd": "ブースト{n}分スタート!",
+  "reward.adFree": "広告がなくなりました",
+  "reward.offline": "お休み中に稼いだコイン",
+  "reward.bought": "購入しました!"
 }

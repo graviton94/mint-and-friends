@@ -33,6 +33,9 @@ class BillingService extends ChangeNotifier {
   ProductDetails? starter;
   void Function()? onStarter;
 
+  /// 광고 제거를 새로 샀을 때 (복원은 제외).
+  void Function()? onAdFree;
+
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     adFree = prefs.getBool(_cacheKey) ?? false; // 오프라인 대비 캐시
@@ -98,7 +101,9 @@ class BillingService extends ChangeNotifier {
         case PurchaseStatus.purchased:
           Analytics.instance.purchase(p.productID);
           _seenActiveThisSession = true;
+          final wasFree = adFree;
           await _setAdFree(true);
+          if (!wasFree) onAdFree?.call();
           break;
         case PurchaseStatus.restored:
           _seenActiveThisSession = true;

@@ -121,12 +121,20 @@ class AdsService extends ChangeNotifier {
     _rewarded = null;
     notifyListeners();
     final done = Completer<bool>();
-    var earned = false;
+    var earned = false, dismissed = false;
     ad.fullScreenContentCallback = FullScreenContentCallback(
       onAdDismissedFullScreenContent: (a) {
         a.dispose();
         _loadRewarded();
-        if (!done.isCompleted) done.complete(earned);
+        // 일부 기기 · 광고는 '보상' 알림이 창을 닫은 뒤에 온다: 잠깐 더 기다린다
+        dismissed = true;
+        if (earned) {
+          if (!done.isCompleted) done.complete(true);
+        } else {
+          Future.delayed(const Duration(milliseconds: 1500), () {
+            if (!done.isCompleted) done.complete(earned);
+          });
+        }
       },
       onAdFailedToShowFullScreenContent: (a, _) {
         a.dispose();
@@ -134,7 +142,13 @@ class AdsService extends ChangeNotifier {
         if (!done.isCompleted) done.complete(false);
       },
     );
-    await ad.show(onUserEarnedReward: (_, _) => earned = true);
+    await ad.show(
+      onUserEarnedReward: (_, _) {
+        earned = true;
+        // 창을 닫은 뒤에 온 보상 알림: 기다리던 것을 바로 끝낸다
+        if (dismissed && !done.isCompleted) done.complete(true);
+      },
+    );
     return done.future;
   }
 }

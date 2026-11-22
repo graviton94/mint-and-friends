@@ -1009,5 +1009,12 @@
   "social.recTitle": "Suggested friends",
   "social.recNote": "Recently active players near your level",
   "social.recEmpty": "No suggestions right now",
-  "social.tomorrow": "Tomorrow"
+  "social.tomorrow": "Tomorrow",
+  "reward.ad": "Ad reward!",
+  "reward.purchase": "Thanks for your purchase!",
+  "reward.quotaAd": "{name}: +{n} star requests",
+  "reward.boostAd": "Boost on for {n} min!",
+  "reward.adFree": "Ads are gone",
+  "reward.offline": "Coins earned while away",
+  "reward.bought": "Purchased!"
 }

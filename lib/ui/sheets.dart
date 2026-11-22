@@ -19,6 +19,7 @@ import 'renew_ui.dart';
 import 'theme.dart';
 import 'widgets/frame_box.dart';
 import 'widgets/icon_text.dart';
+import 'widgets/reward_popup.dart';
 import 'widgets/sprout_scrollbar.dart';
 
 /// 게임 공통 아래 시트 (패널 프레임, 언어 · 상태가 바뀌면 다시 그림).
@@ -1447,7 +1448,13 @@ Future<void> _shopSheet(
             onTap: () async {
               if (await watchAd(AdKind.gems)) {
                 game.grantGemAd();
-                sfx(Sfx.coin);
+                if (context.mounted) {
+                  RewardPopup.show(
+                    context,
+                    const Reward(gems: GameConfig.adGems),
+                    title: tr('reward.ad'),
+                  );
+                }
               }
             },
           ),
@@ -1477,7 +1484,14 @@ Future<void> _shopSheet(
               button: '[[diamond]] ${Gems.coinPacks[i].$1}',
               enabled: game.gems >= Gems.coinPacks[i].$1,
               onTap: () {
-                if (game.buyCoinPack(i)) sfx(Sfx.coin);
+                final c = game.coinPackAmount(i);
+                if (game.buyCoinPack(i)) {
+                  RewardPopup.show(
+                    context,
+                    Reward(coins: c.round()),
+                    title: tr('reward.bought'),
+                  );
+                }
               },
             ),
           for (final k in BoostKind.values)
@@ -1488,7 +1502,7 @@ Future<void> _shopSheet(
               button: '[[diamond]] ${Boosts.gemCost[k]}',
               enabled: game.gems >= Boosts.gemCost[k]! && game.canAddBoostOf(k),
               onTap: () {
-                if (game.buyBoost(k)) sfx(Sfx.coin);
+                if (game.buyBoost(k)) _boostBought(context, k, gems: true);
               },
             ),
           _ShopCard(
@@ -1497,7 +1511,13 @@ Future<void> _shopSheet(
             button: '[[diamond]] ${game.refillCost}',
             enabled: game.gems >= game.refillCost,
             onTap: () {
-              if (game.buyEnergyRefill()) sfx(Sfx.coin);
+              if (game.buyEnergyRefill()) {
+                RewardPopup.show(
+                  context,
+                  const Reward(energy: Gems.refillEnergy),
+                  title: tr('reward.bought'),
+                );
+              }
             },
           ),
           // 추천 아이템: 무엇이 들었는지 그림 · 이름 · 단계를 그대로 보여 준다 (무작위 상품 아님)
@@ -2352,7 +2372,7 @@ class _BoostRow extends StatelessWidget {
                     ? () async {
                         if (await watchAd(AdKind.boost)) {
                           game.grantBoostAd(kind);
-                          sfx(Sfx.coin);
+                          if (context.mounted) _boostBought(context, kind);
                         }
                       }
                     : null,
@@ -2380,7 +2400,9 @@ class _BoostRow extends StatelessWidget {
                       light: false,
                       onTap: room && game.gems >= cost
                           ? () {
-                              if (game.buyBoost(kind)) sfx(Sfx.coin);
+                              if (game.buyBoost(kind)) {
+                                _boostBought(context, kind, gems: true);
+                              }
                             }
                           : null,
                     ),
@@ -2593,6 +2615,18 @@ Future<void> showSettingsSheet(
     ),
   ),
 );
+
+/// 부스트를 얻었을 때 (광고 · 다이아): 부스트 그림 + 몇 분.
+void _boostBought(BuildContext context, BoostKind k, {bool gems = false}) =>
+    RewardPopup.show(
+      context,
+      const Reward(),
+      title: tr(gems ? 'reward.bought' : 'reward.ad'),
+      art: IconText.resolve(boostIcon(k)),
+      sub: tr('reward.boostAd', {
+        'n': (gems ? Boosts.perGems[k]! : Boosts.perAd[k]!).inMinutes,
+      }),
+    );
 
 class SheetFrame extends StatelessWidget {
   const SheetFrame({super.key, required this.title, required this.child});

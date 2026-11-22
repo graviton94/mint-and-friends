@@ -1010,5 +1010,12 @@
   "social.recTitle": "추천 친구",
   "social.recNote": "최근에 놀러 온 비슷한 레벨의 친구들이에요",
   "social.recEmpty": "지금은 추천할 친구가 없어요",
-  "social.tomorrow": "내일"
+  "social.tomorrow": "내일",
+  "reward.ad": "광고 보상!",
+  "reward.purchase": "구매해 주셔서 고마워요!",
+  "reward.quotaAd": "{name}의 별 부탁 +{n}번",
+  "reward.boostAd": "부스트 {n}분 시작!",
+  "reward.adFree": "광고가 사라졌어요",
+  "reward.offline": "쉬는 동안 번 코인",
+  "reward.bought": "구매 완료!"
 }

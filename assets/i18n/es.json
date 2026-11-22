@@ -1009,5 +1009,12 @@
   "social.recTitle": "Amigos sugeridos",
   "social.recNote": "Jugadores activos de nivel parecido",
   "social.recEmpty": "No hay sugerencias ahora",
-  "social.tomorrow": "Mañana"
+  "social.tomorrow": "Mañana",
+  "reward.ad": "¡Premio del anuncio!",
+  "reward.purchase": "¡Gracias por tu compra!",
+  "reward.quotaAd": "{name}: +{n} pedidos con estrellas",
+  "reward.boostAd": "¡Impulso de {n} min activo!",
+  "reward.adFree": "Ya no hay anuncios",
+  "reward.offline": "Monedas ganadas mientras no estabas",
+  "reward.bought": "¡Comprado!"
 }

@@ -54,7 +54,19 @@ class RewardPopup {
     );
     _live = e;
     overlay.insert(e);
-    t = Timer(stay, close);
+    // 광고 · 결제 화면에서 돌아오는 중이면 앱이 다시 보일 때부터 시간을 잰다
+    // (안 그러면 보이기도 전에 저절로 닫혀 '받았다' 창을 못 본다)
+    void arm() {
+      if (!e.mounted) return;
+      final st = WidgetsBinding.instance.lifecycleState;
+      if (st == null || st == AppLifecycleState.resumed) {
+        t = Timer(stay, close);
+      } else {
+        t = Timer(const Duration(milliseconds: 300), arm);
+      }
+    }
+
+    arm();
   }
 }
 

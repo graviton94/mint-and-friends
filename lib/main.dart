@@ -7,6 +7,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'art/art.dart';
+import 'ui/widgets/reward_popup.dart';
+import 'game/config.dart' show Starter;
 import 'game/format.dart';
 import 'game/game_state.dart';
 import 'i18n/l10n.dart';
@@ -166,13 +168,24 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
       if (game.grantStarter()) {
         save.saveLocal(game);
         save.upload(game);
+        _celebrate(
+          const Reward(gems: Starter.gems, energy: Starter.energy),
+          tr('reward.purchase'),
+        );
       }
     };
     widget.billing.onGems = (pack) {
-      game.grantGemPack(pack);
+      final n = game.grantGemPack(pack);
       save.saveLocal(game);
       save.upload(game);
+      _celebrate(Reward(gems: n), tr('reward.purchase'));
     };
+    widget.billing.onAdFree = () => _celebrate(
+      const Reward(),
+      tr('reward.purchase'),
+      art: Art.icon('no_ads'),
+      sub: tr('reward.adFree'),
+    );
     auth.addListener(_onAuthChanged);
     _start();
     DevLog.instance.record(game, 'start');
@@ -397,6 +410,17 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     if (doubled == true) x2 = await widget.ads.showRewarded();
     game.grantOffline(reward, doubled: x2);
     save.saveLocal(game);
+    _celebrate(
+      Reward(coins: (reward.coins * (x2 ? 2 : 1)).round()),
+      tr(x2 ? 'reward.ad' : 'reward.offline'),
+    );
+  }
+
+  /// 결제 · 광고 보상 축하 창 (결제는 화면 밖에서 끝나므로 맨 위 내비게이터에 띄운다).
+  void _celebrate(Reward r, String title, {ArtRef? art, String? sub}) {
+    final ctx = _navKey.currentContext;
+    if (ctx == null) return;
+    RewardPopup.show(ctx, r, title: title, art: art, sub: sub);
   }
 
   // ---------------------------------------------------------------- 설정 / 계정
