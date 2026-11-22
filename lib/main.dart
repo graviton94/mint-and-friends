@@ -29,6 +29,7 @@ import 'ui/theme.dart';
 import 'ui/widgets/icon_text.dart';
 import 'ui/widgets/frame_box.dart';
 import 'services/analytics_service.dart';
+import 'services/crash_service.dart';
 import 'services/remote_tuning.dart';
 import 'services/dev_log.dart';
 import 'services/update_service.dart';
@@ -93,6 +94,8 @@ Future<Widget> _boot(void Function(double) report) async {
     final info = await PackageInfo.fromPlatform();
     version = '${info.version} (${info.buildNumber})';
   } catch (_) {}
+  // 비정상 종료 · 오류 수집 (Firebase 준비 뒤, 디버그 빌드는 끔)
+  await CrashService.install(version: version);
 
   unawaited(billing.init());
   unawaited(ads.init());
@@ -217,6 +220,9 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     _gameSub?.cancel();
     _gameSub = game.events.listen((e) {
       if (e is LevelUpEvent) DevLog.instance.record(game, 'level');
+      if (e is LevelUpEvent || e is AreaCompletedEvent) {
+        CrashService.state(level: game.level, area: game.currentArea);
+      }
       if (e is AreaCompletedEvent) DevLog.instance.record(game, 'area');
       if (e is LevelUpEvent ||
           e is DecorPlacedEvent ||

@@ -52,6 +52,7 @@ dependencies:
   share_plus: ^13.3.1
   flutter_local_notifications: ^21.0.0
   timezone: ^0.11.2
+  firebase_crashlytics: ^6.1.0
 # path_provider_android 2.3.x 는 JNI 로 바뀌면서 릴리스(R8) 빌드에서 임시 폴더를 못 찾는다
 # (ClassNotFoundException: android.content.Context → 공유 실패 · 효과음 캐시 실패).
 # 공유 진단(share-probe.yml)으로 확인. JNI 이전 마지막 판(Pigeon)으로 고정한다.

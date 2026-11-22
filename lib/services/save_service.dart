@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../game/game_state.dart';
+import 'crash_service.dart';
 
 /// 저장 데이터 요약 (충돌 시 사용자에게 보여줌).
 class SaveSummary {
@@ -194,6 +195,7 @@ class SaveService extends ChangeNotifier {
       status = SyncStatus.synced;
     } catch (e) {
       debugPrint('cloud upload failed: $e');
+      CrashService.log('cloud upload failed: $e');
       status = SyncStatus.error;
     } finally {
       _uploading = false;
