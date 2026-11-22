@@ -106,48 +106,58 @@ class UpdatePill extends StatelessWidget {
           u.phase == UpdatePhase.downloaded;
       if (!show) return const SizedBox.shrink();
       final ready = u.phase == UpdatePhase.downloaded;
-      return SafeArea(
-        child: Align(
-          alignment: const Alignment(0, 0.74),
-          child: GestureDetector(
-            onTap: ready ? onReadyTap : null,
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                width: 250,
-                padding: const EdgeInsets.fromLTRB(12, 7, 12, 8),
-                decoration: BoxDecoration(
-                  color: ready ? const Color(0xFFFFF1C9) : Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFF7A5230), width: 2),
-                  boxShadow: const [
-                    BoxShadow(color: Color(0x33000000), blurRadius: 8),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconText(
-                      ready
-                          ? tr('update.pillReady')
-                          : tr('update.pill', {
-                              'pct': (u.progress * 100).round(),
-                            }),
-                      style: const TextStyle(fontSize: 14),
+      // 앱 맨 바깥층(모든 화면 위)이라 게임 테마 밖이다: 글꼴이 기기 기본으로 바뀌지 않게 테마를 직접 입힌다
+      return Theme(
+        data: buildTheme(),
+        child: SafeArea(
+          child: Align(
+            alignment: const Alignment(0, 0.74),
+            child: GestureDetector(
+              onTap: ready ? onReadyTap : null,
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: 250,
+                  padding: const EdgeInsets.fromLTRB(12, 7, 12, 8),
+                  decoration: BoxDecoration(
+                    color: ready ? const Color(0xFFFFF1C9) : Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFF7A5230),
+                      width: 2,
                     ),
-                    if (!ready) ...[
-                      const SizedBox(height: 5),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(5),
-                        child: LinearProgressIndicator(
-                          value: u.total > 0 ? u.progress : null,
-                          minHeight: 7,
-                          backgroundColor: const Color(0xFFEDE3CC),
-                          color: Palette.primary,
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x33000000), blurRadius: 8),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconText(
+                        ready
+                            ? tr('update.pillReady')
+                            : tr('update.pill', {
+                                'pct': (u.progress * 100).round(),
+                              }),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Palette.text,
                         ),
                       ),
+                      if (!ready) ...[
+                        const SizedBox(height: 5),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(5),
+                          child: LinearProgressIndicator(
+                            value: u.total > 0 ? u.progress : null,
+                            minHeight: 7,
+                            backgroundColor: const Color(0xFFEDE3CC),
+                            color: Palette.primary,
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
             ),
