@@ -24,8 +24,9 @@ class ShareCard {
   // 프레임 그림(share_frame, 1024 정사각) 안에서 그림 부분 · 사진 창 · 글자 띠 위치.
   // 프레임 그림 전체 (잎 · 꽃 끝까지, 잘리지 않게) · 사진 창 갈색 선 안쪽 · 글자 띠.
   static const Rect _frameSrc = Rect.fromLTRB(121, 62, 903, 963);
-  static const Rect _windowSrc = Rect.fromLTRB(235, 239, 778, 605);
-  static const double _windowRadiusSrc = 30;
+
+  /// 사진을 그리는 칸: 프레임의 뚫린 창(share_frame_cut)보다 조금 크게, 프레임 아래에 깐다.
+  static const Rect _windowSrc = Rect.fromLTRB(220, 224, 794, 620);
   static const Rect _bandSrc = Rect.fromLTRB(214, 700, 812, 812);
   static const double _frameW = 1040, _frameX = (w - _frameW) / 2;
   static const double _frameY = 18;
@@ -54,7 +55,7 @@ class ShareCard {
   }
 
   /// 그림 [img] 를 [dst] 안에 비율을 지켜 (contain) 아래 가운데로.
-  static void _fit(Canvas c, ui.Image img, Rect dst, {bool flip = false}) {
+  static Rect _fit(Canvas c, ui.Image img, Rect dst, {bool flip = false}) {
     final s = min(dst.width / img.width, dst.height / img.height);
     final ww = img.width * s, hh = img.height * s;
     final r = Rect.fromLTWH(
@@ -80,6 +81,7 @@ class ShareCard {
     } else {
       c.drawImageRect(img, src, r, p);
     }
+    return r;
   }
 
   /// 그림을 [dst] 에 꽉 채워 (cover) 가운데를 자른다.
@@ -183,9 +185,7 @@ class ShareCard {
     final ox = dst.left + (dst.width - sw) / 2;
     final oy = dst.top + (dst.height - sh) / 2;
     c.save();
-    c.clipRRect(
-      RRect.fromRectAndRadius(dst, Radius.circular(_windowRadiusSrc * _s)),
-    );
+    c.clipRect(dst);
     if (bg != null) {
       _cover(c, bg, Rect.fromLTWH(ox, oy, sw, sh));
     } else {
@@ -257,29 +257,15 @@ class ShareCard {
           Color(0xFFEAF6DC),
         ]),
     );
-    final frame = await _img(Art.frame('share_frame').path);
     final win = _map(_windowSrc);
     final band = _map(_bandSrc);
-    if (frame != null) {
-      c.drawImageRect(
-        frame,
-        _frameSrc,
-        Rect.fromLTWH(_frameX, _frameY, _frameW, _frameSrc.height * _s),
-        Paint()..filterQuality = FilterQuality.high,
-      );
-    } else {
-      c.drawRRect(
-        RRect.fromRectAndRadius(
-          const Rect.fromLTWH(40, 34, 1000, 1196),
-          const Radius.circular(60),
-        ),
-        Paint()..color = const Color(0xFFFFF3DD),
-      );
-    }
 
-    // 사진 창
+    // ① 사진 (프레임 아래 층). 창 밖으로 나간 부분은 ② 프레임이 덮는다.
+    c.save();
+    c.clipRect(win);
     final a = area ?? game.currentArea;
     var title = '', sub = '';
+    int? legendLevel;
     switch (kind) {
       case ShareKind.garden:
       case ShareKind.area:
@@ -295,25 +281,16 @@ class ShareCard {
                 'level': game.level,
               });
       case ShareKind.renew:
-        c.save();
-        c.clipRRect(
-          RRect.fromRectAndRadius(win, Radius.circular(_windowRadiusSrc * _s)),
-        );
         c.drawRect(win, Paint()..color = const Color(0xFFDDF0CF));
         final halo = await _img(Art.frame('share_halo').path);
         if (halo != null) _fit(c, halo, win.deflate(10));
         final hero = await _img(Art.frame('renew_hero').path);
-        if (hero != null) _fit(c, hero, win.deflate(24));
-        c.restore();
+        if (hero != null) _fit(c, hero, win.deflate(30));
         title = tr('share.renewTitle', {'n': game.renewCount});
         sub = tr('share.renewSub', {'n': seeds});
       case ShareKind.legendary:
         final ch = chain ?? Chain.flower;
         final lv = Chains.maxLevel(ch);
-        c.save();
-        c.clipRRect(
-          RRect.fromRectAndRadius(win, Radius.circular(_windowRadiusSrc * _s)),
-        );
         c.drawRect(win, Paint()..color = const Color(0xFFFFF0C9));
         final rays = await _img(Art.frame('rays').path);
         if (rays != null) _cover(c, rays, win);
@@ -341,38 +318,49 @@ class ShareCard {
             ),
           );
         }
-        c.restore();
-        final badge = await _img(Art.frame('share_level_badge').path);
-        final br = Rect.fromCenter(
-          center: win.topRight.translate(-40, 10),
-          width: 230,
-          height: 230,
-        );
-        if (badge != null) _fit(c, badge, br);
-        _text(
-          c,
-          'LV.$lv!',
-          br.center,
-          52,
-          Colors.white,
-          stroke: const Color(0xFFB8560E),
-        );
+        legendLevel = lv;
         title = tr('share.legendTitle', {
           'name': itemName(Chains.item(ch, lv)),
         });
         sub = tr('share.legendSub', {'chain': chainName(ch), 'n': lv});
     }
-    // 사진 가장자리를 프레임의 갈색 창 테두리로 다시 덮는다 (모서리가 튀어나오지 않게)
-    c.drawRRect(
-      RRect.fromRectAndRadius(
-        win.inflate(3),
-        Radius.circular(_windowRadiusSrc * _s + 3),
-      ),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 9
-        ..color = const Color(0xFF7A4A2A),
-    );
+    c.restore();
+
+    // ② 프레임 (창 안쪽을 뚫은 그림) 을 사진 위에
+    final frame = await _img(Art.frame('share_frame_cut').path);
+    if (frame != null) {
+      c.drawImageRect(
+        frame,
+        _frameSrc,
+        Rect.fromLTWH(_frameX, _frameY, _frameW, _frameSrc.height * _s),
+        Paint()..filterQuality = FilterQuality.high,
+      );
+    }
+
+    // ③ 전설 아이템만: 창 오른쪽 위에 레벨 딱지 (프레임 위 맨 앞), 글자는 딱지 그림의 정가운데
+    if (legendLevel != null) {
+      final badge = await _img(Art.frame('share_level_badge').path);
+      if (badge != null) {
+        final br = _fit(
+          c,
+          badge,
+          Rect.fromCenter(
+            center: win.topRight.translate(-46, 30),
+            width: 210,
+            height: 210,
+          ),
+        );
+        _text(
+          c,
+          'LV.$legendLevel!',
+          br.center,
+          46,
+          Colors.white,
+          maxW: br.width * 0.8,
+          stroke: const Color(0xFFB8560E),
+        );
+      }
+    }
 
     // 로고: 프레임 위쪽 나무 위
     final lang = L10n.instance.lang;
