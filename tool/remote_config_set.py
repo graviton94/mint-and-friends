@@ -29,7 +29,7 @@ for a in sys.argv[1:]:
 
 req = urllib.request.Request(url, headers={'Authorization': f'Bearer {token}', 'Accept-Encoding': 'identity'})
 with urllib.request.urlopen(req) as r:
-    etag = r.headers['ETag']
+    etag = r.headers.get('ETag') or '*'  # 아직 게시한 적 없으면 ETag 가 없다
     tpl = json.load(r)
 params = tpl.setdefault('parameters', {})
 for k, v in pairs.items():
