@@ -340,6 +340,17 @@ void main() {
     expect(g2.firstPackBonus(Gems.packs[0]), isTrue);
   });
 
+  test('새싹 정원 패키지: 처음 보여 준 뒤 7일만 상점에, 지나면 사라진다', () {
+    final g = make();
+    expect(g.starterVisible, isTrue); // 아직 보여 주기 전
+    expect(g.showStarterOffer(), isTrue);
+    expect(g.starterVisible, isTrue);
+    now = now.add(const Duration(days: 6, hours: 23));
+    expect(g.starterVisible, isTrue);
+    now = now.add(const Duration(hours: 2));
+    expect(g.starterVisible, isFalse);
+  });
+
   test('추천 아이템: 사기 전에 보여 준 아이템을 그대로 준다 (무작위 상품 아님)', () {
     final g = make();
     final s = g.spawnLevel;

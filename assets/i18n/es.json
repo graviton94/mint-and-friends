@@ -878,6 +878,8 @@
   "shop.featuredTag": "Top",
   "shop.firstTag": "1.ª compra ×2",
   "shop.firstBonus": "+{n} en tu 1.ª compra",
+  "time.dayClock": "{d} d {t}",
+  "shop.firstShort": "1.ª compra",
   "shop.effectNote": "Pétalos · luciérnagas · hojas · nieve",
   "market.adTake": "Tomar",
   "market.helperTag": "Para pedido",

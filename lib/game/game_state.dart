@@ -2225,6 +2225,10 @@ class GameState extends ChangeNotifier {
 
   // ---------------------------------------------------------------- 새싹 정원 패키지
 
+  /// 상점에 패키지를 보여 줄지: 안 샀고, 아직 처음 보여 주기 전이거나 7일 안.
+  bool get starterVisible =>
+      !starterBought && (starterOfferUntil == null || starterOfferActive);
+
   bool get starterOfferActive =>
       !starterBought &&
       starterOfferUntil != null &&

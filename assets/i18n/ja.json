@@ -878,6 +878,8 @@
   "shop.featuredTag": "おすすめ",
   "shop.firstTag": "初回2倍",
   "shop.firstBonus": "初回 +{n}",
+  "time.dayClock": "{d}日 {t}",
+  "shop.firstShort": "初回",
   "shop.effectNote": "花びら · ほたる · 落ち葉 · 雪",
   "market.adTake": "もらう",
   "market.helperTag": "お願い用",

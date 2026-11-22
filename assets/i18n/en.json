@@ -878,6 +878,8 @@
   "shop.featuredTag": "Pick",
   "shop.firstTag": "1st buy ×2",
   "shop.firstBonus": "+{n} on 1st buy",
+  "time.dayClock": "{d}d {t}",
+  "shop.firstShort": "1st buy",
   "shop.effectNote": "Petals · fireflies · leaves · snow",
   "market.adTake": "Get",
   "market.helperTag": "For request",

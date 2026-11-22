@@ -1079,7 +1079,7 @@ Future<void> showShopSheet(
           ),
         ),
         const SizedBox(height: 12),
-        if (!game.starterBought) ...[
+        if (game.starterVisible) ...[
           StarterCard(billing: billing, game: game),
           const SizedBox(height: 14),
         ],
@@ -1305,8 +1305,15 @@ Widget _gemPackCard(
             'n': fmtInt(pack.gems * (Gems.firstBuyMultiplier - 1)),
           })
         : null,
+    // 첫 구매: 기본 팩(100개) 대비 얼마나 이득인지 % 딱지
+    sticker: first
+        ? (
+            '+${(pack.valueX * Gems.firstBuyMultiplier * 100 - 100).round()}%',
+            tr('shop.firstShort'),
+          )
+        : null,
     tag: first
-        ? tr('shop.firstTag')
+        ? null
         : pack.valueX >= 1.95
         ? tr('shop.bonusX', {
             'n': pack.valueX.toStringAsFixed(pack.valueX < 3.05 ? 0 : 1),
@@ -1350,12 +1357,16 @@ class _ShopCard extends StatelessWidget {
     required this.onTap,
     this.note,
     this.tag,
+    this.sticker,
     this.ad = false,
   });
   final ArtRef icon;
   final String title;
   final String? note;
   final String? tag;
+
+  /// 모서리에 걸치는 빨간 톱니 딱지 (큰 글자 · 작은 글자), 예: ('+177%', '첫 구매').
+  final (String, String)? sticker;
   final String button;
   final bool enabled;
   final bool ad;
@@ -1430,7 +1441,55 @@ class _ShopCard extends StatelessWidget {
               ),
             ],
           ),
-          if (tag != null)
+          if (sticker != null)
+            Positioned(
+              top: -16,
+              right: -12,
+              child: Transform.rotate(
+                angle: 0.16,
+                child: Container(
+                  width: 62,
+                  height: 62,
+                  alignment: Alignment.center,
+                  decoration: Art.frame('sale_badge').available
+                      ? BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage(Art.frame('sale_badge').path),
+                            fit: BoxFit.contain,
+                          ),
+                        )
+                      : const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFFE0533D),
+                        ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          sticker!.$1,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            height: 1,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        sticker!.$2,
+                        style: const TextStyle(
+                          fontSize: 9,
+                          height: 1.2,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          if (tag != null && sticker == null)
             Positioned(
               top: -12,
               right: -4,
@@ -1709,7 +1768,9 @@ class StarterCard extends StatelessWidget {
 /// 남은 시간 시계 표기: 47:59:12 (초까지 흘러가 보이게).
 String _clock(Duration d) {
   String two(int n) => n.toString().padLeft(2, '0');
-  return '${d.inHours}:${two(d.inMinutes % 60)}:${two(d.inSeconds % 60)}';
+  final hms =
+      '${two(d.inHours % 24)}:${two(d.inMinutes % 60)}:${two(d.inSeconds % 60)}';
+  return d.inDays > 0 ? tr('time.dayClock', {'d': d.inDays, 't': hms}) : hms;
 }
 
 /// 살짝 숨 쉬듯 커졌다 작아지는 강조 (구매 버튼).

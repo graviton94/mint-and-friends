@@ -1132,7 +1132,7 @@ class Starter {
   static const String outfitFriend = 'bori';
   static const String outfit = 'starlight';
 
-  /// 처음 보여 준 뒤 이 시간 동안 '한정' 타이머 (지나도 상점에는 남는다).
-  static const Duration offerWindow = Duration(hours: 48);
+  /// 처음 보여 준 뒤 7일 동안만 판다 (타이머가 끝나면 상점에서도 사라진다).
+  static const Duration offerWindow = Duration(days: 7);
   static const int worthKrw = 20000;
 }

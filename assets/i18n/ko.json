@@ -879,6 +879,8 @@
   "shop.featuredTag": "추천",
   "shop.firstTag": "첫 구매 2배",
   "shop.firstBonus": "첫 구매 +{n} 더",
+  "time.dayClock": "{d}일 {t}",
+  "shop.firstShort": "첫 구매",
   "shop.effectNote": "꽃잎 · 반딧불 · 낙엽 · 눈",
   "market.adTake": "받기",
   "market.helperTag": "부탁용",
