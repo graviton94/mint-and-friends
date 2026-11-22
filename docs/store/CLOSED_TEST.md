@@ -66,6 +66,11 @@ Play 에 올린 앱은 Google 이 **앱 서명 키**로 다시 서명한다. 이
 - SHA-256: `4B:E7:5E:91:E6:2F:99:7E:2F:4A:E4:46:70:F3:C5:0E:23:22:25:84:6D:E6:0D:54:18:81:38:23:5A:BB:88:C4`
 - 카카오 키 해시: `wBdTSJLYhOBFuhZ744+JjlJYOYI=`
 
+**업로드 키 (AAB 서명, Play 에 올릴 때만)** — 로그인 설정에는 넣지 않아도 된다
+- SHA-1: `DA:4B:D4:13:51:BD:45:EA:A6:C9:CE:19:A2:84:7E:0F:1D:D6:A2:60`
+
+**Firebase 디지털 지문은 Play 앱 서명 + 테스트 APK 두 개면 된다** (2026-11-22 점검: Play 앱 서명이 빠져 있어 Play 로 받은 앱의 Google 로그인 실패. 지문을 고친 뒤 `google-services.json` 을 다시 받아 `GOOGLE_SERVICES_JSON` 시크릿 교체 → Actions 'Secrets check' 로 확인)
+
 **카카오 Android 플랫폼 키 하나에 둘 다**: 패키지명 `io.github.graviton94.mintandfriends` + 키 해시 `lmHR66JV5KuKUP3WVCp7w0Y24OQ=`(Play) · `wBdTSJLYhOBFuhZ744+JjlJYOYI=`(테스트 APK). 그 키의 네이티브 앱 키를 GitHub 비밀값 `KAKAO_NATIVE_APP_KEY` 로 → 키를 바꾸면 AAB 를 다시 빌드해야 앱에 들어간다. 업로드 키 해시는 넣지 않아도 된다 (사용자 폰의 앱은 Play 앱 서명 키로 서명됨).
 
 ## 7. 비공개 테스트 트랙
