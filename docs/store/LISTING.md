@@ -4,7 +4,7 @@
 
 - 패키지: `io.github.graviton94.mintandfriends`
 - 기본 언어: **en-US** (번역: ko-KR · ja-JP)
-- 카테고리: 게임 › 캐주얼 · 무료 · 문의 ruahn49@gmail.com
+- 카테고리: 게임 › 퍼즐 (태그: 병합 퍼즐, 퍼즐, 증분 게임, 디자인, 캐주얼) · 무료 · 문의 ruahn49@gmail.com
 - 개인정보처리방침: https://graviton94.github.io/mintandfriends/privacy/
 - 계정 삭제: https://graviton94.github.io/mintandfriends/privacy/#delete
 

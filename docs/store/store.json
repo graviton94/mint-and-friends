@@ -3,12 +3,13 @@
   "updated": "2026-11-21",
   "package": "io.github.graviton94.mintandfriends",
   "defaultLang": "en-US",
-  "category": "게임 › 캐주얼",
+  "category": "게임 › 퍼즐 · 태그: 병합 퍼즐, 퍼즐, 증분 게임, 디자인, 캐주얼",
   "price": "무료",
   "email": "ruahn49@gmail.com",
   "privacy": "https://graviton94.github.io/mintandfriends/privacy/",
   "deletion": "https://graviton94.github.io/mintandfriends/privacy/#delete",
-  "repoStore": "docs/store/"
+  "repoStore": "docs/store/",
+  "terms": "https://graviton94.github.io/mintandfriends/terms/"
  },
  "release": {
   "version": "1.0.0",
@@ -263,10 +264,6 @@
    "https://graviton94.github.io/mintandfriends/privacy/"
   ],
   [
-   "앱 액세스 권한",
-   "모든 기능 제한 없이 사용 가능 (게스트로 시작)"
-  ],
-  [
    "광고",
    "예, 광고 포함 — 보상형 + 장식 설치 후 가끔 전면 광고 (3분 간격, 정원 패스는 없음)"
   ],
@@ -280,7 +277,7 @@
   ],
   [
    "데이터 보안",
-   "이름(별명) · 사용자 ID · 게임 진행(선택, 클라우드 저장) · 애널리틱스 이벤트(필수) · 광고 ID와 대략적 위치(AdMob 공유). 전송 암호화 예, 삭제 요청 가능"
+   "docs/store/data_safety_import.csv 를 Play Console 에서 CSV 가져오기 (화면 순서 설명: docs/store/DATA_SAFETY.md)"
   ],
   [
    "계정 삭제",
@@ -293,6 +290,18 @@
   [
    "정부 · 금융 · 건강",
    "모두 아님"
+  ],
+  [
+   "서비스 약관",
+   "https://graviton94.github.io/mintandfriends/terms/ (PR #17 병합 뒤)"
+  ],
+  [
+   "광고 ID",
+   "예 — 애널리틱스, 광고 또는 마케팅, 사기 예방 · 보안 · 규정 준수 (AdMob · Firebase Analytics)"
+  ],
+  [
+   "앱 액세스 권한",
+   "아니요 (게스트로 모든 기능, 결제가 필요한 콘텐츠 없음)"
   ]
  ],
  "checklist": [
