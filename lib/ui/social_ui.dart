@@ -74,6 +74,8 @@ class _FriendsBodyState extends State<_FriendsBody> {
   Timer? _noteTimer;
   bool _starting = true;
   String? _startError;
+  int _tab = 0; // 0 친구 목록 · 1 추가 · 초대
+  bool _giftingAll = false;
 
   SocialService get social => widget.social;
   GameState get game => widget.game;
@@ -160,6 +162,29 @@ class _FriendsBodyState extends State<_FriendsBody> {
     _show(tr('social.giftSent', {'name': f.profile.name}));
   });
 
+  /// 오늘 아직 안 보낸 친구 모두에게 선물.
+  Future<void> _giftAll() async {
+    if (_giftingAll) return;
+    setState(() => _giftingAll = true);
+    var n = 0;
+    for (final f in [...social.friends]) {
+      if (social.giftSentToday(f)) continue;
+      try {
+        await social.sendGift(f, game);
+        n++;
+      } on SocialException catch (e) {
+        if (n == 0) _show(socialErrorText(e.code), bad: true);
+        break;
+      }
+    }
+    if (!mounted) return;
+    setState(() => _giftingAll = false);
+    if (n > 0) {
+      sfx(Sfx.coin);
+      _show(tr('social.giftAllDone', {'n': n, 'e': SocialConfig.giftEnergy}));
+    }
+  }
+
   Future<void> _rename() async {
     final name = await showDialog<String>(
       context: context,
@@ -237,119 +262,415 @@ class _FriendsBodyState extends State<_FriendsBody> {
         ],
       );
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _MyCard(
-          me: me,
-          onCopy: () {
-            Clipboard.setData(ClipboardData(text: me.code));
-            sfx(Sfx.tap);
-            _show(tr('social.copied'));
-          },
-          onRename: _rename,
-          onAvatar: _cycleAvatar,
-        ),
-        const SizedBox(height: 10),
-        _InviteCard(
-          social: social,
-          game: game,
-          onInvite: () => showShareDialog(context, game, ShareKind.garden),
-        ),
-        const SizedBox(height: 10),
-        // 친구 추가
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _code,
-                textCapitalization: TextCapitalization.characters,
-                maxLength: 9,
-                onSubmitted: (_) => _add(),
-                decoration: InputDecoration(
-                  counterText: '',
-                  isDense: true,
-                  filled: true,
-                  fillColor: Colors.white,
-                  hintText: tr('social.codeHint'),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+    final note = AnimatedSize(
+      duration: const Duration(milliseconds: 180),
+      child: _note == null
+          ? const SizedBox(width: double.infinity)
+          : Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: IconText(
+                _note!,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: _noteBad ? const Color(0xFFB0640A) : Palette.primary,
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            FilledButton(
-              style: framedButton(
-                FilledButton.styleFrom(minimumSize: const Size(64, 44)),
-                'button_green',
-              ),
-              onPressed: social.busy ? null : _add,
-              child: IconText(tr('social.add')),
-            ),
+    );
+    final left = social.giftableCount;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _Tabs(
+          index: _tab,
+          labels: [
+            tr('social.tabFriends', {
+              'n': social.friends.length,
+              'max': SocialConfig.maxFriends,
+            }),
+            tr('social.tabAdd'),
           ],
+          dots: [false, game.canBeInvited],
+          onTap: (i) {
+            if (i == _tab) return;
+            sfx(Sfx.tap);
+            FocusScope.of(context).unfocus();
+            setState(() => _tab = i);
+          },
         ),
-        AnimatedSize(
-          duration: const Duration(milliseconds: 180),
-          child: _note == null
-              ? const SizedBox(width: double.infinity)
-              : Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: IconText(
-                    _note!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: _noteBad
-                          ? const Color(0xFFB0640A)
-                          : Palette.primary,
+        _TabPanel(
+          child: _tab == 0
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // 오늘 선물 · 모두 선물
+                    Row(
+                      children: [
+                        ArtImage(Art.icon('gift'), size: 30),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: IconText(
+                            social.friends.isEmpty
+                                ? tr('social.giftHint')
+                                : left > 0
+                                ? tr('social.giftLeft', {
+                                    'n': left,
+                                    'e': SocialConfig.giftEnergy,
+                                  })
+                                : tr('social.giftAllSent'),
+                            style: _sub,
+                          ),
+                        ),
+                        if (social.loading)
+                          const Padding(
+                            padding: EdgeInsets.only(right: 6),
+                            child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        if (left > 0)
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: FilledButton(
+                                style: framedButton(
+                                  FilledButton.styleFrom(
+                                    minimumSize: const Size(84, 38),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                    ),
+                                    backgroundColor: const Color(0xFFF2C14E),
+                                    foregroundColor: const Color(0xFF5A3A08),
+                                  ),
+                                  'button_gold',
+                                ),
+                                onPressed: _giftingAll || social.busy
+                                    ? null
+                                    : _giftAll,
+                                child: _giftingAll
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : IconText(tr('social.giftAll')),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    note,
+                    const _VineDivider(),
+                    if (social.friends.isEmpty)
+                      social.friendsLoaded
+                          ? Column(
+                              children: [
+                                _Message(
+                                  icon: Art.friend(Friends.byId('bori')),
+                                  text: tr('social.empty'),
+                                  small: true,
+                                ),
+                                FilledButton(
+                                  style: framedButton(
+                                    FilledButton.styleFrom(
+                                      minimumSize: const Size(180, 46),
+                                    ),
+                                    'button_green',
+                                  ),
+                                  onPressed: () => setState(() => _tab = 1),
+                                  child: IconText(tr('social.goAdd')),
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                            )
+                          : const _Loading()
+                    else
+                      for (final f in _sorted())
+                        _FriendRow(
+                          friend: f,
+                          sent: social.giftSentToday(f),
+                          sending: social.isSending(f),
+                          onGift: () => _gift(f),
+                          onVisit: () =>
+                              showVisitSheet(context, social, game, f),
+                          onRemove: () => _remove(f),
+                        ),
+                    if (social.friends.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: IconText(
+                          tr('social.removeHint'),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.black38,
+                          ),
+                        ),
+                      ),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _MyCard(
+                      me: me,
+                      onCopy: () {
+                        Clipboard.setData(ClipboardData(text: me.code));
+                        sfx(Sfx.tap);
+                        _show(tr('social.copied'));
+                      },
+                      onRename: _rename,
+                      onAvatar: _cycleAvatar,
+                    ),
+                    const _VineDivider(),
+                    IconText(
+                      tr('social.addTitle'),
+                      style: const TextStyle(fontSize: 17),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _code,
+                            textCapitalization: TextCapitalization.characters,
+                            maxLength: 9,
+                            onSubmitted: (_) => _add(),
+                            decoration: InputDecoration(
+                              counterText: '',
+                              isDense: true,
+                              filled: true,
+                              fillColor: Colors.white,
+                              hintText: tr('social.codeHint'),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFD9C9A8),
+                                  width: 1.5,
+                                ),
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton(
+                          style: framedButton(
+                            FilledButton.styleFrom(
+                              minimumSize: const Size(64, 44),
+                            ),
+                            'button_green',
+                          ),
+                          onPressed: social.busy ? null : _add,
+                          child: IconText(tr('social.add')),
+                        ),
+                      ],
+                    ),
+                    note,
+                    const _VineDivider(),
+                    _InviteCard(
+                      social: social,
+                      game: game,
+                      onInvite: () =>
+                          showShareDialog(context, game, ShareKind.garden),
+                    ),
+                  ],
+                ),
+        ),
+      ],
+    );
+  }
+
+  /// 아직 선물 안 보낸 친구 먼저, 그다음 레벨 높은 순.
+  List<SocialFriend> _sorted() {
+    final l = [...social.friends];
+    l.sort((a, b) {
+      final sa = social.giftSentToday(a) ? 1 : 0;
+      final sb = social.giftSentToday(b) ? 1 : 0;
+      if (sa != sb) return sa - sb;
+      return b.profile.level - a.profile.level;
+    });
+    return l;
+  }
+}
+
+/// 잎 탭 두 개 (tab_body · tab_sprout · tab_idle). 고른 탭은 초록 + 새싹, 아래 판과 이어진다.
+class _Tabs extends StatelessWidget {
+  const _Tabs({
+    required this.index,
+    required this.labels,
+    required this.onTap,
+    this.dots = const [],
+  });
+  final int index;
+  final List<String> labels;
+  final List<bool> dots;
+  final ValueChanged<int> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 58,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          for (var i = 0; i < labels.length; i++)
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => onTap(i),
+                child: _Tab(
+                  label: labels[i],
+                  on: i == index,
+                  dot: i < dots.length && dots[i],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Tab extends StatelessWidget {
+  const _Tab({required this.label, required this.on, this.dot = false});
+  final String label;
+  final bool on;
+  final bool dot;
+
+  @override
+  Widget build(BuildContext context) {
+    final body = Art.frame(on ? 'tab_body' : 'tab_idle');
+    final h = on ? 46.0 : 38.0;
+    // 원본 → 화면 배율: 탭 몸통 높이 기준
+    final k = h / (on ? 162 : 136);
+    final text = IconText(
+      label,
+      maxLines: 1,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: on ? 17 : 15,
+        color: on ? Colors.white : const Color(0xFF7A6A58),
+        shadows: on
+            ? const [Shadow(color: Color(0x88316B1C), offset: Offset(0, 1.5))]
+            : null,
+      ),
+    );
+    return Stack(
+      clipBehavior: Clip.none,
+      alignment: Alignment.bottomCenter,
+      children: [
+        SizedBox(
+          height: h,
+          child: body.available
+              ? LayoutBuilder(
+                  builder: (context, b) => FittedBox(
+                    fit: BoxFit.fill,
+                    child: Image.asset(
+                      body.path,
+                      width: (b.maxWidth / k).clamp(
+                        on ? 260 : 200,
+                        double.infinity,
+                      ),
+                      height: on ? 162 : 136,
+                      centerSlice: on
+                          ? const Rect.fromLTRB(70, 70, 190, 130)
+                          : const Rect.fromLTRB(50, 50, 150, 100),
+                      filterQuality: FilterQuality.medium,
+                    ),
+                  ),
+                )
+              : Container(
+                  decoration: BoxDecoration(
+                    color: on ? Palette.primary : const Color(0xFFF0E2D2),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(16),
                     ),
                   ),
                 ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: IconText(
-                tr('social.list', {
-                  'n': social.friends.length,
-                  'max': SocialConfig.maxFriends,
-                }),
-                style: const TextStyle(fontSize: 18),
+        Positioned(
+          left: 6,
+          right: 6,
+          bottom: on ? 10 : 8,
+          child: FittedBox(fit: BoxFit.scaleDown, child: text),
+        ),
+        if (on && Art.frame('tab_sprout').available)
+          Positioned(
+            bottom: h - 12 * k,
+            child: Image.asset(
+              Art.frame('tab_sprout').path,
+              width: 112 * k,
+              height: 60 * k,
+            ),
+          ),
+        if (dot)
+          Positioned(
+            top: on ? 4 : 18,
+            right: 14,
+            child: Container(
+              width: 10,
+              height: 10,
+              decoration: const BoxDecoration(
+                color: Color(0xFFE5533B),
+                shape: BoxShape.circle,
               ),
             ),
-            if (social.loading)
-              const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 2, bottom: 6),
-          child: IconText(tr('social.giftHint'), style: _sub),
-        ),
-        if (social.friends.isEmpty)
-          social.friendsLoaded
-              ? _Message(
-                  icon: Art.icon('gift'),
-                  text: tr('social.empty'),
-                  small: true,
-                )
-              : const _Loading()
-        else
-          for (final f in social.friends)
-            _FriendRow(
-              friend: f,
-              sent: social.giftSentToday(f),
-              sending: social.isSending(f),
-              onGift: () => _gift(f),
-              onVisit: () => showVisitSheet(context, social, game, f),
-              onRemove: () => _remove(f),
-            ),
+          ),
       ],
+    );
+  }
+}
+
+/// 탭 아래 판: 크림색 카드, 위 테두리는 고른 탭과 이어지는 초록 줄.
+class _TabPanel extends StatelessWidget {
+  const _TabPanel({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Container(
+        height: 4,
+        decoration: BoxDecoration(
+          color: const Color(0xFF6DBB3A),
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+      Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFBF0),
+          borderRadius: const BorderRadius.vertical(
+            bottom: Radius.circular(18),
+          ),
+          border: Border.all(color: const Color(0xFFE5DCC8), width: 1.5),
+        ),
+        child: child,
+      ),
+    ],
+  );
+}
+
+/// 덩굴 구분선 (divider).
+class _VineDivider extends StatelessWidget {
+  const _VineDivider();
+  @override
+  Widget build(BuildContext context) {
+    final d = Art.frame('divider');
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: d.available
+          ? Image.asset(d.path, height: 22, fit: BoxFit.contain)
+          : const Divider(),
     );
   }
 }
@@ -407,7 +728,7 @@ class _MyCard extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: onAvatar,
-            child: ArtImage(Art.friend(Friends.byId(me.avatar)), size: 56),
+            child: _Avatar(id: safeAvatar(me.avatar), size: 60),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -439,13 +760,16 @@ class _MyCard extends StatelessWidget {
                 Row(
                   children: [
                     Flexible(
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          FriendCode.display(me.code),
-                          style: const TextStyle(
-                            fontSize: 20,
-                            letterSpacing: 1.5,
+                      child: _Plaque(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            FriendCode.display(me.code),
+                            style: const TextStyle(
+                              fontSize: 19,
+                              letterSpacing: 1.5,
+                              color: Color(0xFF5C402C),
+                            ),
                           ),
                         ),
                       ),
@@ -503,88 +827,215 @@ class _FriendRow extends StatelessWidget {
       onLongPress: onRemove,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-        decoration: _card(),
+        padding: const EdgeInsets.fromLTRB(8, 8, 10, 8),
+        decoration: _card(sent ? const Color(0xFFFAF6EC) : Colors.white),
         child: Row(
           children: [
-            ArtImage(Art.friend(Friends.byId(p.avatar)), size: 44),
-            const SizedBox(width: 8),
+            _Avatar(id: safeAvatar(p.avatar), size: 50),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    p.name,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 16),
+                  Row(
+                    children: [
+                      _LevelChip(level: p.level),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          p.name,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 2),
                   IconText(
-                    tr('social.levelArea', {
-                      'n': p.level,
-                      'area': areaName(Garden.areaAt(p.area)),
-                    }),
+                    areaName(Garden.areaAt(p.area)),
                     maxLines: 1,
                     style: _sub,
                   ),
+                  if (p.score > 0)
+                    IconText(
+                      tr('social.scoreLine', {
+                        'score': (p.score / 10).toStringAsFixed(1),
+                      }),
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF9A7A3A),
+                      ),
+                    ),
                 ],
               ),
             ),
-            const SizedBox(width: 4),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 176),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Row(
-                  children: [
-                    if (sent)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 6),
-                        child: IconText(
-                          tr('social.giftDone'),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.black45,
-                          ),
-                        ),
-                      )
-                    else
-                      FilledButton(
-                        style: framedButton(
-                          FilledButton.styleFrom(
-                            minimumSize: const Size(56, 38),
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                          ),
-                          'button_green',
-                        ),
-                        onPressed: sending ? null : onGift,
-                        child: sending
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : IconText(tr('social.gift')),
-                      ),
-                    const SizedBox(width: 6),
-                    OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(52, 38),
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                      ),
-                      onPressed: onVisit,
-                      child: IconText(tr('social.visit')),
-                    ),
-                  ],
-                ),
-              ),
+            const SizedBox(width: 6),
+            _RoundButton(
+              icon: Art.icon('visit'),
+              label: tr('social.visitShort'),
+              color: const Color(0xFFFFF1C9),
+              onTap: onVisit,
             ),
+            const SizedBox(width: 6),
+            sent
+                ? _RoundButton(
+                    icon: Art.icon('check'),
+                    label: tr('social.sentShort'),
+                    color: const Color(0xFFEDE6D6),
+                  )
+                : _RoundButton(
+                    icon: Art.icon('gift'),
+                    label: tr('social.giftShort'),
+                    color: const Color(0xFFD8F0C4),
+                    busy: sending,
+                    onTap: onGift,
+                  ),
           ],
         ),
       ),
     );
   }
+}
+
+/// 친구 얼굴: 민트 동그라미 위에.
+/// 나무 이름판 (title_plaque): 꽃 장식 · 테두리는 그대로, 가운데만 늘린다.
+class _Plaque extends StatelessWidget {
+  const _Plaque({required this.child});
+  final Widget child;
+  @override
+  Widget build(BuildContext context) {
+    final img = Art.frame('title_plaque');
+    const h = 48.0, k = h / 189;
+    return SizedBox(
+      height: h,
+      child: Stack(
+        children: [
+          if (img.available)
+            Positioned.fill(
+              child: LayoutBuilder(
+                builder: (context, b) => FittedBox(
+                  fit: BoxFit.fill,
+                  child: Image.asset(
+                    img.path,
+                    width: (b.maxWidth / k).clamp(450, double.infinity),
+                    height: 189,
+                    centerSlice: const Rect.fromLTRB(110, 60, 340, 130),
+                    filterQuality: FilterQuality.medium,
+                  ),
+                ),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 6, 22, 8),
+            child: Center(child: child),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  const _Avatar({required this.id, required this.size});
+  final String id;
+  final double size;
+  @override
+  Widget build(BuildContext context) => Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      color: const Color(0xFFE3F4DA),
+      shape: BoxShape.circle,
+      border: Border.all(color: const Color(0xFFB9DDA4), width: 2),
+    ),
+    alignment: Alignment.center,
+    child: ArtImage(Art.friend(Friends.byId(id)), size: size * 0.86),
+  );
+}
+
+class _LevelChip extends StatelessWidget {
+  const _LevelChip({required this.level});
+  final int level;
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+    decoration: BoxDecoration(
+      color: const Color(0xFF6DBB3A),
+      borderRadius: BorderRadius.circular(9),
+      border: Border.all(color: const Color(0xFF4E8A2A), width: 1.2),
+    ),
+    child: Text(
+      'Lv.$level',
+      style: const TextStyle(fontSize: 12, color: Colors.white, height: 1.2),
+    ),
+  );
+}
+
+/// 동그란 아이콘 버튼 + 아래 작은 글자 (구경 · 선물 · 보냄).
+class _RoundButton extends StatelessWidget {
+  const _RoundButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.onTap,
+    this.busy = false,
+  });
+  final ArtRef icon;
+  final String label;
+  final Color color;
+  final VoidCallback? onTap;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onTap: busy ? null : onTap,
+    child: SizedBox(
+      width: 52,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF7A5230), width: 2),
+              boxShadow: onTap == null
+                  ? null
+                  : const [
+                      BoxShadow(color: Color(0x33000000), offset: Offset(0, 2)),
+                    ],
+            ),
+            alignment: Alignment.center,
+            child: busy
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Opacity(
+                    opacity: onTap == null ? 0.6 : 1,
+                    child: ArtImage(icon, size: 28),
+                  ),
+          ),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: onTap == null ? Colors.black38 : const Color(0xFF5C402C),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 // ---------------------------------------------------------------- 친구 정원 구경
@@ -880,13 +1331,18 @@ class _InviteCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              FilledButton(
-                style: framedButton(
-                  FilledButton.styleFrom(minimumSize: const Size(72, 44)),
-                  'button_green',
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: FilledButton(
+                    style: framedButton(
+                      FilledButton.styleFrom(minimumSize: const Size(72, 44)),
+                      'button_green',
+                    ),
+                    onPressed: onInvite,
+                    child: IconText(tr('invite.button')),
+                  ),
                 ),
-                onPressed: onInvite,
-                child: IconText(tr('invite.button')),
               ),
             ],
           ),

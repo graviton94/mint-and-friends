@@ -104,6 +104,9 @@ class SocialConfig {
   /// 하루 한 번 친구 정원 구경 답례.
   static const Reward visitThanks = Reward(energy: 3);
 
+  /// 친구 선물 하나의 에너지 (함수 sendGift 와 같은 값).
+  static const int giftEnergy = 5;
+
   /// 프로필은 바뀌었을 때만, 그래도 최소 이 간격으로.
   static const Duration profileMinGap = Duration(minutes: 2);
   static const Duration profileRefresh = Duration(hours: 12);

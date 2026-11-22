@@ -573,17 +573,23 @@ void main() {
         await a.addFriendByCode(bMe.code);
       });
       await open(tester, a, g);
-      expect(find.text('민트'), findsOneWidget);
-      expect(find.textContaining('social.gift'), findsWidgets);
-      await tester.ensureVisible(find.textContaining('social.gift').last);
+      // 내 카드는 '추가 · 초대' 탭에
+      await tester.tap(find.textContaining('social.tabAdd'));
       await tester.pumpAndSettle();
-      await tester.tap(find.textContaining('social.gift').last);
+      expect(find.text('민트'), findsOneWidget);
+      await tester.tap(find.textContaining('social.tabFriends'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('social.giftAll'), findsOneWidget);
+      await tester.ensureVisible(find.textContaining('social.giftShort'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.textContaining('social.giftShort'));
       await tester.pumpAndSettle();
       expect(g.stat(Stat.giftsSent), 1);
-      expect(find.textContaining('social.giftDone'), findsOneWidget);
-      await tester.ensureVisible(find.textContaining('social.visit'));
+      expect(find.textContaining('social.sentShort'), findsOneWidget);
+      expect(find.textContaining(RegExp(r'social\.giftAll$')), findsNothing);
+      await tester.ensureVisible(find.textContaining('social.visitShort'));
       await tester.pumpAndSettle();
-      await tester.tap(find.textContaining('social.visit'));
+      await tester.tap(find.textContaining('social.visitShort'));
       for (var i = 0; i < 10; i++) {
         await tester.pump(
           const Duration(milliseconds: 50),

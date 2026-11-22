@@ -993,5 +993,18 @@
   "notify.mailFrom.title": "{name}의 편지가 도착했어요",
   "notify.mailMany.title": "안 읽은 편지가 {n}통 있어요",
   "notify.mail.body.0": "쪽지함에 선물이 기다리고 있어요. 열어 볼까요?",
-  "notify.mail.body.1": "정원 친구들이 소식을 보냈어요. 읽으러 와 주세요!"
+  "notify.mail.body.1": "정원 친구들이 소식을 보냈어요. 읽으러 와 주세요!",
+  "social.tabFriends": "친구 {n}/{max}",
+  "social.tabAdd": "추가 · 초대",
+  "social.giftAll": "[[gift]] 모두 선물",
+  "social.giftAllDone": "친구 {n}명에게 [[energy]]{e} 씩 보냈어요!",
+  "social.giftLeft": "오늘 선물 보낼 친구 {n}명 · 하나에 [[energy]]{e}",
+  "social.giftAllSent": "오늘 선물은 다 보냈어요. 내일 또 보내요!",
+  "social.goAdd": "친구 추가하러 가기",
+  "social.addTitle": "코드로 친구 추가",
+  "social.removeHint": "친구를 길게 누르면 목록에서 뺄 수 있어요",
+  "social.scoreLine": "꾸밈 점수 {score}",
+  "social.visitShort": "구경",
+  "social.giftShort": "선물",
+  "social.sentShort": "보냄"
 }

@@ -992,5 +992,18 @@
   "notify.mailFrom.title": "{name}からお手紙が届いたよ",
   "notify.mailMany.title": "読んでいないお手紙が{n}通あるよ",
   "notify.mail.body.0": "お手紙ボックスでプレゼントが待っているよ。開いてみる?",
-  "notify.mail.body.1": "お庭の友だちからお便りが来たよ。読みに来てね!"
+  "notify.mail.body.1": "お庭の友だちからお便りが来たよ。読みに来てね!",
+  "social.tabFriends": "フレンド {n}/{max}",
+  "social.tabAdd": "追加 · 招待",
+  "social.giftAll": "[[gift]] まとめて贈る",
+  "social.giftAllDone": "フレンド{n}人に [[energy]]{e} ずつ贈りました!",
+  "social.giftLeft": "今日贈れるフレンド {n}人 · 1回 [[energy]]{e}",
+  "social.giftAllSent": "今日のプレゼントは全部贈りました。また明日!",
+  "social.goAdd": "フレンドを追加する",
+  "social.addTitle": "コードでフレンド追加",
+  "social.removeHint": "長押しでフレンドから外せます",
+  "social.scoreLine": "飾りスコア {score}",
+  "social.visitShort": "見学",
+  "social.giftShort": "贈る",
+  "social.sentShort": "贈った"
 }

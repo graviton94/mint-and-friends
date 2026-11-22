@@ -49,24 +49,20 @@ class _SproutScrollbarState extends State<SproutScrollbar> {
       child: LayoutBuilder(
         builder: (context, box) {
           final view = widget.builder(_c);
-          if (!_c.hasClients || !_c.position.hasContentDimensions) {
-            return view;
-          }
-          final p = _c.position;
-          final max = p.maxScrollExtent;
-          if (max <= 0) return view;
-          final track = p.viewportDimension - widget.inset * 2;
-          final thumb =
-              (track * p.viewportDimension / (max + p.viewportDimension)).clamp(
-                widget.width * 3.2,
-                track,
-              );
-          final top =
-              widget.inset + (track - thumb) * (p.pixels / max).clamp(0.0, 1.0);
-          return Stack(
-            children: [
-              view,
-              Positioned(
+          // 손잡이가 있든 없든 같은 모양의 트리를 돌려준다 (안쪽 상태가 초기화되지 않게)
+          Widget? bar;
+          if (_c.hasClients && _c.position.hasContentDimensions) {
+            final p = _c.position;
+            final max = p.maxScrollExtent;
+            if (max > 0) {
+              final track = p.viewportDimension - widget.inset * 2;
+              final thumb =
+                  (track * p.viewportDimension / (max + p.viewportDimension))
+                      .clamp(widget.width * 3.2, track);
+              final top =
+                  widget.inset +
+                  (track - thumb) * (p.pixels / max).clamp(0.0, 1.0);
+              bar = Positioned(
                 right: 0,
                 top: top,
                 width: widget.width + 8,
@@ -83,7 +79,14 @@ class _SproutScrollbarState extends State<SproutScrollbar> {
                     child: _Thumb(width: widget.width, height: thumb),
                   ),
                 ),
-              ),
+              );
+            }
+          }
+          return Stack(
+            fit: StackFit.passthrough,
+            children: [
+              view,
+              bar ?? const Positioned(width: 0, height: 0, child: SizedBox()),
             ],
           );
         },

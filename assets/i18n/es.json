@@ -992,5 +992,18 @@
   "notify.mailFrom.title": "Una carta de {name}",
   "notify.mailMany.title": "{n} cartas sin leer",
   "notify.mail.body.0": "Un regalo te espera en el buzón. ¿Lo abres?",
-  "notify.mail.body.1": "Tus amigos del jardín te enviaron noticias. ¡Ven a leerlas!"
+  "notify.mail.body.1": "Tus amigos del jardín te enviaron noticias. ¡Ven a leerlas!",
+  "social.tabFriends": "Amigos {n}/{max}",
+  "social.tabAdd": "Añadir · Invitar",
+  "social.giftAll": "[[gift]] Regalar a todos",
+  "social.giftAllDone": "¡Enviaste [[energy]]{e} a {n} amigos!",
+  "social.giftLeft": "{n} amigos por regalar hoy · [[energy]]{e} c/u",
+  "social.giftAllSent": "Hoy ya regalaste a todos. ¡Hasta mañana!",
+  "social.goAdd": "Añadir amigos",
+  "social.addTitle": "Añadir con código",
+  "social.removeHint": "Mantén pulsado un amigo para quitarlo",
+  "social.scoreLine": "Decoración {score}",
+  "social.visitShort": "Visitar",
+  "social.giftShort": "Regalar",
+  "social.sentShort": "Enviado"
 }

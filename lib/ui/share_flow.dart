@@ -2,8 +2,10 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:material_ui/material_ui.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../art/art.dart';
 import '../game/config.dart';
@@ -167,6 +169,20 @@ class ShareButton extends StatelessWidget {
 Future<void> runShareProbe(GameState game) async {
   void log(String s) => print('SHAREPROBE $s'); // ignore: avoid_print
   try {
+    // 같은 원인(JNI 플러그인)을 쓰는 저장 · 소리 캐시도 함께 확인
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('probe', 'ok');
+      log('prefs ${prefs.getString('probe')}');
+    } catch (e) {
+      log('prefs ERROR $e');
+    }
+    try {
+      final u = await AudioCache.instance.load('audio/bgm_garden.ogg');
+      log('audio cache ok ${u.path.split('/').last}');
+    } catch (e) {
+      log('audio cache ERROR $e');
+    }
     log('render start');
     final png = await ShareCard.render(kind: ShareKind.garden, game: game);
     log('render ok ${png.length} bytes');

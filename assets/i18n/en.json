@@ -992,5 +992,18 @@
   "notify.mailFrom.title": "A letter from {name}",
   "notify.mailMany.title": "{n} unread letters",
   "notify.mail.body.0": "A gift is waiting in your mailbox. Open it?",
-  "notify.mail.body.1": "Your garden friends sent news. Come read it!"
+  "notify.mail.body.1": "Your garden friends sent news. Come read it!",
+  "social.tabFriends": "Friends {n}/{max}",
+  "social.tabAdd": "Add · Invite",
+  "social.giftAll": "[[gift]] Gift all",
+  "social.giftAllDone": "Sent [[energy]]{e} to {n} friends!",
+  "social.giftLeft": "{n} friends to gift today · [[energy]]{e} each",
+  "social.giftAllSent": "All gifts sent today. See you tomorrow!",
+  "social.goAdd": "Add friends",
+  "social.addTitle": "Add by friend code",
+  "social.removeHint": "Long-press a friend to remove them",
+  "social.scoreLine": "Decor score {score}",
+  "social.visitShort": "Visit",
+  "social.giftShort": "Gift",
+  "social.sentShort": "Sent"
 }
