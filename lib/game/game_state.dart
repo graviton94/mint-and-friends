@@ -200,6 +200,12 @@ class OrderMilestoneEvent extends GameEvent {
   OrderMilestoneEvent(this.count, this.gems);
 }
 
+/// 오늘 별 부탁을 모두 썼다 (하루 한 번, 분석용: 한도가 너무 빡빡한지 본다).
+class OrdersDoneEvent extends GameEvent {
+  final int ordersToday;
+  OrdersDoneEvent(this.ordersToday);
+}
+
 class RenewEvent extends GameEvent {
   final int round;
   final int seeds;
@@ -1078,6 +1084,7 @@ class GameState extends ChangeNotifier {
   /// 방금 부탁을 들어준 친구가 다시 부탁하기까지 쉬는 시간 (같은 친구가 연달아 부탁하지 않게).
   static const Duration orderRest = Duration(seconds: 45);
   final Map<String, DateTime> _restUntil = {};
+  String _doneDay = '';
 
   /// 쉬는 중인 친구 (친구가 셋 이상일 때만: 초반 한두 명일 때는 부탁이 끊기지 않게).
   bool _resting(String f) {
@@ -1856,6 +1863,10 @@ class GameState extends ChangeNotifier {
     orders.removeAt(orderIndex);
     _restUntil[o.friendId] = now.add(orderRest);
     _fillOrders();
+    if (ordersDoneToday && _doneDay != _dayKey(now)) {
+      _doneDay = _dayKey(now);
+      _events.add(OrdersDoneEvent(_ordersToday));
+    }
     _trace(
       'order',
       '${o.friendId},${o.chain.name},${o.level},$gained,${c.round()}',

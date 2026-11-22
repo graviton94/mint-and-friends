@@ -68,6 +68,26 @@ class Analytics {
             'left': game.gems,
             'level': game.level,
           });
+        case OrdersDoneEvent():
+          // 하루 별 부탁 한도를 다 쓴 시각 · 그날 부탁 수 (한도가 빡빡한지)
+          log('orders_done', {
+            'orders': e.ordersToday,
+            'hour': DateTime.now().hour,
+            'level': game.level,
+            'area': game.currentArea + 1,
+          });
+        case OrderMilestoneEvent():
+          log('order_milestone', {'count': e.count, 'level': game.level});
+        case RenewEvent():
+          log('renew', {
+            'round': e.round,
+            'seeds': e.seeds,
+            'level': game.level,
+          });
+        case LandmarkEvent():
+          if (e.level == 1 || e.newStage) {
+            log('landmark', {'area': e.area + 1, 'lv': e.level});
+          }
         case AdRewardEvent():
           log('ad_reward', {'kind': e.kind, 'level': game.level});
         default:

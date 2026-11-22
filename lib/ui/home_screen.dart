@@ -282,7 +282,10 @@ class _HomeScreenState extends State<HomeScreen> {
           title: tr('upgrade.milestoneHit', {'name': upgradeTitle(type)}),
           sub: tr('upgrade.milestoneSub', {'lv': level}),
         );
-      case EnergyEmptyEvent() || AdRewardEvent() || GemsSpentEvent():
+      case EnergyEmptyEvent() ||
+          AdRewardEvent() ||
+          GemsSpentEvent() ||
+          OrdersDoneEvent():
         break; // 지표용 (Analytics)
     }
   }
