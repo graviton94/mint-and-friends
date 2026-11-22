@@ -256,6 +256,8 @@
   "tut.done": "Let's go!",
   "tut.skip": "Skip",
   "login.failed": "Couldn't sign in. Try again later, or play as a guest.",
+  "login.copyDiag": "Copy error details",
+  "login.copied": "Copied",
   "login.timeout": "No response, so sign-in was stopped. Please try again.",
   "settings.music": "Music",
   "settings.sfx": "Sound effects",

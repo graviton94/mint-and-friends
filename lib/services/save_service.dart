@@ -103,7 +103,8 @@ class SaveService extends ChangeNotifier {
       FirebaseFirestore.instance.collection('users').doc(id);
 
   Future<Map<String, dynamic>?> _fetchCloud(String id) async {
-    final snap = await _doc(id).get();
+    // 연결이 막히면 Firestore 는 오래 기다린다: 제한 시간 뒤에는 실패로 보고 나중에 다시.
+    final snap = await _doc(id).get().timeout(const Duration(seconds: 12));
     final data = snap.data();
     final raw = data?['data'] as String?;
     if (raw == null) return null;
@@ -111,7 +112,8 @@ class SaveService extends ChangeNotifier {
   }
 
   /// 로그인 직후 호출. 충돌이면 [askUser] 로 물어본다 (true = 클라우드 사용).
-  Future<void> attach(
+  /// 클라우드를 읽지 못하면 false (uid 를 붙이지 않는다: 읽지 못한 클라우드를 기기 진행으로 덮어쓰지 않게).
+  Future<bool> attach(
     String newUid,
     GameState game, {
     required Future<bool> Function(SaveSummary local, SaveSummary cloud)
@@ -147,11 +149,15 @@ class SaveService extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('cloud attach failed: $e');
+      uid = null;
       status = SyncStatus.error;
+      notifyListeners();
+      return false;
     }
     _timer?.cancel();
     _timer = Timer.periodic(cloudInterval, (_) => upload(game));
     notifyListeners();
+    return true;
   }
 
   void detach() {
@@ -171,14 +177,18 @@ class SaveService extends ChangeNotifier {
       final json = game.encode();
       _prefs.setString(_key, json);
       _prefs.setString(_ownerKey, id);
-      await _doc(id).set({
-        'data': json,
-        'level': game.level,
-        'area': game.currentArea,
-        'progress': game.progressScore,
-        'updatedAt': FieldValue.serverTimestamp(),
-        'schema': GameState.saveVersion,
-      });
+      await _doc(id)
+          .set({
+            'data': json,
+            'level': game.level,
+            'area': game.currentArea,
+            'progress': game.progressScore,
+            'updatedAt': FieldValue.serverTimestamp(),
+            'schema': GameState.saveVersion,
+          })
+          .timeout(
+            const Duration(seconds: 20),
+          ); // 오프라인이면 끝나지 않는다 (쓰기는 Firestore 가 대기열에 둔다)
       lastCloudSave = DateTime.now();
       status = SyncStatus.synced;
     } catch (e) {

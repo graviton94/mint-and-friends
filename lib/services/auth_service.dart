@@ -57,10 +57,14 @@ class AuthService extends ChangeNotifier {
 
   bool get isGuest => provider == LoginProvider.guest;
 
+  /// 초기화 중 실패한 단계 (진단 화면에 보인다).
+  final List<String> initErrors = [];
+
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _localGuest = prefs.getBool(_localGuestKey) ?? false;
     if (firebaseEnabled) {
+      // 단계마다 따로: 하나가 실패해도 나머지(특히 게스트)는 살린다.
       try {
         await Firebase.initializeApp(options: AppConfig.firebaseOptions);
         user = FirebaseAuth.instance.currentUser;
@@ -68,21 +72,58 @@ class AuthService extends ChangeNotifier {
           user = u;
           notifyListeners();
         });
-        if (googleEnabled) {
+      } catch (e) {
+        initErrors.add('firebase ${_reason(e)}');
+        debugPrint('Firebase init failed: $e');
+      }
+      if (googleEnabled) {
+        try {
           await GoogleSignIn.instance.initialize(
             serverClientId: AppConfig.googleServerClientId,
           );
+        } catch (e) {
+          initErrors.add('google init ${_reason(e)}');
         }
-        if (kakaoEnabled) {
-          kakao.KakaoSdk.init(nativeAppKey: AppConfig.kakaoNativeAppKey);
+      }
+      if (kakaoEnabled) {
+        try {
+          await kakao.KakaoSdk.init(nativeAppKey: AppConfig.kakaoNativeAppKey);
+        } catch (e) {
+          initErrors.add('kakao init ${_reason(e)}');
         }
-      } catch (e) {
-        debugPrint('Firebase init failed: $e');
       }
     }
     ready = true;
     notifyListeners();
   }
+
+  /// 로그인이 안 될 때 원인을 찾는 정보 (비밀값 없음: 공개 키 일부 · 서명 해시 · 패키지).
+  /// 카카오 '키 해시'와 Firebase 지문은 이 기기에서 실제로 돌고 있는 앱의 서명이다.
+  Future<String> diagnostics() async {
+    String mask(String v) => v.length <= 8
+        ? (v.isEmpty ? '-' : v)
+        : '${v.substring(0, 4)}…${v.substring(v.length - 4)}';
+    final lines = <String>[
+      'fb ${firebaseEnabled ? AppConfig.firebaseProjectId : 'off'} app ${mask(AppConfig.firebaseAppId)} ready ${Firebase.apps.isNotEmpty}',
+      'google ${googleEnabled ? mask(AppConfig.googleServerClientId) : 'off'}',
+      'kakao ${kakaoEnabled ? mask(AppConfig.kakaoNativeAppKey) : 'off'}',
+    ];
+    if (kakaoEnabled) {
+      try {
+        final info = kakao.KakaoSdk.platformInfo;
+        lines.add('pkg ${info.packageName ?? '-'}');
+        lines.add('keyhash ${info.origin}');
+      } catch (e) {
+        lines.add('keyhash ? ${e.runtimeType}');
+      }
+    }
+    if (initErrors.isNotEmpty) lines.add('init: ${initErrors.join(' / ')}');
+    if (lastGuestError != null) lines.add('anon: $lastGuestError');
+    return lines.join('\n');
+  }
+
+  /// 마지막 익명 로그인 실패 이유 (기기 전용 게스트로 대신 시작했을 때).
+  String? lastGuestError;
 
   Future<T> _run<T>(Future<T> Function() body) async {
     busy = true;
@@ -148,28 +189,34 @@ class AuthService extends ChangeNotifier {
     });
   }
 
-  Future<void> signInGuest() => _run(() async {
-    if (firebaseEnabled && Firebase.apps.isNotEmpty) {
-      if (FirebaseAuth.instance.currentUser == null) {
+  /// 게스트 시작은 실패하지 않는다: Firebase 익명 로그인이 안 되면 기기 전용 게스트로 바로 들어가고
+  /// (진행은 기기에 저장), 나중에 설정에서 계정을 연결한다.
+  Future<void> signInGuest() async {
+    busy = true;
+    notifyListeners();
+    try {
+      if (firebaseEnabled && Firebase.apps.isNotEmpty) {
+        if (FirebaseAuth.instance.currentUser != null) return;
         try {
           await FirebaseAuth.instance.signInAnonymously().timeout(
-            const Duration(seconds: 12),
+            const Duration(seconds: 10),
           );
+          lastGuestError = null;
           return;
         } catch (e) {
-          // 오프라인 등: 기기 전용 게스트로라도 바로 시작한다 (나중에 설정에서 연결).
+          lastGuestError = e is TimeoutException ? 'timeout' : _reason(e);
           debugPrint('anonymous sign-in failed, local guest: $e');
         }
-      } else {
-        return;
       }
       _localGuest = true;
-      (await SharedPreferences.getInstance()).setBool(_localGuestKey, true);
-    } else {
-      _localGuest = true;
-      (await SharedPreferences.getInstance()).setBool(_localGuestKey, true);
+      try {
+        (await SharedPreferences.getInstance()).setBool(_localGuestKey, true);
+      } catch (_) {}
+    } finally {
+      busy = false;
+      notifyListeners();
     }
-  });
+  }
 
   /// Google 로그인. 익명 계정이면 연결(link)해서 uid 를 유지한다.
   Future<void> signInGoogle() => _run(() async {
@@ -180,6 +227,7 @@ class AuthService extends ChangeNotifier {
     } on GoogleSignInException catch (e) {
       throw AuthException(
         e.code == GoogleSignInExceptionCode.canceled ? 'cancelled' : 'failed',
+        'google ${e.code.name}${e.description == null ? '' : ': ${e.description}'}',
       );
     }
     final idToken = account.authentication.idToken;

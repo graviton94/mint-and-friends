@@ -256,6 +256,8 @@
   "tut.done": "はじめる!",
   "tut.skip": "スキップ",
   "login.failed": "ログインできませんでした。あとでもう一度試すか、ゲストではじめてください。",
+  "login.copyDiag": "エラー情報をコピー",
+  "login.copied": "コピーしました",
   "login.timeout": "応答がないためログインを中止しました。もう一度お試しください。",
   "settings.music": "BGM",
   "settings.sfx": "効果音",

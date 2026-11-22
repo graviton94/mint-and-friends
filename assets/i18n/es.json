@@ -256,6 +256,8 @@
   "tut.done": "¡Vamos!",
   "tut.skip": "Saltar",
   "login.failed": "No se pudo iniciar sesión. Inténtalo más tarde o juega como invitado.",
+  "login.copyDiag": "Copiar detalles del error",
+  "login.copied": "Copiado",
   "login.timeout": "No hubo respuesta, así que se detuvo el inicio de sesión. Inténtalo de nuevo.",
   "settings.music": "Música",
   "settings.sfx": "Efectos de sonido",

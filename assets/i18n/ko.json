@@ -257,6 +257,8 @@
   "tut.done": "시작!",
   "tut.skip": "건너뛰기",
   "login.failed": "로그인하지 못했어요. 잠시 후 다시 시도하거나 게스트로 시작해 주세요.",
+  "login.copyDiag": "오류 정보 복사",
+  "login.copied": "복사했어요",
   "login.timeout": "응답이 없어 로그인을 멈췄어요. 다시 시도해 주세요.",
   "settings.music": "배경 음악",
   "settings.sfx": "효과음",

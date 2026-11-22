@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:material_ui/material_ui.dart';
 
 import '../art/art.dart';
@@ -32,6 +33,8 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _pending; // 누른 버튼 (그 버튼에만 로딩 표시)
   String? _error;
   String? _detail;
+  String? _diag; // 로그인 실패 때 원인 찾기용 (서명 해시 · 키 일부)
+  bool _copied = false;
 
   AuthService get auth => widget.auth;
 
@@ -41,6 +44,8 @@ class _LoginScreenState extends State<LoginScreen> {
       _pending = which;
       _error = null;
       _detail = null;
+      _diag = null;
+      _copied = false;
     });
     try {
       await f();
@@ -51,6 +56,8 @@ class _LoginScreenState extends State<LoginScreen> {
           _error = tr(e.code == 'timeout' ? 'login.timeout' : 'login.failed');
           _detail = e.detail.isEmpty ? null : e.detail;
         });
+        final d = await widget.auth.diagnostics();
+        if (mounted) setState(() => _diag = d);
       }
     } finally {
       if (mounted) setState(() => _pending = null);
@@ -250,6 +257,35 @@ class _LoginScreenState extends State<LoginScreen> {
                                               color: Colors.black45,
                                             ),
                                           ),
+                                        if (_diag != null) ...[
+                                          const SizedBox(height: 6),
+                                          SelectableText(
+                                            _diag!,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.black38,
+                                            ),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              Clipboard.setData(
+                                                ClipboardData(
+                                                  text:
+                                                      '${_detail ?? ''}\n$_diag',
+                                                ),
+                                              );
+                                              setState(() => _copied = true);
+                                            },
+                                            child: Text(
+                                              tr(
+                                                _copied
+                                                    ? 'login.copied'
+                                                    : 'login.copyDiag',
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),

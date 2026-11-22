@@ -211,8 +211,9 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     setState(() {});
     if (uid == null || uid == _attachedUid || _attaching) return;
     _attaching = true;
+    var ok = false;
     try {
-      await save.attach(
+      ok = await save.attach(
         uid,
         game,
         askUser: (local, cloud) async {
@@ -221,10 +222,18 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
           return askSaveConflict(ctx, local, cloud);
         },
       );
-      _attachedUid = uid;
-      _refreshSocial(force: true);
+      if (ok) {
+        _attachedUid = uid;
+        _refreshSocial(force: true);
+      }
     } finally {
       _attaching = false;
+    }
+    // 클라우드를 못 읽었으면 (연결 문제) 잠시 뒤 다시. 그동안은 기기에 저장된다.
+    if (!ok) {
+      Future.delayed(const Duration(seconds: 30), () {
+        if (mounted && auth.uid == uid) _onAuthChanged();
+      });
     }
   }
 
