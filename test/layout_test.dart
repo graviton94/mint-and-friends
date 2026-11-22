@@ -68,7 +68,7 @@ void main() {
         'storage': (c, g, b) => showStorageSheet(c, g, onMessage: (_) {}),
       };
 
-  for (final lang in ['ko', 'en', 'ja']) {
+  for (final lang in ['ko', 'en', 'ja', 'es']) {
     for (final size in [const Size(720, 1280), const Size(1080, 2400)]) {
       testWidgets(
         '글자 넘침 없음: $lang ${size.width.toInt()}x${size.height.toInt()}',
