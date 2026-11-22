@@ -594,7 +594,10 @@ void main() {
     );
     g.coins = 1e15;
     final gm0 = g.gardenMultiplier;
-    expect(g.upgradeLandmark(0), isTrue);
+    expect(g.upgradeLandmark(0), isFalse); // 세우기는 별로 먼저
+    g.stars = g.landmarkBuildStars(0);
+    expect(g.buildLandmark(0), isTrue);
+    expect(g.stars, 0);
     expect(g.landmarkLevel(0), 1);
     expect(g.gardenMultiplier, greaterThan(gm0));
     final n = g.upgradeLandmarkMax(0);

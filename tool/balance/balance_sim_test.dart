@@ -224,10 +224,17 @@ class Sim {
           }
         }
       }
-      // 랜드마크 (D-048)
+      // 랜드마크 (D-048): 별이 남으면 세우고, 레벨업은 코인
       for (var a = 0; a < Landmarks.ids.length; a++) {
+        if (g.placed.length == Garden.slotsPerArea || a < g.currentArea) {
+          g.buildLandmark(a);
+        }
         if (g.canUpgradeLandmark(a)) {
-          cands.add((g.landmarkCost(a), 'landmark', () => g.upgradeLandmark(a)));
+          cands.add((
+            g.landmarkCost(a),
+            'landmark',
+            () => g.upgradeLandmark(a),
+          ));
         }
       }
       if (cands.isEmpty) return;
@@ -571,11 +578,12 @@ const profS = Profile('A-noStyles (coins only on functional sinks)', [
   18,
   22,
 ], buyStyles: false);
-const profW = Profile(
-  'W whale-collector (A + all special designs)',
-  [8, 12.5, 18, 22],
-  ownSpecial: true,
-);
+const profW = Profile('W whale-collector (A + all special designs)', [
+  8,
+  12.5,
+  18,
+  22,
+], ownSpecial: true);
 const profB = Profile(
   'B heavy',
   [7, 9, 11, 13, 15, 17, 19, 22],

@@ -767,8 +767,29 @@ class GameState extends ChangeNotifier {
   int get landmarkCap => min(Landmarks.maxLevel, max(1, level - 5));
   bool landmarkCapped(int area) => landmarkLevel(area) >= landmarkCap;
 
+  /// 세우기(Lv0 → 1)는 다른 장식처럼 별로: 그 구역 가장 비싼 장식만큼.
+  int landmarkBuildStars(int area) =>
+      Garden.decorCost(area, Garden.slotsPerArea - 1);
+
+  bool canBuildLandmark(int area) =>
+      landmarkOpen(area) &&
+      landmarkLevel(area) == 0 &&
+      stars >= landmarkBuildStars(area);
+
+  bool buildLandmark(int area) {
+    if (!canBuildLandmark(area)) return false;
+    stars -= landmarkBuildStars(area);
+    landmarks[area] = 1;
+    _events.add(LandmarkEvent(area, 1, newStage: true));
+    _trace('landmark', '$area,1,build');
+    notifyListeners();
+    return true;
+  }
+
+  /// 레벨업(Lv1 부터)은 코인.
   bool canUpgradeLandmark(int area) =>
       landmarkOpen(area) &&
+      landmarkLevel(area) >= 1 &&
       landmarkLevel(area) < landmarkCap &&
       coins >= landmarkCost(area);
 

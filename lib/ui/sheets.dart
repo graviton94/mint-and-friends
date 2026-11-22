@@ -177,16 +177,22 @@ class LandmarkRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 CostButton(
-                  label: maxed
+                  label: lv == 0
+                      ? '${tr('landmark.build')} [[star]]${game.landmarkBuildStars(area)}'
+                      : maxed
                       ? tr('common.max')
                       : game.landmarkCapped(area)
                       ? tr('upgrade.needLevel', {'n': lv + 6})
-                      : '${lv == 0 ? '${tr('landmark.build')} ' : '[[coin]] '}${fmt(game.landmarkCost(area))}',
-                  onPressed: game.canUpgradeLandmark(area)
+                      : '[[coin]] ${fmt(game.landmarkCost(area))}',
+                  onPressed: lv == 0
+                      ? (game.canBuildLandmark(area)
+                            ? () => game.buildLandmark(area)
+                            : null)
+                      : game.canUpgradeLandmark(area)
                       ? () => game.upgradeLandmark(area)
                       : null,
                 ),
-                if (bulk >= 2) ...[
+                if (bulk >= 2 && lv >= 1) ...[
                   const SizedBox(height: 4),
                   CostButton(
                     label: tr('upgrade.max', {'n': bulk}),

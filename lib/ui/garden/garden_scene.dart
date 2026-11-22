@@ -178,9 +178,9 @@ class _GardenSceneState extends State<GardenScene>
   bool _inLandmark(Offset p) {
     if (_landmarkArt == null && !_landmarkGhost) return false;
     final a = Garden.areaAt(widget.area);
-    return (p.dx - a.landmarkX).abs() < 0.11 &&
+    return (p.dx - a.landmarkX).abs() < 0.13 &&
         p.dy > a.landmarkY - 0.12 &&
-        p.dy < a.landmarkY + 0.03;
+        p.dy < a.landmarkY + 0.08;
   }
 
   int? _walkArea;
@@ -213,6 +213,7 @@ class _GardenSceneState extends State<GardenScene>
       spot.dx + (_rng.nextDouble() * 2 - 1) * _orderRoam,
       spot.dy + (_rng.nextDouble() * 2 - 1) * _orderRoam * 0.5,
     );
+    if (_inLandmark(p)) return spot;
     for (final z in zones) {
       if (p.dx >= z.x0 && p.dx <= z.x1 && p.dy >= z.y0 && p.dy <= z.y1) {
         return p;
@@ -641,80 +642,6 @@ class _GardenSceneState extends State<GardenScene>
       ));
     }
 
-    // 아직 안 세운 랜드마크 자리: 반투명 미리보기 + '세우기' 팻말 (누르면 랜드마크 창)
-    final ghost = _landmarkGhost;
-    if (ghost) {
-      final h = unit * GardenScene.decorK * Landmarks.scale * 0.85;
-      final p = px(area.landmarkX, area.landmarkY);
-      final glow = 0.5 + 0.5 * sin(_t * 3);
-      layers.add((
-        y: p.dy,
-        child: Positioned(
-          key: ValueKey('landmark-ghost-${widget.area}'),
-          left: p.dx - h * 0.6,
-          top: p.dy - h,
-          width: h * 1.2,
-          height: h + 8,
-          child: GestureDetector(
-            onTap: () => widget.onLandmarkTap!(widget.area),
-            child: Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                Opacity(
-                  opacity: 0.55 + 0.1 * glow,
-                  child: Image.asset(
-                    Art.landmark(widget.area, 1).path,
-                    fit: BoxFit.contain,
-                    alignment: Alignment.bottomCenter,
-                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ));
-      // '세우기' 팻말은 친구들보다 앞에 (가려지지 않게)
-      final glow2 = 0.5 + 0.5 * sin(_t * 3);
-      layers.add((
-        y: 99999,
-        child: Positioned(
-          key: ValueKey('landmark-sign-${widget.area}'),
-          left: p.dx - 70,
-          top: p.dy - 14,
-          width: 140,
-          height: 34,
-          child: Center(
-            child: GestureDetector(
-              onTap: () => widget.onLandmarkTap!(widget.area),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 3,
-                ),
-                decoration: BoxDecoration(
-                  color: Color.lerp(
-                    const Color(0xFFFFF1C9),
-                    const Color(0xFFFFE08A),
-                    glow2,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF7A5230), width: 2),
-                ),
-                child: IconText(
-                  '[[decorate]] ${tr('landmark.build')}',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF5C402C),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ));
-    }
-
     for (var i = 0; i < area.decor.length; i++) {
       final d = area.decor[i];
       final p = px(d.x, d.y);
@@ -891,9 +818,56 @@ class _GardenSceneState extends State<GardenScene>
     return (c: Offset(gx(d.x, s.width), y), w: w);
   }
 
+  /// 랜드마크 빈자리 (장식 빈자리와 같은 모양, 조금 크게).
+  ({Offset c, double w})? _landmarkSlot(AreaDef area, Size s) {
+    if (!_landmarkGhost) return null;
+    final unit = min(s.width, s.height * 1.6);
+    final w = unit * GardenScene.decorK * 1.5 * widget.markerScale;
+    return (
+      c: Offset(gx(area.landmarkX, s.width), area.landmarkY * s.height),
+      w: w,
+    );
+  }
+
   List<Widget> _markerLayer(AreaDef area, Size s) {
-    if (widget.area != game.currentArea) return const [];
     final out = <Widget>[];
+    final ls = _landmarkSlot(area, s);
+    if (ls != null) {
+      final ok = game.canBuildLandmark(widget.area);
+      final glow = ok ? 0.5 + 0.5 * sin(_t * 4) : 0.0;
+      out.add(
+        Positioned(
+          left: ls.c.dx - ls.w / 2,
+          top: ls.c.dy - ls.w * 0.62,
+          width: ls.w,
+          height: ls.w * 0.8,
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: ls.w * 0.36,
+                child: CustomPaint(
+                  painter: _PlotPainter(affordable: ok, glow: glow),
+                ),
+              ),
+              Positioned(
+                bottom: ls.w * 0.1,
+                child: _CostTag(
+                  locked: false,
+                  affordable: ok,
+                  cost: game.landmarkBuildStars(widget.area),
+                  size: ls.w * 0.18,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    if (widget.area != game.currentArea) return out;
     for (var i = 0; i < area.decor.length; i++) {
       if (game.isPlaced(widget.area, i)) continue;
       final g = _slotGeom(area, i, s);
@@ -935,7 +909,29 @@ class _GardenSceneState extends State<GardenScene>
   }
 
   List<Widget> _markerHits(AreaDef area, Size s) {
-    if (widget.area != game.currentArea) return const [];
+    final ls = _landmarkSlot(area, s);
+    return [
+      // 랜드마크 빈자리: 별이 있으면 바로 세우고, 모자라면 랜드마크 창 (별 · 설명)
+      if (ls != null)
+        Positioned(
+          left: ls.c.dx - ls.w / 2,
+          top: ls.c.dy - ls.w * 0.45,
+          width: ls.w,
+          height: ls.w * 0.6,
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () {
+              if (!game.buildLandmark(widget.area)) {
+                widget.onLandmarkTap?.call(widget.area);
+              }
+            },
+          ),
+        ),
+      if (widget.area == game.currentArea) ..._decorHits(area, s),
+    ];
+  }
+
+  List<Widget> _decorHits(AreaDef area, Size s) {
     return [
       for (var i = 0; i < area.decor.length; i++)
         if (!game.isPlaced(widget.area, i))
