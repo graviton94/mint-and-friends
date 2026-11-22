@@ -12,12 +12,12 @@
  },
  "release": {
   "version": "1.0.0",
-  "versionCode": 1009,
+  "versionCode": 1010,
   "track": "비공개 테스트",
-  "aab": "MintAndFriends-1.0.0-1009.aab",
+  "aab": "MintAndFriends-1.0.0-1010.aab",
   "releaseUrl": "https://github.com/graviton94/mint-and-friends/releases",
-  "tag": "store-1.0.0-1009",
-  "built": "2026-11-21",
+  "tag": "store-1.0.0-1010",
+  "built": "2026-11-22",
   "signed": "업로드 키 서명 · 실광고 ID 확인됨",
   "notes": {
    "en-US": "Thanks for joining the Mint & Friends closed test!\nMerging, requests, garden decorating, upgrades, garden renewal, friends and daily gifts are all in.\nPlease send bugs or anything confusing through the contact email in Settings.",
