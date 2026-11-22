@@ -13,13 +13,13 @@
  },
  "release": {
   "version": "1.0.0",
-  "versionCode": 1012,
+  "versionCode": 1013,
   "track": "비공개 테스트",
-  "aab": "MintAndFriends-1.0.0-1012.aab",
+  "aab": "MintAndFriends-1.0.0-1013.aab",
   "releaseUrl": "https://github.com/graviton94/mint-and-friends/releases",
-  "tag": "store-1.0.0-1012",
+  "tag": "store-1.0.0-1013",
   "built": "2026-11-22",
-  "signed": "업로드 키 서명 · 실광고 ID · 비공개 테스트 업로드 완료",
+  "signed": "업로드 키 서명 · 실광고 ID · 새 카카오 키",
   "notes": {
    "en-US": "Thanks for joining the Mint & Friends closed test!\nMerging, requests, garden decorating, upgrades, garden renewal, friends and daily gifts are all in.\nPlease send bugs or anything confusing through the contact email in Settings.",
    "ko-KR": "민트앤프렌즈 비공개 테스트에 와 주셔서 고마워요!\n합치기 · 부탁 · 정원 꾸미기 · 강화 · 정원 재단장 · 친구 · 출석까지 모두 들어 있어요.\n불편한 점이나 버그는 앱 설정의 문의 메일로 알려 주세요.",
