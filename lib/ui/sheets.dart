@@ -122,7 +122,7 @@ class LandmarkRow extends StatelessWidget {
       var c = game.coins;
       var l = lv;
       final hour = game.hourlyIncome;
-      while (l < Landmarks.maxLevel && bulk < 99) {
+      while (l < game.landmarkCap && bulk < 99) {
         final cost = hour * Landmarks.hoursAt(l);
         if (c < cost) break;
         c -= cost;
@@ -179,6 +179,8 @@ class LandmarkRow extends StatelessWidget {
                 CostButton(
                   label: maxed
                       ? tr('common.max')
+                      : game.landmarkCapped(area)
+                      ? tr('upgrade.needLevel', {'n': lv + 6})
                       : '${lv == 0 ? '${tr('landmark.build')} ' : '[[coin]] '}${fmt(game.landmarkCost(area))}',
                   onPressed: game.canUpgradeLandmark(area)
                       ? () => game.upgradeLandmark(area)

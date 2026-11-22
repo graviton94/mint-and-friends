@@ -581,10 +581,13 @@ void main() {
 
   test('랜드마크 (D-048): 다 꾸민 구역만, 가격은 지금 수입 × 시간, 매력 · 재단장 유지 · 저장', () {
     final g = make();
-    expect(g.landmarkOpen(0), isFalse);
+    g.level = 30;
+    expect(g.landmarkOpen(0), isTrue); // 지금 구역에서도
+    expect(g.landmarkOpen(1), isFalse);
     g.currentArea = 2;
     expect(g.landmarkOpen(0), isTrue);
-    expect(g.landmarkOpen(2), isFalse);
+    expect(g.landmarkOpen(2), isTrue);
+    expect(g.landmarkOpen(3), isFalse);
     expect(
       g.landmarkCost(0),
       closeTo(g.hourlyIncome * Landmarks.hoursAt(0), 1e-6),
@@ -596,6 +599,7 @@ void main() {
     expect(g.gardenMultiplier, greaterThan(gm0));
     final n = g.upgradeLandmarkMax(0);
     expect(n, greaterThan(5));
+    expect(g.landmarkLevel(0), g.landmarkCap); // 플레이어 레벨 − 5 상한
     expect(g.landmarkLevel(0), lessThanOrEqualTo(Landmarks.maxLevel));
     expect(Landmarks.stageOf(1), 1);
     expect(Landmarks.stageOf(10), 2);

@@ -752,17 +752,24 @@ class GameState extends ChangeNotifier {
   final Map<int, int> landmarks = {};
   int landmarkLevel(int area) => landmarks[area] ?? 0;
 
-  /// 세울 수 있는 구역: 다 꾸민 구역 (처음 6구역).
+  /// 세울 수 있는 구역: 들어온 구역 (처음 6구역). 지금 꾸미는 구역에서도 세워 늘 보이게.
+  /// 강화가 열린 뒤부터 (튜토리얼 첫 몇 분에는 안 보이게).
   bool landmarkOpen(int area) =>
-      area < Landmarks.ids.length && area < currentArea;
+      isUnlocked(Feature.upgrades) &&
+      area < Landmarks.ids.length &&
+      area <= currentArea;
 
   /// 다음 레벨 가격: 지금 시간당 수입 × 시간 (부스트 제외 기본 수입).
   double landmarkCost(int area) =>
       hourlyIncome * Landmarks.hoursAt(landmarkLevel(area));
 
+  /// 랜드마크 레벨 상한: 플레이어 레벨 − 5 (초반 싼 수입으로 몰아 올리지 못하게), 최대 [Landmarks.maxLevel].
+  int get landmarkCap => min(Landmarks.maxLevel, max(1, level - 5));
+  bool landmarkCapped(int area) => landmarkLevel(area) >= landmarkCap;
+
   bool canUpgradeLandmark(int area) =>
       landmarkOpen(area) &&
-      landmarkLevel(area) < Landmarks.maxLevel &&
+      landmarkLevel(area) < landmarkCap &&
       coins >= landmarkCost(area);
 
   bool upgradeLandmark(int area) {

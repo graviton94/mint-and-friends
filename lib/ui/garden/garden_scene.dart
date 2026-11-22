@@ -165,9 +165,18 @@ class _GardenSceneState extends State<GardenScene>
     return a.available ? a : null;
   }
 
+  /// 아직 안 세운 랜드마크 자리를 '세우기' 로 보여 줄지.
+  bool get _landmarkGhost =>
+      _landmarkArt == null &&
+      widget.showEmptySlots &&
+      widget.onLandmarkTap != null &&
+      game.landmarkOpen(widget.area) &&
+      game.landmarkLevel(widget.area) == 0 &&
+      Art.landmark(widget.area, 1).available;
+
   /// 랜드마크 바닥 근처 (친구 · 부탁 자리가 들어가지 않는 곳).
   bool _inLandmark(Offset p) {
-    if (_landmarkArt == null) return false;
+    if (_landmarkArt == null && !_landmarkGhost) return false;
     final a = Garden.areaAt(widget.area);
     return (p.dx - a.landmarkX).abs() < 0.11 &&
         p.dy > a.landmarkY - 0.12 &&
@@ -626,6 +635,80 @@ class _GardenSceneState extends State<GardenScene>
               fit: BoxFit.contain,
               alignment: Alignment.bottomCenter,
               errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      ));
+    }
+
+    // 아직 안 세운 랜드마크 자리: 반투명 미리보기 + '세우기' 팻말 (누르면 랜드마크 창)
+    final ghost = _landmarkGhost;
+    if (ghost) {
+      final h = unit * GardenScene.decorK * Landmarks.scale * 0.85;
+      final p = px(area.landmarkX, area.landmarkY);
+      final glow = 0.5 + 0.5 * sin(_t * 3);
+      layers.add((
+        y: p.dy,
+        child: Positioned(
+          key: ValueKey('landmark-ghost-${widget.area}'),
+          left: p.dx - h * 0.6,
+          top: p.dy - h,
+          width: h * 1.2,
+          height: h + 8,
+          child: GestureDetector(
+            onTap: () => widget.onLandmarkTap!(widget.area),
+            child: Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                Opacity(
+                  opacity: 0.55 + 0.1 * glow,
+                  child: Image.asset(
+                    Art.landmark(widget.area, 1).path,
+                    fit: BoxFit.contain,
+                    alignment: Alignment.bottomCenter,
+                    errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ));
+      // '세우기' 팻말은 친구들보다 앞에 (가려지지 않게)
+      final glow2 = 0.5 + 0.5 * sin(_t * 3);
+      layers.add((
+        y: 99999,
+        child: Positioned(
+          key: ValueKey('landmark-sign-${widget.area}'),
+          left: p.dx - 70,
+          top: p.dy - 14,
+          width: 140,
+          height: 34,
+          child: Center(
+            child: GestureDetector(
+              onTap: () => widget.onLandmarkTap!(widget.area),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                ),
+                decoration: BoxDecoration(
+                  color: Color.lerp(
+                    const Color(0xFFFFF1C9),
+                    const Color(0xFFFFE08A),
+                    glow2,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF7A5230), width: 2),
+                ),
+                child: IconText(
+                  '[[decorate]] ${tr('landmark.build')}',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF5C402C),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
