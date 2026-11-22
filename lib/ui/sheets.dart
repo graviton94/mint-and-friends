@@ -1288,9 +1288,9 @@ Widget _offerCard(
 Widget _gemPackCard(BillingService billing, GemPack pack, int index) {
   final d = billing.gemProducts[pack.id];
   return _ShopCard(
-    // 팩 그림: 100 · 430 · 900 · 2,000 · 6,000 · 14,000 (900 그림은 발주 전까지 주머니 공유)
+    // 팩 그림: 100 한 줌 · 430 바구니 · 900 주머니 · 2,000 상자 · 6,000 보물 상자 · 14,000 보물단지
     icon: Art.icon(
-      const ['dia_1', 'dia_2', 'dia_2', 'dia_3', 'dia_4', 'dia_5'][index],
+      const ['dia_1', 'dia_basket', 'dia_2', 'dia_3', 'dia_4', 'dia_5'][index],
     ),
     title: '[[diamond]] ${fmtInt(pack.gems)}',
     tag: pack.valueX >= 1.95

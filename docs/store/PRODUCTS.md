@@ -1,7 +1,7 @@
 # Play Console 인앱 상품 문구 (4개 언어)
 
-Play Console → 수익 창출 → 제품. 이름 55자 · 설명 200자 · 구독 혜택 40자(4개까지) · 구독 설명 80자 안에 맞춤.
-가격 · 구성 · 가성비 근거: 경제 카탈로그 (`docs/bm/catalog.json`).
+Play Console → 수익 창출 → 제품. 이름 55자 · 설명 200자 · 구독 혜택 40자(4개까지) · 구독 설명 80자 안에 맞춤. 상품 이미지(512×512 PNG)는 [products/](products/) 폴더.
+가격 · 구성 · 가성비 근거: 경제 카탈로그 (`docs/bm/catalog.json`). 게임 안 그림: 100 `dia_1` · 430 `dia_basket` · 900 `dia_2` · 2,000 `dia_3` · 6,000 `dia_4` · 14,000 `dia_5`.
 
 ## 관리형 제품 (일회성)
 
@@ -18,19 +18,19 @@ Play Console → 수익 창출 → 제품. 이름 55자 · 설명 200자 · 구�
 
 | 언어 | 이름 | 설명 |
 |---|---|---|
-| English (en-US, 기본) | Pouch of Diamonds (430) | 430 diamonds, about 1.4× the value of the Handful. Use them for energy, boosts, coin bundles and outfits. |
-| 한국어 (ko-KR) | 다이아 주머니 (430) | 다이아 430개, 한 줌보다 약 1.4배 이득이에요. 에너지 · 부스트 · 코인 꾸러미 · 의상에 쓸 수 있어요. |
-| 日本語 (ja-JP) | ダイヤのふくろ (430) | ダイヤ430個。ひとつかみより約1.4倍おトク。エネルギー・ブースト・コインのたば・衣装に使えます。 |
-| Español (es-419 · es-ES · es-US, 스페인어 등록정보를 열 때) | Bolsita de diamantes (430) | 430 diamantes, cerca de 1,4 veces el valor del Puñado. Úsalos en energía, potenciadores, monedas y trajes. |
+| English (en-US, 기본) | Basket of Diamonds (430) | 430 diamonds, about 1.4× the value of the Handful. Use them for energy, boosts, coin bundles and outfits. |
+| 한국어 (ko-KR) | 다이아 바구니 (430) | 다이아 430개, 한 줌보다 약 1.4배 이득이에요. 에너지 · 부스트 · 코인 꾸러미 · 의상에 쓸 수 있어요. |
+| 日本語 (ja-JP) | ダイヤのかご (430) | ダイヤ430個。ひとつかみより約1.4倍おトク。エネルギー・ブースト・コインのたば・衣装に使えます。 |
+| Español (es-419 · es-ES · es-US, 스페인어 등록정보를 열 때) | Cesta de diamantes (430) | 430 diamantes, cerca de 1,4 veces el valor del Puñado. Úsalos en energía, potenciadores, monedas y trajes. |
 
 ### `gems_900` · ₩9,900
 
 | 언어 | 이름 | 설명 |
 |---|---|---|
-| English (en-US, 기본) | Basket of Diamonds (900) | 900 diamonds, about 1.7× the value of the Handful. Great for energy refills and seasonal outfits. |
-| 한국어 (ko-KR) | 다이아 바구니 (900) | 다이아 900개, 한 줌보다 약 1.7배 이득이에요. 에너지 충전과 계절 의상에 넉넉해요. |
-| 日本語 (ja-JP) | ダイヤのかご (900) | ダイヤ900個。ひとつかみより約1.7倍おトク。エネルギー回復や季節の衣装にたっぷり使えます。 |
-| Español (es-419 · es-ES · es-US, 스페인어 등록정보를 열 때) | Cesta de diamantes (900) | 900 diamantes, cerca de 1,7 veces el valor del Puñado. Ideal para recargar energía y trajes de temporada. |
+| English (en-US, 기본) | Pouch of Diamonds (900) | 900 diamonds, about 1.7× the value of the Handful. Great for energy refills and seasonal outfits. |
+| 한국어 (ko-KR) | 다이아 주머니 (900) | 다이아 900개, 한 줌보다 약 1.7배 이득이에요. 에너지 충전과 계절 의상에 넉넉해요. |
+| 日本語 (ja-JP) | ダイヤのふくろ (900) | ダイヤ900個。ひとつかみより約1.7倍おトク。エネルギー回復や季節の衣装にたっぷり使えます。 |
+| Español (es-419 · es-ES · es-US, 스페인어 등록정보를 열 때) | Bolsita de diamantes (900) | 900 diamantes, cerca de 1,7 veces el valor del Puñado. Ideal para recargar energía y trajes de temporada. |
 
 ### `gems_2000` · ₩19,000
 

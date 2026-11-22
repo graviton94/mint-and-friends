@@ -224,13 +224,13 @@
    "id": "gems_430",
    "type": "관리형 (소모성)",
    "price": "₩5,900",
-   "name": "다이아 주머니 (430)"
+   "name": "다이아 바구니 (430)"
   },
   {
    "id": "gems_900",
    "type": "관리형 (소모성)",
    "price": "₩9,900",
-   "name": "다이아 바구니 (900)",
+   "name": "다이아 주머니 (900)",
    "todo": true
   },
   {
@@ -364,37 +364,37 @@
    },
    "gems_430": {
     "en": [
-     "Pouch of Diamonds (430)",
+     "Basket of Diamonds (430)",
      "430 diamonds, about 1.4× the value of the Handful. Use them for energy, boosts, coin bundles and outfits."
     ],
     "ko": [
-     "다이아 주머니 (430)",
+     "다이아 바구니 (430)",
      "다이아 430개, 한 줌보다 약 1.4배 이득이에요. 에너지 · 부스트 · 코인 꾸러미 · 의상에 쓸 수 있어요."
     ],
     "ja": [
-     "ダイヤのふくろ (430)",
+     "ダイヤのかご (430)",
      "ダイヤ430個。ひとつかみより約1.4倍おトク。エネルギー・ブースト・コインのたば・衣装に使えます。"
     ],
     "es": [
-     "Bolsita de diamantes (430)",
+     "Cesta de diamantes (430)",
      "430 diamantes, cerca de 1,4 veces el valor del Puñado. Úsalos en energía, potenciadores, monedas y trajes."
     ]
    },
    "gems_900": {
     "en": [
-     "Basket of Diamonds (900)",
+     "Pouch of Diamonds (900)",
      "900 diamonds, about 1.7× the value of the Handful. Great for energy refills and seasonal outfits."
     ],
     "ko": [
-     "다이아 바구니 (900)",
+     "다이아 주머니 (900)",
      "다이아 900개, 한 줌보다 약 1.7배 이득이에요. 에너지 충전과 계절 의상에 넉넉해요."
     ],
     "ja": [
-     "ダイヤのかご (900)",
+     "ダイヤのふくろ (900)",
      "ダイヤ900個。ひとつかみより約1.7倍おトク。エネルギー回復や季節の衣装にたっぷり使えます。"
     ],
     "es": [
-     "Cesta de diamantes (900)",
+     "Bolsita de diamantes (900)",
      "900 diamantes, cerca de 1,7 veces el valor del Puñado. Ideal para recargar energía y trajes de temporada."
     ]
    },

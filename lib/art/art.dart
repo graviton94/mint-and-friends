@@ -215,6 +215,7 @@ class Art {
     'dia_3': '',
     'dia_4': '',
     'dia_5': '',
+    'dia_basket': '',
     'shop': '',
     'calendar': '',
     'swap': '',

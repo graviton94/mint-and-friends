@@ -156,8 +156,8 @@
   },
   {
    "id": "gems_430",
-   "name": "다이아 주머니 (430)",
-   "icon": "dia_2",
+   "name": "다이아 바구니 (430)",
+   "icon": "dia_basket",
    "type": "소모형",
    "priceKrw": 5900,
    "contents": "다이아 430",
@@ -168,7 +168,7 @@
   },
   {
    "id": "gems_900",
-   "name": "다이아 바구니 (900)",
+   "name": "다이아 주머니 (900)",
    "icon": "dia_2",
    "type": "소모형",
    "priceKrw": 9900,
