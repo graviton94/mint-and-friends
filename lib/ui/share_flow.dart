@@ -118,8 +118,30 @@ Future<void> _share(
       TopToast.show(context, tr('share.reward', {'n': got}));
     }
   } catch (e) {
-    debugPrint('share failed: $e');
-    if (context.mounted) TopToast.show(context, tr('share.failed'));
+    // 그림 첨부 공유가 안 되는 기기: 글과 링크만이라도 보낸다 (원인은 분석 · 화면에 남긴다)
+    final why = '$e';
+    debugPrint('share failed: $why');
+    Analytics.instance.log('share_error', {
+      'kind': kind.name,
+      'why': why.length > 90 ? why.substring(0, 90) : why,
+    });
+    try {
+      final r = await SharePlus.instance.share(ShareParams(text: text));
+      if (r.status == ShareResultStatus.dismissed) return;
+      Analytics.instance.shareDone(kind.name, 'text');
+      final got = game.claimShareReward();
+      if (got > 0 && context.mounted) {
+        sfx(Sfx.coin);
+        TopToast.show(context, tr('share.reward', {'n': got}));
+      }
+    } catch (e2) {
+      if (context.mounted) {
+        TopToast.show(
+          context,
+          '${tr('share.failed')}\n${'$e2'.length > 80 ? '$e2'.substring(0, 80) : e2}',
+        );
+      }
+    }
   }
 }
 
