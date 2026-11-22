@@ -1,0 +1,38 @@
+name: Remote Config
+
+# Firebase 원격 설정 값을 바꾼다 (예: 새 버전을 올린 뒤 latest_version_code).
+# 입력 예: latest_version_code=1023  (여러 개는 공백으로)
+on:
+  workflow_dispatch:
+    inputs:
+      values:
+        description: 'key=value (공백으로 여러 개)'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  set:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Project
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          P=$(printf %s "$SA" | python3 -c "import json,sys; print(json.load(sys.stdin)['project_id'])")
+          echo "PROJECT=$P" >> "$GITHUB_ENV"
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Enable Remote Config API
+        run: gcloud services enable firebaseremoteconfig.googleapis.com --project "$PROJECT" || echo "::warning::could not enable API (may already be on)"
+      - name: Set values
+        env:
+          VALUES: ${{ inputs.values }}
+        run: |
+          export ACCESS_TOKEN=$(gcloud auth print-access-token)
+          python3 tool/remote_config_set.py $VALUES
