@@ -108,13 +108,13 @@ class UpdatePill extends StatelessWidget {
       final ready = u.phase == UpdatePhase.downloaded;
       return SafeArea(
         child: Align(
-          alignment: const Alignment(0, -0.82),
+          alignment: const Alignment(0, 0.74),
           child: GestureDetector(
             onTap: ready ? onReadyTap : null,
             child: Material(
               color: Colors.transparent,
               child: Container(
-                width: 230,
+                width: 250,
                 padding: const EdgeInsets.fromLTRB(12, 7, 12, 8),
                 decoration: BoxDecoration(
                   color: ready ? const Color(0xFFFFF1C9) : Colors.white,

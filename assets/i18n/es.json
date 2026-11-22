@@ -970,5 +970,5 @@
   "update.readyBody": "Vuelve a abrir para usar la nueva versión.\nTu progreso está guardado.",
   "update.restart": "Volver a abrir",
   "update.pill": "Descargando actualización {pct}%",
-  "update.pillReady": "Actualización lista · toca para reabrir"
+  "update.pillReady": "Lista · toca para reabrir"
 }

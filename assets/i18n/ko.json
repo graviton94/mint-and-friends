@@ -971,5 +971,5 @@
   "update.readyBody": "다시 열면 새 버전으로 바뀌어요.\n진행은 그대로 저장돼 있어요.",
   "update.restart": "다시 열기",
   "update.pill": "업데이트 받는 중 {pct}%",
-  "update.pillReady": "업데이트 준비 완료 · 눌러서 다시 열기"
+  "update.pillReady": "업데이트 준비 완료 · 다시 열기"
 }
