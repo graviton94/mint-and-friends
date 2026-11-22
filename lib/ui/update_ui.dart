@@ -10,51 +10,59 @@ import 'widgets/frame_box.dart';
 import 'widgets/icon_text.dart';
 
 /// 새 버전 알림 창 (D-049): 업데이트 → 게임하는 동안 뒤에서 받는다 · 나중에 → 하루 뒤 다시.
-Future<void> showUpdatePrompt(BuildContext context) => showDialog<void>(
-  context: context,
-  builder: (ctx) => GameDialog(
-    banner: 'gold',
-    title: IconText(tr('update.title'), textAlign: TextAlign.center),
-    onClose: () {
-      UpdateService.instance.snooze();
-      Navigator.pop(ctx);
-    },
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ArtImage(
-          Art.friendPose(Friends.byId('bori'), 'camera') ??
-              Art.friend(Friends.byId('bori'), happy: true),
-          size: 120,
-        ),
-        const SizedBox(height: 8),
-        IconText(
-          tr('update.body'),
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 16, color: Color(0xFF6B5A44)),
-        ),
-      ],
-    ),
-    actions: [
-      FilledButton(
-        style: framedButton(
-          FilledButton.styleFrom(
-            minimumSize: const Size(double.infinity, 56),
-            backgroundColor: Palette.primary,
-            foregroundColor: Colors.white,
-          ),
-          'button_green',
-        ),
-        onPressed: () {
-          sfx(Sfx.tap);
+Future<void> showUpdatePrompt(BuildContext context, {bool store = false}) =>
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => GameDialog(
+        banner: 'gold',
+        title: IconText(tr('update.title'), textAlign: TextAlign.center),
+        onClose: () {
+          UpdateService.instance.snooze();
           Navigator.pop(ctx);
-          UpdateService.instance.start();
         },
-        child: IconText(tr('update.go'), style: const TextStyle(fontSize: 19)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ArtImage(
+              Art.friendPose(Friends.byId('bori'), 'camera') ??
+                  Art.friend(Friends.byId('bori'), happy: true),
+              size: 120,
+            ),
+            const SizedBox(height: 8),
+            IconText(
+              tr(store ? 'update.bodyStore' : 'update.body'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16, color: Color(0xFF6B5A44)),
+            ),
+          ],
+        ),
+        actions: [
+          FilledButton(
+            style: framedButton(
+              FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, 56),
+                backgroundColor: Palette.primary,
+                foregroundColor: Colors.white,
+              ),
+              'button_green',
+            ),
+            onPressed: () {
+              sfx(Sfx.tap);
+              Navigator.pop(ctx);
+              if (store) {
+                UpdateService.instance.openStore();
+              } else {
+                UpdateService.instance.start();
+              }
+            },
+            child: IconText(
+              tr('update.go'),
+              style: const TextStyle(fontSize: 19),
+            ),
+          ),
+        ],
       ),
-    ],
-  ),
-);
+    );
 
 /// 다 받았을 때: 지금 다시 열기 · 나중에 (나중에 열면 다음 실행 때 적용된다).
 Future<void> showUpdateReady(BuildContext context) => showDialog<void>(

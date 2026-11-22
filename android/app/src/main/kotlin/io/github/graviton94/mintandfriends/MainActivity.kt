@@ -123,6 +123,30 @@ class MainActivity : FlutterActivity() {
                         m.completeUpdate()
                         result.success(true)
                     }
+                    // Play 가 새 버전을 늦게 알려 줄 때: 스토어의 앱 페이지를 연다
+                    "openStore" -> {
+                        try {
+                            startActivity(
+                                android.content.Intent(
+                                    android.content.Intent.ACTION_VIEW,
+                                    android.net.Uri.parse("market://details?id=$packageName"),
+                                ).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK),
+                            )
+                            result.success(true)
+                        } catch (e: Exception) {
+                            try {
+                                startActivity(
+                                    android.content.Intent(
+                                        android.content.Intent.ACTION_VIEW,
+                                        android.net.Uri.parse("https://play.google.com/store/apps/details?id=$packageName"),
+                                    ),
+                                )
+                                result.success(true)
+                            } catch (e2: Exception) {
+                                result.error("openStore", e2.message, null)
+                            }
+                        }
+                    }
                     else -> result.notImplemented()
                 }
             }

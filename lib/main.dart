@@ -245,7 +245,8 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     if (!mounted) return;
     final ask = await UpdateService.instance.check(myVersionCode: _versionCode);
     final ctx = _navKey.currentContext;
-    if (ask && ctx != null && ctx.mounted) await showUpdatePrompt(ctx);
+    if (ask == UpdateAsk.none || ctx == null || !ctx.mounted) return;
+    await showUpdatePrompt(ctx, store: ask == UpdateAsk.store);
   }
 
   bool _readyShown = false;
@@ -375,6 +376,10 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
       DevLog.instance.record(game, 'start');
       _offerOffline();
       _refreshSocial();
+      // 오래 켜 둔 앱도 새 버전을 알 수 있게 (30분에 한 번)
+      if (UpdateService.instance.checkDue) {
+        Future.delayed(const Duration(seconds: 2), _checkUpdate);
+      }
     }
   }
 

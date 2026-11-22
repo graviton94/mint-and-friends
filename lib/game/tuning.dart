@@ -34,6 +34,9 @@ class Tuning {
   /// 이 버전 코드보다 낮은 앱은 필수 업데이트 (전체 화면). 0 = 없음.
   static int minVersionCode = 0;
 
+  /// 지금 스토어에 올라간 최신 버전 코드 (Play 가 늦게 알려 줄 때 업데이트 안내용).
+  static int latestVersionCode = 0;
+
   /// 친구 한 명의 하루 별 부탁 기본 횟수 (테스트 중 원격으로 조정).
   static int orderQuotaPerFriend = 4;
 
@@ -52,6 +55,7 @@ class Tuning {
     'seed_income': (0.01, 1, (v) => seedIncome = v.toDouble()),
     'seed_coin_base': (1e6, 1e15, (v) => seedCoinBase = v.toDouble()),
     'min_version_code': (0, 1e9, (v) => minVersionCode = v.toInt()),
+    'latest_version_code': (0, 1e9, (v) => latestVersionCode = v.toInt()),
     'order_quota_per_friend': (2, 12, (v) => orderQuotaPerFriend = v.toInt()),
   };
 
@@ -70,6 +74,7 @@ class Tuning {
     'seed_income': 0.10,
     'seed_coin_base': 1e9,
     'min_version_code': 0,
+    'latest_version_code': 0,
     'order_quota_per_friend': 4,
   };
 
