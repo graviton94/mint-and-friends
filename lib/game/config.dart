@@ -870,7 +870,7 @@ class Garden {
       [
         DecorDef('big_tree', '🌳', 0.10, 0.38),
         DecorDef('bench', '🪑', 0.23, 0.36),
-        DecorDef('mailbox', '📮', 0.61, 0.42),
+        DecorDef('mailbox', '📮', 0.80, 0.38),
         DecorDef('veggie_patch', '🥕', 0.18, 0.62, bringsFriend: 'dubu'),
         DecorDef('lantern', '🏮', 0.63, 0.70),
         DecorDef('bird_feeder', '🐦', 0.32, 0.80),
@@ -887,18 +887,18 @@ class Garden {
       0xFF9CD3B0,
       [
         DecorDef('stepping_stones', '🪨', 0.70, 0.48),
-        DecorDef('water_lily', '🪷', 0.40, 0.50, bringsFriend: 'kwak'),
+        DecorDef('water_lily', '🪷', 0.52, 0.52, bringsFriend: 'kwak'),
         DecorDef('fishing_spot', '🎣', 0.85, 0.36),
-        DecorDef('rowboat', '🛶', 0.44, 0.66),
+        DecorDef('rowboat', '🛶', 0.62, 0.68),
         DecorDef('reeds', '🌾', 0.09, 0.80),
-        DecorDef('log_chair', '🪵', 0.30, 0.86, bringsFriend: 'nabi'),
+        DecorDef('log_chair', '🪵', 0.54, 0.90, bringsFriend: 'nabi'),
         DecorDef('tent', '🏕️', 0.88, 0.80),
-        DecorDef('wooden_bridge', '🌉', 0.18, 0.56),
+        DecorDef('wooden_bridge', '🌉', 0.30, 0.74),
       ],
       walk: [WalkZone(0.06, 0.44, 0.94, 0.94)],
       water: [WaterZone(0.52, 0.58, 0.46, 0.21)],
-      landmarkX: 0.62,
-      landmarkY: 0.90,
+      landmarkX: 0.20,
+      landmarkY: 0.47,
     ),
     AreaDef(
       'greenhouse',
@@ -934,7 +934,7 @@ class Garden {
         DecorDef('fireworks', '🎆', 0.80, 0.82),
       ],
       landmarkX: 0.58,
-      landmarkY: 0.62,
+      landmarkY: 0.55,
     ),
     // 5 · 6구역: 배경 · 장식 · 친구 그림이 모두 들어와야 열린다 (그 전에는 1~4구역 순환)
     AreaDef(
@@ -953,7 +953,7 @@ class Garden {
         DecorDef('seagull_post', '🪵', 0.62, 0.76),
       ],
       landmarkX: 0.52,
-      landmarkY: 0.58,
+      landmarkY: 0.39,
     ),
     AreaDef(
       'snow_village',
@@ -1105,7 +1105,7 @@ class Landmarks {
   static double charm(int lv) => 0.004 * lv + 0.03 * (lv ~/ 10);
 
   /// 세운 랜드마크 높이 (장식 크기 대비).
-  static const double scale = 2.3;
+  static const double scale = 2.0;
 }
 
 // ------------------------------------------------------------------ 꾸밈 점수 · 세트 효과 (D-046)
