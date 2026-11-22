@@ -61,6 +61,13 @@ Play 에 올린 앱은 Google 이 **앱 서명 키**로 다시 서명한다. 이
 - SHA-256: `77:50:B4:E6:3B:9F:F3:FD:B0:C8:48:29:5F:51:5D:85:35:FC:D4:02:1C:21:8F:9D:B9:39:B7:75:49:64:71:D6`
 - 카카오 키 해시: `lmHR66JV5KuKUP3WVCp7w0Y24OQ=`
 
+**테스트용 APK (사이드로드 키) — Releases `android-latest`**
+- SHA-1: `C0:17:53:48:92:D8:84:E0:45:BA:16:7B:E3:8F:89:8E:52:58:39:82`
+- SHA-256: `4B:E7:5E:91:E6:2F:99:7E:2F:4A:E4:46:70:F3:C5:0E:23:22:25:84:6D:E6:0D:54:18:81:38:23:5A:BB:88:C4`
+- 카카오 키 해시: `wBdTSJLYhOBFuhZ744+JjlJYOYI=`
+
+**카카오 Android 플랫폼 키 하나에 둘 다**: 패키지명 `io.github.graviton94.mintandfriends` + 키 해시 `lmHR66JV5KuKUP3WVCp7w0Y24OQ=`(Play) · `wBdTSJLYhOBFuhZ744+JjlJYOYI=`(테스트 APK). 그 키의 네이티브 앱 키를 GitHub 비밀값 `KAKAO_NATIVE_APP_KEY` 로 → 키를 바꾸면 AAB 를 다시 빌드해야 앱에 들어간다. 업로드 키 해시는 넣지 않아도 된다 (사용자 폰의 앱은 Play 앱 서명 키로 서명됨).
+
 ## 7. 비공개 테스트 트랙
 1. 테스트 → **비공개 테스트** → 트랙 만들기 → 테스터: 이메일 목록(Google 그룹 가능)
 2. 새 버전 만들기 → AAB 업로드 → 출시 노트(아래) → 검토 제출
