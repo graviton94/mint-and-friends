@@ -249,7 +249,7 @@
   "tut.hello": "¡Hola! Soy Menta.\n¡Combinemos cosas y creemos un jardín con nuestros amigos!",
   "tut.spawner": "Toca la cesta [[basket]] de abajo.\nUsa [[energy]]{n} para soltar una semilla. ¡Pruébalo tres veces!",
   "tut.merge": "Arrastra dos objetos iguales uno sobre otro\n¡para combinarlos en el siguiente!",
-  "tut.orders": "Los bocadillos sobre tus amigos son pedidos\nToca el bocadillo para dar el objeto",
+  "tut.orders": "Los bocadillos sobre tus amigos son sus pedidos.\n¡Cuando tengas el objeto, toca el bocadillo para dárselo!",
   "tut.decor": "Usa [[star]] estrellas para decorar el jardín.\n¡La decoración atrae nuevos amigos!",
   "tut.garden": "Los objetos del tablero ganan [[coin]] monedas solos.\nToca el jardín para verlo de cerca. ¡Vamos!",
   "tut.next": "Siguiente",

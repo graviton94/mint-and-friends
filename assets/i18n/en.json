@@ -249,7 +249,7 @@
   "tut.hello": "Hi! I'm Mint.\nLet's merge things and build a garden with our friends!",
   "tut.spawner": "Tap the [[basket]] basket below.\nIt uses [[energy]]{n} to drop a seed. Try it three times!",
   "tut.merge": "Drag two matching items onto each other\nto merge them into the next one!",
-  "tut.orders": "Speech bubbles over friends are requests\nTap the bubble to give the item",
+  "tut.orders": "The bubbles over friends are their requests.\nWhen you have the item, tap the bubble to give it!",
   "tut.decor": "Spend [[star]] stars to decorate the garden.\nDecorations bring new friends!",
   "tut.garden": "Items on the board earn [[coin]] coins by themselves.\nTap the garden to see it up close. Let's go!",
   "tut.next": "Next",

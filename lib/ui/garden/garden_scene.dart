@@ -143,6 +143,24 @@ class _GardenSceneState extends State<GardenScene>
 
   int? _walkArea;
 
+  /// 부탁을 든 친구가 자기 자리에서 서성이는 범위 (씬 대비).
+  static const double _orderRoam = 0.07;
+
+  /// 자리 [spot] 근처의 걸을 수 있는 한 점.
+  Offset _nearSpot(Offset spot) {
+    final zones = Garden.areaAt(widget.area).walk;
+    final p = Offset(
+      spot.dx + (_rng.nextDouble() * 2 - 1) * _orderRoam,
+      spot.dy + (_rng.nextDouble() * 2 - 1) * _orderRoam * 0.5,
+    );
+    for (final z in zones) {
+      if (p.dx >= z.x0 && p.dx <= z.x1 && p.dy >= z.y0 && p.dy <= z.y1) {
+        return p;
+      }
+    }
+    return spot;
+  }
+
   /// 부탁을 든 친구가 서 있을 자리: 부탁 순서대로 왼쪽 · 가운데 · 오른쪽에 고르게 (말풍선이 겹치지 않게).
   /// 걸을 수 있는 땅 안에서 그 x 에 가장 가까운 곳, 높이는 땅 위쪽 1/3 (말풍선이 화면 위로 넘치지 않게 조금 아래).
   Map<String, Offset> _orderSpots() {
@@ -214,10 +232,11 @@ class _GardenSceneState extends State<GardenScene>
     }
 
     // 부탁을 든 친구는 정해진 자리로 가서 기다린다
+    // (자리 근처에서는 조금씩 서성이며 쉰다: 말풍선이 따라다녀도 겹치지 않을 만큼만)
     final spots = _orderSpots();
     for (final e in spots.entries) {
       final w = _walkers[e.key]!;
-      w.target = e.value;
+      if ((w.target - e.value).distance > _orderRoam * 1.5) w.target = e.value;
       w.visitingDecor = null;
     }
     for (final e in _walkers.entries) {
@@ -234,7 +253,9 @@ class _GardenSceneState extends State<GardenScene>
       final d = w.target - w.pos;
       final dist = d.distance;
       if (dist < 0.01 && waiting) {
-        // 자리에서 기다림 (손님 쪽을 바라보게: 화면 가운데를 향해)
+        // 자리 근처에서 잠깐 쉬었다가 (가만히 서서) 가까운 곳으로 몇 걸음
+        w.pauseLeft = 2.5 + _rng.nextDouble() * 4;
+        w.target = _nearSpot(spots[e.key]!);
         w.facingRight = w.pos.dx < 0.5;
         continue;
       }

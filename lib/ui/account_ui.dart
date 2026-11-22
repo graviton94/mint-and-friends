@@ -207,7 +207,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                       'button_green',
                                     ),
-                                    onPressed: _pending != null
+                                    // 다른 로그인이 멈춰 있어도 게스트로는 언제든 들어갈 수 있다
+                                    onPressed: _pending == 'guest'
                                         ? null
                                         : () => _go('guest', auth.signInGuest),
                                     child: _pending == 'guest'

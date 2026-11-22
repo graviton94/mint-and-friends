@@ -183,7 +183,7 @@ class AuthService extends ChangeNotifier {
         if (!done.isCompleted) done.completeError(e, st);
       },
     );
-    return done.future.timeout(const Duration(minutes: 3)).whenComplete(() {
+    return done.future.timeout(const Duration(seconds: 90)).whenComplete(() {
       graceTimer?.cancel();
       listener.dispose();
     });
