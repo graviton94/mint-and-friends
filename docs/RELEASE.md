@@ -53,6 +53,11 @@ Actions → **Android signing key (one time)** 를 `sideload`, `upload` 로 한 
 sideload 키가 아직 없으면 App 은 디버그 키로 서명하고 경고만 남깁니다.
 로컬 실행: `config/app_config.example.json` 을 `config/app_config.json` 으로 복사해 채우고 `flutter run --dart-define-from-file=config/app_config.json`. 값이 비면 해당 로그인 버튼이 숨고, Firebase 가 없으면 게스트(기기 저장)로만 동작합니다.
 
+### 새 버전을 테스터 · 사용자에게 올린 뒤
+- 원격 설정 `latest_version_code` 를 올린 버전 코드로: Actions → **Remote Config** → `latest_version_code=1023`
+  (Claude 가 관리한다. Play 가 새 버전을 늦게 알려 줘도 앱이 'Play 스토어에서 업데이트' 창을 띄운다, 1.0.6 부터)
+- 같은 워크플로로 `order_quota_per_friend=5` 처럼 경제 값도 바꿀 수 있다 (tool/remote_config_set.py 가 아는 키만)
+
 ## 5. AdMob, 구독
 
 - `AndroidManifest.xml` 의 AdMob `APPLICATION_ID`, `lib/services/ad_ids.dart` 의 `_prod*` 3개를 실제 값으로 교체합니다 (지금은 테스트 ID).
