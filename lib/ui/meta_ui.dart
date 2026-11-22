@@ -601,15 +601,21 @@ Future<void> showMailDetail(BuildContext context, GameState game, Mail m) {
   );
 }
 
-/// 편지지 (mail_paper): 위쪽 꽃 · 우표는 그대로, 가운데만 늘린다. 본문은 새싹 손잡이로 스크롤.
+/// 쪽지 본문: 단순한 둥근 상자. 넘치면 새싹 손잡이로 스크롤.
 class _LetterPaper extends StatelessWidget {
   const _LetterPaper({required this.body});
   final String body;
 
   @override
-  Widget build(BuildContext context) {
-    final paper = Art.frame('mail_paper');
-    final text = SproutScrollbar(
+  Widget build(BuildContext context) => Container(
+    constraints: const BoxConstraints(maxHeight: 260),
+    padding: const EdgeInsets.fromLTRB(12, 12, 6, 12),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFFBF0),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: const Color(0xFFE5DCC8), width: 1.5),
+    ),
+    child: SproutScrollbar(
       builder: (c) => SingleChildScrollView(
         controller: c,
         padding: const EdgeInsets.only(right: 18),
@@ -622,50 +628,8 @@ class _LetterPaper extends StatelessWidget {
           ),
         ),
       ),
-    );
-    if (!paper.available) {
-      return Container(
-        constraints: const BoxConstraints(maxHeight: 260),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFFBF0),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5DCC8), width: 1.5),
-        ),
-        child: text,
-      );
-    }
-    return LayoutBuilder(
-      builder: (context, box) {
-        final k = box.maxWidth / 523; // 원본 → 화면 배율
-        return ConstrainedBox(
-          constraints: BoxConstraints(minHeight: 200 * k + 60, maxHeight: 320),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: LayoutBuilder(
-                  builder: (context, b) => FittedBox(
-                    fit: BoxFit.fill,
-                    child: Image.asset(
-                      paper.path,
-                      width: 523,
-                      height: (b.maxHeight / k).clamp(540, double.infinity),
-                      centerSlice: const Rect.fromLTRB(70, 170, 450, 470),
-                      filterQuality: FilterQuality.medium,
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.fromLTRB(40 * k, 150 * k, 26 * k, 40 * k),
-                child: text,
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+    ),
+  );
 }
 
 // ---------------------------------------------------------------- 메뉴
