@@ -220,7 +220,7 @@
 | 다이아 팩 5종 | `BillingService` 소모형 구매 · 지급 구현 | Play Console 관리형 상품 `gems_100` · `gems_430` · `gems_2000` · `gems_6000` · `gems_14000` 등록 → 내부 테스트로 실제 결제 확인 |
 | 정원 패스 월 구독 ₩5,900 | 구독 구매 · 복원 · 혜택 구현 | Play Console 구독 `garden_pass_1m` 등록 |
 | 보상형 광고 | AdMob SDK · UMP 동의 · 하루 상한 구현 | AdMob 앱 · 광고 단위 생성 → 실제 광고 단위 ID 를 CI 비밀값으로 |
-| 원격 조정 | `RemoteTuning` 구현 | Firebase 원격 구성에 8개 키 입력 |
+| 원격 조정 | `RemoteTuning` 구현 | Firebase 원격 구성에 12개 키 입력 (CLOSED_TEST.md 6번) |
 | 스토어 등록 | 문구 · 데이터 보안 · 등급 답안 · 스크린샷 18장 · 그래픽 이미지 (docs/store/), 개인정보처리방침 게시 완료 | Play Console 입력, 비공개 테스트 12명 · 14일 |
 
 ## 11. 결정 기록
