@@ -1017,6 +1017,6 @@
   "reward.adFree": "Ya no hay anuncios",
   "reward.offline": "Monedas ganadas mientras no estabas",
   "reward.bought": "¡Comprado!",
-  "patch.1.0.6": "• Añadimos informes de errores para arreglar problemas más rápido (no se envían datos de la cuenta)\n• Cambiar el reloj del teléfono ya no hace retroceder el tiempo del juego\n• Los jugadores que denunciaste ya no aparecen en amigos sugeridos\n\n¡Te enviamos energía como regalo de actualización!",
+  "patch.1.0.6": "• Añadimos informes de errores para arreglar problemas más rápido (no se envían datos de la cuenta)\n• Cambiar el reloj del teléfono ya no hace retroceder el tiempo del juego\n• Los jugadores que denunciaste ya no aparecen en amigos sugeridos\n• Las burbujas de pedidos quedan justo sobre cada amigo\n• Los monumentos aparecen con un ¡pop! al cambiar de zona\n• Ya no te perderás los avisos de nueva versión\n\n¡Te enviamos energía como regalo de actualización!",
   "update.bodyStore": "Trae novedades y arreglos.\nActualiza desde Play Store."
 }

@@ -1017,6 +1017,6 @@
   "reward.adFree": "Ads are gone",
   "reward.offline": "Coins earned while away",
   "reward.bought": "Purchased!",
-  "patch.1.0.6": "• Added error reports so we can fix problems faster (no account info is sent)\n• Changing the phone's clock no longer makes game time go backward\n• Players you reported no longer appear in suggested friends\n\nHere is some energy as an update gift!",
+  "patch.1.0.6": "• Added error reports so we can fix problems faster (no account info is sent)\n• Changing the phone's clock no longer makes game time go backward\n• Players you reported no longer appear in suggested friends\n• Request bubbles now stay right above each friend\n• Landmarks pop in when you switch areas\n• New-version alerts no longer get missed\n\nHere is some energy as an update gift!",
   "update.bodyStore": "It has new features and fixes.\nPlease update from the Play Store."
 }

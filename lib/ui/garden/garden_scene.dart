@@ -204,7 +204,7 @@ class _GardenSceneState extends State<GardenScene>
   }
 
   /// 부탁을 든 친구가 자기 자리에서 서성이는 범위 (씬 대비).
-  static const double _orderRoam = 0.07;
+  static const double _orderRoam = 0.05;
 
   /// 자리 [spot] 근처의 걸을 수 있는 한 점.
   Offset _nearSpot(Offset spot) {
@@ -631,11 +631,23 @@ class _GardenSceneState extends State<GardenScene>
             onTap: widget.onLandmarkTap == null
                 ? null
                 : () => widget.onLandmarkTap!(widget.area),
-            child: Image.asset(
-              lm.path,
-              fit: BoxFit.contain,
-              alignment: Alignment.bottomCenter,
-              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            // 다른 장식처럼 구역을 넘기거나 모습 단계가 바뀌면 '퐁' 하고 나타난다
+            child: TweenAnimationBuilder<double>(
+              key: ValueKey('landmark-pop-${widget.area}-${lm.path}'),
+              tween: Tween(begin: 0, end: 1),
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.elasticOut,
+              builder: (_, v, ch) => Transform.scale(
+                scale: v,
+                alignment: Alignment.bottomCenter,
+                child: ch,
+              ),
+              child: Image.asset(
+                lm.path,
+                fit: BoxFit.contain,
+                alignment: Alignment.bottomCenter,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
             ),
           ),
         ),
@@ -979,36 +991,11 @@ class _GardenSceneState extends State<GardenScene>
         ),
       ));
     }
-    // 2) 겹치면 옆으로 비킨다 (같은 높이대끼리), 화면 밖이면 안으로
-    items.sort((a, b) => a.cx.compareTo(b.cx));
+    // 2) 말풍선은 언제나 친구 머리 바로 위 (피하려고 옆으로 밀면 꼬리가 비틀려 어색하다).
+    //    친구들이 서는 자리를 떨어뜨려 두어 거의 겹치지 않고, 조금 겹쳐도 그대로 둔다. 화면 밖으로만 안 나가게.
     final lo = visible.left + bw / 2 + 2, hi = visible.right - bw / 2 - 2;
     final cx = [for (final it in items) it.cx.clamp(lo, hi).toDouble()];
     final top = [for (final it in items) it.top.toDouble()];
-    for (var k = 1; k < cx.length; k++) {
-      for (var j = 0; j < k; j++) {
-        if ((top[k] - top[j]).abs() < bh + 4 &&
-            (cx[k] - cx[j]).abs() < bw + 4) {
-          cx[k] = cx[j] + bw + 4;
-        }
-      }
-    }
-    for (var k = cx.length - 1; k >= 0; k--) {
-      if (cx[k] > hi) cx[k] = hi;
-      if (k + 1 < cx.length &&
-          (top[k + 1] - top[k]).abs() < bh + 4 &&
-          cx[k + 1] - cx[k] < bw + 4) {
-        cx[k] = cx[k + 1] - bw - 4;
-      }
-    }
-    // 그래도 폭이 모자라 겹치면 위로 쌓는다
-    for (var k = 1; k < cx.length; k++) {
-      for (var j = 0; j < k; j++) {
-        if ((top[k] - top[j]).abs() < bh + 4 &&
-            (cx[k] - cx[j]).abs() < bw + 4) {
-          top[k] = max(visible.top + widget.orderTopInset + 2, top[j] - bh - 6);
-        }
-      }
-    }
     final out = <Widget>[];
     for (var k = 0; k < items.length; k++) {
       final i = items[k].i;
