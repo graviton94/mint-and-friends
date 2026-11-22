@@ -870,7 +870,7 @@ class Garden {
       [
         DecorDef('big_tree', '🌳', 0.10, 0.38),
         DecorDef('bench', '🪑', 0.23, 0.36),
-        DecorDef('mailbox', '📮', 0.58, 0.42),
+        DecorDef('mailbox', '📮', 0.61, 0.42),
         DecorDef('veggie_patch', '🥕', 0.18, 0.62, bringsFriend: 'dubu'),
         DecorDef('lantern', '🏮', 0.63, 0.70),
         DecorDef('bird_feeder', '🐦', 0.32, 0.80),
