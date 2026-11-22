@@ -22,10 +22,13 @@ class ShareCard {
   static const double w = 1080, h = 1350;
 
   // 프레임 그림(share_frame, 1024 정사각) 안에서 그림 부분 · 사진 창 · 글자 띠 위치.
-  static const Rect _frameSrc = Rect.fromLTRB(145, 77, 875, 951);
-  static const Rect _windowSrc = Rect.fromLTRB(232, 236, 782, 609);
+  // 프레임 그림 전체 (잎 · 꽃 끝까지, 잘리지 않게) · 사진 창 갈색 선 안쪽 · 글자 띠.
+  static const Rect _frameSrc = Rect.fromLTRB(121, 62, 903, 963);
+  static const Rect _windowSrc = Rect.fromLTRB(235, 239, 778, 605);
+  static const double _windowRadiusSrc = 30;
   static const Rect _bandSrc = Rect.fromLTRB(214, 700, 812, 812);
-  static const double _frameX = 40, _frameY = 34, _frameW = 1000;
+  static const double _frameW = 1040, _frameX = (w - _frameW) / 2;
+  static const double _frameY = 18;
   static double get _s => _frameW / _frameSrc.width;
   static Rect _map(Rect r) => Rect.fromLTRB(
     _frameX + (r.left - _frameSrc.left) * _s,
@@ -139,6 +142,9 @@ class ShareCard {
     'nabi': 'frame',
   };
 
+  /// 오른쪽을 보고 있는 친구 그림 (나머지는 왼쪽을 본다).
+  static const List<String> _facingRight = ['bori_camera'];
+
   static List<String> _cornerPaths(GameState g, Random rng) {
     final ids = g.friends.toList()..shuffle(rng);
     if (ids.length < 2) ids.addAll(['bori', 'dubu']);
@@ -177,7 +183,9 @@ class ShareCard {
     final ox = dst.left + (dst.width - sw) / 2;
     final oy = dst.top + (dst.height - sh) / 2;
     c.save();
-    c.clipRRect(RRect.fromRectAndRadius(dst, const Radius.circular(34)));
+    c.clipRRect(
+      RRect.fromRectAndRadius(dst, Radius.circular(_windowRadiusSrc * _s)),
+    );
     if (bg != null) {
       _cover(c, bg, Rect.fromLTWH(ox, oy, sw, sh));
     } else {
@@ -288,7 +296,9 @@ class ShareCard {
               });
       case ShareKind.renew:
         c.save();
-        c.clipRRect(RRect.fromRectAndRadius(win, const Radius.circular(34)));
+        c.clipRRect(
+          RRect.fromRectAndRadius(win, Radius.circular(_windowRadiusSrc * _s)),
+        );
         c.drawRect(win, Paint()..color = const Color(0xFFDDF0CF));
         final halo = await _img(Art.frame('share_halo').path);
         if (halo != null) _fit(c, halo, win.deflate(10));
@@ -301,7 +311,9 @@ class ShareCard {
         final ch = chain ?? Chain.flower;
         final lv = Chains.maxLevel(ch);
         c.save();
-        c.clipRRect(RRect.fromRectAndRadius(win, const Radius.circular(34)));
+        c.clipRRect(
+          RRect.fromRectAndRadius(win, Radius.circular(_windowRadiusSrc * _s)),
+        );
         c.drawRect(win, Paint()..color = const Color(0xFFFFF0C9));
         final rays = await _img(Art.frame('rays').path);
         if (rays != null) _cover(c, rays, win);
@@ -350,6 +362,18 @@ class ShareCard {
         });
         sub = tr('share.legendSub', {'chain': chainName(ch), 'n': lv});
     }
+    // 사진 가장자리를 프레임의 갈색 창 테두리로 다시 덮는다 (모서리가 튀어나오지 않게)
+    c.drawRRect(
+      RRect.fromRectAndRadius(
+        win.inflate(3),
+        Radius.circular(_windowRadiusSrc * _s + 3),
+      ),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 9
+        ..color = const Color(0xFF7A4A2A),
+    );
+
     // 로고: 프레임 위쪽 나무 위
     final lang = L10n.instance.lang;
     final logo =
@@ -400,17 +424,32 @@ class ShareCard {
     _text(
       c,
       tr('share.store'),
-      const Offset(w / 2, 1296),
+      const Offset(w / 2, 1300),
       32,
       const Color(0xFF8A6A4C),
       maxW: 560,
     );
+    // 두 친구는 카드 안쪽(가운데)을 바라본다. 친구 그림은 대부분 왼쪽을 보고, 카메라 토끼만 오른쪽을 본다.
     final corners = _cornerPaths(game, rng);
+    bool facesRight(String path) => _facingRight.any(path.contains);
     final l = await _img(corners[0]);
     final r = await _img(corners[1]);
-    if (l != null) _fit(c, l, const Rect.fromLTWH(-6, 1040, 290, 305));
-    if (r != null)
-      _fit(c, r, const Rect.fromLTWH(796, 1040, 290, 305), flip: true);
+    if (l != null) {
+      _fit(
+        c,
+        l,
+        const Rect.fromLTWH(-4, 1046, 280, 300),
+        flip: !facesRight(corners[0]),
+      );
+    }
+    if (r != null) {
+      _fit(
+        c,
+        r,
+        const Rect.fromLTWH(804, 1046, 280, 300),
+        flip: facesRight(corners[1]),
+      );
+    }
 
     final pic = rec.endRecording();
     final img = await pic.toImage(w.toInt(), h.toInt());
