@@ -23,7 +23,8 @@
   "notes": {
    "en-US": "Thanks for joining the Mint & Friends closed test!\nMerging, requests, garden decorating, upgrades, garden renewal, friends and daily gifts are all in.\nPlease send bugs or anything confusing through the contact email in Settings.",
    "ko-KR": "민트앤프렌즈 비공개 테스트에 와 주셔서 고마워요!\n합치기 · 부탁 · 정원 꾸미기 · 강화 · 정원 재단장 · 친구 · 출석까지 모두 들어 있어요.\n불편한 점이나 버그는 앱 설정의 문의 메일로 알려 주세요.",
-   "ja-JP": "ミント＆フレンズのクローズドテストにご参加ありがとうございます！\n合成・お願い・お庭づくり・強化・リニューアル・フレンド・ログインギフトまで全部入っています。\n不具合や分かりにくい点は、設定のお問い合わせメールで教えてください。"
+   "ja-JP": "ミント＆フレンズのクローズドテストにご参加ありがとうございます！\n合成・お願い・お庭づくり・強化・リニューアル・フレンド・ログインギフトまで全部入っています。\n不具合や分かりにくい点は、設定のお問い合わせメールで教えてください。",
+   "es-419": "¡Gracias por unirte a la prueba cerrada de Mint & Friends!\nCombinar, pedidos, decorar el jardín, mejoras, renovar el jardín, amigos y regalos diarios: todo está incluido.\nEnvíanos errores o dudas desde el correo de contacto en Ajustes."
   }
  },
  "langs": [
@@ -69,6 +70,20 @@
     "short": 48,
     "full": 655
    }
+  },
+  {
+   "code": "es-419",
+   "label": "Español (es-419 · es-ES · es-US)",
+   "appLabel": "Mint & Friends",
+   "title": "Mint & Friends: Jardín Fusión",
+   "short": "Combina flores y dulces, ayuda a tus amigos animales y decora tu jardín acogedor",
+   "full": "Ven a visitar un pequeño jardín donde viven Menta, la conejita, y sus amigos con nombres de hierbas.\n\n■ Solo combina\nArrastra dos flores, dulces, hojas de té o polvo estelar iguales para crear algo más bonito. Cada cadena crece a lo largo de 30 niveles, desde un brote diminuto hasta un tesoro legendario.\n\n■ Pedidos de tus amigos\nSalvia, Albahaca, Lavanda... lleva a tus amigos lo que piden y gana estrellas y monedas. Sube a cada amigo hasta el nivel 30 para recibir más ayuda.\n\n■ Tu propio jardín\nPatio Soleado, Estanque Brillante, Invernadero Fragante, Colina Estelar, Playa de las Olas y Aldea Copo de Nieve. Coloca adornos con estrellas y elige un diseño básico, de lujo o especial, además de decoración y trajes de temporada durante todo el año.\n\n■ Crece aunque no estés\nTu jardín sigue ganando monedas con la app cerrada. Mejora tu cesta, la producción y los ingresos, y renueva tu jardín para obtener Semillas doradas que aumentan tus ingresos para siempre.\n\n■ Un poco cada día\nRegalos de asistencia diaria, el mercado de hoy, premios por pedidos diarios, cartas de tus amigos animales, cientos de logros y avisos suaves cuando tu energía está llena (nunca de noche).\n\n■ Con amigos\nAgrega amigos con un código, envía un regalo de energía cada día y visita sus jardines.\n\nUn juego acogedor para los momentos tranquilos de un día ajetreado.\n\nGratis para jugar. Compras opcionales dentro de la app (diamantes, Paquete Jardín Brote, suscripción Pase del Jardín). Contiene anuncios: anuncios con recompensa que eliges ver y, a veces, un anuncio corto después de colocar adornos (ninguno con el Pase del Jardín).",
+   "shots": "es",
+   "lens": {
+    "title": 29,
+    "short": 80,
+    "full": 1615
+   }
   }
  ],
  "shots": [
@@ -85,6 +100,10 @@
    "ja": [
     "同じものを合成しよう",
     "お花・おやつ・お茶・星くず"
+   ],
+   "es": [
+    "Combina objetos iguales",
+    "Flores, dulces, té y polvo estelar"
    ]
   },
   {
@@ -100,6 +119,10 @@
    "ja": [
     "自分だけのお庭を飾ろう",
     "海辺から雪の村まで"
+   ],
+   "es": [
+    "Decora tu jardín",
+    "De la playa a una aldea nevada"
    ]
   },
   {
@@ -115,6 +138,10 @@
    "ja": [
     "飾りごとに3つのデザイン",
     "ベーシック・デラックス・スペシャル"
+   ],
+   "es": [
+    "Tres diseños por adorno",
+    "Básico, de lujo y especial"
    ]
   },
   {
@@ -130,6 +157,10 @@
    "ja": [
     "強化でぐんぐん育つ",
     "かご・生産力・収益"
+   ],
+   "es": [
+    "Mejora y crece",
+    "Cesta, producción e ingresos"
    ]
   },
   {
@@ -145,6 +176,10 @@
    "ja": [
     "お庭をリニューアル",
     "金の種でずっと強く"
+   ],
+   "es": [
+    "Renueva tu jardín",
+    "Semillas doradas para siempre"
    ]
   },
   {
@@ -160,6 +195,10 @@
    "ja": [
     "フレンドとプレゼント交換",
     "フレンドコードでかんたん"
+   ],
+   "es": [
+    "Regalos para tus amigos",
+    "Conéctate con un código"
    ]
   },
   {
@@ -175,6 +214,10 @@
    "ja": [
     "フレンドのお庭へ遊びに",
     "見に行くとお礼がもらえます"
+   ],
+   "es": [
+    "Visita jardines de amigos",
+    "Pasea y recibe un regalo"
    ]
   },
   {
@@ -190,6 +233,10 @@
    "ja": [
     "動物の仲間を集めよう",
     "10人の仲間と図鑑"
+   ],
+   "es": [
+    "Reúne amigos animales",
+    "Diez amigos y un álbum"
    ]
   }
  ],

@@ -4,7 +4,7 @@ import sys
 W,H=1024,500
 A='assets/art/'
 JUA='assets/fonts/Jua.ttf'; IPA='/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf'
-TAG={'en':('Merge, help friends, decorate!',JUA),'ko':('합치고, 돕고, 꾸미는 힐링 정원',JUA),'ja':('合成して、助けて、飾る癒しの庭',IPA)}
+TAG={'es':('¡Combina, ayuda y decora!',JUA),'en':('Merge, help friends, decorate!',JUA),'ko':('합치고, 돕고, 꾸미는 힐링 정원',JUA),'ja':('合成して、助けて、飾る癒しの庭',IPA)}
 def load(p): return Image.open(p).convert('RGBA')
 def fit_h(im,h):
     im=im.crop(im.getbbox()); return im.resize((round(im.width*h/im.height),h),Image.LANCZOS)
@@ -50,7 +50,9 @@ def make(lang,out):
     for x,y,sz in [(585,120,34),(700,30,26),(905,22,30),(1000,150,24),(470,40,28)]:
         a=fit_h(sp,sz); im.alpha_composite(a,(x-sz//2,y))
     # 로고 + 빛
-    logo=fit_h(load(A+f'title/logo_{lang}.webp'),170 if lang!='ko' else 176)
+    import os
+    lp=A+f'title/logo_{lang}.webp'
+    logo=fit_h(load(lp if os.path.exists(lp) else A+'title/logo_en.webp'),170 if lang!='ko' else 176)
     if logo.width>500: logo=logo.resize((500,round(logo.height*500/logo.width)),Image.LANCZOS)
     lx,ly=40,70
     g,pad=glow(logo,22,(255,252,235),255); im.alpha_composite(g,(lx-pad,ly-pad)); im.alpha_composite(logo,(lx,ly))
