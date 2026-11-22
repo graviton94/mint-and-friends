@@ -962,5 +962,13 @@
   "landmark.nextLook": "New look at Lv.{n}",
   "landmark.build": "Build",
   "landmark.built": "{name} built!",
-  "landmark.grew": "{name} looks even better!"
+  "landmark.grew": "{name} looks even better!",
+  "update.title": "A new version is here!",
+  "update.body": "New features and fixes inside.\nIt downloads while you keep playing.",
+  "update.go": "Update",
+  "update.readyTitle": "Update ready!",
+  "update.readyBody": "Reopen to switch to the new version.\nYour progress is saved.",
+  "update.restart": "Reopen",
+  "update.pill": "Downloading update {pct}%",
+  "update.pillReady": "Update ready · tap to reopen"
 }

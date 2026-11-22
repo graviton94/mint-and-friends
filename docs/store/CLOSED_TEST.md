@@ -44,8 +44,8 @@
 2. 앱 ID · 광고 단위 ID 를 Claude 에게 전달 → GitHub 비밀값으로 연결 (지금은 테스트 광고)
 
 ## 6. Firebase 원격 구성
-Firebase 콘솔 → Remote Config → 아래 12개 키를 지금 값 그대로 추가 후 게시 (이후 여기서 조정, 값은 `lib/game/tuning.dart` 의 `Tuning.defaults` 와 같아야 함):
-`energy_regen_seconds` 150 · `energy_ad_amount` 20 · `refill_base` 60 · `refill_step` 30 · `refill_max` 150 · `rescue_chance` 0.25 · `easy_order_chance` 0.33 · `market_price_base` 10 · `area_star_scale` 1.6 · `coin_scale` 1.0 · `seed_income` 0.10 · `seed_coin_base` 1000000000
+Firebase 콘솔 → Remote Config → 아래 13개 키를 지금 값 그대로 추가 후 게시 (이후 여기서 조정, 값은 `lib/game/tuning.dart` 의 `Tuning.defaults` 와 같아야 함):
+`energy_regen_seconds` 150 · `energy_ad_amount` 20 · `refill_base` 60 · `refill_step` 30 · `refill_max` 150 · `rescue_chance` 0.25 · `easy_order_chance` 0.33 · `market_price_base` 10 · `area_star_scale` 1.6 · `coin_scale` 1.0 · `seed_income` 0.10 · `seed_coin_base` 1000000000 · `min_version_code` 0 (이 버전 코드보다 낮은 앱은 필수 업데이트)
 
 ## 6-1. Play 앱 서명 키 등록 (첫 AAB 업로드 직후 꼭)
 Play 에 올린 앱은 Google 이 **앱 서명 키**로 다시 서명한다. 이 키의 지문을 Firebase · 카카오에 넣지 않으면

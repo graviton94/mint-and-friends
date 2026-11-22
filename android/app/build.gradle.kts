@@ -93,4 +93,6 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     // Play 설치 추천인 (초대 링크, D-045)
     implementation("com.android.installreferrer:installreferrer:2.2")
+    // Play 인앱 업데이트 (새 버전 알림 · 게임 안에서 받기 · 다시 열기)
+    implementation("com.google.android.play:app-update:2.1.0")
 }

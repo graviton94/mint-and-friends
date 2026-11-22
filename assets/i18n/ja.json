@@ -962,5 +962,13 @@
   "landmark.nextLook": "Lv.{n}で新しい姿",
   "landmark.build": "建てる",
   "landmark.built": "{name}を建てたよ!",
-  "landmark.grew": "{name}がもっとすてきになったよ!"
+  "landmark.grew": "{name}がもっとすてきになったよ!",
+  "update.title": "新しいバージョンが出たよ!",
+  "update.body": "新しい機能となおしたところが入っているよ。\n遊んでいるあいだにダウンロードしておくね。",
+  "update.go": "アップデート",
+  "update.readyTitle": "アップデートの準備ができたよ!",
+  "update.readyBody": "開きなおすと新しいバージョンになるよ。\n進みぐあいはそのまま保存されているよ。",
+  "update.restart": "開きなおす",
+  "update.pill": "アップデート中 {pct}%",
+  "update.pillReady": "準備完了・タップで開きなおす"
 }

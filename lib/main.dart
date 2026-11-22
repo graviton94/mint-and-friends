@@ -29,7 +29,9 @@ import 'ui/widgets/frame_box.dart';
 import 'services/analytics_service.dart';
 import 'services/remote_tuning.dart';
 import 'services/dev_log.dart';
+import 'services/update_service.dart';
 import 'ui/share_flow.dart';
+import 'ui/update_ui.dart';
 import 'ui/start_screens.dart';
 import 'ui/widgets/top_toast.dart';
 
@@ -170,6 +172,9 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     auth.addListener(_onAuthChanged);
     _start();
     DevLog.instance.record(game, 'start');
+    // 새 버전 확인 (D-049): 게임 화면이 뜨고 조금 뒤, 다 받으면 '다시 열기' 창
+    UpdateService.instance.addListener(_onUpdate);
+    Future.delayed(const Duration(seconds: 4), _checkUpdate);
     // 알림 권한은 처음 한 번, 게임 화면이 뜬 뒤에 묻는다
     Future.delayed(const Duration(seconds: 6), NotifyService.instance.askOnce);
     NotifyService.instance.cancel();
@@ -201,6 +206,30 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
         social?.syncProfile(game);
       }
     });
+  }
+
+  /// 이 앱의 버전 코드 (version 글자 '1.0.2 (1016)' 에서).
+  int get _versionCode =>
+      int.tryParse(
+        RegExp(r'\((\d+)\)').firstMatch(widget.version)?.group(1) ?? '',
+      ) ??
+      0;
+
+  Future<void> _checkUpdate() async {
+    if (!mounted) return;
+    final ask = await UpdateService.instance.check(myVersionCode: _versionCode);
+    final ctx = _navKey.currentContext;
+    if (ask && ctx != null && ctx.mounted) await showUpdatePrompt(ctx);
+  }
+
+  bool _readyShown = false;
+  void _onUpdate() {
+    if (UpdateService.instance.phase != UpdatePhase.downloaded || _readyShown) {
+      return;
+    }
+    _readyShown = true;
+    final ctx = _navKey.currentContext;
+    if (ctx != null) showUpdateReady(ctx);
   }
 
   /// 친구 선물함 · 공지 확인, 공개 프로필 갱신 (실패해도 조용히, 모두 시간 제한).
@@ -461,6 +490,18 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
         locale: L10n.instance.locale,
         supportedLocales: [for (final c in L10n.supported.keys) Locale(c)],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        // 업데이트 받는 중 · 다 받음 알약 (모든 화면 위)
+        builder: (context, child) => Stack(
+          children: [
+            ?child,
+            UpdatePill(
+              onReadyTap: () {
+                final ctx = _navKey.currentContext;
+                if (ctx != null) showUpdateReady(ctx);
+              },
+            ),
+          ],
+        ),
         home: !auth.ready
             ? const Scaffold(body: Center(child: CircularProgressIndicator()))
             : !auth.signedIn

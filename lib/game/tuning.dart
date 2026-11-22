@@ -31,6 +31,9 @@ class Tuning {
   /// 구역 꾸미기 별 합계 배율 (구역 진행 속도 A/B).
   static double areaStarScale = 1.6;
 
+  /// 이 버전 코드보다 낮은 앱은 필수 업데이트 (전체 화면). 0 = 없음.
+  static int minVersionCode = 0;
+
   /// 서버 키 → (최소, 최대, 적용).
   static final Map<String, (num, num, void Function(num))> keys = {
     'energy_regen_seconds': (60, 600, (v) => energyRegenSeconds = v.toDouble()),
@@ -45,6 +48,7 @@ class Tuning {
     'coin_scale': (0.1, 10, (v) => coinScale = v.toDouble()),
     'seed_income': (0.01, 1, (v) => seedIncome = v.toDouble()),
     'seed_coin_base': (1e6, 1e15, (v) => seedCoinBase = v.toDouble()),
+    'min_version_code': (0, 1e9, (v) => minVersionCode = v.toInt()),
   };
 
   /// 기본값 표 (Remote Config 콘솔에 넣을 값과 같다).
@@ -61,6 +65,7 @@ class Tuning {
     'coin_scale': 1.0,
     'seed_income': 0.10,
     'seed_coin_base': 1e9,
+    'min_version_code': 0,
   };
 
   /// 서버 값 하나 적용. 범위 밖이면 false.

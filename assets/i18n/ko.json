@@ -963,5 +963,13 @@
   "landmark.nextLook": "Lv.{n}에 새 모습",
   "landmark.build": "세우기",
   "landmark.built": "{name}을(를) 세웠어요!",
-  "landmark.grew": "{name}이(가) 더 멋져졌어요!"
+  "landmark.grew": "{name}이(가) 더 멋져졌어요!",
+  "update.title": "새 버전이 나왔어요!",
+  "update.body": "새 기능과 고친 점이 들어 있어요.\n게임하는 동안 뒤에서 받아 둘게요.",
+  "update.go": "업데이트",
+  "update.readyTitle": "업데이트 준비 완료!",
+  "update.readyBody": "다시 열면 새 버전으로 바뀌어요.\n진행은 그대로 저장돼 있어요.",
+  "update.restart": "다시 열기",
+  "update.pill": "업데이트 받는 중 {pct}%",
+  "update.pillReady": "업데이트 준비 완료 · 눌러서 다시 열기"
 }

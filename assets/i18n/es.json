@@ -962,5 +962,13 @@
   "landmark.nextLook": "Nuevo aspecto en Nv.{n}",
   "landmark.build": "Construir",
   "landmark.built": "¡{name} construido!",
-  "landmark.grew": "¡{name} se ve aún mejor!"
+  "landmark.grew": "¡{name} se ve aún mejor!",
+  "update.title": "¡Hay una nueva versión!",
+  "update.body": "Trae novedades y arreglos.\nSe descarga mientras sigues jugando.",
+  "update.go": "Actualizar",
+  "update.readyTitle": "¡Actualización lista!",
+  "update.readyBody": "Vuelve a abrir para usar la nueva versión.\nTu progreso está guardado.",
+  "update.restart": "Volver a abrir",
+  "update.pill": "Descargando actualización {pct}%",
+  "update.pillReady": "Actualización lista · toca para reabrir"
 }
