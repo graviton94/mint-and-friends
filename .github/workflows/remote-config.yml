@@ -30,13 +30,16 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v2
       - name: Enable Remote Config API
         run: gcloud services enable firebaseremoteconfig.googleapis.com --project "$PROJECT" || echo "::warning::could not enable API (may already be on)"
+      - name: Service account email (Play Console 초대용)
+        if: inputs.values == 'whoami'
+        run: gcloud config get-value account
       - name: Player stats
         if: inputs.values == 'stats'
         run: |
           export ACCESS_TOKEN=$(gcloud auth print-access-token)
           python3 tool/player_stats.py
       - name: Set values
-        if: inputs.values != 'stats'
+        if: inputs.values != 'stats' && inputs.values != 'whoami'
         env:
           VALUES: ${{ inputs.values }}
         run: |
