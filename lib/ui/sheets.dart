@@ -1500,7 +1500,7 @@ Future<void> _shopSheet(
               title: tr('boost.${k.name}'),
               note: tr('shop.boostTime', {'n': Boosts.perGems[k]!.inMinutes}),
               button: '[[diamond]] ${Boosts.gemCost[k]}',
-              enabled: game.gems >= Boosts.gemCost[k]! && game.canAddBoostOf(k),
+              enabled: game.gems >= Boosts.gemCost[k]! && game.canBuyBoostOf(k),
               onTap: () {
                 if (game.buyBoost(k)) _boostBought(context, k, gems: true);
               },
@@ -2398,7 +2398,7 @@ class _BoostRow extends StatelessWidget {
                         'n': Boosts.perGems[kind]!.inMinutes,
                       }),
                       light: false,
-                      onTap: room && game.gems >= cost
+                      onTap: game.canBuyBoostOf(kind) && game.gems >= cost
                           ? () {
                               if (game.buyBoost(kind)) {
                                 _boostBought(context, kind, gems: true);

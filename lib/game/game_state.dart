@@ -421,6 +421,13 @@ class GameState extends ChangeNotifier {
     coins = lastRun * 0.01 * perkLv(SeedPerk.startCoins);
     runStartCoins = lifetimeCoins;
     _featured = null;
+    // 지난 판 등급으로 만든 장터 물건 · 판매 되돌리기는 새 판에 가져오지 않는다
+    // (오늘 받은 무료 선물 표시만 남겨 두면 같은 날 다시 만들 때 또 받지 못한다)
+    _offers = [
+      for (final o in _offers)
+        if (o.kind == 1 && o.sold) o,
+    ];
+    _lastSale = null;
     orders.clear();
     energy = max(energy, energyCap);
     _fillOrders();
@@ -623,6 +630,8 @@ class GameState extends ChangeNotifier {
     if (m.difference(t) > clockRollbackLimit) {
       _maxSeen = t;
       lastSeen = t;
+      // 시계를 다시 앞으로 돌려도 이미 지난 시간만큼 방치 보상을 또 받지 못하게
+      if (_clockFloor == null || m.isAfter(_clockFloor!)) _clockFloor = m;
       return t;
     }
     return m;
@@ -630,6 +639,9 @@ class GameState extends ChangeNotifier {
 
   static const Duration clockRollbackLimit = Duration(days: 3);
   DateTime? _maxSeen;
+
+  /// 시계를 크게 되돌리기 전 가장 늦게 본 시각: 방치 시간은 이 뒤부터만 센다.
+  DateTime? _clockFloor;
 
   /// 하루 초기화에 쓴 가장 늦은 날 (yyyymmdd). 날짜는 이보다 앞으로 돌아가지 않는다.
   int _maxDay = 0;
@@ -951,6 +963,10 @@ class GameState extends ChangeNotifier {
       boosted(k) ? boosts[k]!.difference(now) : Duration.zero;
   bool canAddBoostOf(BoostKind k) =>
       boostLeft(k) < Boosts.max - const Duration(minutes: 1);
+
+  /// 다이아 부스트는 산 시간이 모두 들어갈 자리가 있을 때만 (상한에 잘려 다이아만 날리지 않게).
+  bool canBuyBoostOf(BoostKind k) =>
+      boostLeft(k) + Boosts.perGems[k]! <= Boosts.max;
 
   /// 코인 2배 부스트 (예전 이름 유지).
   bool get boostActive => boosted(BoostKind.coins);
@@ -1631,6 +1647,12 @@ class GameState extends ChangeNotifier {
     lifetimeCoins -= s.price;
     board[s.cell] = s.item;
     _lastSale = null;
+    // 팔기 · 되돌리기 반복으로 업적 기록이 쌓이지 않게 함께 되돌린다
+    stats[Stat.sells] = max(0, (stats[Stat.sells] ?? 0) - 1);
+    stats[Stat.coinsEarned] = max(
+      0,
+      (stats[Stat.coinsEarned] ?? 0) - s.price.round(),
+    );
     notifyListeners();
     return true;
   }
@@ -2518,8 +2540,8 @@ class GameState extends ChangeNotifier {
   }
 
   void _rollPlayDay() {
-    final d = now;
-    final k = '${d.year}-${d.month}-${d.day}';
+    // 하루 초기화와 같은 날짜 (시계를 앞뒤로 돌려 날 수를 쌓지 못하게)
+    final k = _dayKey(now);
     if (k == _playDay) return;
     _playDay = k;
     _bump(Stat.daysPlayed);
@@ -2633,7 +2655,7 @@ class GameState extends ChangeNotifier {
 
   /// 다이아로 부스트.
   bool buyBoost(BoostKind k) {
-    if (!canAddBoostOf(k)) return false;
+    if (!canBuyBoostOf(k)) return false;
     if (!_spendGems(Boosts.gemCost[k]!, 'boost_${k.name}')) return false;
     _addBoost(k, Boosts.perGems[k]!);
     _trace('boost', '${k.name},gems');
@@ -2712,7 +2734,8 @@ class GameState extends ChangeNotifier {
     final (_, hours, floor) = Gems.coinPacks[i];
     return max(
       floor * inflation * Tuning.coinScale,
-      incomePerSec * 3600 * hours,
+      // 코인 부스트 중에 사도 같은 양 (부스트 2배는 방치 수익에만)
+      baseIncomePerSec * 3600 * hours,
     ).roundToDouble();
   }
 
@@ -2820,7 +2843,17 @@ class GameState extends ChangeNotifier {
 
   OfflineReward? computeOffline() {
     final t = now;
-    var away = t.difference(lastSeen);
+    var from = lastSeen;
+    final floor = _clockFloor;
+    if (floor != null && floor.isAfter(from)) {
+      if (!t.isAfter(floor)) {
+        lastSeen = t;
+        return null;
+      }
+      from = floor;
+      _clockFloor = null;
+    }
+    var away = t.difference(from);
     if (away < const Duration(minutes: 1)) return null;
     _rechargeBaskets(away.inMilliseconds / 1000);
     _regenEnergy(away.inMilliseconds / 1000); // 에너지는 오프라인 상한 없이 찬다 (최대치까지)
@@ -2936,6 +2969,8 @@ class GameState extends ChangeNotifier {
       'effectOn': effectOn,
       'bag': coinBagReadyAt?.millisecondsSinceEpoch,
       'seen': lastSeen.millisecondsSinceEpoch,
+      if (_clockFloor != null)
+        'clockFloor': _clockFloor!.millisecondsSinceEpoch,
       'maxDay': _maxDay,
       'visitorNext': nextVisitorAt.millisecondsSinceEpoch,
       'merges': totalMerges,
@@ -3200,6 +3235,8 @@ class GameState extends ChangeNotifier {
     coinBagReadyAt = ts('bag');
     _maxDay = (j['maxDay'] as num?)?.toInt() ?? 0;
     lastSeen = ts('seen') ?? now;
+    _clockFloor = ts('clockFloor');
+    _lastSale = null;
     // 저장한 때보다 기기 시계가 뒤에 있으면 그때부터 (위 now 규칙과 같다)
     if (_maxSeen == null || lastSeen.isAfter(_maxSeen!)) _maxSeen = lastSeen;
     nextVisitorAt = ts('visitorNext') ?? now.add(GameConfig.visitorMinGap);
