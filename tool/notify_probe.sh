@@ -10,20 +10,24 @@ adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null
 sleep 30
 adb exec-out screencap -p > probe/screen1.png || true
 adb shell dumpsys alarm | grep -A3 "$PKG" > probe/alarm.txt || true
-adb shell dumpsys notification --noredact | grep -B2 -A12 "$PKG" > probe/notif_30s.txt || true
+adb shell dumpsys notification --noredact > probe/notif_all_30s.txt || true
+grep -A25 "pkg=$PKG" probe/notif_all_30s.txt > probe/notif_30s.txt || true
 # 앱을 내리고 프로세스를 없앤 뒤(백그라운드 정리), 예약 알림이 앱 없이도 뜨는지 본다
 adb shell input keyevent KEYCODE_HOME
 sleep 5
 adb shell am kill "$PKG" || true
 sleep 150
-adb shell dumpsys notification --noredact | grep -B2 -A12 "$PKG" > probe/notif_after_kill.txt || true
+adb shell dumpsys notification --noredact > probe/notif_all_kill.txt || true
+grep -A25 "pkg=$PKG" probe/notif_all_kill.txt > probe/notif_after_kill.txt || true
 adb shell dumpsys alarm | grep -A3 "$PKG" > probe/alarm_after_home.txt || true
 adb logcat -d > probe/logcat.txt
 {
   echo "## Notify probe"
   echo '```'
   grep -E "NOTIFYPROBE" probe/logcat.txt | sed 's/.*NOTIFYPROBE/NOTIFYPROBE/' | head -40
-  echo '--- posted notifications at 30s / after kill+150s (titles) ---'
+  echo '--- posted notifications at 30s / after kill+150s (records) ---'
+  grep -cE "NotificationRecord" probe/notif_30s.txt; grep -oE "(probe now|probe scheduled|tickerText=[^,]*)" probe/notif_30s.txt | head -5
+  grep -cE "NotificationRecord" probe/notif_after_kill.txt; grep -oE "(probe now|probe scheduled|tickerText=[^,]*)" probe/notif_after_kill.txt | head -5
   grep -E "android.title|probe now|probe scheduled" probe/notif_30s.txt | head -10
   echo '...'
   grep -E "android.title|probe now|probe scheduled" probe/notif_after_kill.txt | head -10
@@ -31,6 +35,8 @@ adb logcat -d > probe/logcat.txt
   echo '--- alarms (after home) ---'
   grep -cE "$PKG" probe/alarm_after_home.txt
   head -20 probe/alarm_after_home.txt
+  echo '--- Firebase Analytics (FA) ---'
+  grep -E " FA  | FA-SVC|google_app_id|Analytics" probe/logcat.txt | head -15
   echo '--- errors ---'
   grep -iE "flutterlocalnotifications|ScheduledNotification|E/flutter|FATAL|Missing type parameter" -A3 probe/logcat.txt | head -60
   echo '```'
