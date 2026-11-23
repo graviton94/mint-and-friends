@@ -1023,5 +1023,10 @@
   "update.bodyStore": "Trae novedades y arreglos.\nActualiza desde Play Store.",
   "patch.1.0.7": "• Al abrir el té o el polvo de estrellas, ahora empiezan desde el nivel 1 (los objetos que ya tenías pasan al nivel del mismo valor)\n• Si el tablero está lleno y no hay nada que combinar, te indicamos el objeto que menos cuesta vender\n• Tus amigos a veces piden objetos de nivel bajo\n• Corregido: los diamantes comprados a veces no llegaban\n• El progreso antiguo de otro dispositivo ya no sobrescribe el más nuevo\n• Al cerrar sesión como invitado tu progreso se queda en este dispositivo (vuelve a entrar como invitado para seguir)\n• Tus amigos ven tu apodo del juego en lugar del nombre de tu cuenta\n• Las recompensas de visitantes y burbujas llegan aunque se vayan durante un anuncio\n• Los sonidos del juego ahora suenan junto con YouTube o tu música, sin detenerlos\n• La bonificación x2 de la primera compra de diamantes es ahora una sola vez entre todos los paquetes\n• Muchas otras correcciones\n\n¡Te enviamos energía como regalo de actualización!",
   "board.stuckPick": "¡Tablero lleno y nada que combinar! Toca aquí y elegiremos el objeto que menos cuesta vender",
-  "patch.1.0.8": "• Los avisos ahora son cortos y se leen de un vistazo\n• Preparamos el jardín para el invierno\n\n¡Te enviamos energía como regalo de actualización!"
+  "patch.1.0.8": "• Los avisos ahora son cortos y se leen de un vistazo\n• Preparamos el jardín para el invierno\n\n¡Te enviamos energía como regalo de actualización!",
+  "notify.test.button": "Probar aviso",
+  "notify.test.title": "Prueba de Mint & Friends",
+  "notify.test.body": "¡Así se ven los avisos!",
+  "notify.test.sent": "¡Enviado! ¿Apareció?",
+  "notify.test.blocked": "Los avisos de esta app están desactivados en el teléfono"
 }

@@ -2554,6 +2554,28 @@ Future<void> showSettingsSheet(
                   onChanged: NotifyService.instance.setOn,
                 ),
               ),
+              // 알림이 오는지 바로 확인 (기기 설정 · 배터리 절약 때문에 막혔는지 알 수 있게)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () async {
+                    final ok = await NotifyService.instance.sendTest(
+                      tr('notify.test.title'),
+                      tr('notify.test.body'),
+                    );
+                    if (context.mounted) {
+                      TopToast.show(
+                        context,
+                        tr(ok ? 'notify.test.sent' : 'notify.test.blocked'),
+                      );
+                    }
+                  },
+                  child: IconText(
+                    tr('notify.test.button'),
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+              ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(

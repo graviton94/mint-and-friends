@@ -74,6 +74,43 @@ class NotifyService extends ChangeNotifier {
     if (v) await askOnce();
   }
 
+  /// 알림 채널: 화면 위로 잠깐 내려오는 중요도(높음). 채널 중요도는 만든 뒤 바꿀 수 없어
+  /// 예전 'garden'(기본 중요도, 알림창에 조용히 쌓여 잘 안 보였음) 대신 새 채널을 쓴다 (1.0.9).
+  static const _details = NotificationDetails(
+    android: AndroidNotificationDetails(
+      'garden_alerts',
+      'Garden',
+      channelDescription: 'Energy, gifts and friends',
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: 'ic_stat_notify',
+      color: Color(0xFF5FA05A),
+    ),
+  );
+
+  /// 설정의 '알림 테스트': 지금 바로 하나 띄운다. 기기에서 알림이 막혀 있으면 false.
+  Future<bool> sendTest(String title, String body) async {
+    if (!_ready) return false;
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    try {
+      var on = await android?.areNotificationsEnabled() ?? true;
+      if (!on) on = await android?.requestNotificationsPermission() ?? false;
+      if (!on) return false;
+      await _plugin.show(
+        id: 99,
+        title: title,
+        body: body,
+        notificationDetails: _details,
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// 예약 세대: 예약 도중 앱이 다시 켜져 cancel 되면 남은 예약을 버린다.
   int _gen = 0;
 
@@ -201,17 +238,6 @@ class NotifyService extends ChangeNotifier {
       }
       kept.add(p);
     }
-    const details = NotificationDetails(
-      android: AndroidNotificationDetails(
-        'garden',
-        'Garden',
-        channelDescription: 'Energy, gifts and friends',
-        importance: Importance.defaultImportance,
-        priority: Priority.defaultPriority,
-        icon: 'ic_stat_notify',
-        color: Color(0xFF5FA05A),
-      ),
-    );
     for (var i = 0; i < kept.length; i++) {
       if (gen != _gen) return; // 그사이 앱이 다시 켜졌다
       final (t, title, body) = kept[i];
@@ -219,7 +245,7 @@ class NotifyService extends ChangeNotifier {
         await _plugin.zonedSchedule(
           id: 100 + i,
           scheduledDate: tz.TZDateTime.from(t.toUtc(), tz.UTC),
-          notificationDetails: details,
+          notificationDetails: _details,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           title: title,
           body: body,
