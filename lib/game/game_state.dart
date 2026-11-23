@@ -252,6 +252,12 @@ class AdRewardEvent extends GameEvent {
   AdRewardEvent(this.kind);
 }
 
+/// 튜토리얼 단계가 바뀌었다 (첫 몇 분에 어디서 멈추는지 보는 지표).
+class TutorialStepEvent extends GameEvent {
+  final int step;
+  TutorialStepEvent(this.step);
+}
+
 class SoldEvent extends GameEvent {
   final Item item;
   final double price;
@@ -289,6 +295,7 @@ class GameState extends ChangeNotifier {
   final Set<String> tipsSeen = {};
   bool tipsKnown = true;
   void setTutorial(int step) {
+    if (step != tutorial) _events.add(TutorialStepEvent(step));
     tutorial = step;
     notifyListeners();
   }
@@ -761,8 +768,18 @@ class GameState extends ChangeNotifier {
   /// 바구니 기본 단계 = 1 + 바구니 등급 (D-029).
   int get spawnLevel => 1 + lv(UpgradeType.basketTier);
 
+  /// 그 체인 바구니에서 나오는 단계 (늦게 열리는 체인은 1단계부터, D-053).
+  int spawnLevelOf(Chain c) => max(1, spawnLevel - Chains.levelOffset(c));
+
+  /// 등급 비교용 단계 (체인 사이 공통 눈금): 단계 + 체인 보정.
+  int rankOf(Chain c, int level) => level + Chains.levelOffset(c);
+
+  /// 공통 눈금 단계를 그 체인의 단계로.
+  int levelAtRank(Chain c, int rank) =>
+      (rank - Chains.levelOffset(c)).clamp(1, Chains.maxLevel(c));
+
   /// 바구니 기준 상대 단계 (부탁 별 · 경험치는 이 값으로: 등급이 올라도 별 · 레벨 속도는 그대로).
-  int relLevel(int level) => max(1, level - spawnLevel + 1);
+  int relLevel(Chain c, int level) => max(1, level - spawnLevelOf(c) + 1);
 
   /// 바구니에서 2단계가 나올 확률 (기본 + 품질 강화 + 친구 버프).
   double get luckyChance =>
@@ -1415,7 +1432,7 @@ class GameState extends ChangeNotifier {
         if (availableChains.contains(c)) c,
     ];
     final chain = chains[_rng.nextInt(chains.length)];
-    var lvl = spawnLevel;
+    var lvl = spawnLevelOf(chain);
     if (_rng.nextDouble() < luckyChance) lvl += 1;
     lvl = min(lvl, Chains.maxLevel(chain));
     board[cell] = Item(_nextId++, chain, lvl);
@@ -1484,7 +1501,7 @@ class GameState extends ChangeNotifier {
     _events.add(MergedEvent(to, b.level));
     _checkDiscovery(b.chain, b.level);
     _gainXp(Leveling.xpForMerge(b.level));
-    if (relLevel(b.level) >= GameConfig.bubbleMinLevel &&
+    if (relLevel(b.chain, b.level) >= GameConfig.bubbleMinLevel &&
         !board.any((it) => it != null && it.isBubble) &&
         board.indexed.where((e) => e.$2 == null && isCellOpen(e.$1)).length >=
             GameConfig.bubbleMinFree &&
@@ -1533,7 +1550,7 @@ class GameState extends ChangeNotifier {
           it.level >=
               Upgrades.autoMergeMaxLevel(
                 lv(UpgradeType.autoMerge),
-                spawnLevel,
+                spawnLevelOf(it.chain),
               ) ||
           _isOrderTarget(it))
         continue;
@@ -1554,6 +1571,90 @@ class GameState extends ChangeNotifier {
       }
     }
     return false;
+  }
+
+  // ---------------------------------------------------------------- 낮은 단계 정리 (D-054)
+
+  /// 바구니보다 낮은 단계라 더는 바구니에서 나오지 않는 아이템 칸 (보관 칸 · 비눗방울 · 부탁 대상 제외).
+  List<int> get lowCells => [
+    for (var i = 0; i < board.length; i++)
+      if (_isLow(i)) i,
+  ];
+
+  bool _isLow(int i) {
+    final it = board[i];
+    return it != null &&
+        !it.isBubble &&
+        !GameConfig.isVault(i) &&
+        it.level < spawnLevelOf(it.chain) &&
+        !_isOrderTarget(it);
+  }
+
+  /// 낮은 아이템끼리 합칠 수 있는 횟수 (모두 합치기 미리 보기).
+  int get lowMergeCount {
+    final n = <String, int>{};
+    for (final i in lowCells) {
+      final it = board[i]!;
+      n.update(
+        '${it.chain.index}-${it.level}',
+        (v) => v + 1,
+        ifAbsent: () => 1,
+      );
+    }
+    return n.values.fold(0, (a, v) => a + v ~/ 2);
+  }
+
+  /// 낮은 아이템 모두 팔기 값.
+  double get lowSellTotal =>
+      lowCells.fold(0.0, (a, i) => a + sellPrice(board[i]!));
+
+  /// 낮은 아이템을 같은 것끼리 모두 합친다 (바구니 단계에 닿을 때까지 이어서). 합친 횟수.
+  int mergeAllLow() {
+    var n = 0;
+    while (true) {
+      final groups = <String, List<int>>{};
+      for (final i in lowCells) {
+        final it = board[i]!;
+        groups
+            .putIfAbsent(
+              '${it.level.toString().padLeft(2, '0')}-${it.chain.index}',
+              () => [],
+            )
+            .add(i);
+      }
+      final keys = groups.keys.toList()..sort();
+      final k = keys.where((k) => groups[k]!.length >= 2).firstOrNull;
+      if (k == null) break;
+      final cells = groups[k]!;
+      _merge(cells[1], cells[0]);
+      n++;
+    }
+    if (n > 0) {
+      _trace('mergeLow', '$n');
+      notifyListeners();
+    }
+    return n;
+  }
+
+  /// 낮은 아이템을 모두 판다 (되돌리기 없음). 받은 코인.
+  double sellAllLow() {
+    final cells = lowCells;
+    if (cells.isEmpty) return 0;
+    var total = 0.0;
+    Item? last;
+    for (final i in cells) {
+      final it = board[i]!;
+      total += sellPrice(it);
+      board[i] = null;
+      last = it;
+      _bump(Stat.sells);
+    }
+    _earn(total);
+    _lastSale = null;
+    _events.add(SoldEvent(last!, total));
+    _trace('sellLow', '${cells.length},${total.round()}');
+    notifyListeners();
+    return total;
   }
 
   // ---------------------------------------------------------------- 칸 해금, 판매
@@ -1724,6 +1825,9 @@ class GameState extends ChangeNotifier {
     ];
   }
 
+  @visibleForTesting
+  void fillOrdersForTest() => _fillOrders();
+
   /// 부탁을 채운다. 한도를 다 쓴 친구의 부탁은 거둬들이고, 부탁할 친구가 없으면 빈 채로 둔다.
   void _fillOrders() {
     if (quotaActive) {
@@ -1757,11 +1861,13 @@ class GameState extends ChangeNotifier {
       final inStorage = storage.any(
         (it) => it != null && it.chain == o.chain && it.level == o.level,
       );
-      if (o.level < spawnLevel && !canDeliverOrder(o) && !inStorage) {
+      if (o.level < spawnLevelOf(o.chain) &&
+          !canDeliverOrder(o) &&
+          !inStorage) {
         final n = _newOrder();
         orders[i] = Order(n.id, o.friendId, n.chain, n.level, n.stars);
       } else {
-        final st = Garden.orderStars(relLevel(o.level));
+        final st = Garden.orderStars(relLevel(o.chain, o.level));
         if (st != o.stars) {
           orders[i] = Order(o.id, o.friendId, o.chain, o.level, st);
         }
@@ -1781,11 +1887,12 @@ class GameState extends ChangeNotifier {
     Item? best;
     for (final it in board) {
       if (it == null || it.isBubble || !chains.contains(it.chain)) continue;
-      if (it.level <= top || it.level >= Chains.maxLevel(it.chain)) continue;
+      final r = rankOf(it.chain, it.level);
+      if (r <= top || it.level >= Chains.maxLevel(it.chain)) continue;
       if (orders.any((o) => o.chain == it.chain && o.level == it.level)) {
         continue;
       }
-      if (best == null || it.level > best.level) best = it;
+      if (best == null || r > rankOf(best.chain, best.level)) best = it;
     }
     return best;
   }
@@ -1810,8 +1917,28 @@ class GameState extends ChangeNotifier {
         _pickFriend(pool),
         stuck.chain,
         stuck.level,
-        Garden.orderStars(relLevel(stuck.level)),
+        Garden.orderStars(relLevel(stuck.chain, stuck.level)),
       );
+    }
+    // 정리 부탁: 바구니보다 낮아 쓸 데가 없어진 아이템을 가끔 원한다 (별은 적지만 코인은 그 가치만큼).
+    // 한 번에 하나만 (부탁 칸을 다 차지하지 않게).
+    if (preferChain == null &&
+        !orders.any((o) => o.level < spawnLevelOf(o.chain)) &&
+        _rng.nextDouble() < Tuning.cleanupChance) {
+      final low = [
+        for (final i in lowCells)
+          if (chains.contains(board[i]!.chain)) board[i]!,
+      ];
+      if (low.isNotEmpty) {
+        final it = low[_rng.nextInt(low.length)];
+        return Order(
+          _nextId++,
+          _pickFriend(pool),
+          it.chain,
+          it.level,
+          Garden.orderStars(relLevel(it.chain, it.level)),
+        );
+      }
     }
     for (var attempt = 0; ; attempt++) {
       final friendId = _pickFriend(pool);
@@ -1820,11 +1947,15 @@ class GameState extends ChangeNotifier {
       final spread = 1.0 + min(1, attempt ~/ 15);
       // 3번에 1번은 낮은 단계(바구니 +1~2) 부탁: 판에 남는 낮은 아이템을 쓸 데가 생기게
       final easy = attempt < 20 && _rng.nextDouble() < Tuning.easyOrderChance;
+      final base = spawnLevelOf(chain);
       final lvl =
           (easy
-                  ? spawnLevel + 1 + _rng.nextInt(2)
-                  : (center + (_rng.nextDouble() * 2 - 1) * spread).round())
-              .clamp(spawnLevel + 1, Chains.maxLevel(chain));
+                  ? base + 1 + _rng.nextInt(2)
+                  : levelAtRank(
+                      chain,
+                      (center + (_rng.nextDouble() * 2 - 1) * spread).round(),
+                    ))
+              .clamp(base + 1, Chains.maxLevel(chain));
       final dup = orders.any((o) => o.chain == chain && o.level == lvl);
       // 같은 부탁을 연달아 받아 별을 쉽게 모으지 못하게: 최근 전달한 것 · 판에 이미 있는 것은 피한다
       // (부탁은 합쳐서 만들어야 하는 아이템이 기본 · 장르 표준)
@@ -1843,7 +1974,7 @@ class GameState extends ChangeNotifier {
           friendId,
           chain,
           lvl,
-          Garden.orderStars(relLevel(lvl)),
+          Garden.orderStars(relLevel(chain, lvl)),
         );
       }
     }
@@ -1923,7 +2054,7 @@ class GameState extends ChangeNotifier {
       'order',
       '${o.friendId},${o.chain.name},${o.level},$gained,${c.round()}',
     );
-    final gx = Leveling.xpForOrder(relLevel(o.level));
+    final gx = Leveling.xpForOrder(relLevel(o.chain, o.level));
     _events.add(OrderDeliveredEvent(o.friendId, gained, c, up, gx));
     _gainXp(gx);
     notifyListeners();
@@ -2247,12 +2378,17 @@ class GameState extends ChangeNotifier {
       final chains = availableChains;
       Chain pick() => chains[_rng.nextInt(chains.length)];
       final center = orderCenter.round();
-      final list = <ShopOffer>[
-        ShopOffer(pick(), spawnLevel + min(3, 1 + level ~/ 6), 0, kind: 1),
-      ];
+      ShopOffer at(Chain c, int up, int price, {int kind = 0}) => ShopOffer(
+        c,
+        min(Chains.maxLevel(c), spawnLevelOf(c) + up),
+        price,
+        kind: kind,
+      );
+      final list = <ShopOffer>[at(pick(), min(3, 1 + level ~/ 6), 0, kind: 1)];
       final pending = [
         for (final o in orders)
-          if (!canDeliver(orders.indexOf(o)) && relLevel(o.level) >= 3) o,
+          if (!canDeliver(orders.indexOf(o)) && relLevel(o.chain, o.level) >= 3)
+            o,
       ];
       if (pending.isNotEmpty) {
         final o = pending[_rng.nextInt(pending.length)];
@@ -2268,31 +2404,14 @@ class GameState extends ChangeNotifier {
       while (list.length < DailyShop.slots) {
         final c = pick();
         final l = max(
-          spawnLevel + 1,
-          center - 2 + _rng.nextInt(2),
+          spawnLevelOf(c) + 1,
+          levelAtRank(c, center - 2 + _rng.nextInt(2)),
         ).clamp(1, Chains.maxLevel(c));
         list.add(ShopOffer(c, l, DailyShop.price(c, l, level)));
       }
       // 고단계 두 칸: 다이아로 사기 · 광고 보고 받기
-      list.add(
-        ShopOffer(
-          pick(),
-          min(
-            Chains.maxLevel(Chain.flower),
-            spawnLevel + Gems.marketGemLevelUp,
-          ),
-          Gems.marketGemPrice,
-          kind: 3,
-        ),
-      );
-      list.add(
-        ShopOffer(
-          pick(),
-          min(Chains.maxLevel(Chain.flower), spawnLevel + Gems.marketAdLevelUp),
-          0,
-          kind: 4,
-        ),
-      );
+      list.add(at(pick(), Gems.marketGemLevelUp, Gems.marketGemPrice, kind: 3));
+      list.add(at(pick(), Gems.marketAdLevelUp, 0, kind: 4));
       if (freeTaken) list.first.sold = true;
       _offers = list;
     }
@@ -2747,11 +2866,12 @@ class GameState extends ChangeNotifier {
     return true;
   }
 
-  /// 지금 판 · 보관함에 있는 가장 높은 단계 (비눗방울 제외).
+  /// 지금 판 · 보관함에 있는 가장 높은 단계 (공통 눈금, 비눗방울 제외).
   int get _fieldTop {
     var top = spawnLevel;
     for (final it in [...board, ...storage]) {
-      if (it != null && !it.isBubble && it.level > top) top = it.level;
+      if (it != null && !it.isBubble)
+        top = max(top, rankOf(it.chain, it.level));
     }
     return top;
   }
@@ -2768,13 +2888,16 @@ class GameState extends ChangeNotifier {
     final f = _featured;
     if (f == null ||
         _featuredDay != _dayKey(now) ||
-        f.$2 <= spawnLevel ||
-        f.$2 > spawnLevel + Gems.featuredMaxAbove) {
+        f.$2 <= spawnLevelOf(f.$1) ||
+        f.$2 > spawnLevelOf(f.$1) + Gems.featuredMaxAbove) {
       final chains = availableChains;
       final c = chains[_rng.nextInt(chains.length)];
       final hi = min(surpriseMax, spawnLevel + Gems.featuredMaxAbove);
       final lo = min(surpriseMin, hi);
-      final l = (lo + _rng.nextInt(hi - lo + 1)).clamp(1, Chains.maxLevel(c));
+      final l = max(
+        spawnLevelOf(c) + 1,
+        levelAtRank(c, lo + _rng.nextInt(hi - lo + 1)),
+      ).clamp(1, Chains.maxLevel(c));
       _featured = (c, l);
       _featuredDay = _dayKey(now);
       // 화면을 그리는 중에 정해질 수 있으니, 저장은 다음 틈에 (껐다 켜도 같은 상품)
@@ -2785,11 +2908,10 @@ class GameState extends ChangeNotifier {
 
   /// 추천 아이템 값: 그 아이템을 바구니로 만드는 에너지 × 0.7.
   int get surpriseGems {
-    final l = featuredItem.$2;
-    return (pow(2, l - spawnLevel) * Gems.surpriseGemPerEnergy).round().clamp(
-      Gems.surpriseMinGems,
-      Gems.surpriseMaxGems,
-    );
+    final (c, l) = featuredItem;
+    return (pow(2, l - spawnLevelOf(c)) * Gems.surpriseGemPerEnergy)
+        .round()
+        .clamp(Gems.surpriseMinGems, Gems.surpriseMaxGems);
   }
 
   /// 추천 아이템 사기: 보여 준 그 아이템을 빈 칸에.
@@ -2982,6 +3104,7 @@ class GameState extends ChangeNotifier {
       'playDay': _playDay,
       'welcome': _welcomeSent,
       'seenHi': {for (final e in seenHighest.entries) e.key.name: e.value},
+      'lvOff': 1,
       'savedAt': savedAt!.millisecondsSinceEpoch,
     };
   }
@@ -3000,6 +3123,38 @@ class GameState extends ChangeNotifier {
   }
 
   /// 저장 불러오기. 전부 되거나 전혀 안 되거나: 망가진 저장이면 원래 상태로 되돌리고 false.
+  /// 체인 단계 보정(D-053) 이전 저장: 찻잎 · 별가루 아이템을 보정만큼 낮춘다 (가치는 그대로).
+  static Map<String, dynamic> migrateChainLevels(Map<String, dynamic> src) {
+    final j = (jsonDecode(jsonEncode(src)) as Map).cast<String, dynamic>();
+    int shift(Object? c, int l) {
+      final i = (c as num?)?.toInt();
+      if (i == null || i < 0 || i >= Chain.values.length) return l;
+      return max(1, l - Chains.levelOffset(Chain.values[i]));
+    }
+
+    for (final key in ['board', 'store', 'orders', 'offers']) {
+      for (final e in (j[key] as List? ?? const [])) {
+        if (e is Map && e['l'] is num) {
+          e['l'] = shift(e['c'], (e['l'] as num).toInt());
+        }
+      }
+    }
+    final fe = j['featured'];
+    if (fe is List && fe.length >= 2 && fe[1] is num) {
+      fe[1] = shift(fe[0], (fe[1] as num).toInt());
+    }
+    for (final key in ['hi', 'seenHi']) {
+      final m = j[key];
+      if (m is! Map) continue;
+      for (final c in Chain.values) {
+        final v = m[c.name];
+        if (v is num) m[c.name] = shift(c.index, v.toInt());
+      }
+    }
+    j['lvOff'] = 1;
+    return j;
+  }
+
   bool loadJson(Map<String, dynamic> j) {
     final backup = toJson();
     try {
@@ -3013,6 +3168,7 @@ class GameState extends ChangeNotifier {
 
   bool _loadJson(Map<String, dynamic> j) {
     if (j['v'] != saveVersion) return false;
+    if (j['lvOff'] == null) j = migrateChainLevels(j);
     // 경제 2판(별이 에너지에 비례)으로 옮기기: 남은 별은 4배, 부탁의 별은 다시 계산
     final econ = (j['econ'] as num?)?.toInt() ?? 1;
     DateTime? ts(String k) => j[k] == null
@@ -3143,7 +3299,7 @@ class GameState extends ChangeNotifier {
             o.friendId,
             o.chain,
             o.level,
-            Garden.orderStars(relLevel(o.level)),
+            Garden.orderStars(relLevel(o.chain, o.level)),
           ),
       ];
     }

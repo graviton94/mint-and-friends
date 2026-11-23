@@ -1018,5 +1018,13 @@
   "reward.offline": "Monedas ganadas mientras no estabas",
   "reward.bought": "¡Comprado!",
   "patch.1.0.6": "• Añadimos informes de errores para arreglar problemas más rápido (no se envían datos de la cuenta)\n• Cambiar el reloj del teléfono ya no hace retroceder el tiempo del juego\n• Los jugadores que denunciaste ya no aparecen en amigos sugeridos\n• Las burbujas de pedidos quedan justo sobre cada amigo\n• Los monumentos aparecen con un ¡pop! al cambiar de zona\n• Ya no te perderás los avisos de nueva versión\n\n¡Te enviamos energía como regalo de actualización!",
-  "update.bodyStore": "Trae novedades y arreglos.\nActualiza desde Play Store."
+  "update.bodyStore": "Trae novedades y arreglos.\nActualiza desde Play Store.",
+  "board.tidy": "Ordenar",
+  "board.stuckTidy": "¡Tablero lleno! Toca para ordenar {n} objetos por debajo del nivel de tu cesta",
+  "tidy.title": "Ordenar",
+  "tidy.count": "{n} objetos",
+  "tidy.note": "Estos objetos están por debajo del nivel de tu cesta, así que ya no salen de ella. Combina todas las parejas o véndelos todos de una vez. No se tocan los objetos de los pedidos ni las casillas de almacén.",
+  "tidy.merge": "Combinar todo ({n})",
+  "tidy.sell": "Vender todo [[coin]]{price}",
+  "tidy.merged": "Combinado {n} veces"
 }

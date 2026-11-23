@@ -40,6 +40,11 @@ class Analytics {
             unawaited(_fa.logLevelUp(level: e.level).catchError((Object _) {}));
           }
           _prop('player_level', '${e.level}');
+        case TutorialStepEvent(:final step):
+          log('tutorial_step', {'step': step, 'level': game.level});
+          if (step >= 99 && _on) {
+            unawaited(_fa.logTutorialComplete().catchError((Object _) {}));
+          }
         case AreaCompletedEvent():
           log('area_complete', {'area': e.area, 'level': game.level});
           _prop('area', '${e.area + 1}');

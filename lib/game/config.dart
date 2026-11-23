@@ -40,7 +40,9 @@ class GameConfig {
     Chain.stardust: 8,
   };
   static double valueOf(Chain c, int level) =>
-      chainValue[c]! * pow(valueGrowth, level - 1) * Tuning.coinScale;
+      chainValue[c]! *
+      pow(valueGrowth, level + Chains.levelOffset(c) - 1) *
+      Tuning.coinScale;
 
   /// 판 위 아이템 1개의 초당 방치 수익: 시간당 가치 1배.
   static double incomeOf(Chain c, int level) => valueOf(c, level) / 3600;
@@ -434,6 +436,15 @@ class Chains {
     // 새 체인은 그림이 들어와야 열린다 (이모지 대체 없음)
     Chain.tea: [],
     Chain.stardust: [],
+  };
+
+  /// 늦게 열리는 체인은 1단계부터 시작한다 (증분 성장, D-053): 바구니 등급에서 이만큼 뺀 단계가 나오고,
+  /// 가치는 이만큼 올린 단계로 센다 (예전 찻잎 4단계 = 지금 찻잎 1단계, 경제는 그대로).
+  /// 값 = 그 체인이 열리는 구역에 닿을 때 보통의 바구니 등급 (시뮬: 온실 ≈ 등급 3, 별빛 언덕 ≈ 등급 5).
+  static int levelOffset(Chain c) => switch (c) {
+    Chain.tea => 3,
+    Chain.stardust => 5,
+    _ => 0,
   };
 
   /// 체인별 최고 단계: 모두 30 (D-029, 방치 머지의 수입 인플레이션 · 바구니 등급으로 올라간다).

@@ -18,6 +18,9 @@ class Tuning {
   /// 구조 부탁 확률.
   static double rescueChance = 0.25;
 
+  /// 정리 부탁 확률: 바구니보다 낮은 아이템이 판에 있을 때 새 부탁이 그것을 원할 확률 (D-054).
+  static double cleanupChance = 0.25;
+
   /// 오늘의 시장 가격 계수 (에너지값 × (base + 2·레벨)).
   static int marketPriceBase = 10;
 
@@ -48,6 +51,7 @@ class Tuning {
     'refill_step': (0, 100, (v) => refillStep = v.toInt()),
     'refill_max': (10, 500, (v) => refillMax = v.toInt()),
     'rescue_chance': (0, 1, (v) => rescueChance = v.toDouble()),
+    'cleanup_chance': (0, 1, (v) => cleanupChance = v.toDouble()),
     'easy_order_chance': (0, 1, (v) => easyOrderChance = v.toDouble()),
     'market_price_base': (1, 100, (v) => marketPriceBase = v.toInt()),
     'area_star_scale': (0.3, 3, (v) => areaStarScale = v.toDouble()),
@@ -67,6 +71,7 @@ class Tuning {
     'refill_step': 30,
     'refill_max': 150,
     'rescue_chance': 0.25,
+    'cleanup_chance': 0.25,
     'easy_order_chance': 0.33,
     'market_price_base': 10,
     'area_star_scale': 1.6,

@@ -389,11 +389,11 @@ void main() {
 
   test('바구니 등급: 나오는 단계와 부탁 단계가 함께 오르고, 별 · 경험치는 상대 단계 기준', () {
     final g = make();
-    final s0 = Garden.orderStars(g.relLevel(5));
+    final s0 = Garden.orderStars(g.relLevel(Chain.flower, 5));
     g.upgrades[UpgradeType.basketTier] = 3;
     expect(g.spawnLevel, 4);
-    expect(g.relLevel(8), 5);
-    expect(Garden.orderStars(g.relLevel(8)), s0);
+    expect(g.relLevel(Chain.flower, 8), 5);
+    expect(Garden.orderStars(g.relLevel(Chain.flower, 8)), s0);
     expect(g.orderCenter, greaterThan(4));
   });
 
