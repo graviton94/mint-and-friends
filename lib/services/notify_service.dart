@@ -264,20 +264,6 @@ class NotifyService extends ChangeNotifier {
       log('show error $e');
     }
     try {
-      await _plugin.zonedSchedule(
-        id: 901,
-        scheduledDate: tz.TZDateTime.now(tz.UTC)
-            .add(const Duration(seconds: 70)),
-        notificationDetails: details,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        title: 'probe scheduled',
-        body: '70s',
-      );
-      log('zonedSchedule ok');
-    } catch (e) {
-      log('zonedSchedule error $e');
-    }
-    try {
       await schedule(g);
       final pending = await _plugin.pendingNotificationRequests();
       log(
@@ -285,6 +271,20 @@ class NotifyService extends ChangeNotifier {
       );
     } catch (e) {
       log('schedule error $e');
+    }
+    try {
+      await _plugin.zonedSchedule(
+        id: 901,
+        scheduledDate: tz.TZDateTime.now(tz.UTC)
+            .add(const Duration(seconds: 90)),
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        title: 'probe scheduled',
+        body: '90s',
+      );
+      log('zonedSchedule ok');
+    } catch (e) {
+      log('zonedSchedule error $e');
     }
   }
 }

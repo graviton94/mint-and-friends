@@ -11,20 +11,23 @@ sleep 30
 adb exec-out screencap -p > probe/screen1.png || true
 adb shell dumpsys alarm | grep -A3 "$PKG" > probe/alarm.txt || true
 adb shell dumpsys notification --noredact | grep -B2 -A12 "$PKG" > probe/notif_30s.txt || true
-# 앱을 내려서 실제 예약 흐름(일시정지 → schedule)도 본다
+# 앱을 내리고 프로세스를 없앤 뒤(백그라운드 정리), 예약 알림이 앱 없이도 뜨는지 본다
 adb shell input keyevent KEYCODE_HOME
-sleep 75
-adb shell dumpsys notification --noredact | grep -B2 -A12 "$PKG" > probe/notif_105s.txt || true
+sleep 5
+adb shell am kill "$PKG" || true
+sleep 150
+adb shell dumpsys notification --noredact | grep -B2 -A12 "$PKG" > probe/notif_after_kill.txt || true
 adb shell dumpsys alarm | grep -A3 "$PKG" > probe/alarm_after_home.txt || true
 adb logcat -d > probe/logcat.txt
 {
   echo "## Notify probe"
   echo '```'
   grep -E "NOTIFYPROBE" probe/logcat.txt | sed 's/.*NOTIFYPROBE/NOTIFYPROBE/' | head -40
-  echo '--- posted notifications at 30s / 105s (titles) ---'
-  grep -E "android.title=|tickerText" probe/notif_30s.txt | head -10
+  echo '--- posted notifications at 30s / after kill+150s (titles) ---'
+  grep -E "android.title|probe now|probe scheduled" probe/notif_30s.txt | head -10
   echo '...'
-  grep -E "android.title=|tickerText" probe/notif_105s.txt | head -10
+  grep -E "android.title|probe now|probe scheduled" probe/notif_after_kill.txt | head -10
+  echo '--- process alive? ---'; adb shell pidof "$PKG" || echo 'not running'
   echo '--- alarms (after home) ---'
   grep -cE "$PKG" probe/alarm_after_home.txt
   head -20 probe/alarm_after_home.txt
