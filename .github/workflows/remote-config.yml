@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       values:
-        description: 'key=value (공백으로 여러 개)'
+        description: 'key=value (공백으로 여러 개). stats 면 접속 현황만 본다'
         required: true
 
 permissions:
@@ -30,7 +30,13 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v2
       - name: Enable Remote Config API
         run: gcloud services enable firebaseremoteconfig.googleapis.com --project "$PROJECT" || echo "::warning::could not enable API (may already be on)"
+      - name: Player stats
+        if: inputs.values == 'stats'
+        run: |
+          export ACCESS_TOKEN=$(gcloud auth print-access-token)
+          python3 tool/player_stats.py
       - name: Set values
+        if: inputs.values != 'stats'
         env:
           VALUES: ${{ inputs.values }}
         run: |
