@@ -881,7 +881,7 @@
   "shop.featuredNote": "Lv.{n} · today's pick",
   "shop.featuredTag": "Pick",
   "shop.firstTag": "1st buy ×2",
-  "shop.firstBonus": "+{n} on 1st buy",
+  "shop.firstBonus": "+{n} on your first purchase (once)",
   "time.dayClock": "{d}d {t}",
   "shop.firstShort": "1st buy",
   "shop.effectNote": "Petals · fireflies · leaves · snow",
@@ -1021,6 +1021,6 @@
   "reward.bought": "Purchased!",
   "patch.1.0.6": "• Added error reports so we can fix problems faster (no account info is sent)\n• Changing the phone's clock no longer makes game time go backward\n• Players you reported no longer appear in suggested friends\n• Request bubbles now stay right above each friend\n• Landmarks pop in when you switch areas\n• New-version alerts no longer get missed\n\nHere is some energy as an update gift!",
   "update.bodyStore": "It has new features and fixes.\nPlease update from the Play Store.",
-  "patch.1.0.7": "• When tea or stardust opens, it now starts from level 1 (items you already have change to the level of the same value)\n• When the board is full with nothing to merge, we point out the item that's least costly to sell\n• Friends sometimes ask for lower-level items too\n• Fixed purchased gems sometimes not arriving\n• Older progress on another device no longer overwrites newer progress\n• Logging out as a guest keeps your progress on this device (start as guest again to continue)\n• Friends see your game nickname instead of your account name\n• Visitor and bubble rewards still arrive if they leave while an ad plays\n• Many other fixes\n\nHere is some energy as an update gift!",
+  "patch.1.0.7": "• When tea or stardust opens, it now starts from level 1 (items you already have change to the level of the same value)\n• When the board is full with nothing to merge, we point out the item that's least costly to sell\n• Friends sometimes ask for lower-level items too\n• Fixed purchased gems sometimes not arriving\n• Older progress on another device no longer overwrites newer progress\n• Logging out as a guest keeps your progress on this device (start as guest again to continue)\n• Friends see your game nickname instead of your account name\n• Visitor and bubble rewards still arrive if they leave while an ad plays\n• Game sounds now play alongside YouTube or music instead of stopping them\n• The 2x first-purchase diamond bonus now applies once across all packs\n• Many other fixes\n\nHere is some energy as an update gift!",
   "board.stuckPick": "Board full with nothing to merge! Tap here and we'll pick the item that's least costly to sell"
 }

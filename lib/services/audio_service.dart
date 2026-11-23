@@ -108,7 +108,7 @@ class AudioService extends ChangeNotifier {
 
     AudioContext? sfxCtx;
     try {
-      // 효과음은 다른 소리(BGM·다른 앱)의 오디오 포커스를 뺏지 않게 한다.
+      // 효과음 · 배경 음악 모두 다른 앱(유튜브 · 음악)의 소리를 끊지 않고 겹쳐 난다 (오디오 포커스를 뺏지 않음).
       sfxCtx = AudioContextConfig(focus: AudioContextConfigFocus.mixWithOthers)
           .build();
     } catch (e) {
@@ -127,6 +127,9 @@ class AudioService extends ChangeNotifier {
     final m = AudioPlayer(playerId: 'bgm');
     await step('bgmLoop', () => m.setReleaseMode(ReleaseMode.loop));
     await step('bgmVolume', () => m.setVolume(musicVolume));
+    if (sfxCtx != null) {
+      await step('bgmContext', () => m.setAudioContext(sfxCtx!));
+    }
     _music = m;
     _ready = _pool.isNotEmpty;
     // 에셋을 임시 파일로 미리 풀어 둬서 첫 재생 지연을 줄인다 (실패해도 재생은 된다).

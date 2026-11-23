@@ -584,7 +584,9 @@ class GameState extends ChangeNotifier {
 
   /// 한 번이라도 산 다이아 팩 (팩마다 첫 구매는 다이아 2배, D-042).
   final Set<String> boughtPacks = {};
-  bool firstPackBonus(GemPack p) => !boughtPacks.contains(p.id);
+
+  /// 첫 결제 2배는 다이아 팩 전체에서 한 번만 (어느 팩이든 처음 산 한 번).
+  bool firstPackBonus(GemPack p) => boughtPacks.isEmpty;
   DateTime? starterOfferUntil;
   int starterShows = 0;
 

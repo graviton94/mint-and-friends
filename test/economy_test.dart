@@ -324,7 +324,7 @@ void main() {
     expect(g5.passNoticeDue, isNull);
   });
 
-  test('다이아 팩: 팩마다 첫 구매는 2배, 두 번째부터는 그대로, 저장돼도 유지', () {
+  test('다이아 팩: 첫 결제 2배는 팩 전체에서 한 번만, 저장돼도 유지', () {
     final g = make();
     final p = Gems.packs[1];
     final g0 = g.gems;
@@ -333,11 +333,12 @@ void main() {
     expect(g.gems, g0 + p.gems * 2);
     expect(g.firstPackBonus(p), isFalse);
     expect(g.grantGemPack(p), p.gems);
-    expect(g.firstPackBonus(Gems.packs[0]), isTrue);
+    expect(g.firstPackBonus(Gems.packs[0]), isFalse);
+    expect(g.grantGemPack(Gems.packs[3]), Gems.packs[3].gems);
     final g2 = make();
     expect(g2.loadJson(g.toJson()), isTrue);
     expect(g2.firstPackBonus(p), isFalse);
-    expect(g2.firstPackBonus(Gems.packs[0]), isTrue);
+    expect(g2.firstPackBonus(Gems.packs[0]), isFalse);
   });
 
   test('새싹 정원 패키지: 처음 보여 준 뒤 7일만 상점에, 지나면 사라진다', () {

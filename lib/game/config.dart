@@ -1194,7 +1194,7 @@ class Gems {
   /// 레벨업마다 무료 다이아.
   static const int levelUp = 3;
 
-  /// 팩마다 첫 구매 다이아 배수 (Play 상품 · 가격은 그대로, 게임 안에서 더 준다).
+  /// 첫 결제 다이아 배수: 다이아 팩 전체에서 한 번만 (Play 상품 · 가격은 그대로, 게임 안에서 더 준다).
   static const int firstBuyMultiplier = 2;
 
   /// 에너지 충전: 하루 안에 다시 살수록 비싸진다 (60 → 90 → 120 → 최대 150).
