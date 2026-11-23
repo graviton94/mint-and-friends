@@ -1,0 +1,32 @@
+name: Insights
+
+# Google Analytics(Firebase) 지표 요약을 실행 로그 · 요약에 남긴다 (읽기만). 서비스 계정이 GA 속성 뷰어여야 한다.
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "최근 며칠"
+        required: true
+        default: "7"
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Enable APIs
+        run: |
+          P=$(gcloud config get-value project); echo "PROJECT=$P" >> "$GITHUB_ENV"
+          gcloud services enable analyticsdata.googleapis.com firebase.googleapis.com --project "$P" || echo "::warning::could not enable APIs"
+      - run: pip install -q google-auth requests
+      - name: Report
+        run: python3 tool/ga_report.py "${{ inputs.days }}" | tee report.txt
+      - run: '{ echo "## Insights"; echo "\`\`\`"; cat report.txt; echo "\`\`\`"; } >> "$GITHUB_STEP_SUMMARY"'
