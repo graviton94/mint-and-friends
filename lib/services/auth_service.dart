@@ -31,6 +31,11 @@ class AuthException implements Exception {
 ///   익명 계정에 커스텀 토큰을 직접 연결할 수 없어서, 로그인 후 CloudSave 가 기기 데이터를 옮긴다.
 class AuthService extends ChangeNotifier {
   static const _localGuestKey = 'local_guest';
+  static const _parkedKey = 'guest_parked';
+
+  /// 게스트가 로그아웃한 상태: 로그인 화면으로 돌아가지만 게스트 계정 · 진행은 기기에 그대로 둔다.
+  /// 다시 '게스트로 시작'하면 이어서, 구글로 로그인하면 그 계정에 연결된다.
+  bool _parked = false;
 
   bool ready = false;
   bool busy = false;
@@ -43,7 +48,7 @@ class AuthService extends ChangeNotifier {
   bool get kakaoEnabled => AppConfig.kakaoEnabled;
 
   /// 로그인 화면을 건너뛸 수 있는 상태인지.
-  bool get signedIn => user != null || _localGuest;
+  bool get signedIn => !_parked && (user != null || _localGuest);
   String? get uid => user?.uid;
 
   LoginProvider get provider {
@@ -63,6 +68,7 @@ class AuthService extends ChangeNotifier {
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     _localGuest = prefs.getBool(_localGuestKey) ?? false;
+    _parked = prefs.getBool(_parkedKey) ?? false;
     if (firebaseEnabled) {
       // 단계마다 따로: 하나가 실패해도 나머지(특히 게스트)는 살린다.
       try {
@@ -129,7 +135,10 @@ class AuthService extends ChangeNotifier {
     busy = true;
     notifyListeners();
     try {
-      return await body();
+      final r = await body();
+      // 로그인 · 로그아웃이 끝나면 게스트 대기 상태는 풀린다
+      await _setParked(false);
+      return r;
     } on AuthException {
       rethrow;
     } on TimeoutException {
@@ -194,7 +203,9 @@ class AuthService extends ChangeNotifier {
   Future<void> signInGuest() async {
     busy = true;
     notifyListeners();
+    await _setParked(false);
     try {
+      if (_localGuest) return;
       if (firebaseEnabled && Firebase.apps.isNotEmpty) {
         if (FirebaseAuth.instance.currentUser != null) return;
         try {
@@ -300,6 +311,20 @@ class AuthService extends ChangeNotifier {
       }
       rethrow;
     }
+  }
+
+  Future<void> _setParked(bool v) async {
+    _parked = v;
+    try {
+      final p = await SharedPreferences.getInstance();
+      v ? await p.setBool(_parkedKey, true) : await p.remove(_parkedKey);
+    } catch (_) {}
+  }
+
+  /// 게스트 로그아웃: 계정 · 기기 진행은 지우지 않고 로그인 화면으로만 돌아간다.
+  Future<void> parkGuest() async {
+    await _setParked(true);
+    notifyListeners();
   }
 
   Future<void> signOut() => _run(() async {

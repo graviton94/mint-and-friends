@@ -119,8 +119,6 @@
   "account.delete": "Delete account and data",
   "account.deleteConfirm": "Your account and all game data will be deleted permanently. Delete?",
   "account.deleteYes": "Delete",
-  "account.logoutGuestConfirm": "You're playing as a guest. Logging out will permanently delete all your progress. Log out?",
-  "account.logoutGuestYes": "Delete and log out",
   "account.logoutFailed": "Couldn't save to the cloud, so you're still logged in. Check your connection and try again.",
   "account.syncing": "Saving…",
   "account.synced": "Saved to cloud {time}",
@@ -1023,13 +1021,6 @@
   "reward.bought": "Purchased!",
   "patch.1.0.6": "• Added error reports so we can fix problems faster (no account info is sent)\n• Changing the phone's clock no longer makes game time go backward\n• Players you reported no longer appear in suggested friends\n• Request bubbles now stay right above each friend\n• Landmarks pop in when you switch areas\n• New-version alerts no longer get missed\n\nHere is some energy as an update gift!",
   "update.bodyStore": "It has new features and fixes.\nPlease update from the Play Store.",
-  "board.tidy": "Tidy",
-  "board.stuckTidy": "Board full! Tap to tidy up {n} items below your basket level",
-  "tidy.title": "Tidy Up",
-  "tidy.count": "{n} items",
-  "tidy.note": "These items are below your basket level, so the basket no longer makes them. Merge all matching pairs or sell them all at once. Items needed for requests and storage cells are left alone.",
-  "tidy.merge": "Merge all ({n})",
-  "tidy.sell": "Sell all [[coin]]{price}",
-  "tidy.merged": "Merged {n} times",
-  "patch.1.0.7": "• When tea or stardust opens, it now starts from level 1 (items you already have change to the level of the same value)\n• Merge or sell all items below your basket level at once (tap an item, then 'Tidy')\n• Friends sometimes ask for lower-level items too\n• Fixed purchased gems sometimes not arriving\n• Older progress on another device no longer overwrites newer progress\n• Logging out as a guest now warns that progress will be deleted\n• Friends see your game nickname instead of your account name\n• Visitor and bubble rewards still arrive if they leave while an ad plays\n• Many other fixes\n\nHere is some energy as an update gift!"
+  "patch.1.0.7": "• When tea or stardust opens, it now starts from level 1 (items you already have change to the level of the same value)\n• When the board is full with nothing to merge, we point out the item that's least costly to sell\n• Friends sometimes ask for lower-level items too\n• Fixed purchased gems sometimes not arriving\n• Older progress on another device no longer overwrites newer progress\n• Logging out as a guest keeps your progress on this device (start as guest again to continue)\n• Friends see your game nickname instead of your account name\n• Visitor and bubble rewards still arrive if they leave while an ad plays\n• Many other fixes\n\nHere is some energy as an update gift!",
+  "board.stuckPick": "Board full with nothing to merge! Tap here and we'll pick the item that's least costly to sell"
 }

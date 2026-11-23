@@ -26,28 +26,28 @@ void main() {
     return g;
   }
 
-  test('낮은 아이템만 고르고, 모두 합치면 바구니 단계까지 이어서 합친다', () {
+  test('판이 막히지 않았으면 팔 아이템을 고르지 않는다', () {
     final g = withLow();
-    expect(g.lowCells.length, 4);
-    expect(g.lowMergeCount, 1);
-    expect(g.mergeAllLow(), 2); // 2+2 → 3, 3+3 → 4
-    final lv = [
-      for (final it in g.board)
-        if (it != null && !it.isBubble) it.level,
-    ]..sort();
-    expect(lv, [1, 4, 5]);
-    expect(g.lowCells.length, 1);
+    expect(g.boardStuck, isFalse);
+    expect(g.cheapestSellCell, isNull);
   });
 
-  test('모두 팔기: 낮은 것만 팔고 되돌리기는 없다', () {
+  test('꽉 막혔을 때만 가장 싼 낮은 아이템 하나를 고른다', () {
     final g = withLow();
-    final c0 = g.coins;
-    final expected = g.lowSellTotal;
-    expect(g.sellAllLow(), closeTo(expected, 1e-6));
-    expect(g.coins, greaterThan(c0));
-    expect(g.lowCells, isEmpty);
-    expect(g.board.where((it) => it?.level == 5).length, 1);
-    expect(g.canUndoSell, isFalse);
+    // 빈 칸을 서로 다른 아이템으로 채워 합칠 쌍이 없게
+    var l = 4;
+    for (final i in g.unlockedCells) {
+      if (GameConfig.isVault(i)) continue;
+      if (g.board[i] == null) g.board[i] = Item(1000 + i, Chain.snack, l++);
+    }
+    g.board[g.unlockedCells.firstWhere((i) => g.board[i]?.level == 2)] = Item(
+      990,
+      Chain.snack,
+      30,
+    );
+    expect(g.boardStuck, isTrue);
+    final c = g.cheapestSellCell!;
+    expect(g.board[c]!.level, 1); // 꽃 1단계 (바구니보다 낮고 가장 쌈)
   });
 
   test('부탁에 쓰일 낮은 아이템은 정리하지 않는다', () {

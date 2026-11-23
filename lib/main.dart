@@ -470,39 +470,21 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
   }
 
   Future<void> _signOut(BuildContext sheetCtx) async {
+    Navigator.of(sheetCtx).pop();
     if (auth.isGuest) {
-      // 게스트(익명 · 기기 전용)는 로그아웃하면 진행을 되찾을 길이 없다: 분명히 묻는다
-      final ok = await showDialog<bool>(
-        context: sheetCtx,
-        builder: (ctx) => GameDialog(
-          content: IconText(tr('account.logoutGuestConfirm')),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: IconText(tr('common.cancel')),
-            ),
-            FilledButton(
-              style: plainButton(
-                FilledButton.styleFrom(backgroundColor: Colors.redAccent),
-              ),
-              onPressed: () => Navigator.pop(ctx, true),
-              child: IconText(tr('account.logoutGuestYes')),
-            ),
-          ],
-        ),
-      );
-      if (ok != true || !sheetCtx.mounted) return;
-      Navigator.of(sheetCtx).pop();
-    } else {
-      Navigator.of(sheetCtx).pop();
-      // 마지막 업로드가 실제로 끝났을 때만 기기 데이터를 지운다
-      if (!await save.upload(game)) {
-        final ctx = _navKey.currentContext;
-        if (ctx != null && ctx.mounted) {
-          TopToast.show(ctx, tr('account.logoutFailed'));
-        }
-        return;
+      // 게스트: 계정 · 진행은 이 기기에 그대로 두고 로그인 화면으로만 (다시 게스트로 시작하면 이어서)
+      save.saveLocal(game);
+      await save.upload(game);
+      await auth.parkGuest();
+      return;
+    }
+    // 마지막 업로드가 실제로 끝났을 때만 기기 데이터를 지운다
+    if (!await save.upload(game)) {
+      final ctx = _navKey.currentContext;
+      if (ctx != null && ctx.mounted) {
+        TopToast.show(ctx, tr('account.logoutFailed'));
       }
+      return;
     }
     await _guard(auth.signOut);
     save.detach();

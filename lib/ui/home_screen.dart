@@ -1049,65 +1049,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// 낮은 단계 정리 (D-054): 바구니보다 낮아 더는 나오지 않는 아이템을 모두 합치거나 판다.
-  Future<void> _tidyDialog() async {
-    final n = game.lowCells.length;
-    if (n == 0) return;
-    final merges = game.lowMergeCount;
-    final total = game.lowSellTotal;
-    final pick = await showDialog<String>(
-      context: context,
-      builder: (ctx) => GameDialog(
-        title: IconText(tr('tidy.title'), textAlign: TextAlign.center),
-        content: PopupHero(
-          art: ArtImage(Art.icon('auto'), size: 76),
-          big: tr('tidy.count', {'n': n}),
-          note: tr('tidy.note'),
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        onClose: () => Navigator.pop(ctx),
-        actions: [
-          if (merges > 0)
-            FilledButton(
-              style: framedButton(
-                FilledButton.styleFrom(minimumSize: const Size(120, 48)),
-                'button_green',
-              ),
-              onPressed: () => Navigator.pop(ctx, 'merge'),
-              child: IconText(
-                tr('tidy.merge', {'n': merges}),
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-          FilledButton(
-            style: plainButton(
-              FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFE07A5F),
-                minimumSize: const Size(120, 48),
-              ),
-            ),
-            onPressed: () => Navigator.pop(ctx, 'sell'),
-            child: IconText(
-              tr('tidy.sell', {'price': fmt(total)}),
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
-        ],
-      ),
-    );
-    if (!mounted || pick == null) return;
-    setState(() => _selected = null);
-    if (pick == 'merge') {
-      final done = game.mergeAllLow();
-      if (done > 0) {
-        sfx(Sfx.merge);
-        _toast(tr('tidy.merged', {'n': done}));
-      }
-    } else {
-      game.sellAllLow();
-    }
-  }
-
   /// 맨 아랫줄 보관 칸: 다이아로 영구 해금 (정원 패스는 2칸 바로).
   Future<void> _vaultDialog(int cell) async {
     final cost = game.vaultCostNext;
@@ -2029,23 +1970,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            if (game.lowCells.contains(idx)) ...[
-              FilledButton(
-                style: plainButton(
-                  FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF6FA86A),
-                    minimumSize: const Size(40, 36),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                  ),
-                ),
-                onPressed: _tidyDialog,
-                child: IconText(
-                  tr('board.tidy'),
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ),
-              const SizedBox(width: 6),
-            ],
             if (game.isMaxItem(sel) && game.friends.isNotEmpty) ...[
               FilledButton(
                 style: plainButton(
@@ -2095,12 +2019,14 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
     }
-    if (game.boardStuck && game.lowCells.isNotEmpty) {
+    final cheap = game.cheapestSellCell;
+    if (cheap != null) {
+      // 꽉 막혔을 때만: 가장 덜 아까운 아이템 하나를 골라 준다 (누르면 그 아이템이 선택되고, 팔지는 직접)
       return card(
         GestureDetector(
-          onTap: _tidyDialog,
+          onTap: () => setState(() => _selected = cheap),
           child: IconText(
-            tr('board.stuckTidy', {'n': game.lowCells.length}),
+            tr('board.stuckPick'),
             style: const TextStyle(fontSize: 14, color: Color(0xFFB0640A)),
           ),
         ),

@@ -119,8 +119,6 @@
   "account.delete": "Eliminar cuenta y datos",
   "account.deleteConfirm": "Tu cuenta y todos los datos del juego se eliminarán de forma permanente. ¿Eliminar?",
   "account.deleteYes": "Eliminar",
-  "account.logoutGuestConfirm": "Estás jugando como invitado. Si cierras sesión, todo tu progreso se eliminará para siempre. ¿Cerrar sesión?",
-  "account.logoutGuestYes": "Eliminar y cerrar sesión",
   "account.logoutFailed": "No se pudo guardar en la nube, así que no se cerró la sesión. Revisa tu conexión e inténtalo de nuevo.",
   "account.syncing": "Guardando…",
   "account.synced": "Guardado en la nube {time}",
@@ -1023,13 +1021,6 @@
   "reward.bought": "¡Comprado!",
   "patch.1.0.6": "• Añadimos informes de errores para arreglar problemas más rápido (no se envían datos de la cuenta)\n• Cambiar el reloj del teléfono ya no hace retroceder el tiempo del juego\n• Los jugadores que denunciaste ya no aparecen en amigos sugeridos\n• Las burbujas de pedidos quedan justo sobre cada amigo\n• Los monumentos aparecen con un ¡pop! al cambiar de zona\n• Ya no te perderás los avisos de nueva versión\n\n¡Te enviamos energía como regalo de actualización!",
   "update.bodyStore": "Trae novedades y arreglos.\nActualiza desde Play Store.",
-  "board.tidy": "Ordenar",
-  "board.stuckTidy": "¡Tablero lleno! Toca para ordenar {n} objetos por debajo del nivel de tu cesta",
-  "tidy.title": "Ordenar",
-  "tidy.count": "{n} objetos",
-  "tidy.note": "Estos objetos están por debajo del nivel de tu cesta, así que ya no salen de ella. Combina todas las parejas o véndelos todos de una vez. No se tocan los objetos de los pedidos ni las casillas de almacén.",
-  "tidy.merge": "Combinar todo ({n})",
-  "tidy.sell": "Vender todo [[coin]]{price}",
-  "tidy.merged": "Combinado {n} veces",
-  "patch.1.0.7": "• Al abrir el té o el polvo de estrellas, ahora empiezan desde el nivel 1 (los objetos que ya tenías pasan al nivel del mismo valor)\n• Combina o vende de una vez los objetos por debajo del nivel de tu cesta (toca un objeto y luego 'Ordenar')\n• Tus amigos a veces piden objetos de nivel bajo\n• Corregido: los diamantes comprados a veces no llegaban\n• El progreso antiguo de otro dispositivo ya no sobrescribe el más nuevo\n• Al cerrar sesión como invitado se avisa de que se borrará el progreso\n• Tus amigos ven tu apodo del juego en lugar del nombre de tu cuenta\n• Las recompensas de visitantes y burbujas llegan aunque se vayan durante un anuncio\n• Muchas otras correcciones\n\n¡Te enviamos energía como regalo de actualización!"
+  "patch.1.0.7": "• Al abrir el té o el polvo de estrellas, ahora empiezan desde el nivel 1 (los objetos que ya tenías pasan al nivel del mismo valor)\n• Si el tablero está lleno y no hay nada que combinar, te indicamos el objeto que menos cuesta vender\n• Tus amigos a veces piden objetos de nivel bajo\n• Corregido: los diamantes comprados a veces no llegaban\n• El progreso antiguo de otro dispositivo ya no sobrescribe el más nuevo\n• Al cerrar sesión como invitado tu progreso se queda en este dispositivo (vuelve a entrar como invitado para seguir)\n• Tus amigos ven tu apodo del juego en lugar del nombre de tu cuenta\n• Las recompensas de visitantes y burbujas llegan aunque se vayan durante un anuncio\n• Muchas otras correcciones\n\n¡Te enviamos energía como regalo de actualización!",
+  "board.stuckPick": "¡Tablero lleno y nada que combinar! Toca aquí y elegiremos el objeto que menos cuesta vender"
 }

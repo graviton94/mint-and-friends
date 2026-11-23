@@ -1590,71 +1590,24 @@ class GameState extends ChangeNotifier {
         !_isOrderTarget(it);
   }
 
-  /// 낮은 아이템끼리 합칠 수 있는 횟수 (모두 합치기 미리 보기).
-  int get lowMergeCount {
-    final n = <String, int>{};
-    for (final i in lowCells) {
-      final it = board[i]!;
-      n.update(
-        '${it.chain.index}-${it.level}',
-        (v) => v + 1,
-        ifAbsent: () => 1,
-      );
-    }
-    return n.values.fold(0, (a, v) => a + v ~/ 2);
-  }
-
-  /// 낮은 아이템 모두 팔기 값.
-  double get lowSellTotal =>
-      lowCells.fold(0.0, (a, i) => a + sellPrice(board[i]!));
-
-  /// 낮은 아이템을 같은 것끼리 모두 합친다 (바구니 단계에 닿을 때까지 이어서). 합친 횟수.
-  int mergeAllLow() {
-    var n = 0;
-    while (true) {
-      final groups = <String, List<int>>{};
-      for (final i in lowCells) {
-        final it = board[i]!;
-        groups
-            .putIfAbsent(
-              '${it.level.toString().padLeft(2, '0')}-${it.chain.index}',
-              () => [],
-            )
-            .add(i);
+  /// 판이 꽉 막혔을 때(빈 칸도 합칠 쌍도 없음) 팔아도 가장 덜 아까운 칸 하나:
+  /// 바구니보다 낮은 아이템 중 가장 싼 것, 없으면 판에서 가장 싼 것 (보관 칸 · 비눗방울 · 부탁 대상 제외).
+  int? get cheapestSellCell {
+    if (!boardStuck) return null;
+    int? best;
+    double bestKey = double.infinity;
+    for (var i = 0; i < board.length; i++) {
+      final it = board[i];
+      if (it == null || it.isBubble || GameConfig.isVault(i)) continue;
+      if (_isOrderTarget(it)) continue;
+      // 낮은 아이템을 먼저 (같은 값이라도)
+      final key = sellPrice(it) * (_isLow(i) ? 1 : 1e9);
+      if (key < bestKey) {
+        bestKey = key;
+        best = i;
       }
-      final keys = groups.keys.toList()..sort();
-      final k = keys.where((k) => groups[k]!.length >= 2).firstOrNull;
-      if (k == null) break;
-      final cells = groups[k]!;
-      _merge(cells[1], cells[0]);
-      n++;
     }
-    if (n > 0) {
-      _trace('mergeLow', '$n');
-      notifyListeners();
-    }
-    return n;
-  }
-
-  /// 낮은 아이템을 모두 판다 (되돌리기 없음). 받은 코인.
-  double sellAllLow() {
-    final cells = lowCells;
-    if (cells.isEmpty) return 0;
-    var total = 0.0;
-    Item? last;
-    for (final i in cells) {
-      final it = board[i]!;
-      total += sellPrice(it);
-      board[i] = null;
-      last = it;
-      _bump(Stat.sells);
-    }
-    _earn(total);
-    _lastSale = null;
-    _events.add(SoldEvent(last!, total));
-    _trace('sellLow', '${cells.length},${total.round()}');
-    notifyListeners();
-    return total;
+    return best;
   }
 
   // ---------------------------------------------------------------- 칸 해금, 판매
