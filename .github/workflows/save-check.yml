@@ -1,0 +1,45 @@
+name: Save check
+
+# 실제 테스터 저장을 지금 코드로 불러 본다 (단계 이동 등). 저장 내용은 남기지 않고 숫자만 출력한다.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FLUTTER_VERSION: "3.50.0"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - name: Project
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          P=$(printf %s "$SA" | python3 -c "import json,sys; print(json.load(sys.stdin)['project_id'])")
+          echo "PROJECT=$P" >> "$GITHUB_ENV"
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Fetch saves
+        run: |
+          export ACCESS_TOKEN=$(gcloud auth print-access-token)
+          python3 tool/ci/fetch_saves.py "$RUNNER_TEMP/saves.json"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Load with current code
+        run: |
+          cp tool/ci_test/real_saves_test.dart test/zz_real_saves_test.dart
+          SAVES="$RUNNER_TEMP/saves.json" flutter test test/zz_real_saves_test.dart --reporter expanded
+      - name: Remove saves
+        if: always()
+        run: rm -f "$RUNNER_TEMP/saves.json"
