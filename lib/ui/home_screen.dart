@@ -1481,14 +1481,13 @@ class _HomeScreenState extends State<HomeScreen> {
       _setTutorial(_tut >= 5 ? _tutDone : _tut + 1);
     }
 
-    final skip = _tut == 0 ? () => _setTutorial(_tutDone) : null;
+    // 건너뛰기는 첫 합치기를 해 본 뒤부터 (첫 화면에서 건너뛰고 바로 나가는 사람이 많았다, 1.0.9)
+    final skip = _tut >= 3 ? () => _setTutorial(_tutDone) : null;
     return switch (_tut) {
       0 => CoachOverlay(
         text: tr('tut.hello'),
         buttonLabel: tr('tut.next'),
         onNext: next,
-        onSkip: skip,
-        skipLabel: tr('tut.skip'),
       ),
       1 => CoachOverlay(
         text: tr('tut.spawner', {'n': GameConfig.energyPerTap}),
@@ -1512,6 +1511,8 @@ class _HomeScreenState extends State<HomeScreen> {
         action: true,
         buttonLabel: tr('tut.next'),
         onNext: next,
+        onSkip: skip,
+        skipLabel: tr('tut.skip'),
       ),
       4 => CoachOverlay(
         text: tr('tut.decor'),
@@ -1519,6 +1520,8 @@ class _HomeScreenState extends State<HomeScreen> {
         pointAt: _rectOf(_kDecor)?.center,
         buttonLabel: tr('tut.next'),
         onNext: next,
+        onSkip: skip,
+        skipLabel: tr('tut.skip'),
       ),
       _ => CoachOverlay(
         text: tr('tut.garden'),
