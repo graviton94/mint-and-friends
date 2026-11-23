@@ -60,10 +60,13 @@ class FriendCode {
 }
 
 /// 기기 시간 기준 날짜 키 (하루 한 번 판정).
-String socialDayKey(DateTime t) =>
-    '${t.year.toString().padLeft(4, '0')}-'
-    '${t.month.toString().padLeft(2, '0')}-'
-    '${t.day.toString().padLeft(2, '0')}';
+/// 소셜 하루(선물 · 친구 추가 한도)는 어느 나라에서나 한국 자정에 바뀐다 (서버 한도와 같은 날짜).
+String socialDayKey(DateTime t) {
+  final k = t.toUtc().add(const Duration(hours: 9));
+  return '${k.year.toString().padLeft(4, '0')}-'
+      '${k.month.toString().padLeft(2, '0')}-'
+      '${k.day.toString().padLeft(2, '0')}';
+}
 
 /// 오늘 이 친구에게 아직 선물하지 않았는지.
 bool canGiftToday(String? lastSentDay, String today) => lastSentDay != today;

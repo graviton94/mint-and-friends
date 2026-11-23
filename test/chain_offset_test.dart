@@ -41,7 +41,9 @@ void main() {
     g.board[cells[1]] = Item(901, Chain.flower, 8);
     g.board[cells[2]] = Item(902, Chain.stardust, 3);
     g.highest[Chain.tea] = 8;
-    final j = g.toJson()..remove('lvOff');
+    final j = g.toJson()
+      ..remove('lvOff')
+      ..['tips'] = <String>[];
     final g2 = make();
     expect(g2.loadJson(j), isTrue);
     expect(g2.board[cells[0]]!.level, 5);
@@ -51,5 +53,10 @@ void main() {
     final g3 = make();
     expect(g3.loadJson(g2.toJson()), isTrue);
     expect(g3.board[cells[0]]!.level, 5);
+    // 1.0.6 앱이 열었다 저장하면 'lvOff' 는 빠지지만 tips 표시는 남는다: 다시 낮추지 않는다
+    final j106 = g2.toJson()..remove('lvOff');
+    final g4 = make();
+    expect(g4.loadJson(j106), isTrue);
+    expect(g4.board[cells[0]]!.level, 5);
   });
 }

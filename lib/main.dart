@@ -290,9 +290,16 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
 
   // ---------------------------------------------------------------- 로그인 ↔ 저장
 
+  /// 직전에 게임 화면이었는지 (게스트 대기에서 돌아올 때 그동안의 방치 보상을 주려고).
+  late bool _wasSignedIn = auth.signedIn;
+
   Future<void> _onAuthChanged() async {
     final uid = auth.uid;
     if (!mounted) return;
+    final back = auth.signedIn && !_wasSignedIn;
+    _wasSignedIn = auth.signedIn;
+    // 첫 틱이 lastSeen 을 지금으로 당기기 전에 (동기 구간에서) 방치 보상을 계산한다
+    if (back) _offerOffline();
     setState(() {});
     if (uid == null || uid == _attachedUid || _attaching) return;
     _attaching = true;
@@ -368,7 +375,8 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
       _stop();
       AudioService.instance.pauseMusic();
       DevLog.instance.record(game, 'pause');
-      NotifyService.instance.schedule(game);
+      // 로그인 화면(게스트 대기 포함)에서는 게임 알림을 걸지 않는다
+      if (auth.signedIn) NotifyService.instance.schedule(game);
     } else if (state == AppLifecycleState.resumed) {
       NotifyService.instance.cancel();
       _start();
@@ -475,6 +483,9 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
       // 게스트: 계정 · 진행은 이 기기에 그대로 두고 로그인 화면으로만 (다시 게스트로 시작하면 이어서)
       save.saveLocal(game);
       await save.upload(game);
+      // 대기 중에는 클라우드 자동 업로드를 멈추고, 다시 들어오면 새로 붙인다 (같은 계정이라 묻지 않음)
+      save.detach();
+      _attachedUid = null;
       await auth.parkGuest();
       return;
     }

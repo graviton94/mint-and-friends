@@ -150,7 +150,7 @@ void main() {
           manualMerge(g);
           for (var i = 0; i < g.orders.length; i++) {
             final o = g.orders[i];
-            final starred = g.quotaActive && g.orderGivesStars(o);
+            final starred = g.quotaActive && g.orderGivesStars(o) && !o.cleanup;
             if (g.deliver(i)) {
               used.add('deliver');
               if (starred) {

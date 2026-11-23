@@ -261,8 +261,8 @@ void main() {
   });
 
   test('하루 한 번: 날짜 키와 판정', () {
-    expect(socialDayKey(DateTime(2026, 3, 1, 23, 59)), '2026-03-01');
-    expect(socialDayKey(DateTime(2026, 3, 2, 0, 1)), '2026-03-02');
+    expect(socialDayKey(DateTime.utc(2026, 3, 1, 14, 59)), '2026-03-01');
+    expect(socialDayKey(DateTime.utc(2026, 3, 1, 15, 1)), '2026-03-02');
     expect(canGiftToday(null, '2026-03-01'), isTrue);
     expect(canGiftToday('2026-03-01', '2026-03-01'), isFalse);
     expect(canGiftToday('2026-02-28', '2026-03-01'), isTrue);

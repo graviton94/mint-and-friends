@@ -38,16 +38,25 @@ void main() {
     var l = 4;
     for (final i in g.unlockedCells) {
       if (GameConfig.isVault(i)) continue;
-      if (g.board[i] == null) g.board[i] = Item(1000 + i, Chain.snack, l++);
+      if (g.board[i] == null) {
+        // 최고 단계(선물 가능)는 만들지 않는다: 그러면 팔라고 하지 않는다
+        final c = l < 29 ? Chain.snack : Chain.tea;
+        g.board[i] = Item(1000 + i, c, l < 29 ? l : l - 26);
+        l++;
+      }
     }
     g.board[g.unlockedCells.firstWhere((i) => g.board[i]?.level == 2)] = Item(
       990,
-      Chain.snack,
-      30,
+      Chain.tea,
+      20,
     );
     expect(g.boardStuck, isTrue);
     final c = g.cheapestSellCell!;
     expect(g.board[c]!.level, 1); // 꽃 1단계 (바구니보다 낮고 가장 쌈)
+    // 최고 단계 아이템이 있으면 선물할 수 있으니 팔라고 하지 않는다
+    g.board[c] = Item(991, Chain.flower, Chains.maxLevel(Chain.flower));
+    expect(g.boardStuck, isTrue);
+    expect(g.cheapestSellCell, isNull);
   });
 
   test('부탁에 쓰일 낮은 아이템은 정리하지 않는다', () {
@@ -70,5 +79,26 @@ void main() {
     } finally {
       Tuning.cleanupChance = old;
     }
+  });
+
+  test('정리 부탁은 하루 별 부탁 한도를 쓰지 않고, 아이템이 없어지면 거둔다', () {
+    final g = withLow();
+    final f = g.friends.first;
+    final cell = g.board.indexWhere((it) => it?.level == 1);
+    g.orders.add(Order(77, f, Chain.flower, 1, 1, cleanup: true));
+    final used = g.starOrdersUsed[f] ?? 0;
+    expect(g.deliver(g.orders.indexWhere((o) => o.id == 77)), isTrue);
+    expect(g.starOrdersUsed[f] ?? 0, used);
+    // 다시 정리 부탁을 걸고, 그 아이템을 팔면 부탁이 사라진다
+    g.board[cell] = Item(905, Chain.flower, 1);
+    g.orders.add(Order(78, f, Chain.flower, 1, 1, cleanup: true));
+    g.sell(cell);
+    g.fillOrdersForTest();
+    expect(g.orders.any((o) => o.id == 78), isFalse);
+    // 저장해도 정리 부탁 표시가 남는다
+    g.board[cell] = Item(906, Chain.flower, 1);
+    g.orders.add(Order(79, f, Chain.flower, 1, 1, cleanup: true));
+    final g2 = make()..loadJson(g.toJson());
+    expect(g2.orders.firstWhere((o) => o.id == 79).cleanup, isTrue);
   });
 }

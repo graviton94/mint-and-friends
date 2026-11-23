@@ -83,3 +83,6 @@ sideload 키가 아직 없으면 App 은 디버그 키로 서명하고 경고만
   python3 tool/post_notice.py --key sa.json --list        # 목록,  --delete <id> 로 삭제
   ```
   앱은 시작 · 복귀 때(30분 간격) 진행 중인 공지를 쪽지함에 넣고, 같은 공지는 한 번만 받습니다. 키 파일은 커밋하지 마세요.
+
+### 1.0.7 출시 때 한 번 더
+찻잎 · 별가루 단계가 바뀌어 1.0.6 이 1.0.7 저장을 읽으면 값이 틀려 보인다. 출시 확인 뒤 `latest_version_code` 와 함께 `min_version_code` 도 1.0.7 의 버전 코드로 (Actions → Remote Config: `latest_version_code=NNNN min_version_code=NNNN`).

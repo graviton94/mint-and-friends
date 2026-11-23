@@ -46,7 +46,20 @@ class Order {
   final Chain chain;
   final int level;
   final int stars;
-  const Order(this.id, this.friendId, this.chain, this.level, this.stars);
+
+  /// 정리 부탁 (D-054): 바구니보다 낮은 아이템을 원한다. 하루 별 부탁 한도 · 단계 보상에 세지 않는다.
+  final bool cleanup;
+  const Order(
+    this.id,
+    this.friendId,
+    this.chain,
+    this.level,
+    this.stars, {
+    this.cleanup = false,
+  });
+
+  Order withStars(int s) =>
+      Order(id, friendId, chain, level, s, cleanup: cleanup);
 
   ItemDef get item => Chains.item(chain, level);
 
@@ -56,6 +69,7 @@ class Order {
     'c': chain.index,
     'l': level,
     's': stars,
+    if (cleanup) 'x': true,
   };
   static Order fromJson(Map<String, dynamic> j) => Order(
     j['i'] as int,
@@ -63,6 +77,7 @@ class Order {
     Chain.values[j['c'] as int],
     j['l'] as int,
     j['s'] as int,
+    cleanup: j['x'] == true,
   );
 }
 
@@ -462,7 +477,11 @@ class GameState extends ChangeNotifier {
     for (final u in UpgradeType.values) u: 0,
   };
   double autoMergeProgress = 0;
-  final Map<Chain, int> highest = {for (final c in Chain.values) c: 1};
+
+  /// 체인별 발견한 최고 단계. 늦게 열리는 체인은 0 (첫 아이템도 발견 카드가 뜨게).
+  final Map<Chain, int> highest = {
+    for (final c in Chain.values) c: Chains.levelOffset(c) > 0 ? 0 : 1,
+  };
 
   int currentArea = 0; // 지금 꾸미는 구역 (이전 구역은 모두 완성)
   Set<int> placed = {}; // 현재 구역에 설치한 장식 슬롯
@@ -614,7 +633,9 @@ class GameState extends ChangeNotifier {
   bool _welcomeSent = false;
 
   /// 도감에서 이미 본 최고 단계 (새 발견 빨간 점용).
-  final Map<Chain, int> seenHighest = {for (final c in Chain.values) c: 1};
+  final Map<Chain, int> seenHighest = {
+    for (final c in Chain.values) c: Chains.levelOffset(c) > 0 ? 0 : 1,
+  };
 
   /// 최근 전달한 부탁 (종류-단계), 최대 3개. 새 부탁이 같은 것을 바로 다시 원하지 않게.
   final List<String> _recentOrders = [];
@@ -1099,11 +1120,17 @@ class GameState extends ChangeNotifier {
   bool get boardStuck => boardFull && !_hasMergeablePair();
 
   bool _hasMergeablePair() {
-    final seen = <String>{};
-    for (final it in board) {
+    // 같은 것 두 개 중 적어도 하나는 열린 칸에 있어야 합칠 수 있다 (패스가 끝난 보관 칸끼리는 못 합침)
+    final n = <String, int>{};
+    final open = <String>{};
+    for (var i = 0; i < board.length; i++) {
+      final it = board[i];
       if (it == null || it.isBubble || it.level >= Chains.maxLevel(it.chain))
         continue;
-      if (!seen.add('${it.chain.index}-${it.level}')) return true;
+      final k = '${it.chain.index}-${it.level}';
+      n[k] = (n[k] ?? 0) + 1;
+      if (isCellOpen(i)) open.add(k);
+      if (n[k]! >= 2 && open.contains(k)) return true;
     }
     return false;
   }
@@ -1594,6 +1621,11 @@ class GameState extends ChangeNotifier {
   /// 바구니보다 낮은 아이템 중 가장 싼 것, 없으면 판에서 가장 싼 것 (보관 칸 · 비눗방울 · 부탁 대상 제외).
   int? get cheapestSellCell {
     if (!boardStuck) return null;
+    // 팔지 않고 풀 수 있으면 (부탁 전달 · 최고 단계 선물) 팔라고 하지 않는다
+    if (orders.any(canDeliverOrder)) return null;
+    if (friends.isNotEmpty && board.any((it) => it != null && isMaxItem(it))) {
+      return null;
+    }
     int? best;
     double bestKey = double.infinity;
     for (var i = 0; i < board.length; i++) {
@@ -1773,7 +1805,9 @@ class GameState extends ChangeNotifier {
     if (!quotaActive) return pool;
     return [
       for (final f in pool)
-        if (starOrdersLeft(f) - orders.where((o) => o.friendId == f).length > 0)
+        if (starOrdersLeft(f) -
+                orders.where((o) => o.friendId == f && !o.cleanup).length >
+            0)
           f,
     ];
   }
@@ -1783,6 +1817,15 @@ class GameState extends ChangeNotifier {
 
   /// 부탁을 채운다. 한도를 다 쓴 친구의 부탁은 거둬들이고, 부탁할 친구가 없으면 빈 채로 둔다.
   void _fillOrders() {
+    // 더는 만들 수 없는 낮은 단계 부탁(정리 부탁의 아이템을 합치거나 팔았을 때)은 거둔다
+    orders.removeWhere(
+      (o) =>
+          o.level < spawnLevelOf(o.chain) &&
+          !canDeliverOrder(o) &&
+          !storage.any(
+            (it) => it != null && it.chain == o.chain && it.level == o.level,
+          ),
+    );
     if (quotaActive) {
       orders.removeWhere(
         (o) => !canDeliverOrder(o) && starOrdersLeft(o.friendId) <= 0,
@@ -1818,11 +1861,18 @@ class GameState extends ChangeNotifier {
           !canDeliverOrder(o) &&
           !inStorage) {
         final n = _newOrder();
-        orders[i] = Order(n.id, o.friendId, n.chain, n.level, n.stars);
+        orders[i] = Order(
+          n.id,
+          o.friendId,
+          n.chain,
+          n.level,
+          n.stars,
+          cleanup: n.cleanup,
+        );
       } else {
         final st = Garden.orderStars(relLevel(o.chain, o.level));
         if (st != o.stars) {
-          orders[i] = Order(o.id, o.friendId, o.chain, o.level, st);
+          orders[i] = o.withStars(st);
         }
       }
     }
@@ -1890,6 +1940,7 @@ class GameState extends ChangeNotifier {
           it.chain,
           it.level,
           Garden.orderStars(relLevel(it.chain, it.level)),
+          cleanup: true,
         );
       }
     }
@@ -1955,7 +2006,7 @@ class GameState extends ChangeNotifier {
     if (!canDeliver(orderIndex)) return false;
     final o = orders[orderIndex];
     board[_findItem(o.chain, o.level)] = null;
-    final withStars = orderGivesStars(o);
+    final withStars = o.cleanup || orderGivesStars(o);
     var gained = withStars ? o.stars : 0;
     // 단풍(별 보너스): 가끔 별을 반만큼 더
     if (withStars &&
@@ -1975,7 +2026,7 @@ class GameState extends ChangeNotifier {
     }
     // 하루 부탁 단계 보상: 하루 한도가 걸리는 별 부탁만 센다 (첫 구역의 한도 없는 부탁으로 쉽게 채우지 않게)
     _rollOrdersDay();
-    final counts = withStars && quotaActive;
+    final counts = withStars && quotaActive && !o.cleanup;
     if (counts) _ordersToday += 1;
     final mi = counts ? GameConfig.orderMilestones.indexOf(_ordersToday) : -1;
     if (mi >= 0) {
@@ -1983,7 +2034,7 @@ class GameState extends ChangeNotifier {
       gems += g;
       _events.add(OrderMilestoneEvent(_ordersToday, g));
     }
-    if (withStars && quotaActive) {
+    if (counts) {
       starOrdersUsed[o.friendId] = (starOrdersUsed[o.friendId] ?? 0) + 1;
     }
     stars += gained;
@@ -2983,7 +3034,7 @@ class GameState extends ChangeNotifier {
       'life': lifetimeCoins,
       'renew': renewCount,
       'tut': tutorial,
-      'tips': tipsSeen.toList(),
+      'tips': {...tipsSeen, lvOffTip}.toList(),
       'ordDay': _ordersDay,
       'ordToday': _ordersToday,
       'seedsT': seedsTotal,
@@ -3076,6 +3127,12 @@ class GameState extends ChangeNotifier {
   }
 
   /// 저장 불러오기. 전부 되거나 전혀 안 되거나: 망가진 저장이면 원래 상태로 되돌리고 false.
+  /// 단계 보정 표시. 1.0.6 앱은 모르는 키('lvOff')를 버리고 저장하지만 tips 목록의 글자는 그대로 남기므로
+  /// 둘 다에 적는다 (1.0.6 기기가 한 번 열었다 저장한 1.0.7 저장을 다시 낮추지 않게).
+  static const lvOffTip = '_lvOff';
+  static bool chainLevelsMigrated(Map<String, dynamic> j) =>
+      j['lvOff'] != null || ((j['tips'] as List?)?.contains(lvOffTip) ?? false);
+
   /// 체인 단계 보정(D-053) 이전 저장: 찻잎 · 별가루 아이템을 보정만큼 낮춘다 (가치는 그대로).
   static Map<String, dynamic> migrateChainLevels(Map<String, dynamic> src) {
     final j = (jsonDecode(jsonEncode(src)) as Map).cast<String, dynamic>();
@@ -3105,6 +3162,8 @@ class GameState extends ChangeNotifier {
       }
     }
     j['lvOff'] = 1;
+    // (tips 가 없던 아주 예전 저장은 그대로: 기기에 저장된 안내 기록을 쓰는 표시라서)
+    if (j['tips'] is List) j['tips'] = [...(j['tips'] as List), lvOffTip];
     return j;
   }
 
@@ -3121,7 +3180,7 @@ class GameState extends ChangeNotifier {
 
   bool _loadJson(Map<String, dynamic> j) {
     if (j['v'] != saveVersion) return false;
-    if (j['lvOff'] == null) j = migrateChainLevels(j);
+    if (!chainLevelsMigrated(j)) j = migrateChainLevels(j);
     // 경제 2판(별이 에너지에 비례)으로 옮기기: 남은 별은 4배, 부탁의 별은 다시 계산
     final econ = (j['econ'] as num?)?.toInt() ?? 1;
     DateTime? ts(String k) => j[k] == null
@@ -3247,13 +3306,7 @@ class GameState extends ChangeNotifier {
     if (econ < 2) {
       orders = [
         for (final o in orders)
-          Order(
-            o.id,
-            o.friendId,
-            o.chain,
-            o.level,
-            Garden.orderStars(relLevel(o.chain, o.level)),
-          ),
+          o.withStars(Garden.orderStars(relLevel(o.chain, o.level))),
       ];
     }
     boosts.clear();
