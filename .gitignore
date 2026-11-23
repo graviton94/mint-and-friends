@@ -56,3 +56,4 @@ config/app_config.json
 .idea/
 __pycache__/
 *.iml
+android/app/src/main/res/values/firebase_ci.xml

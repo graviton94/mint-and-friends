@@ -16,6 +16,25 @@ if g:
         print(f"--dart-define=FB_APP_ID={c['client_info']['mobilesdk_app_id']}")
         print(f"--dart-define=FB_PROJECT_ID={g['project_info']['project_id']}")
         print(f"--dart-define=FB_SENDER_ID={g['project_info']['project_number']}")
+        # 안드로이드 리소스 값 (google-services 플러그인이 만드는 것과 같음): Firebase Analytics 는
+        # 이 google_app_id 리소스가 없으면 'Missing google_app_id' 로 꺼진다 (1.0.8 까지 지표가 0 이었던 원인)
+        res = os.path.join(os.path.dirname(__file__), '..', 'android', 'app', 'src', 'main', 'res', 'values')
+        os.makedirs(res, exist_ok=True)
+        vals = {
+            'google_app_id': c['client_info']['mobilesdk_app_id'],
+            'gcm_defaultSenderId': g['project_info']['project_number'],
+            'google_api_key': c['api_key'][0]['current_key'],
+            'google_crash_reporting_api_key': c['api_key'][0]['current_key'],
+            'project_id': g['project_info']['project_id'],
+        }
+        if g['project_info'].get('storage_bucket'):
+            vals['google_storage_bucket'] = g['project_info']['storage_bucket']
+        with open(os.path.join(res, 'firebase_ci.xml'), 'w') as f:
+            f.write('<?xml version="1.0" encoding="utf-8"?>\n<resources>\n')
+            for k, v in vals.items():
+                f.write(f'    <string name="{k}" translatable="false">{v}</string>\n')
+            f.write('</resources>\n')
+        print(f"Firebase resource values: {', '.join(vals)}", file=sys.stderr)
         oauth = [o for cl in g["client"] for o in cl.get("oauth_client", [])]
         # 웹 클라이언트는 oauth_client 또는 services.appinvite_service.other_platform_oauth_client 에 들어 있다.
         others = [o for cl in g["client"]
