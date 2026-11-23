@@ -377,8 +377,11 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
       _offerOffline();
       _refreshSocial();
       // 오래 켜 둔 앱도 새 버전을 알 수 있게 (30분에 한 번)
+      // 원격 설정(최신 버전 코드 등)도 다시 받아 둔다 (Firebase 쪽에서 1시간에 한 번으로 제한)
       if (UpdateService.instance.checkDue) {
-        Future.delayed(const Duration(seconds: 2), _checkUpdate);
+        RemoteTuning.load().whenComplete(
+          () => Future.delayed(const Duration(seconds: 2), _checkUpdate),
+        );
       }
     }
   }
