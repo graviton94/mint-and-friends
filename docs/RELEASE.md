@@ -86,3 +86,10 @@ sideload 키가 아직 없으면 App 은 디버그 키로 서명하고 경고만
 
 ### 1.0.7 출시 때 한 번 더
 찻잎 · 별가루 단계가 바뀌어 1.0.6 이 1.0.7 저장을 읽으면 값이 틀려 보인다. 출시 확인 뒤 `latest_version_code` 와 함께 `min_version_code` 도 1.0.7 의 버전 코드로 (Actions → Remote Config: `latest_version_code=NNNN min_version_code=NNNN`).
+
+### 자동 출시 (2026-11-23부터)
+Play Console 앱 권한을 받은 서비스 계정으로 CI 가 직접 올린다. Actions → Store AAB:
+- `version` = 1.0.8, `track` = `alpha`(비공개 테스트) / `internal` / `production`, `rollout` = 정식 단계 비율(예 0.2), `min_version` = true 면 강제 업데이트까지.
+- 빌드 → 트랙 업로드(출시 노트는 `patch.<version>` 4개 언어, Play 한도 500자에 맞춰 줄 단위로 자름) → 출시 → 원격 설정 `latest_version_code`(+ `min_version_code`).
+- 권한 확인: Actions → Play check (트랙 · 리뷰 읽기만).
+- 정식(production) 출시는 사장님 확인 뒤에만.
