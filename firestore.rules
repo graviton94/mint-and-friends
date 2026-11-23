@@ -35,10 +35,11 @@ service cloud.firestore {
     }
 
     // 공개 프로필: 로그인한 누구나 읽고, 본인만 쓴다. 친구 코드는 본인이 예약한 것이어야 한다.
+    // 새 앱은 합치기(merge)로 쓰고, 예전 앱(1.0.6 까지)은 문서 전체를 덮어쓴다 (invitedTs · invitedDays 가 빠진다).
     match /profiles/{uid} {
       allow read: if signedIn();
       allow create, update: if isMe(uid)
-        && request.resource.data.keys().hasOnly(['name', 'code', 'level', 'area', 'placed', 'friends', 'avatar', 'days', 'invitedBy', 'invitedAt', 'score', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['name', 'code', 'level', 'area', 'placed', 'friends', 'avatar', 'days', 'invitedBy', 'invitedAt', 'invitedTs', 'invitedDays', 'score', 'updatedAt'])
         && request.resource.data.name is string
         && request.resource.data.name.size() > 0
         && request.resource.data.name.size() <= 64
@@ -61,6 +62,20 @@ service cloud.firestore {
               && request.resource.data.invitedBy.size() <= 128
               && request.resource.data.invitedBy != uid))
         && (!('invitedAt' in request.resource.data) || request.resource.data.invitedAt is int)
+        // invitedAt 은 기기 시각이라 초대 보상 판단에 쓰지 않는다 (예전 앱 호환으로만 받는다).
+        // invitedTs: 초대를 처음 적은 서버 시각. 새로 적을 때는 반드시 지금(request.time), 그 뒤로는 그대로.
+        // 예전 앱이 덮어써서 빠지는 것은 허용 (다시 적으면 그때 시각이라 기다림이 길어질 뿐 앞당길 수 없다).
+        && (!('invitedTs' in request.resource.data)
+              || (request.resource.data.get('invitedBy', '') != ''
+                  && (request.resource.data.invitedTs == request.time
+                      || (resource != null
+                          && request.resource.data.invitedTs == resource.data.get('invitedTs', null)))))
+        // invitedDays: invitedTs 를 적을 때의 플레이 날 수. 그때만 바꿀 수 있다.
+        && (!('invitedDays' in request.resource.data)
+              || (request.resource.data.invitedDays is int && request.resource.data.invitedDays >= 0
+                  && (request.resource.data.get('invitedTs', null) == request.time
+                      || (resource != null
+                          && request.resource.data.invitedDays == resource.data.get('invitedDays', -1)))))
         && (!('score' in request.resource.data) || (request.resource.data.score is int
               && request.resource.data.score >= 0 && request.resource.data.score <= 10000))
         && (resource == null || !('invitedBy' in resource.data) || resource.data.invitedBy == ''

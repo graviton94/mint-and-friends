@@ -3,8 +3,9 @@
 - login(provider, token): 카카오 액세스 토큰을 카카오 서버에서 확인하고 Firebase 커스텀 토큰을 돌려준다.
     uid = "kakao:<카카오 회원번호>". KAKAO_APP_ID 가 설정돼 있으면 다른 카카오 앱이 받은 토큰은 거부한다.
 - deleteAccount(): 로그인한 사용자의 게임 저장(users/{uid}) · 친구 데이터와 Firebase 계정을 지운다 (Play 정책: 앱 안 계정 삭제).
-- sendGift(to, day): 친구에게 하루 한 번 선물 (에너지 5). 친구 관계 · 하루 한 번(쌍마다) · 하루 최대 50개를
-    트랜잭션으로 확인하고 받는 사람의 inbox/{to}/items 에 넣는다. day = 보내는 기기의 날짜 'YYYY-MM-DD'.
+- sendGift(to, day): 친구에게 하루 한 번 선물 (에너지 5). 친구 관계 · 쌍마다 하루 한 번 · 보내는 사람 하루 3개 ·
+    받는 사람 하루 10개를 트랜잭션으로 확인하고 받는 사람의 inbox/{to}/items 에 넣는다.
+    '하루'는 서버 UTC 날짜다. day(보내는 기기의 날짜 'YYYY-MM-DD')는 형식 · 서버 날짜 ±1일만 확인하고 친구 목록 표시(lastGiftSentDay)에만 쓴다.
 """
 import datetime
 import json
@@ -125,6 +126,7 @@ def _delete_social(db, uid: str) -> None:
 
 GIFT_REWARD = {'e': 5}
 GIFT_DAILY_MAX = 3  # 한 사람이 하루에 보낼 수 있는 선물 수 (앱 SocialConfig.giftsPerDay 와 같게)
+GIFT_RECV_DAILY_MAX = 10  # 한 사람이 하루에 받을 수 있는 선물 수 (부계정으로 몰아 주기 방지)
 _DAY = re.compile(r'^\d{4}-\d{2}-\d{2}$')
 
 
@@ -142,15 +144,23 @@ def _check_day(day) -> str:
     return day
 
 
+def _server_day() -> str:
+    """하루 제한의 기준: 서버 UTC 날짜. 기기 날짜(어제 · 오늘 · 내일)로 키를 만들면 하루에 세 번 쓸 수 있었다."""
+    return datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+
+
 @firestore.transactional
-def _gift_txn(txn, db, sender: str, to: str, day: str, from_name: str) -> None:
-    gift_ref = db.collection('gifts').document(f'{sender}_{to}_{day}')
-    count_ref = db.collection('giftCounts').document(f'{sender}_{day}')
+def _gift_txn(txn, db, sender: str, to: str, day: str, sday: str, from_name: str) -> None:
+    gift_ref = db.collection('gifts').document(f'{sender}_{to}_{sday}')
+    count_ref = db.collection('giftCounts').document(f'{sender}_{sday}')
+    # 받는 쪽 하루 상한 (giftCounts 에 두어 같은 TTL 정책으로 지워진다)
+    recv_ref = db.collection('giftCounts').document(f'{to}_{sday}_in')
     friend_ref = db.collection('users').document(sender).collection('friends').document(to)
     # 트랜잭션에서는 읽기를 모두 먼저
     gift = gift_ref.get(transaction=txn)
     count = count_ref.get(transaction=txn)
     friend = friend_ref.get(transaction=txn)
+    recv = recv_ref.get(transaction=txn)
     if not friend.exists:
         raise https_fn.HttpsError(https_fn.FunctionsErrorCode.FAILED_PRECONDITION, 'not a friend')
     if gift.exists:
@@ -158,10 +168,17 @@ def _gift_txn(txn, db, sender: str, to: str, day: str, from_name: str) -> None:
     n = int((count.to_dict() or {}).get('n', 0)) if count.exists else 0
     if n >= GIFT_DAILY_MAX:
         raise https_fn.HttpsError(https_fn.FunctionsErrorCode.RESOURCE_EXHAUSTED, 'daily gift limit')
+    got = int((recv.to_dict() or {}).get('n', 0)) if recv.exists else 0
+    if got >= GIFT_RECV_DAILY_MAX:
+        # 예전 앱은 details 를 모르고 'resource-exhausted' 만 보고 '오늘 선물 다 보냄'으로 보여 준다
+        raise https_fn.HttpsError(https_fn.FunctionsErrorCode.RESOURCE_EXHAUSTED, 'receiver daily limit',
+                                  {'reason': 'receiver'})
     # 기록은 며칠 뒤 필요 없다: Firestore TTL 정책(expireAt)을 켜 두면 자동으로 지워진다
     expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=3)
-    txn.set(gift_ref, {'from': sender, 'to': to, 'day': day, 'at': firestore.SERVER_TIMESTAMP, 'expireAt': expire})
+    txn.set(gift_ref, {'from': sender, 'to': to, 'day': sday, 'clientDay': day,
+                       'at': firestore.SERVER_TIMESTAMP, 'expireAt': expire})
     txn.set(count_ref, {'n': n + 1, 'expireAt': expire})
+    txn.set(recv_ref, {'n': got + 1, 'expireAt': expire})
     txn.set(db.collection('inbox').document(to).collection('items').document(), {
         'kind': 'gift',
         'fromUid': sender,
@@ -169,6 +186,7 @@ def _gift_txn(txn, db, sender: str, to: str, day: str, from_name: str) -> None:
         'reward': GIFT_REWARD,
         'at': firestore.SERVER_TIMESTAMP,
     })
+    # 앱의 '오늘 보냄' 표시는 기기 날짜로 비교하므로 기기 날짜를 적는다 (제한과는 무관)
     txn.set(friend_ref, {'lastGiftSentDay': day}, merge=True)
 
 
@@ -187,5 +205,6 @@ def sendGift(req: https_fn.CallableRequest) -> dict:  # noqa: N802 (앱에서 �
         raise https_fn.HttpsError(https_fn.FunctionsErrorCode.NOT_FOUND, 'no such player')
     me = db.collection('profiles').document(sender).get()
     from_name = str((me.to_dict() or {}).get('name') or '')[:24] if me.exists else ''
-    _gift_txn(db.transaction(), db, sender, to, day, from_name)
-    return {'ok': True, 'day': day, 'reward': GIFT_REWARD}
+    sday = _server_day()
+    _gift_txn(db.transaction(), db, sender, to, day, sday, from_name)
+    return {'ok': True, 'day': day, 'serverDay': sday, 'reward': GIFT_REWARD}

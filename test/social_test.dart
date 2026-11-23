@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mint_and_friends/ui/social_ui.dart';
@@ -35,10 +36,22 @@ class FakeBackend implements SocialBackend {
   @override
   Future<Map<String, dynamic>?> getProfile(String uid) =>
       _go(() => profiles[uid]);
+
+  /// 서버 시각 (실제로는 FieldValue.serverTimestamp).
+  DateTime Function() clock = DateTime.now;
   @override
-  Future<void> putProfile(String uid, Map<String, dynamic> data) => _go(() {
+  Future<void> putProfile(
+    String uid,
+    Map<String, dynamic> data, {
+    bool stampInvite = false,
+  }) => _go(() {
     profileWrites++;
-    profiles[uid] = data;
+    profiles[uid] = {
+      ...?profiles[uid],
+      ...data,
+      'updatedAt': clock(),
+      if (stampInvite) 'invitedTs': clock(),
+    };
   });
   @override
   Future<bool> reserveCode(String code, String uid) => _go(() {
@@ -123,7 +136,7 @@ void main() {
 
   setUp(() async {
     now = DateTime(2026, 3, 1, 10);
-    server = FakeBackend();
+    server = FakeBackend()..clock = () => now;
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();
   });
@@ -182,6 +195,9 @@ void main() {
       // 두 번은 안 된다
       expect(await b.applyInvite(codeA, gb), isFalse);
       expect(server.profiles['B']!['invitedBy'], 'A');
+      // 초대 시각은 서버 시각으로 한 번 적힌다
+      expect(server.profiles['B']!['invitedTs'], now);
+      expect(b.me!.invitedTs, now.millisecondsSinceEpoch);
 
       // 아직 조건 전: 초대한 사람에게 보상 없음, 그래도 서로 친구가 된다
       server.sender = 'A';
@@ -189,13 +205,16 @@ void main() {
       expect(a.friends.map((f) => f.uid), contains('B'));
       expect(a.invitees.single.uid, 'B');
 
-      // 7일 · 5일 · Lv15
+      // 7일 · 5일 · Lv15: 내 시계만 7일 앞으로 돌려서는 안 된다 (초대 친구가 서버에 쓴 시각 기준)
       server.profiles['B'] = {
         ...server.profiles['B']!,
         'level': Invite.needLevel,
         'days': Invite.needDays,
       };
       now = now.add(Invite.wait);
+      expect(await a.checkInvites(ga), 0);
+      // 초대 친구가 7일 뒤에 프로필을 쓰면 (서버 updatedAt) 인정
+      server.profiles['B'] = {...server.profiles['B']!, 'updatedAt': now};
       expect(await a.checkInvites(ga), 1);
       expect(
         ga.mail.firstWhere((m) => m.id == 'invite-B').reward.gems,
@@ -333,11 +352,13 @@ void main() {
       );
     });
 
-    test('프로필 만들기: 코드 예약, 계정 이름, 바뀐 게 없으면 다시 쓰지 않음', () async {
+    test('프로필 만들기: 코드 예약, 게임 닉네임(계정 이름 아님), 바뀐 게 없으면 다시 쓰지 않음', () async {
       final s = make('u1', name: '민트');
       final g = game();
       final me = await s.ensureProfile(g);
-      expect(me.name, '민트');
+      expect(me.name, isNot('민트'));
+      expect(me.name, isNotEmpty);
+      expect(server.profiles['u1']!['name'], me.name);
       expect(FriendCode.isValid(me.code), isTrue);
       expect(server.codes[me.code], 'u1');
       expect(server.profileWrites, 1);
@@ -474,9 +495,10 @@ void main() {
       final b = make('u2', seed: 2);
       final bGame = game();
       final bMe = await b.ensureProfile(bGame);
-      final a = make('u1', name: '민트');
+      final a = make('u1');
       final aGame = game();
       await a.ensureProfile(aGame);
+      await a.rename('민트');
       final f = await a.addFriendByCode(bMe.code);
       expect(a.badge, isTrue);
 
@@ -626,8 +648,9 @@ void main() {
       await tester.runAsync(() async {
         final b = make('u2', seed: 2);
         final bMe = await b.ensureProfile(game());
-        a = make('u1', name: '민트');
+        a = make('u1');
         await a.ensureProfile(g);
+        await a.rename('민트');
         await a.addFriendByCode(bMe.code);
       });
       await open(tester, a, g);
@@ -657,6 +680,135 @@ void main() {
       await tester.tap(find.textContaining('social.visitThanks'));
       await tester.pump(const Duration(milliseconds: 100));
       expect(find.textContaining('social.visitThanked'), findsOneWidget);
+    });
+  });
+  group('초대 보상 악용 막기', () {
+    SocialProfile inv(Map<String, dynamic> m) => SocialProfile.fromMap('B', {
+      'name': 'b',
+      'code': 'ABCDEFGH',
+      'invitedBy': 'A',
+      'level': Invite.needLevel,
+      'days': Invite.needDays,
+      ...m,
+    });
+    final t0 = DateTime(2026, 3, 1, 10);
+
+    test('기기 시각 invitedAt 만 있으면 (예전 앱 · 조작) 인정하지 않는다', () {
+      final p = inv({'invitedAt': 1, 'updatedAt': t0});
+      expect(p.invitedTs, 0);
+      expect(p.inviteDone(), isFalse);
+      expect(p.inviteDaysLeft(t0), Invite.wait.inDays);
+      // 숫자로 적은 invitedTs · updatedAt 도 서버 시각이 아니다
+      expect(inv({'invitedTs': 1, 'updatedAt': 9e12}).inviteDone(), isFalse);
+    });
+
+    test('서버 시각끼리 7일이 지나야 한다', () {
+      expect(
+        inv({
+          'invitedTs': t0,
+          'updatedAt': t0.add(const Duration(days: 6, hours: 23)),
+        }).inviteDone(),
+        isFalse,
+      );
+      expect(
+        inv({'invitedTs': t0, 'updatedAt': t0.add(Invite.wait)}).inviteDone(),
+        isTrue,
+      );
+      expect(
+        inv({
+          'invitedTs': Timestamp.fromDate(t0),
+          'updatedAt': Timestamp.fromDate(t0.add(Invite.wait)),
+        }).inviteDone(),
+        isTrue,
+      );
+    });
+
+    test('지난 날보다 많은 접속일 · 모자란 레벨은 인정하지 않는다', () {
+      final at = t0.add(Invite.wait);
+      expect(
+        inv({'invitedTs': t0, 'updatedAt': at, 'days': 30}).inviteDone(),
+        isFalse,
+      );
+      // 초대 전에 플레이한 날은 빼고 센다
+      expect(
+        inv({'invitedTs': t0, 'updatedAt': at, 'days': 30, 'invitedDays': 24})
+            .inviteDone(),
+        isTrue,
+      );
+      expect(
+        inv({'invitedTs': t0, 'updatedAt': at, 'level': 14}).inviteDone(),
+        isFalse,
+      );
+    });
+
+    test('부계정이 invitedAt=1 로 프로필을 써도 초대한 사람은 보상을 못 받는다', () async {
+      final a = make('A');
+      final ga = game();
+      await a.ensureProfile(ga);
+      server.profiles['alt'] = {
+        'name': 'alt',
+        'code': 'ABCDEFGH',
+        'invitedBy': 'A',
+        'invitedAt': 1,
+        'level': 15,
+        'days': 5,
+        'updatedAt': now,
+      };
+      expect(await a.checkInvites(ga), 0);
+      expect(a.invitees.single.profile.inviteDaysLeft(now), Invite.wait.inDays);
+    });
+
+    test('예전 앱으로 초대받은 친구는 새 앱에서 처음 쓸 때 서버 시각을 적는다', () async {
+      final g = game()
+        ..invitedBy = 'A'
+        ..invitedAt = DateTime(2020);
+      final b = make('B');
+      await b.ensureProfile(g);
+      expect(server.profiles['B']!['invitedTs'], now);
+      expect(server.profiles['B']!['invitedDays'], g.stat(Stat.daysPlayed));
+      // 다음 쓰기부터는 다시 적지 않는다
+      final writes = server.profileWrites;
+      now = now.add(const Duration(minutes: 5));
+      await b.syncProfile(g);
+      expect(server.profileWrites, writes);
+    });
+  });
+
+  group('닉네임 (계정 이름 비공개)', () {
+    test('예전에 계정 이름으로 올라간 프로필은 게임 닉네임으로 바꾸고 기기에 기억', () async {
+      server.profiles['u1'] = {
+        'name': 'Kim Minji',
+        'code': 'ABCDEFGH',
+        'level': 3,
+      };
+      server.codes['ABCDEFGH'] = 'u1';
+      final s = make('u1', name: 'Kim Minji');
+      final me = await s.ensureProfile(game());
+      expect(me.name, isNot('Kim Minji'));
+      expect(me.code, 'ABCDEFGH');
+      expect(server.profiles['u1']!['name'], me.name);
+      // 다시 시작해도 같은 닉네임
+      final again = make('u1', name: 'Kim Minji');
+      expect((await again.ensureProfile(game())).name, me.name);
+    });
+
+    test('직접 고친 이름은 그대로 (계정 이름과 같아도 이 기기에서 고른 것이면)', () async {
+      final s = make('u1', name: '민트');
+      await s.ensureProfile(game());
+      await s.rename('보리 농장');
+      expect(
+        (await make('u1', name: '민트').ensureProfile(game())).name,
+        '보리 농장',
+      );
+      await s.rename('민트');
+      expect((await make('u1', name: '민트').ensureProfile(game())).name, '민트');
+    });
+
+    test('계정 이름과 다른 서버 이름은 건드리지 않는다', () async {
+      server.profiles['u1'] = {'name': '초록 정원', 'code': 'ABCDEFGH'};
+      server.codes['ABCDEFGH'] = 'u1';
+      final me = await make('u1', name: 'Kim').ensureProfile(game());
+      expect(me.name, '초록 정원');
     });
   });
 }
