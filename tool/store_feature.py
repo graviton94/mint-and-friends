@@ -67,5 +67,6 @@ def make(lang,out):
     d.rounded_rectangle((bx0,by,bx1,by+54),27,fill=(255,251,240),outline=(122,82,48),width=4)
     d.text((cx,by+28),text,font=f,fill=(122,82,48),anchor='mm')
     im.convert('RGB').save(out,optimize=True)
-for l in sys.argv[1:]:
-    make(l,f'docs/store/feature/{l}.png')
+if __name__=='__main__':
+    for l in sys.argv[1:]:
+        make(l,f'docs/store/feature/{l}.png')
