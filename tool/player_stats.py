@@ -49,9 +49,9 @@ for d in docs:
     j = json.loads(raw)
     upd = time.mktime(time.strptime(d['updateTime'][:19], '%Y-%m-%dT%H:%M:%S')) * 1000
     up = j.get('up', {})
-    rows.append((round((now - upd) / 3600000, 1), j.get('level'), j.get('area'), up.get('basketTier', 0),
-                 up.get('teaPower', 0), j.get('hi', {}), sum(1 for x in j.get('store', []) if x)))
+    rows.append((round((now - upd) / 3600000, 1), j.get('updateSeen', '-'), j.get('tut'), j.get('level'), j.get('area'),
+                 up.get('basketTier', 0), (j.get('stats') or {}).get('merges', '-'), j.get('hi', {})))
 rows.sort()
-print(f'\n== 클라우드 저장 {len(rows)}개 (최근 저장 순) : 몇시간전 | Lv | 구역 | 바구니등급 | 찻잎강화 | 체인별 최고단계 | 보관함 칸 사용')
+print(f'\n== 클라우드 저장 {len(rows)}개 (최근 저장 순) : 몇시간전 | 앱버전코드 | 튜토리얼단계(99=완료) | Lv | 구역 | 바구니등급 | 합치기 수 | 체인별 최고단계')
 for r in rows:
     print('  ', *r)
