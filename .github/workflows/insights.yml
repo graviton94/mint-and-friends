@@ -25,7 +25,7 @@ jobs:
       - name: Enable APIs
         run: |
           P=$(gcloud config get-value project); echo "PROJECT=$P" >> "$GITHUB_ENV"
-          gcloud services enable analyticsdata.googleapis.com firebase.googleapis.com --project "$P" || echo "::warning::could not enable APIs"
+          gcloud services enable analyticsdata.googleapis.com analyticsadmin.googleapis.com firebase.googleapis.com --project "$P" || echo "::warning::could not enable APIs"
       - run: pip install -q google-auth requests
       - name: Report
         run: python3 tool/ga_report.py "${{ inputs.days }}" | tee report.txt

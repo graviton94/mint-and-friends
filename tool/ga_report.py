@@ -14,6 +14,11 @@ if not r.ok:
     print('analyticsDetails', r.status_code, r.text[:300]); sys.exit(1)
 prop = r.json()['analyticsProperty']['id']
 print(f'GA property {prop}, last {DAYS} days')
+st = s.get(f'https://analyticsadmin.googleapis.com/v1beta/properties/{prop}/dataStreams')
+print('data streams:', [(x.get('type'), x.get('displayName'), (x.get('androidAppStreamData') or {}).get('packageName')) for x in st.json().get('dataStreams', [])] if st.ok else (st.status_code, st.text[:200]))
+rt = s.post(f'https://analyticsdata.googleapis.com/v1beta/properties/{prop}:runRealtimeReport',
+            json={'dimensions': [{'name': 'eventName'}], 'metrics': [{'name': 'eventCount'}], 'limit': 20})
+print('realtime (30 min):', [(x['dimensionValues'][0]['value'], x['metricValues'][0]['value']) for x in rt.json().get('rows', [])] if rt.ok else (rt.status_code, rt.text[:200]))
 URL = f'https://analyticsdata.googleapis.com/v1beta/properties/{prop}:runReport'
 RANGE = [{'startDate': f'{DAYS}daysAgo', 'endDate': 'today'}]
 
