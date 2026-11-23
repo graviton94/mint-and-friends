@@ -2992,13 +2992,16 @@ class _ToastView extends StatelessWidget {
             ),
           ],
         ),
-        // 긴 안내는 줄여 한 줄에 우겨 넣지 않고 글자 크기 그대로 줄을 바꾼다 (최대 3줄)
-        child: IconText(
-          text,
-          maxLines: 3,
-          textAlign: TextAlign.center,
-          iconScale: 1.15,
-          style: const TextStyle(color: Color(0xFF3A2E22), fontSize: 16),
+        // 알림은 한 줄 (문구를 짧게 쓴다: 한국어 약 20자 안). 넘치면 조금만 줄인다
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: IconText(
+            text,
+            maxLines: 1,
+            textAlign: TextAlign.center,
+            iconScale: 1.15,
+            style: const TextStyle(color: Color(0xFF3A2E22), fontSize: 16),
+          ),
         ),
       ),
     );
