@@ -64,8 +64,25 @@ Future<void> showUpdatePrompt(BuildContext context, {bool store = false}) =>
       ),
     );
 
+bool _updateReadyOpen = false;
+
+/// 업데이트 완료 창이 떠 있는지 (테스트 확인용).
+@visibleForTesting
+bool get updateReadyOpen => _updateReadyOpen;
+
 /// 다 받았을 때: 지금 다시 열기 · 나중에 (나중에 열면 다음 실행 때 적용된다).
-Future<void> showUpdateReady(BuildContext context) => showDialog<void>(
+/// 알약을 여러 번 눌러도 창은 하나만 뜬다.
+Future<void> showUpdateReady(BuildContext context) async {
+  if (_updateReadyOpen) return;
+  _updateReadyOpen = true;
+  try {
+    await _showUpdateReady(context);
+  } finally {
+    _updateReadyOpen = false;
+  }
+}
+
+Future<void> _showUpdateReady(BuildContext context) => showDialog<void>(
   context: context,
   builder: (ctx) => GameDialog(
     banner: 'gold',

@@ -79,6 +79,10 @@ class NotifyService extends ChangeNotifier {
 
   Future<void> cancel() async {
     _gen++;
+    await _cancelAll();
+  }
+
+  Future<void> _cancelAll() async {
     if (!_ready) return;
     try {
       await _plugin.cancelAll();
@@ -101,9 +105,10 @@ class NotifyService extends ChangeNotifier {
   /// 앱을 내릴 때: 지금 상태로 다음 알림들을 예약한다.
   Future<void> schedule(GameState g) async {
     if (!_ready) return;
-    await cancel();
-    final gen = _gen;
-    if (!_on) return;
+    // 세대는 기다리기 전에 잡는다: 지우는 사이 앱이 다시 켜지면(cancel) 예약하지 않게
+    final gen = ++_gen;
+    await _cancelAll();
+    if (gen != _gen || !_on) return;
     final now = DateTime.now();
     final rng = Random();
     final plans = <(DateTime, String, String)>[];

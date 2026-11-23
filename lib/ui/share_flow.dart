@@ -44,6 +44,7 @@ Future<void> showShareDialog(
     code: ShareInfo.code(),
     name: ShareInfo.name(),
   );
+  var busy = false;
   await showDialog<void>(
     context: context,
     builder: (ctx) => GameDialog(
@@ -62,26 +63,33 @@ Future<void> showShareDialog(
         ),
       ),
       actions: [
-        FilledButton(
-          style: framedButton(
-            FilledButton.styleFrom(
-              minimumSize: const Size(double.infinity, 56),
-              backgroundColor: Palette.primary,
-              foregroundColor: Colors.white,
+        // 그림이 준비되기 전에는 누를 수 없고, 한 번만 눌린다
+        // (두 번 누르면 아래 화면까지 닫히고 두 번 공유됐다)
+        FutureBuilder<Uint8List>(
+          future: png,
+          builder: (_, snap) => FilledButton(
+            style: framedButton(
+              FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, 56),
+                backgroundColor: Palette.primary,
+                foregroundColor: Colors.white,
+              ),
+              'button_green',
             ),
-            'button_green',
-          ),
-          onPressed: () async {
-            final bytes = await png;
-            if (!ctx.mounted) return;
-            Navigator.pop(ctx);
-            await _share(context, game, kind, bytes);
-          },
-          child: IconText(
-            game.shareRewardReady
-                ? '${tr('share.button')}  [[energy]]+${Invite.shareEnergy}'
-                : tr('share.button'),
-            style: const TextStyle(fontSize: 19),
+            onPressed: !snap.hasData
+                ? null
+                : () async {
+                    if (busy || !ctx.mounted) return;
+                    busy = true;
+                    Navigator.pop(ctx);
+                    await _share(context, game, kind, snap.data!);
+                  },
+            child: IconText(
+              game.shareRewardReady
+                  ? '${tr('share.button')}  [[energy]]+${Invite.shareEnergy}'
+                  : tr('share.button'),
+              style: const TextStyle(fontSize: 19),
+            ),
           ),
         ),
       ],

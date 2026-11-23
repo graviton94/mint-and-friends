@@ -392,6 +392,7 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     final ctx = _navKey.currentContext;
     if (reward == null || ctx == null) return;
     final adFree = widget.billing.adFree;
+    var adBusy = false;
     final doubled = await showDialog<bool>(
       context: ctx,
       barrierDismissible: false,
@@ -411,7 +412,20 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
             label: tr('reward.times', {'n': 2}),
             sub: '[[coin]]${fmt(reward.coins * 2)}',
             adFree: adFree,
-            onTap: () => Navigator.pop(ctx, true),
+            onTap: () async {
+              // 광고가 없으면 다른 보상 버튼처럼 알리고 창을 그대로 둔다 (보상을 쓰지 않는다)
+              if (adBusy) return;
+              adBusy = true;
+              final ok = await widget.ads.showRewarded();
+              adBusy = false;
+              if (!ctx.mounted) return;
+              if (ok) {
+                Navigator.pop(ctx, true);
+              } else {
+                TopToast.show(ctx, tr('toast.adLoading'));
+                Analytics.instance.adUnavailable();
+              }
+            },
           ),
           DialogPlainButton(
             label: '${tr('offline.take')}  [[coin]]${fmt(reward.coins)}',
@@ -420,8 +434,7 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
         ],
       ),
     );
-    var x2 = false;
-    if (doubled == true) x2 = await widget.ads.showRewarded();
+    final x2 = doubled == true; // 광고는 창 안에서 이미 봤다
     game.grantOffline(reward, doubled: x2);
     save.saveLocal(game);
     _celebrate(
@@ -457,8 +470,40 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
   }
 
   Future<void> _signOut(BuildContext sheetCtx) async {
-    Navigator.of(sheetCtx).pop();
-    await save.upload(game);
+    if (auth.isGuest) {
+      // 게스트(익명 · 기기 전용)는 로그아웃하면 진행을 되찾을 길이 없다: 분명히 묻는다
+      final ok = await showDialog<bool>(
+        context: sheetCtx,
+        builder: (ctx) => GameDialog(
+          content: IconText(tr('account.logoutGuestConfirm')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: IconText(tr('common.cancel')),
+            ),
+            FilledButton(
+              style: plainButton(
+                FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+              ),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: IconText(tr('account.logoutGuestYes')),
+            ),
+          ],
+        ),
+      );
+      if (ok != true || !sheetCtx.mounted) return;
+      Navigator.of(sheetCtx).pop();
+    } else {
+      Navigator.of(sheetCtx).pop();
+      // 마지막 업로드가 실제로 끝났을 때만 기기 데이터를 지운다
+      if (!await save.upload(game)) {
+        final ctx = _navKey.currentContext;
+        if (ctx != null && ctx.mounted) {
+          TopToast.show(ctx, tr('account.logoutFailed'));
+        }
+        return;
+      }
+    }
     await _guard(auth.signOut);
     save.detach();
     await save.clearLocal();
