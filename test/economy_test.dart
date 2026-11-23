@@ -684,6 +684,19 @@ void main() {
     expect(g2.boostLeft(BoostKind.energy), Boosts.max);
   });
 
+  test('에너지 절약 부스트: 에너지가 0이면 아무리 눌러도 공짜로 나오지 않는다', () {
+    final g = make();
+    g.gems = 500;
+    expect(g.buyBoost(BoostKind.energy), isTrue);
+    g.energy = 0;
+    final before = g.board.where((it) => it != null).length;
+    for (var i = 0; i < 400; i++) {
+      expect(g.tapSpawner(), TapResult.noEnergy);
+    }
+    expect(g.board.where((it) => it != null).length, before);
+    expect(g.energy, 0);
+  });
+
   test('보관 칸: 다이아로 영구 해금, 패스는 2칸, 패스가 끝나도 아이템은 꺼낼 수 있다', () {
     final g = make();
     expect(g.isCellOpen(30), isFalse);
