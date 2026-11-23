@@ -9,6 +9,18 @@ on:
         description: "스토어에 보이는 버전 이름 (예: 1.0.0)"
         required: true
         default: "1.0.0"
+      track:
+        description: "Play 트랙에 바로 출시 (none = 파일만, alpha = 비공개 테스트, internal = 내부 테스트, production = 정식)"
+        required: false
+        default: "none"
+      rollout:
+        description: "정식 출시 단계 비율 (0~1, 비우면 전체)"
+        required: false
+        default: ""
+      min_version:
+        description: "출시 뒤 원격 설정 min_version_code 도 이 버전으로 (강제 업데이트) true/false"
+        required: false
+        default: "false"
 
 concurrency:
   group: aab
@@ -115,3 +127,28 @@ jobs:
           gh release create "$T" out/*.aab out/store-assets.zip docs/store/icon_512.png --draft --target "$GITHUB_SHA" \
             --title "Mint & Friends ${{ inputs.version }} (${CODE}) for Play" \
             --notes "Upload this AAB in Play Console (closed testing). Version code ${CODE}, from ${GITHUB_REF_NAME} @ ${GITHUB_SHA::7}."
+
+      # ---- Play 출시 (선택): 서비스 계정 (Play Console 앱 권한) 으로 트랙에 올리고, 원격 설정 최신 버전 갱신
+      - uses: google-github-actions/auth@v2
+        if: inputs.track != 'none'
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+        if: inputs.track != 'none'
+      - name: Release to Play
+        if: inputs.track != 'none'
+        run: |
+          pip install -q google-auth requests
+          if [ -n "${{ inputs.rollout }}" ] && [ "${{ inputs.track }}" = "production" ]; then
+            python3 tool/play_api.py upload out/*.aab "${{ inputs.track }}" "${{ inputs.version }}" inProgress "${{ inputs.rollout }}"
+          else
+            python3 tool/play_api.py upload out/*.aab "${{ inputs.track }}" "${{ inputs.version }}"
+          fi
+      - name: Remote Config latest version
+        if: inputs.track != 'none'
+        run: |
+          export ACCESS_TOKEN=$(gcloud auth print-access-token)
+          export PROJECT=$(gcloud config get-value project)
+          V="latest_version_code=${CODE}"
+          if [ "${{ inputs.min_version }}" = "true" ]; then V="$V min_version_code=${CODE}"; fi
+          python3 tool/remote_config_set.py $V

@@ -42,7 +42,10 @@ def notes(version):
         except Exception:
             t = None
         if t:
-            out.append({'language': code, 'text': t.split('\n\n')[0][:500]})
+            t = t.split('\n\n')[0]  # 선물 안내 문단은 빼고
+            while len(t) > 500 and '\n' in t:  # Play 한도 500자: 줄 단위로 줄인다
+                t = t.rsplit('\n', 1)[0]
+            out.append({'language': code, 'text': t[:500]})
     return out
 
 
