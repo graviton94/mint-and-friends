@@ -70,8 +70,6 @@ def make(season, lang, out):
         if not os.path.exists(p):
             p = A + f'friends/{fid}_{pose}.webp'
         a = sf.fit_h(sf.load(p), h)
-        if i > 2:  # 오른쪽 친구는 가운데를 보게 좌우 반전
-            a = a.transpose(Image.FLIP_LEFT_RIGHT)
         x = cx - a.width // 2
         sh = Image.new('RGBA', (W, H), (0, 0, 0, 0))
         ImageDraw.Draw(sh).ellipse((x + a.width * 0.18, top + h - 14, x + a.width * 0.82, top + h + 8), fill=(40, 60, 30, 80))

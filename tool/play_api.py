@@ -1,5 +1,6 @@
 """Google Play Developer API (CI 전용). 서비스 계정: GOOGLE_APPLICATION_CREDENTIALS.
 사용: play_api.py check | upload <aab> <track> <versionName> [status] [fraction]
+      | feature <season> [--apply]  (docs/store/season/<season>/<lang>.png 를 언어별 그래픽 이미지로, --apply 없으면 확인만)
 출시 노트는 assets/i18n/<lang>.json 의 patch.<versionName> 에서 가져온다."""
 import json, sys, time
 import google.auth
@@ -65,8 +66,40 @@ def upload(aab, track, version, status='completed', fraction=None):
     open('/tmp/play_code', 'w').write(str(code))
 
 
+# 앱 언어 → Play 등록정보 언어 (등록돼 있는 것만 바꾼다)
+FEATURE_LANG = {'ko': ['ko-KR'], 'en': ['en-US', 'en-GB'], 'ja': ['ja-JP'], 'es': ['es-419', 'es-ES', 'es-US']}
+
+
+def feature(season, apply=False):
+    import os
+    e = ok(s.post(f'{API}/edits'))['id']
+    have = {l['language'] for l in ok(s.get(f'{API}/edits/{e}/listings')).get('listings', [])}
+    print('listings:', sorted(have))
+    todo = []
+    for lang, codes in FEATURE_LANG.items():
+        f = f'docs/store/season/{season}/{lang}.png'
+        if not os.path.exists(f):
+            print('missing', f); sys.exit(1)
+        todo += [(c, f) for c in codes if c in have]
+    for code, f in todo:
+        print(('upload ' if apply else 'would upload ') + f'{f} -> {code}')
+        if apply:
+            ok(s.delete(f'{API}/edits/{e}/listings/{code}/featureGraphic'))
+            with open(f, 'rb') as fh:
+                ok(s.post(f'{UP}/edits/{e}/listings/{code}/featureGraphic', params={'uploadType': 'media'},
+                          data=fh, headers={'Content-Type': 'image/png'}, timeout=300))
+    if apply:
+        ok(s.post(f'{API}/edits/{e}:commit'))
+        print(f'feature graphics for {season} committed ({len(todo)} listings)')
+    else:
+        s.delete(f'{API}/edits/{e}')
+        print('dry run: nothing changed')
+
+
 if __name__ == '__main__':
     if sys.argv[1] == 'check':
         check()
+    elif sys.argv[1] == 'feature':
+        feature(sys.argv[2], '--apply' in sys.argv)
     else:
         upload(*sys.argv[2:])
