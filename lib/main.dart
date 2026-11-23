@@ -103,6 +103,13 @@ Future<Widget> _boot(void Function(double) report) async {
   if (const bool.fromEnvironment('SHARE_PROBE')) {
     Future.delayed(const Duration(seconds: 6), () => runShareProbe(game));
   }
+  // 진단 빌드: 알림 권한 · 즉시 알림 · 예약 알림을 단계별로 (notify-probe.yml)
+  if (const bool.fromEnvironment('NOTIFY_PROBE')) {
+    Future.delayed(
+      const Duration(seconds: 6),
+      () => NotifyService.instance.probe(game),
+    );
+  }
   // 초대 링크로 설치했으면 친구 코드를 받아 둔다 (첫 실행 한 번, D-045)
   unawaited(InviteReferrer.capture(prefs));
   report(1);

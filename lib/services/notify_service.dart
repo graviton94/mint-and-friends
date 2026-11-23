@@ -229,4 +229,62 @@ class NotifyService extends ChangeNotifier {
       }
     }
   }
+
+  /// 진단 (빌드 옵션 NOTIFY_PROBE, notify-probe.yml): 단계별 결과를 'NOTIFYPROBE' 로그로.
+  Future<void> probe(GameState g) async {
+    void log(String m) => debugPrint('NOTIFYPROBE $m');
+    log('ready=$_ready on=$_on');
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    try {
+      log('enabled=${await android?.areNotificationsEnabled()}');
+      log('exactAllowed=${await android?.canScheduleExactNotifications()}');
+    } catch (e) {
+      log('status error $e');
+    }
+    const details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'garden',
+        'Garden',
+        channelDescription: 'Energy, gifts and friends',
+        icon: 'ic_stat_notify',
+      ),
+    );
+    try {
+      await _plugin.show(
+        id: 900,
+        title: 'probe now',
+        body: 'immediate',
+        notificationDetails: details,
+      );
+      log('show ok');
+    } catch (e) {
+      log('show error $e');
+    }
+    try {
+      await _plugin.zonedSchedule(
+        id: 901,
+        scheduledDate: tz.TZDateTime.now(tz.UTC)
+            .add(const Duration(seconds: 70)),
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        title: 'probe scheduled',
+        body: '70s',
+      );
+      log('zonedSchedule ok');
+    } catch (e) {
+      log('zonedSchedule error $e');
+    }
+    try {
+      await schedule(g);
+      final pending = await _plugin.pendingNotificationRequests();
+      log(
+        'after schedule pending=${pending.length} ids=${pending.map((p) => p.id).toList()}',
+      );
+    } catch (e) {
+      log('schedule error $e');
+    }
+  }
 }
