@@ -58,23 +58,54 @@ SyncDecision decideSync({
 
 enum SyncStatus { local, syncing, synced, error }
 
+/// 클라우드 읽기 (테스트에서 바꿔 끼운다).
+typedef CloudFetch = Future<Map<String, dynamic>?> Function(String uid);
+
+/// 클라우드 쓰기 (테스트에서 바꿔 끼운다).
+typedef CloudWrite = Future<void> Function(
+  String uid,
+  String json,
+  GameState game,
+);
+
 /// 기기 저장(SharedPreferences, Google 백업 대상) + 클라우드 저장(Firestore users/{uid}).
 class SaveService extends ChangeNotifier {
   static const _key = 'save_v3';
   static const _ownerKey = 'save_owner';
   static const Duration cloudInterval = Duration(seconds: 60);
 
-  SaveService(this._prefs);
+  SaveService(this._prefs, {CloudFetch? fetch, CloudWrite? write})
+    : _fetchOverride = fetch,
+      _writeOverride = write;
   final SharedPreferences _prefs;
   SharedPreferences get prefs => _prefs;
+  final CloudFetch? _fetchOverride;
+  final CloudWrite? _writeOverride;
 
   String? uid; // 클라우드 저장 대상 (null 이면 기기에만 저장)
   SyncStatus status = SyncStatus.local;
   DateTime? lastCloudSave;
   Timer? _timer;
-  bool _uploading = false;
+  Future<bool>? _inflight;
+
+  /// 연결 중인 계정 (결정이 끝나기 전에는 uid 로 붙이지 않는다).
+  String? _pendingUid;
+  bool get attaching => _pendingUid != null;
 
   String? get localOwner => _prefs.getString(_ownerKey);
+
+  /// 마지막으로 기기에 저장된 시각 (저장된 값 그대로. toJson 은 지금 시각을 찍으므로 쓰지 않는다).
+  DateTime? get localSavedAt {
+    final raw = _prefs.getString(_key);
+    if (raw == null) return null;
+    try {
+      final j = jsonDecode(raw);
+      final t = j is Map ? (j['savedAt'] as num?)?.toInt() : null;
+      return t == null ? null : DateTime.fromMillisecondsSinceEpoch(t);
+    } catch (_) {
+      return null;
+    }
+  }
 
   // ---------------------------------------------------------------- 기기
 
@@ -91,7 +122,8 @@ class SaveService extends ChangeNotifier {
 
   void saveLocal(GameState game) {
     _prefs.setString(_key, game.encode());
-    if (uid != null) _prefs.setString(_ownerKey, uid!);
+    // 계정 연결 중에는 주인을 바꾸지 않는다 (충돌 질문을 건너뛰지 않게)
+    if (uid != null && _pendingUid == null) _prefs.setString(_ownerKey, uid!);
   }
 
   Future<void> clearLocal() async {
@@ -105,12 +137,31 @@ class SaveService extends ChangeNotifier {
       FirebaseFirestore.instance.collection('users').doc(id);
 
   Future<Map<String, dynamic>?> _fetchCloud(String id) async {
+    final f = _fetchOverride;
+    if (f != null) return f(id);
     // 연결이 막히면 Firestore 는 오래 기다린다: 제한 시간 뒤에는 실패로 보고 나중에 다시.
     final snap = await _doc(id).get().timeout(const Duration(seconds: 12));
     final data = snap.data();
     final raw = data?['data'] as String?;
     if (raw == null) return null;
     return jsonDecode(raw) as Map<String, dynamic>;
+  }
+
+  Future<void> _writeCloud(String id, String json, GameState game) async {
+    final w = _writeOverride;
+    if (w != null) return w(id, json, game);
+    await _doc(id)
+        .set({
+          'data': json,
+          'level': game.level,
+          'area': game.currentArea,
+          'progress': game.progressScore,
+          'updatedAt': FieldValue.serverTimestamp(),
+          'schema': GameState.saveVersion,
+        })
+        .timeout(
+          const Duration(seconds: 20),
+        ); // 오프라인이면 끝나지 않는다 (쓰기는 Firestore 가 대기열에 둔다)
   }
 
   /// 로그인 직후 호출. 충돌이면 [askUser] 로 물어본다 (true = 클라우드 사용).
@@ -121,17 +172,24 @@ class SaveService extends ChangeNotifier {
     required Future<bool> Function(SaveSummary local, SaveSummary cloud)
     askUser,
   }) async {
-    uid = newUid;
+    // 무엇보다 먼저: 기기 저장의 주인과 저장 시각을 잡아 두고, 주기 업로드를 멈춘다.
+    // (가져오는 동안 자동 저장이 주인 · 시각을 바꾸면 충돌 질문 없이 덮어쓴다)
+    final owner = localOwner;
+    final savedAt = localSavedAt;
+    _timer?.cancel();
+    _timer = null;
+    _pendingUid = newUid;
+    uid = null; // 결정 전에는 어디에도 올리지 않는다
     status = SyncStatus.syncing;
     notifyListeners();
     try {
       final cloudJson = await _fetchCloud(newUid);
-      final localJson = game.toJson();
-      final local = SaveSummary.of(localJson);
+      final l = SaveSummary.of(game.toJson());
+      final local = SaveSummary(l.level, l.area, l.progress, savedAt);
       final cloud = cloudJson == null ? null : SaveSummary.of(cloudJson);
       var decision = decideSync(
         local: local,
-        localOwner: localOwner,
+        localOwner: owner,
         cloud: cloud,
         uid: newUid,
       );
@@ -141,16 +199,24 @@ class SaveService extends ChangeNotifier {
             : SyncDecision.uploadLocal;
       }
       if (decision == SyncDecision.useCloud && cloudJson != null) {
-        game.loadJson(cloudJson);
+        // 불러오지 못한 클라우드 저장(버전 · 손상)은 오류: 올리지도, 동기화됐다고 하지도 않는다
+        if (!game.loadJson(cloudJson)) {
+          throw StateError('cloud save could not be loaded');
+        }
+        _pendingUid = null;
+        uid = newUid;
         saveLocal(game);
         status = SyncStatus.synced;
         lastCloudSave = DateTime.now();
       } else {
+        _pendingUid = null;
+        uid = newUid;
         saveLocal(game);
         await upload(game);
       }
     } catch (e) {
       debugPrint('cloud attach failed: $e');
+      _pendingUid = null;
       uid = null;
       status = SyncStatus.error;
       notifyListeners();
@@ -164,41 +230,47 @@ class SaveService extends ChangeNotifier {
 
   void detach() {
     _timer?.cancel();
+    _timer = null;
+    _pendingUid = null;
     uid = null;
     status = SyncStatus.local;
     notifyListeners();
   }
 
-  Future<void> upload(GameState game) async {
+  /// 클라우드에 올린다. 실제로 올라갔으면 true.
+  /// 이미 올리는 중이면 그 업로드가 끝난 뒤 지금 상태로 한 번 더 올린다.
+  Future<bool> upload(GameState game) async {
+    while (_inflight != null) {
+      await _inflight;
+    }
     final id = uid;
-    if (id == null || _uploading) return;
-    _uploading = true;
+    if (id == null) return false;
+    final f = _upload(id, game);
+    _inflight = f;
+    try {
+      return await f;
+    } finally {
+      if (identical(_inflight, f)) _inflight = null;
+    }
+  }
+
+  Future<bool> _upload(String id, GameState game) async {
     status = SyncStatus.syncing;
     notifyListeners();
     try {
       final json = game.encode();
       _prefs.setString(_key, json);
       _prefs.setString(_ownerKey, id);
-      await _doc(id)
-          .set({
-            'data': json,
-            'level': game.level,
-            'area': game.currentArea,
-            'progress': game.progressScore,
-            'updatedAt': FieldValue.serverTimestamp(),
-            'schema': GameState.saveVersion,
-          })
-          .timeout(
-            const Duration(seconds: 20),
-          ); // 오프라인이면 끝나지 않는다 (쓰기는 Firestore 가 대기열에 둔다)
+      await _writeCloud(id, json, game);
       lastCloudSave = DateTime.now();
       status = SyncStatus.synced;
+      return true;
     } catch (e) {
       debugPrint('cloud upload failed: $e');
       CrashService.log('cloud upload failed: $e');
       status = SyncStatus.error;
+      return false;
     } finally {
-      _uploading = false;
       notifyListeners();
     }
   }

@@ -9,6 +9,7 @@ import '../art/art.dart';
 import '../game/config.dart';
 import '../game/format.dart';
 import '../game/game_state.dart';
+import '../game/reward_hold.dart';
 import '../i18n/l10n.dart';
 import '../i18n/names.dart';
 import '../services/ads_service.dart';
@@ -1166,6 +1167,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _onBubble(int cell) async {
     final cost = game.bubbleGemCost(cell);
+    // 창 · 광고가 떠 있는 동안 비눗방울이 터지지 않게 (터지면 아무것도 못 받는다)
+    final release = RewardHold.bubble(game, cell);
+    try {
+      await _bubbleFlow(cell, cost, release);
+    } finally {
+      release();
+    }
+  }
+
+  Future<void> _bubbleFlow(int cell, int cost, void Function() release) async {
     final pick = await showDialog<String>(
       context: context,
       builder: (ctx) => GameDialog(
@@ -1202,11 +1213,16 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     if (pick == 'ad') {
+      // 붙잡은 채로 꺼낸다 (원래 시간이 지났어도 받는다)
       if (await _rewarded() && game.popBubble(cell)) sfx(Sfx.unlock);
     } else if (pick == 'gems') {
+      release(); // 비용은 원래 남은 시간으로 (판에서는 아직 안 터졌다)
+      final it = game.board[cell];
+      if (it == null || !it.isBubble) return; // 사라졌으면 상점을 열 일이 아니다
+      final need = game.bubbleGemCost(cell);
       if (game.popBubbleWithGems(cell)) {
         sfx(Sfx.unlock);
-      } else {
+      } else if (game.gems < need) {
         _toast(tr('shop.notEnough'));
         _openShop();
       }
@@ -1214,6 +1230,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _onVisitorTap() async {
+    // 창 · 광고가 떠 있는 동안 손님이 떠나지 않게 (떠나면 아무것도 못 받는다)
+    final release = RewardHold.visitor(game);
+    try {
+      await _visitorFlow();
+    } finally {
+      release();
+    }
+  }
+
+  Future<void> _visitorFlow() async {
     final base = game.visitorCoins(withAd: false);
     final withAd = await showDialog<bool>(
       context: context,
@@ -1254,7 +1280,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     if (withAd == null) return;
     final ok = withAd ? await widget.ads.showRewarded() : false;
-    final r = game.claimVisitor(withAd: ok);
+    final r = game.claimVisitor(withAd: ok); // 붙잡은 채로 받는다
     if (r != null && mounted) {
       RewardPopup.show(
         context,
