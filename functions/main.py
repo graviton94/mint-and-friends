@@ -5,7 +5,7 @@
 - deleteAccount(): 로그인한 사용자의 게임 저장(users/{uid}) · 친구 데이터와 Firebase 계정을 지운다 (Play 정책: 앱 안 계정 삭제).
 - sendGift(to, day): 친구에게 하루 한 번 선물 (에너지 5). 친구 관계 · 쌍마다 하루 한 번 · 보내는 사람 하루 3개 ·
     받는 사람 하루 10개를 트랜잭션으로 확인하고 받는 사람의 inbox/{to}/items 에 넣는다.
-    '하루'는 서버 UTC 날짜다. day(보내는 기기의 날짜 'YYYY-MM-DD')는 형식 · 서버 날짜 ±1일만 확인하고 친구 목록 표시(lastGiftSentDay)에만 쓴다.
+    '하루'는 서버 시계로 센 한국 날짜다 (자정 기준). day(보내는 기기의 날짜 'YYYY-MM-DD')는 형식 · 서버 날짜 ±1일만 확인하고 친구 목록 표시(lastGiftSentDay)에만 쓴다.
 """
 import datetime
 import json
@@ -144,9 +144,13 @@ def _check_day(day) -> str:
     return day
 
 
+# 하루가 바뀌는 시각: 한국 자정 (플레이어 대부분 · 기기 화면의 '내일 다시'와 맞춘다)
+_DAY_TZ = datetime.timezone(datetime.timedelta(hours=9))
+
+
 def _server_day() -> str:
-    """하루 제한의 기준: 서버 UTC 날짜. 기기 날짜(어제 · 오늘 · 내일)로 키를 만들면 하루에 세 번 쓸 수 있었다."""
-    return datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+    """하루 제한의 기준: 서버 시계로 센 한국 날짜. 기기 날짜(어제 · 오늘 · 내일)로 키를 만들면 하루에 세 번 쓸 수 있었다."""
+    return datetime.datetime.now(_DAY_TZ).date().isoformat()
 
 
 @firestore.transactional

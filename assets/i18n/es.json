@@ -1030,5 +1030,6 @@
   "tidy.note": "Estos objetos están por debajo del nivel de tu cesta, así que ya no salen de ella. Combina todas las parejas o véndelos todos de una vez. No se tocan los objetos de los pedidos ni las casillas de almacén.",
   "tidy.merge": "Combinar todo ({n})",
   "tidy.sell": "Vender todo [[coin]]{price}",
-  "tidy.merged": "Combinado {n} veces"
+  "tidy.merged": "Combinado {n} veces",
+  "patch.1.0.7": "• Al abrir el té o el polvo de estrellas, ahora empiezan desde el nivel 1 (los objetos que ya tenías pasan al nivel del mismo valor)\n• Combina o vende de una vez los objetos por debajo del nivel de tu cesta (toca un objeto y luego 'Ordenar')\n• Tus amigos a veces piden objetos de nivel bajo\n• Corregido: los diamantes comprados a veces no llegaban\n• El progreso antiguo de otro dispositivo ya no sobrescribe el más nuevo\n• Al cerrar sesión como invitado se avisa de que se borrará el progreso\n• Tus amigos ven tu apodo del juego en lugar del nombre de tu cuenta\n• Las recompensas de visitantes y burbujas llegan aunque se vayan durante un anuncio\n• Muchas otras correcciones\n\n¡Te enviamos energía como regalo de actualización!"
 }
