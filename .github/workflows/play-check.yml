@@ -1,0 +1,25 @@
+name: Play check
+
+# Play Console API 권한 확인 (트랙 · 최근 리뷰 수). 아무것도 바꾸지 않는다.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Enable Play API
+        run: |
+          P=$(gcloud config get-value project)
+          gcloud services enable androidpublisher.googleapis.com --project "$P" || echo "::warning::could not enable API"
+      - run: pip install google-auth requests
+      - run: python3 tool/play_api.py check
