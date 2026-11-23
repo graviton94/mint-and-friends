@@ -88,9 +88,25 @@ def feature(season, apply=False):
             with open(f, 'rb') as fh:
                 ok(s.post(f'{UP}/edits/{e}/listings/{code}/featureGraphic', params={'uploadType': 'media'},
                           data=fh, headers={'Content-Type': 'image/png'}, timeout=300))
+    # 휴대전화 스크린샷: [시즌 표지] + 기존 1~7 (8번은 뺀다)
+    for lang, codes in FEATURE_LANG.items():
+        shots = [f'docs/store/season/{season}/shot_{lang}.jpg'] + [f'docs/store/screenshots/{lang}/{i}.jpg' for i in range(1, 8)]
+        for f in shots:
+            if not os.path.exists(f):
+                print('missing', f); sys.exit(1)
+        for code in codes:
+            if code not in have:
+                continue
+            print(('replace ' if apply else 'would replace ') + f'phoneScreenshots {code}: ' + ', '.join(x.split('/')[-1] for x in shots))
+            if apply:
+                ok(s.delete(f'{API}/edits/{e}/listings/{code}/phoneScreenshots'))
+                for f in shots:
+                    with open(f, 'rb') as fh:
+                        ok(s.post(f'{UP}/edits/{e}/listings/{code}/phoneScreenshots', params={'uploadType': 'media'},
+                                  data=fh, headers={'Content-Type': 'image/jpeg'}, timeout=300))
     if apply:
         ok(s.post(f'{API}/edits/{e}:commit'))
-        print(f'feature graphics for {season} committed ({len(todo)} listings)')
+        print(f'feature graphics and screenshots for {season} committed ({len(todo)} listings)')
     else:
         s.delete(f'{API}/edits/{e}')
         print('dry run: nothing changed')
