@@ -14,8 +14,9 @@ SEASON = {
     'summer': dict(bg='seaside_bg', tone=(1.12, 1.04, (255, 240, 200, 18)), outfit='summer',
                    props=[('parasol_summer', 190, 545, 150), ('sandcastle_summer', 110, 1000, 270)],
                    fx=[('sun_sparkle', 9, 30)]),
-    'autumn': dict(bg='yard_bg', tone=(1.25, 1.0, (255, 150, 50, 70)), outfit='autumn',
-                   props=[('big_tree_autumn', 230, 540, 120), ('lantern_autumn', 120, 1000, 250)],
+    # 가을은 다음 업데이트 구역(사과 과수원) 그림을 미리 쓴다 (content/updates/u1_orchard)
+    'autumn': dict(bg='@orchard_bg', tone=(1.1, 1.0, (255, 170, 80, 40)), outfit='autumn',
+                   props=[('@apple_tree_autumn', 230, 540, 120), ('@scarecrow_autumn', 130, 1000, 245)],
                    fx=[('maple_leaf', 22, 34), ('ginkgo_leaf', 12, 30)]),
     'winter': dict(bg='snow_village_bg', tone=(1.0, 0.95, (120, 140, 210, 35)), outfit='winter',
                    props=[('big_tree_winter', 230, 540, 120), ('snowman', 120, 1000, 255)],
@@ -23,10 +24,31 @@ SEASON = {
 }
 
 
+ORCHARD = 'content/updates/u1_orchard/art/'
+
+# 친구는 최대 5명: 가운데 민트(bori)는 늘 고정, 나머지 4명과 자세는 시즌마다 바꾼다
+# 자리: 뒤 왼쪽 · 앞 왼쪽 · (가운데 민트) · 앞 오른쪽 · 뒤 오른쪽
+SLOTS = [(590, 222, 160), (668, 268, 182), (782, 238, 220), (892, 268, 182), (952, 222, 150)]
+LINEUP = {
+    'spring': [('nabi', 'wave'), ('dubu', 'happy'), ('bori', 'happy'), ('kongtteok', 'idle'), ('danpung', 'wave')],
+    'summer': [('pposong', 'happy'), ('bogeul', 'wave'), ('bori', 'wave'), ('kwak', 'happy'), ('dotori', 'idle')],
+    'autumn': [('mochi', 'idle'), ('dotori', 'happy'), ('bori', 'idle'), ('danpung', 'happy'), ('nabi', 'wave')],
+    'winter': [('kwak', 'wave'), ('pposong', 'idle'), ('bori', 'happy'), ('dubu', 'wave'), ('bogeul', 'happy')],
+}
+
+
+def art(path):
+    # '@이름' = 비축 콘텐츠(사과 과수원) 그림
+    if '/@' in path:
+        d, n = path.split('/@')
+        return ORCHARD + d.split('/')[-1] + '/' + n
+    return A + path
+
+
 def make(season, lang, out):
     s = SEASON[season]
     random.seed(7)
-    bg = Image.open(A + f"areas/{s['bg']}.webp").convert('RGB')
+    bg = Image.open(art(f"areas/{s['bg']}.webp")).convert('RGB')
     k = max(W / bg.width, H / bg.height) * 1.05
     bg = bg.resize((int(bg.width * k), int(bg.height * k)), Image.LANCZOS)
     y0 = int((bg.height - H) * 0.35)
@@ -36,40 +58,31 @@ def make(season, lang, out):
     im = Image.alpha_composite(im, Image.new('RGBA', (W, H), tint))
     # 뒤 장식
     for name, h, cx, top in s['props']:
-        a = sf.fit_h(sf.load(A + f'decor/{name}.webp'), h)
+        a = sf.fit_h(sf.load(art(f'decor/{name}.webp')), h)
         x = cx - a.width // 2
         im.alpha_composite(sf.rim(a, 5), (x, top)); im.alpha_composite(a, (x, top))
-    # 친구 (시즌 의상)
-    back = [('kongtteok', 'wave', 150, 600, 250), ('mochi', 'happy', 160, 700, 232), ('nabi', 'wave', 165, 806, 240), ('pposong', 'happy', 150, 905, 262)]
-    front = [('dotori', 'happy', 170, 560, 300), ('dubu', 'wave', 190, 655, 288), ('bori', 'happy', 215, 760, 272), ('kwak', 'happy', 185, 875, 296), ('danpung', 'wave', 170, 955, 318)]
-    for grp in (back, front):
-        for fid, pose, h, cx, top in grp:
-            p = A + f"friends/{fid}_{s['outfit']}_{pose}.webp"
-            if not os.path.exists(p):
-                p = A + f'friends/{fid}_{pose}.webp'
-            a = sf.fit_h(sf.load(p), h)
-            x = cx - a.width // 2
-            sh = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-            ImageDraw.Draw(sh).ellipse((x + a.width * 0.18, top + h - 14, x + a.width * 0.82, top + h + 8), fill=(40, 60, 30, 80))
-            im = Image.alpha_composite(im, sh.filter(ImageFilter.GaussianBlur(6)))
-            im.alpha_composite(sf.rim(a, 5), (x, top)); im.alpha_composite(a, (x, top))
-    # 앞쪽 꽃덤불 (겨울은 하얗게 눈 덮인 느낌)
-    fg = sf.load(A + 'title/fg.webp'); fh = 128
+    # 친구 (시즌 의상, 최대 5명, 가운데 민트 고정)
+    order = [0, 4, 1, 3, 2]  # 뒤에서 앞으로, 민트는 맨 앞에
+    for i in order:
+        fid, pose = LINEUP[season][i]
+        cx, top, h = SLOTS[i]
+        p = A + f"friends/{fid}_{s['outfit']}_{pose}.webp"
+        if not os.path.exists(p):
+            p = A + f'friends/{fid}_{pose}.webp'
+        a = sf.fit_h(sf.load(p), h)
+        if i > 2:  # 오른쪽 친구는 가운데를 보게 좌우 반전
+            a = a.transpose(Image.FLIP_LEFT_RIGHT)
+        x = cx - a.width // 2
+        sh = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+        ImageDraw.Draw(sh).ellipse((x + a.width * 0.18, top + h - 14, x + a.width * 0.82, top + h + 8), fill=(40, 60, 30, 80))
+        im = Image.alpha_composite(im, sh.filter(ImageFilter.GaussianBlur(6)))
+        im.alpha_composite(sf.rim(a, 5), (x, top)); im.alpha_composite(a, (x, top))
+    # 앞쪽 시즌 덤불 띠 (docs/store/season/fg)
+    fg = sf.load(f'docs/store/season/fg/{season}.webp'); fh = 100
     fg = fg.resize((round(fg.width * fh / fg.height), fh), Image.LANCZOS)
-    if season == 'winter':
-        # 꽃 대신 눈 언덕: 같은 실루엣을 하얗게 채우고 위쪽만 살짝 하늘색 그늘
-        al = fg.split()[3]
-        snow = Image.new('RGBA', fg.size, (250, 252, 255, 255)); snow.putalpha(al)
-        shade = Image.new('RGBA', fg.size, (205, 220, 240, 0))
-        sa = al.filter(ImageFilter.MaxFilter(9)).point(lambda v: 0 if v else 0)
-        edge = Image.new('RGBA', fg.size, (150, 170, 200, 255)); edge.putalpha(al.filter(ImageFilter.MaxFilter(5)))
-        fg = Image.alpha_composite(edge, snow)
-    elif season == 'autumn':
-        r, g, b, al = fg.split()
-        fg = Image.merge('RGBA', (r.point(lambda v: min(255, int(v * 1.15 + 20))), g.point(lambda v: int(v * 0.85)), b.point(lambda v: int(v * 0.7)), al))
-    x = -60
+    x = -30
     while x < W:
-        im.alpha_composite(fg, (x, H - fh + 30)); x += fg.width - 40
+        im.alpha_composite(fg, (x, H - fh + 18)); x += fg.width - 30
     # 떨어지는 효과
     for name, n, sz in s['fx']:
         src = sf.load(A + f'fx/{name}.webp')
