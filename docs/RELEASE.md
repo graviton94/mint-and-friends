@@ -96,6 +96,6 @@ Play Console 앱 권한을 받은 서비스 계정으로 CI 가 직접 올린다
 
 ### 시즌 스토어 그래픽 (자동)
 - 그림: `python3 tool/store_feature_season.py <spring|summer|autumn|winter> ko en ja es` → `docs/store/season/<시즌>/<언어>.png` (기존 그림 조립, 친구 5명 · 가운데 민트 고정).
-- 올리기: Actions → Store season. 시즌 시작 사흘 전(2/26 · 5/29 · 8/29 · 11/28 한국 오전 10시) 자동 실행.
+- 올리기: Actions → Store season. 그래픽 이미지 + 휴대전화 스크린샷 8장([시즌 표지 `tool/store_cover_season.py`] + 기존 1~7, 8번 제외)을 함께 바꾼다. 시즌 시작 사흘 전(2/26 · 5/29 · 8/29 · 11/28 한국 오전 10시) 자동 실행.
 - **`docs/store/season/AUTO` 파일이 있어야 자동 실행이 실제로 바꾼다** (없으면 확인만). 정식 출시 때 이 파일을 만든다.
 - 등록정보 언어 6개(ko-KR · en-US · ja-JP · es-419 · es-ES · es-US)에 언어별 그림. 바뀐 등록정보는 Play 검토를 거친다(보통 몇 시간~1일).
