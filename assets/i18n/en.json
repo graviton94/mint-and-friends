@@ -476,6 +476,7 @@
   "social.err.notFriend": "Please reopen the friend list",
   "social.err.signIn": "An online account is needed",
   "social.err.failed": "Please try again later",
+  "social.err.recvLimit": "This friend got lots of gifts today. Try again tomorrow",
   "social.adj.0": "Cozy",
   "social.adj.1": "Sparkly",
   "social.adj.2": "Shy",

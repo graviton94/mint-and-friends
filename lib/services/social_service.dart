@@ -18,7 +18,9 @@ import 'app_config.dart';
 /// 친구(소셜): 친구 코드로 추가, 하루 한 번 선물, 친구 정원 구경, 운영 공지.
 ///
 /// Firestore 구조 (규칙: firestore.rules, 서버: functions/main.py sendGift)
-///   profiles/{uid}              공개 프로필 {name, code, level, area, placed, friends, avatar, updatedAt}
+///   profiles/{uid}              공개 프로필 {name, code, level, area, placed, friends, avatar, updatedAt,
+///                               days, invitedBy, invitedAt, invitedTs, invitedDays, score}
+///                               invitedTs = 초대를 처음 적은 서버 시각 (규칙: request.time 이어야 한다)
 ///   codes/{code}                친구 코드 → {uid, at} (만들기만, 고치기 · 지우기 불가)
 ///   users/{uid}/friends/{fuid}  내가 추가한 친구 {addedAt, lastGiftSentDay}
 ///   inbox/{uid}/items/{id}      받은 선물 {kind:'gift', fromUid, fromName, reward, at} (함수만 씀)
@@ -135,9 +137,17 @@ class SocialProfile {
   final String avatar;
 
   /// 플레이한 날 수 · 나를 초대한 사람 uid · 그때 (초대 보상 조건 확인용, D-045).
+  /// [invitedAt] 은 기기 시각이라 믿지 않는다 (예전 앱 호환으로 계속 쓴다).
   final int days;
   final String invitedBy;
   final int invitedAt;
+
+  /// 초대를 서버에 처음 적은 서버 시각 (ms, 0 = 아직 없음 · 예전 앱) 과 그때의 [days].
+  final int invitedTs;
+  final int invitedDays;
+
+  /// 이 프로필을 마지막으로 쓴 서버 시각 (ms). 초대 대기 기간은 서버 시각끼리만 잰다.
+  final int updatedAt;
 
   /// 꾸밈 점수 × 10 (D-046, 친구에게 보인다).
   final int score;
@@ -154,8 +164,18 @@ class SocialProfile {
     this.days = 0,
     this.invitedBy = '',
     this.invitedAt = 0,
+    this.invitedTs = 0,
+    this.invitedDays = 0,
+    this.updatedAt = 0,
     this.score = 0,
   });
+
+  /// 서버 시각 (Timestamp · 테스트용 DateTime) → ms. 숫자는 기기가 적은 값일 수 있어 받지 않는다.
+  static int _serverMs(Object? v) => v is Timestamp
+      ? v.millisecondsSinceEpoch
+      : v is DateTime
+      ? v.millisecondsSinceEpoch
+      : 0;
 
   static SocialProfile fromMap(String uid, Map<String, dynamic> m) {
     final ids = {for (final f in Friends.all) f.id};
@@ -177,11 +197,14 @@ class SocialProfile {
       days: max(0, (m['days'] as num?)?.toInt() ?? 0),
       invitedBy: m['invitedBy'] is String ? m['invitedBy'] as String : '',
       invitedAt: max(0, (m['invitedAt'] as num?)?.toInt() ?? 0),
+      invitedTs: _serverMs(m['invitedTs']),
+      invitedDays: max(0, (m['invitedDays'] as num?)?.toInt() ?? 0),
+      updatedAt: _serverMs(m['updatedAt']),
       score: max(0, (m['score'] as num?)?.toInt() ?? 0),
     );
   }
 
-  /// 서버에 쓰는 값 (updatedAt 은 백엔드가 붙인다).
+  /// 서버에 쓰는 값 (updatedAt · invitedTs 는 백엔드가 서버 시각으로 붙인다, invitedDays 는 그때만).
   Map<String, dynamic> toMap() => {
     'name': name,
     'code': code,
@@ -196,7 +219,12 @@ class SocialProfile {
     'score': score,
   };
 
-  SocialProfile copyWith({String? name, String? avatar}) => SocialProfile(
+  SocialProfile copyWith({
+    String? name,
+    String? avatar,
+    int? invitedTs,
+    int? invitedDays,
+  }) => SocialProfile(
     uid: uid,
     name: name ?? this.name,
     code: code,
@@ -208,15 +236,20 @@ class SocialProfile {
     days: days,
     invitedBy: invitedBy,
     invitedAt: invitedAt,
+    invitedTs: invitedTs ?? this.invitedTs,
+    invitedDays: invitedDays ?? this.invitedDays,
+    updatedAt: updatedAt,
     score: score,
   );
 
+  /// [prev] 는 서버에서 읽은 (또는 직전) 내 프로필: 서버 시각 값들은 거기서 이어 받는다.
   static SocialProfile ofGame(
     String uid,
     GameState g, {
     required String name,
     required String code,
     required String avatar,
+    SocialProfile? prev,
   }) => SocialProfile(
     uid: uid,
     name: name,
@@ -229,16 +262,34 @@ class SocialProfile {
     days: g.stat(Stat.daysPlayed),
     invitedBy: g.invitedBy ?? '',
     invitedAt: g.invitedAt?.millisecondsSinceEpoch ?? 0,
+    invitedTs: prev?.invitedTs ?? 0,
+    invitedDays: prev?.invitedDays ?? 0,
+    updatedAt: prev?.updatedAt ?? 0,
     score: (g.decorScore * 10).round(),
   );
 
   /// 초대 보상 조건을 채웠는지 (초대 뒤 7일 · 서로 다른 5일 · Lv15).
-  bool inviteDone(DateTime now) =>
-      invitedAt > 0 &&
-      level >= Invite.needLevel &&
-      days >= Invite.needDays &&
-      now.difference(DateTime.fromMillisecondsSinceEpoch(invitedAt)) >=
-          Invite.wait;
+  /// 기기 시각(invitedAt · 내 시계)은 믿지 않는다: 초대 친구가 서버에 적은 두 시각
+  /// (invitedTs → updatedAt) 사이가 7일 이상이어야 하고, 그 사이에 할 수 없는 만큼
+  /// 플레이했다고 적었으면 (지난 날 수 + 1 보다 많은 접속일) 인정하지 않는다.
+  bool inviteDone() {
+    if (invitedTs <= 0 || updatedAt <= invitedTs) return false;
+    final elapsed = Duration(milliseconds: updatedAt - invitedTs);
+    if (elapsed < Invite.wait) return false;
+    if (level < Invite.needLevel || days < Invite.needDays) return false;
+    return days - invitedDays <= elapsed.inDays + 1;
+  }
+
+  /// 초대 대기 남은 날 (표시용). 서버 시각이 아직 없으면 (예전 앱) 7일 그대로.
+  int inviteDaysLeft(DateTime now) => invitedTs <= 0
+      ? Invite.wait.inDays
+      : max(
+          0,
+          Invite.wait.inDays -
+              now
+                  .difference(DateTime.fromMillisecondsSinceEpoch(invitedTs))
+                  .inDays,
+        );
 
   /// 친구 정원 구경용 일회용 게임 상태 (저장 · 진행 없음).
   GameState toVisitGame() {
@@ -403,7 +454,14 @@ class SocialException implements Exception {
 abstract class SocialBackend {
   bool get available;
   Future<Map<String, dynamic>?> getProfile(String uid);
-  Future<void> putProfile(String uid, Map<String, dynamic> data);
+
+  /// 프로필 쓰기 (합치기: [data] 에 없는 필드는 그대로 둔다). updatedAt 은 서버 시각.
+  /// [stampInvite] 면 invitedTs 도 서버 시각으로 적는다 (규칙이 request.time 만 받는다).
+  Future<void> putProfile(
+    String uid,
+    Map<String, dynamic> data, {
+    bool stampInvite = false,
+  });
 
   /// 코드를 내 것으로 예약. 이미 다른 사람 것이면 false.
   Future<bool> reserveCode(String code, String uid);
@@ -440,10 +498,15 @@ class FirestoreSocialBackend implements SocialBackend {
       (await _db.collection('profiles').doc(uid).get()).data();
 
   @override
-  Future<void> putProfile(String uid, Map<String, dynamic> data) => _db
-      .collection('profiles')
-      .doc(uid)
-      .set({...data, 'updatedAt': FieldValue.serverTimestamp()});
+  Future<void> putProfile(
+    String uid,
+    Map<String, dynamic> data, {
+    bool stampInvite = false,
+  }) => _db.collection('profiles').doc(uid).set({
+    ...data,
+    'updatedAt': FieldValue.serverTimestamp(),
+    if (stampInvite) 'invitedTs': FieldValue.serverTimestamp(),
+  }, SetOptions(merge: true));
 
   @override
   Future<bool> reserveCode(String code, String uid) =>
@@ -574,7 +637,10 @@ class FirestoreSocialBackend implements SocialBackend {
     } on FirebaseFunctionsException catch (e) {
       throw SocialException(switch (e.code) {
         'already-exists' => 'already',
-        'resource-exhausted' => 'limit',
+        'resource-exhausted' =>
+          (e.details is Map && (e.details as Map)['reason'] == 'receiver')
+              ? 'recvLimit'
+              : 'limit',
         'failed-precondition' => 'notFriend',
         'not-found' => 'notFound',
         'deadline-exceeded' => 'timeout',
@@ -720,16 +786,18 @@ class SocialService extends ChangeNotifier {
   Future<void> _ensure(String u, GameState game) async {
     final data = await _net(backend.getProfile(u));
     var name = '', code = '', avatar = _avatarPref;
-    if (data != null) {
-      final p = SocialProfile.fromMap(u, data);
-      name = p.name;
-      code = p.code;
-      avatar = p.avatar;
+    final prev = data == null ? null : SocialProfile.fromMap(u, data);
+    if (prev != null) {
+      name = prev.name;
+      code = prev.code;
+      avatar = prev.avatar;
     }
-    if (name.isEmpty) {
-      final acc = cleanName(_accountName() ?? '');
-      name = acc.isNotEmpty ? acc : generatedName();
-    }
+    // 공개 이름은 게임 닉네임만. 로그인 계정 이름(구글 · 카카오, 실명일 수 있다)은 쓰지 않고,
+    // 예전에 계정 이름으로 올라간 프로필은 새 닉네임으로 바꾼다 (이 기기에서 직접 고른 이름이면 그대로).
+    final acc = cleanName(_accountName() ?? '');
+    final saved = cleanName(prefs.getString(_k('name')) ?? '');
+    if (name.isNotEmpty && name == acc && name != saved) name = '';
+    if (name.isEmpty) name = saved.isNotEmpty ? saved : generatedName();
     if (!FriendCode.isValid(code)) {
       code = '';
       for (var i = 0; i < 6 && code.isEmpty; i++) {
@@ -739,7 +807,17 @@ class SocialService extends ChangeNotifier {
       if (code.isEmpty) throw SocialException('failed');
     }
     if (_uid != u) return; // 그 사이 계정이 바뀌었다
-    me = SocialProfile.ofGame(u, game, name: name, code: code, avatar: avatar);
+    unawaited(
+      prefs.setString(_k('name'), name),
+    ); // 기기에도 기억 (계정 이름과 같아도 내가 고른 이름인지 판단용)
+    me = SocialProfile.ofGame(
+      u,
+      game,
+      name: name,
+      code: code,
+      avatar: avatar,
+      prev: prev,
+    );
     await _writeProfile(force: true);
     notifyListeners();
   }
@@ -755,6 +833,7 @@ class SocialService extends ChangeNotifier {
       name: m.name,
       code: m.code,
       avatar: m.avatar,
+      prev: m,
     );
     try {
       await _writeProfile(force: force);
@@ -770,16 +849,32 @@ class SocialService extends ChangeNotifier {
     final sig = jsonEncode(map);
     final now = _clock();
     final last = _lastProfileAt;
+    // 초대받았는데 서버 시각이 아직 없으면 (방금 초대 · 예전 앱에서 넘어옴) 이번에 적는다
+    final stamp = m.invitedBy.isNotEmpty && m.invitedTs <= 0;
     if (!force && last != null) {
       if (sig == _lastProfileSig &&
+          !stamp &&
           now.difference(last) < SocialConfig.profileRefresh) {
         return;
       }
       if (now.difference(last) < SocialConfig.profileMinGap) return;
     }
     _lastProfileAt = now;
-    await _net(backend.putProfile(m.uid, map));
+    await _net(
+      backend.putProfile(m.uid, {
+        ...map,
+        if (stamp) 'invitedDays': m.days,
+      }, stampInvite: stamp),
+    );
     _lastProfileSig = sig;
+    final cur = me;
+    if (stamp && cur != null && cur.invitedTs <= 0) {
+      // 정확한 서버 시각은 다음 _ensure 때 읽는다 (표시용 근삿값)
+      me = cur.copyWith(
+        invitedTs: now.millisecondsSinceEpoch,
+        invitedDays: m.days,
+      );
+    }
   }
 
   Future<void> rename(String raw) async {
@@ -791,6 +886,7 @@ class SocialService extends ChangeNotifier {
     notifyListeners();
     try {
       await _writeProfile(force: true);
+      await prefs.setString(_k('name'), name);
     } on SocialException {
       me = old;
       notifyListeners();
@@ -1083,7 +1179,7 @@ class SocialService extends ChangeNotifier {
     final list = [
       for (final e in data.entries)
         SocialFriend(e.key, SocialProfile.fromMap(e.key, e.value)),
-    ]..sort((a, b) => a.profile.invitedAt.compareTo(b.profile.invitedAt));
+    ]..sort((a, b) => a.profile.invitedTs.compareTo(b.profile.invitedTs));
     invitees = list;
     var got = 0;
     for (final f in list) {
@@ -1096,7 +1192,7 @@ class SocialService extends ChangeNotifier {
           // 다음 기회에
         }
       }
-      if (f.profile.inviteDone(_clock()) &&
+      if (f.profile.inviteDone() &&
           game.grantInviteReward(f.uid, f.profile.name)) {
         got++;
       }

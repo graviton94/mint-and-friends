@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
@@ -1435,17 +1434,7 @@ class _InviteCard extends StatelessWidget {
                             'needLv': Invite.needLevel,
                             'days': f.profile.days,
                             'needDays': Invite.needDays,
-                            'left': max(
-                              0,
-                              Invite.wait.inDays -
-                                  now
-                                      .difference(
-                                        DateTime.fromMillisecondsSinceEpoch(
-                                          f.profile.invitedAt,
-                                        ),
-                                      )
-                                      .inDays,
-                            ),
+                            'left': f.profile.inviteDaysLeft(now),
                           }),
                     style: const TextStyle(
                       fontSize: 13,

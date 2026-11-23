@@ -476,6 +476,7 @@
   "social.err.notFriend": "フレンド一覧を開き直してね",
   "social.err.signIn": "オンラインアカウントが必要です",
   "social.err.failed": "少ししてからもう一度試してね",
+  "social.err.recvLimit": "このフレンドは今日たくさんプレゼントをもらいました。また明日送ってね",
   "social.adj.0": "ふわふわ",
   "social.adj.1": "きらきら",
   "social.adj.2": "はにかみ",

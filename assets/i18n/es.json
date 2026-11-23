@@ -476,6 +476,7 @@
   "social.err.notFriend": "Vuelve a abrir la lista de amigos",
   "social.err.signIn": "Se necesita una cuenta en línea",
   "social.err.failed": "Inténtalo de nuevo más tarde",
+  "social.err.recvLimit": "Este amigo ya recibió muchos regalos hoy. Inténtalo mañana",
   "social.adj.0": "Dulce",
   "social.adj.1": "Brillante",
   "social.adj.2": "Gentil",
