@@ -65,7 +65,7 @@ def make(season, lang, out):
     logo = sf.fit_h(sf.load(lp if os.path.exists(lp) else A + 'title/logo_en.webp'), 330)
     if logo.width > 940:
         logo = logo.resize((940, round(logo.height * 940 / logo.width)), Image.LANCZOS)
-    lx, ly = (W - logo.width) // 2, 150
+    lx, ly = (W - logo.width) // 2, 300
     g, pad = sf.glow(logo, 30, (255, 252, 235), 255)
     im.alpha_composite(g, (lx - pad, ly - pad)); im.alpha_composite(logo, (lx, ly))
     text, font = fs.TAG[season].get(lang, sf.TAG[lang])
@@ -78,8 +78,30 @@ def make(season, lang, out):
     d = ImageDraw.Draw(im)
     d.rounded_rectangle((bx0, by, bx1, by + 100), 50, fill=(255, 251, 240), outline=(122, 82, 48), width=6)
     d.text((cx, by + 52), text, font=f, fill=(122, 82, 48), anchor='mm')
+    # 우상단 딱지: 시즌 끝나는 날 (할인 딱지처럼)
+    badge = sf.load(A + 'frames/sale_badge.webp')
+    bs = 300
+    badge = badge.resize((bs, round(badge.height * bs / badge.width)), Image.LANCZOS).rotate(12, expand=True, resample=Image.BICUBIC)
+    bxp, byp = W - badge.width - 10, 20
+    im.alpha_composite(badge, (bxp, byp))
+    cxb, cyb = bxp + badge.width // 2, byp + badge.height // 2
+    d = ImageDraw.Draw(im)
+    big = ImageFont.truetype(sf.JUA, 64)
+    small_font = sf.IPA if lang == 'ja' else sf.JUA
+    d.text((cxb, cyb - 18), END[season], font=big, fill=(255, 255, 255), anchor='mm', stroke_width=4, stroke_fill=(150, 30, 30))
+    d.text((cxb, cyb + 40), ONLY[season][lang], font=ImageFont.truetype(small_font, 32), fill=(255, 245, 220), anchor='mm', stroke_width=3, stroke_fill=(150, 30, 30))
     os.makedirs(os.path.dirname(out), exist_ok=True)
     im.convert('RGB').save(out, quality=90)
+
+
+# 시즌이 끝나는 날 (게임 안 시즌 의상 · 장식 판매 기간과 같음: 3~5 · 6~8 · 9~11 · 12~2월)
+END = {'spring': '~5/31!', 'summer': '~8/31!', 'autumn': '~11/30!', 'winter': '~2/28!'}
+ONLY = {
+    'spring': {'ko': '봄 한정', 'en': 'Spring only', 'ja': '春限定', 'es': 'Primavera'},
+    'summer': {'ko': '여름 한정', 'en': 'Summer only', 'ja': '夏限定', 'es': 'Verano'},
+    'autumn': {'ko': '가을 한정', 'en': 'Autumn only', 'ja': '秋限定', 'es': 'Otoño'},
+    'winter': {'ko': '겨울 한정', 'en': 'Winter only', 'ja': '冬限定', 'es': 'Invierno'},
+}
 
 
 if __name__ == '__main__':

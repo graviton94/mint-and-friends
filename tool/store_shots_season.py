@@ -46,7 +46,9 @@ top, bot, tcol, scol, fx, (deco_l, deco_r) = STYLE
 for lang in langs:
     font = FONT.get(lang, 'assets/fonts/Jua.ttf')
     for s in store['shots'][:7]:
-        t, sub = s[lang]; i = s['n']
+        t, _ = s[lang]; i = s['n']
+        if not t.endswith(('!', '！', '¡')):
+            t = t + ('！' if lang == 'ja' else '!')
         random.seed(i * 7 + len(season))
         im = Image.new('RGB', (W, H))
         for y in range(H):
@@ -61,25 +63,16 @@ for lang in langs:
                 a = fit_h(src, z).rotate(random.uniform(-40, 40), expand=True, resample=Image.BICUBIC)
                 a.putalpha(a.split()[3].point(lambda v: int(v * 0.85)))
                 im.alpha_composite(a, (random.randint(0, W - z), random.randint(0, H - z)))
-        # 위쪽 양옆 시즌 장식 (제목 옆)
-        for name, x0, h in ((deco_l, -30, 230), (deco_r, W - 170, 180)):
-            a = fit_h(load(f'{A}decor/{name}.webp'), h)
-            x = x0 if x0 >= 0 else x0
-            im.alpha_composite(rim(a, 7), (x, 40)); im.alpha_composite(a, (x, 40))
         d = ImageDraw.Draw(im)
         size = 76
-        while d.textlength(t, font=ImageFont.truetype(font, size)) >= W - 380:
+        while d.textlength(t, font=ImageFont.truetype(font, size)) >= W - 120:
             size -= 4
-        d.text((W / 2, 120), t, font=ImageFont.truetype(font, size), fill=tcol, anchor='mm')
-        fs = 42
-        while d.textlength(sub, font=ImageFont.truetype(font, fs)) >= W - 360:
-            fs -= 2
-        d.text((W / 2, 205), sub, font=ImageFont.truetype(font, fs), fill=scol, anchor='mm')
+        d.text((W / 2, 100), t, font=ImageFont.truetype(font, size), fill=tcol, anchor='mm')
         # 게임 화면 (기존과 같은 틀)
         shot = Image.open(f'{raw}{lang}_{i}.png').convert('RGB')
         h = 1560; w = int(shot.width * h / shot.height)
         shot = shot.resize((w, h), Image.LANCZOS)
-        x, y = (W - w) // 2, 290
+        x, y = (W - w) // 2, 190
         sh = Image.new('L', (W, H), 0)
         ImageDraw.Draw(sh).rounded_rectangle((x + 6, y + 14, x + w + 6, y + h + 14), 44, fill=90)
         im.paste((60, 70, 90, 255), (0, 0), sh.filter(ImageFilter.GaussianBlur(18)))
