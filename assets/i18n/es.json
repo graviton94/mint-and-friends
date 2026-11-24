@@ -1040,5 +1040,6 @@
   "report.note": "Se envían la versión de la app y tu nivel (sin el nombre de la cuenta)",
   "report.send": "Enviar",
   "report.sent": "¡Gracias! Lo revisaremos",
-  "report.saved": "Guardado. Lo enviaremos cuando haya conexión"
+  "report.saved": "Guardado. Lo enviaremos cuando haya conexión",
+  "patch.1.0.10": "• Arreglamos el inicio de sesión con Google y Kakao en algunos dispositivos\n• Si falla el inicio de sesión verás un aviso y nos llegará automáticamente\n• Añadimos 'Informar un problema' en Ajustes\n\n¡Te enviamos energía como regalo de actualización!"
 }

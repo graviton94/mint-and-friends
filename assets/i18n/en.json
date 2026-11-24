@@ -1040,5 +1040,6 @@
   "report.note": "Your app version and level are included (no account name)",
   "report.send": "Send",
   "report.sent": "Thanks! We'll take a look",
-  "report.saved": "Saved. We'll send it once you're online"
+  "report.saved": "Saved. We'll send it once you're online",
+  "patch.1.0.10": "• Fixed Google and Kakao sign-in not working on some devices\n• If sign-in fails, you'll see a notice and we're notified automatically\n• Added 'Report a problem' in Settings\n\nHere is some energy as an update gift!"
 }
