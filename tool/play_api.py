@@ -88,6 +88,19 @@ def feature(season, apply=False):
             with open(f, 'rb') as fh:
                 ok(s.post(f'{UP}/edits/{e}/listings/{code}/featureGraphic', params={'uploadType': 'media'},
                           data=fh, headers={'Content-Type': 'image/png'}, timeout=300))
+    # 스토어 아이콘(512): 시즌판 (홈 화면 아이콘은 앱 업데이트로, tool/launcher_icon.py)
+    icon = f'docs/store/season/{season}/icon_512.png'
+    if os.path.exists(icon):
+        for lang, codes in FEATURE_LANG.items():
+            for code in codes:
+                if code not in have:
+                    continue
+                print(('replace ' if apply else 'would replace ') + f'icon {code}: {icon}')
+                if apply:
+                    ok(s.delete(f'{API}/edits/{e}/listings/{code}/icon'))
+                    with open(icon, 'rb') as fh:
+                        ok(s.post(f'{UP}/edits/{e}/listings/{code}/icon', params={'uploadType': 'media'},
+                                  data=fh, headers={'Content-Type': 'image/png'}, timeout=300))
     # 휴대전화 스크린샷: [시즌 표지] + 기존 1~7 (8번은 뺀다)
     for lang, codes in FEATURE_LANG.items():
         shots = [f'docs/store/season/{season}/shot_{lang}.jpg'] + [f'docs/store/screenshots/{lang}/{i}.jpg' for i in range(1, 8)]
