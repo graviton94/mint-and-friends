@@ -1028,5 +1028,7 @@
   "notify.test.title": "Prueba de Mint & Friends",
   "notify.test.body": "¡Así se ven los avisos!",
   "notify.test.sent": "¡Enviado! ¿Apareció?",
-  "notify.test.blocked": "Los avisos de esta app están desactivados en el teléfono"
+  "notify.test.blocked": "Los avisos de esta app están desactivados en el teléfono",
+  "buy.confirmTitle": "¿Comprar esto?",
+  "buy.confirm": "Comprar"
 }

@@ -1029,5 +1029,7 @@
   "notify.test.title": "민트앤프렌즈 알림 테스트",
   "notify.test.body": "이렇게 알림이 와요!",
   "notify.test.sent": "알림을 보냈어요. 위에 떴나요?",
-  "notify.test.blocked": "휴대폰 설정에서 이 앱 알림이 꺼져 있어요"
+  "notify.test.blocked": "휴대폰 설정에서 이 앱 알림이 꺼져 있어요",
+  "buy.confirmTitle": "구매하시겠어요?",
+  "buy.confirm": "구매"
 }

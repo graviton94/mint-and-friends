@@ -1028,5 +1028,7 @@
   "notify.test.title": "Mint & Friends test",
   "notify.test.body": "This is how notifications look!",
   "notify.test.sent": "Sent! Did it show up?",
-  "notify.test.blocked": "Notifications are off for this app in phone settings"
+  "notify.test.blocked": "Notifications are off for this app in phone settings",
+  "buy.confirmTitle": "Buy this?",
+  "buy.confirm": "Buy"
 }

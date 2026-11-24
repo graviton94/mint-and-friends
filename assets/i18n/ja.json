@@ -1028,5 +1028,7 @@
   "notify.test.title": "ミント&フレンズ 通知テスト",
   "notify.test.body": "こんなふうに通知が届きます!",
   "notify.test.sent": "通知を送ったよ。表示された?",
-  "notify.test.blocked": "端末の設定でこのアプリの通知がオフです"
+  "notify.test.blocked": "端末の設定でこのアプリの通知がオフです",
+  "buy.confirmTitle": "購入しますか?",
+  "buy.confirm": "購入"
 }

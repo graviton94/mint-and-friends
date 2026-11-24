@@ -702,7 +702,14 @@ Future<void> showStyleSheet(
                 FilledButton.styleFrom(minimumSize: const Size(0, 46)),
                 'button_purple',
               ),
-              onPressed: () {
+              onPressed: () async {
+                final go = await confirmPurchase(
+                  context,
+                  art: Art.icon('season_fx'),
+                  title: tr('style.$season'),
+                  price: '[[diamond]] ${Garden.seasonSetGems}',
+                );
+                if (!go || !context.mounted) return;
                 if (game.buySeasonSet(area, setSlots) == StyleResult.ok) {
                   sfx(Sfx.unlock);
                 } else {
@@ -878,7 +885,18 @@ class _StyleCard extends StatelessWidget {
             ),
             onPressed: current || !affordable
                 ? null
-                : () {
+                : () async {
+                    if (!owned) {
+                      final go = await confirmPurchase(
+                        context,
+                        art: style == 0
+                            ? Art.decor(d)
+                            : Art.decorStyle(d, style),
+                        title: tr('style.$style'),
+                        price: label,
+                      );
+                      if (!go || !context.mounted) return;
+                    }
                     switch (game.setStyle(area, slot, style)) {
                       case StyleResult.ok:
                         sfx(Sfx.unlock);
@@ -1007,7 +1025,16 @@ class _OutfitCard extends StatelessWidget {
                             !outfit!.onSaleIn(game.now.month) ||
                             game.gems < outfit!.gems))
                 ? null
-                : () {
+                : () async {
+                    if (!owned) {
+                      final go = await confirmPurchase(
+                        context,
+                        art: Art.friend(def, outfit: id),
+                        title: tr(outfit!.key),
+                        price: label,
+                      );
+                      if (!go || !context.mounted) return;
+                    }
                     final r = game.wearOutfit(def.id, id);
                     if (r == StyleResult.ok) {
                       sfx(Sfx.unlock);
@@ -1483,6 +1510,7 @@ Future<void> _shopSheet(
               note: tr('shop.coinPack.$i'),
               button: '[[diamond]] ${Gems.coinPacks[i].$1}',
               enabled: game.gems >= Gems.coinPacks[i].$1,
+              confirm: true,
               onTap: () {
                 final c = game.coinPackAmount(i);
                 if (game.buyCoinPack(i)) {
@@ -1501,6 +1529,7 @@ Future<void> _shopSheet(
               note: tr('shop.boostTime', {'n': Boosts.perGems[k]!.inMinutes}),
               button: '[[diamond]] ${Boosts.gemCost[k]}',
               enabled: game.gems >= Boosts.gemCost[k]! && game.canBuyBoostOf(k),
+              confirm: true,
               onTap: () {
                 if (game.buyBoost(k)) _boostBought(context, k, gems: true);
               },
@@ -1510,6 +1539,7 @@ Future<void> _shopSheet(
             title: tr('shop.refillShort', {'n': Gems.refillEnergy}),
             button: '[[diamond]] ${game.refillCost}',
             enabled: game.gems >= game.refillCost,
+            confirm: true,
             onTap: () {
               if (game.buyEnergyRefill()) {
                 RewardPopup.show(
@@ -1530,6 +1560,7 @@ Future<void> _shopSheet(
                 ? tr('market.boardFull')
                 : '[[diamond]] ${game.surpriseGems}',
             enabled: !game.boardFull && game.gems >= game.surpriseGems,
+            confirm: true,
             onTap: () {
               if (game.buySurprise(shown: feat)) sfx(Sfx.unlock);
             },
@@ -1545,6 +1576,7 @@ Future<void> _shopSheet(
             enabled:
                 !game.effects.contains(Starter.effect) &&
                 game.gems >= Gems.effectGems,
+            confirm: true,
             onTap: () {
               if (game.buyEffect(Starter.effect)) sfx(Sfx.unlock);
             },
@@ -1628,6 +1660,7 @@ Widget _offerCard(
     ad: o.kind == 4,
     button: button,
     enabled: enabled,
+    confirm: o.kind != 1 && o.kind != 4 && o.price > 0,
     onTap: () async {
       var watched = false;
       if (o.kind == 4) {
@@ -1705,6 +1738,42 @@ class _CardGrid extends StatelessWidget {
 }
 
 /// 상점 카드: 위 그림 · 이름 · 짧은 설명 · 아래 버튼 (가격).
+/// 재화(다이아 · 코인)로 사기 전에 묻는다: '구매하시겠어요?' + 그림 · 이름 · 가격. 사면 true.
+Future<bool> confirmPurchase(
+  BuildContext context, {
+  required ArtRef art,
+  required String title,
+  required String price,
+}) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => GameDialog(
+      title: IconText(tr('buy.confirmTitle'), textAlign: TextAlign.center),
+      content: PopupHero(art: ArtImage(art, size: 76), big: price, note: title),
+      actionsAlignment: MainAxisAlignment.center,
+      onClose: () => Navigator.pop(ctx, false),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: IconText(tr('common.cancel')),
+        ),
+        FilledButton(
+          style: framedButton(
+            FilledButton.styleFrom(minimumSize: const Size(120, 48)),
+            'button_green',
+          ),
+          onPressed: () => Navigator.pop(ctx, true),
+          child: IconText(
+            tr('buy.confirm'),
+            style: const TextStyle(fontSize: 18),
+          ),
+        ),
+      ],
+    ),
+  );
+  return ok == true;
+}
+
 class _ShopCard extends StatelessWidget {
   const _ShopCard({
     required this.icon,
@@ -1716,7 +1785,11 @@ class _ShopCard extends StatelessWidget {
     this.tag,
     this.sticker,
     this.ad = false,
+    this.confirm = false,
   });
+
+  /// 재화로 사는 칸: 누르면 '구매하시겠어요?' 를 먼저 묻는다 (결제 · 광고 · 무료 칸은 묻지 않음).
+  final bool confirm;
   final ArtRef icon;
   final String title;
   final String? note;
@@ -1785,7 +1858,20 @@ class _ShopCard extends StatelessWidget {
                     ),
                     ad ? 'button_purple' : 'button_green',
                   ),
-                  onPressed: enabled ? onTap : null,
+                  onPressed: !enabled
+                      ? null
+                      : confirm
+                      ? () async {
+                          if (await confirmPurchase(
+                            context,
+                            art: icon,
+                            title: title,
+                            price: button,
+                          )) {
+                            onTap();
+                          }
+                        }
+                      : onTap,
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: IconText(
@@ -2399,8 +2485,16 @@ class _BoostRow extends StatelessWidget {
                       }),
                       light: false,
                       onTap: game.canBuyBoostOf(kind) && game.gems >= cost
-                          ? () {
-                              if (game.buyBoost(kind)) {
+                          ? () async {
+                              final go = await confirmPurchase(
+                                context,
+                                art: Art.icon(boostIcon(kind)),
+                                title: tr('boost.${kind.name}'),
+                                price: '[[diamond]] $cost',
+                              );
+                              if (go &&
+                                  context.mounted &&
+                                  game.buyBoost(kind)) {
                                 _boostBought(context, kind, gems: true);
                               }
                             }
