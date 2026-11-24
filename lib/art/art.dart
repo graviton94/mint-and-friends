@@ -157,6 +157,15 @@ class Art {
   static ArtRef ui(String name, String emoji) =>
       ArtRef('assets/art/ui/$name.webp', emoji);
 
+  /// 시스템 창 민트 (mint_sorry · mint_wait · mint_offline · mint_thanks · mint_fixing · mint_report).
+  /// 아직 그림이 없으면 기존 민트 자세로 대신한다.
+  static ArtRef mint(String mood, {String fallbackPose = 'idle'}) {
+    final r = ArtRef('assets/art/ui/mint_$mood.webp', '');
+    return r.available
+        ? r
+        : ArtRef('assets/art/friends/bori_$fallbackPose.webp', '');
+  }
+
   /// UI 아이콘. 발주서 "UI 아이콘 2·3" 시트로 받는다. 파일이 없으면 이모지로 대신 그린다.
   static const Map<String, String> iconFallback = {
     'golden_seed': '🌰',

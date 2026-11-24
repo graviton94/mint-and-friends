@@ -14,6 +14,7 @@ import '../services/audio_service.dart';
 import '../services/analytics_service.dart';
 import '../services/billing_service.dart';
 import '../services/dev_log.dart';
+import '../services/feedback_service.dart';
 import '../services/notify_service.dart';
 import 'renew_ui.dart';
 import 'theme.dart';
@@ -2722,6 +2723,19 @@ Future<void> showSettingsSheet(
         IconText(tr('settings.account'), style: const TextStyle(fontSize: 18)),
         const SizedBox(height: 6),
         accountSection(),
+        const SizedBox(height: 18),
+        // 문제 알리기: 글 + 진단이 운영팀에 바로 간다
+        Builder(
+          builder: (ctx) => OutlinedButton.icon(
+            onPressed: () =>
+                showReportDialog(ctx, version: version, game: game),
+            icon: ArtImage(Art.icon('letter'), size: 22),
+            label: IconText(
+              tr('report.button'),
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+        ),
         if (version.isNotEmpty) ...[
           const SizedBox(height: 18),
           // 버전 글자를 7번 누르면 개발자 모드 (성장 로그)
@@ -2793,6 +2807,75 @@ class SheetFrame extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// '문제 알리기' 창: 무슨 일이 있었는지 적으면 앱 버전 · 언어 · 레벨 · 구역이 함께 운영팀에 간다.
+Future<void> showReportDialog(
+  BuildContext context, {
+  String version = '',
+  GameState? game,
+}) async {
+  final c = TextEditingController();
+  final text = await showDialog<String>(
+    context: context,
+    builder: (ctx) => GameDialog(
+      title: IconText(tr('report.title'), textAlign: TextAlign.center),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ArtImage(Art.mint('report', fallbackPose: 'wave'), size: 84),
+          const SizedBox(height: 8),
+          TextField(
+            controller: c,
+            maxLength: FeedbackService.maxText,
+            minLines: 3,
+            maxLines: 6,
+            decoration: InputDecoration(
+              hintText: tr('report.hint'),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+          IconText(
+            tr('report.note'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12, color: Colors.black54),
+          ),
+        ],
+      ),
+      actionsAlignment: MainAxisAlignment.center,
+      onClose: () => Navigator.pop(ctx),
+      actions: [
+        FilledButton(
+          style: framedButton(
+            FilledButton.styleFrom(minimumSize: const Size(140, 48)),
+            'button_green',
+          ),
+          onPressed: () {
+            if (c.text.trim().isEmpty) return;
+            Navigator.pop(ctx, c.text);
+          },
+          child: IconText(
+            tr('report.send'),
+            style: const TextStyle(fontSize: 18),
+          ),
+        ),
+      ],
+    ),
+  );
+  if (text == null || text.trim().isEmpty) return;
+  final sent = await FeedbackService.send(text, {
+    'version': version,
+    'lang': L10n.instance.lang,
+    if (game != null) 'level': '${game.level}',
+    if (game != null) 'area': '${game.currentArea + 1}',
+  });
+  if (context.mounted) {
+    TopToast.show(context, tr(sent ? 'report.sent' : 'report.saved'));
   }
 }
 

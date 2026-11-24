@@ -103,6 +103,20 @@ service cloud.firestore {
     }
 
     // 신고: 로그인한 사용자가 남기기만 한다 (읽기 · 고치기 · 지우기는 운영자가 콘솔에서).
+    // 게임 안 '문제 알리기' (사용자가 쓴 글 + 진단). 쓰기만, 읽기는 운영 도구(서비스 계정)만.
+    match /feedback/{id} {
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['from', 'text', 'diag', 'at'])
+        && request.resource.data.from == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 1000
+        && request.resource.data.diag is string
+        && request.resource.data.diag.size() <= 2000
+        && request.resource.data.at == request.time;
+      allow read, update, delete: if false;
+    }
+
     match /reports/{id} {
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(['from', 'target', 'name', 'code', 'reason', 'at'])

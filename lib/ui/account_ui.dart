@@ -572,10 +572,17 @@ Future<void> showLoginFailed(
     context: context,
     builder: (ctx) => GameDialog(
       title: IconText(tr('login.failTitle'), textAlign: TextAlign.center),
-      content: IconText(
-        tr(e.code == 'timeout' ? 'login.timeout' : 'login.failBody'),
-        textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 16),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ArtImage(Art.mint('sorry', fallbackPose: 'sleep'), size: 84),
+          const SizedBox(height: 8),
+          IconText(
+            tr(e.code == 'timeout' ? 'login.timeout' : 'login.failBody'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16),
+          ),
+        ],
       ),
       actionsAlignment: MainAxisAlignment.center,
       onClose: () => Navigator.pop(ctx),

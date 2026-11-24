@@ -33,13 +33,18 @@ jobs:
       - name: Service account email (Play Console 초대용)
         if: inputs.values == 'whoami'
         run: gcloud config get-value account
+      - name: Feedback
+        if: inputs.values == 'feedback'
+        run: |
+          export ACCESS_TOKEN=$(gcloud auth print-access-token)
+          python3 tool/feedback_read.py
       - name: Player stats
         if: inputs.values == 'stats'
         run: |
           export ACCESS_TOKEN=$(gcloud auth print-access-token)
           python3 tool/player_stats.py
       - name: Set values
-        if: inputs.values != 'stats' && inputs.values != 'whoami'
+        if: inputs.values != 'stats' && inputs.values != 'whoami' && inputs.values != 'feedback'
         env:
           VALUES: ${{ inputs.values }}
         run: |
