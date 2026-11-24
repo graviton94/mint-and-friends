@@ -1031,5 +1031,7 @@
   "notify.test.blocked": "Notifications are off for this app in phone settings",
   "buy.confirmTitle": "Buy this?",
   "buy.confirm": "Buy",
-  "patch.1.0.9": "• We now ask 'Buy this?' before spending diamonds or coins\n• Notifications now pop up on screen, and there's a 'Test notification' button in Settings\n• A friendlier first-time guide\n• A cozy winter app icon\n• Other improvements\n\nHere is some energy as an update gift!"
+  "patch.1.0.9": "• We now ask 'Buy this?' before spending diamonds or coins\n• Notifications now pop up on screen, and there's a 'Test notification' button in Settings\n• A friendlier first-time guide\n• A cozy winter app icon\n• Other improvements\n\nHere is some energy as an update gift!",
+  "login.failTitle": "Couldn't enter the garden!",
+  "login.failBody": "Please try again in a moment. We've been notified automatically."
 }

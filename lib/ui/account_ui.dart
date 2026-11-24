@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
@@ -8,6 +9,7 @@ import '../game/config.dart';
 import '../i18n/l10n.dart';
 import '../services/audio_service.dart';
 import '../services/auth_service.dart';
+import '../services/crash_service.dart';
 import '../services/save_service.dart';
 import 'start_screens.dart' show TitleLogo;
 import 'theme.dart';
@@ -58,6 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
         });
         final d = await widget.auth.diagnostics();
         if (mounted) setState(() => _diag = d);
+        if (mounted) await showLoginFailed(context, widget.auth, which, e);
       }
     } finally {
       if (mounted) setState(() => _pending = null);
@@ -546,4 +549,52 @@ Future<bool> askSaveConflict(
     ),
   );
   return r ?? true;
+}
+
+/// 로그인 실패: 짧은 안내 창 + 우리에게 기록 (어느 로그인 · 어떤 오류 · 진단). 확인을 누른 것도 남긴다.
+Future<void> showLoginFailed(
+  BuildContext context,
+  AuthService auth,
+  String which,
+  AuthException e,
+) async {
+  final diag = await auth.diagnostics();
+  unawaited(
+    CrashService.issue('login_failed', {
+      'provider': which,
+      'code': e.code,
+      'detail': e.detail,
+      'diag': diag.replaceAll('\n', ' | '),
+    }),
+  );
+  if (!context.mounted) return;
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) => GameDialog(
+      title: IconText(tr('login.failTitle'), textAlign: TextAlign.center),
+      content: IconText(
+        tr(e.code == 'timeout' ? 'login.timeout' : 'login.failBody'),
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 16),
+      ),
+      actionsAlignment: MainAxisAlignment.center,
+      onClose: () => Navigator.pop(ctx),
+      actions: [
+        FilledButton(
+          style: framedButton(
+            FilledButton.styleFrom(minimumSize: const Size(120, 48)),
+            'button_green',
+          ),
+          onPressed: () => Navigator.pop(ctx),
+          child: IconText(
+            tr('common.ok'),
+            style: const TextStyle(fontSize: 18),
+          ),
+        ),
+      ],
+    ),
+  );
+  unawaited(
+    CrashService.issue('login_failed_ack', {'provider': which, 'code': e.code}),
+  );
 }

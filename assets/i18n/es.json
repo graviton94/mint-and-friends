@@ -1031,5 +1031,7 @@
   "notify.test.blocked": "Los avisos de esta app están desactivados en el teléfono",
   "buy.confirmTitle": "¿Comprar esto?",
   "buy.confirm": "Comprar",
-  "patch.1.0.9": "• Ahora preguntamos '¿Comprar esto?' antes de gastar diamantes o monedas\n• Los avisos aparecen en pantalla y hay un botón 'Probar aviso' en Ajustes\n• Una guía inicial más amable\n• Un icono de invierno\n• Otras mejoras\n\n¡Te enviamos energía como regalo de actualización!"
+  "patch.1.0.9": "• Ahora preguntamos '¿Comprar esto?' antes de gastar diamantes o monedas\n• Los avisos aparecen en pantalla y hay un botón 'Probar aviso' en Ajustes\n• Una guía inicial más amable\n• Un icono de invierno\n• Otras mejoras\n\n¡Te enviamos energía como regalo de actualización!",
+  "login.failTitle": "¡No pudimos entrar al jardín!",
+  "login.failBody": "Inténtalo de nuevo en un momento. Ya nos llegó el aviso automáticamente."
 }

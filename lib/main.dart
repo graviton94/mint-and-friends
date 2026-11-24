@@ -98,6 +98,16 @@ Future<Widget> _boot(void Function(double) report) async {
   } catch (_) {}
   // 비정상 종료 · 오류 수집 (Firebase 준비 뒤, 디버그 빌드는 끔)
   await CrashService.install(version: version);
+  // Firebase 를 켜지 못했으면 기록 (다음에 연결될 때 함께 보낸다), 모아 둔 문제 보내기
+  if (auth.initErrors.isNotEmpty) {
+    unawaited(
+      CrashService.issue('firebase_init', {
+        'errors': auth.initErrors.join(' / '),
+        'version': version,
+      }),
+    );
+  }
+  unawaited(CrashService.flushPending());
 
   unawaited(billing.init());
   unawaited(ads.init());
@@ -485,7 +495,13 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     try {
       await f();
     } on AuthException catch (e) {
-      if (e.code != 'cancelled') _snack(e.code);
+      if (e.code == 'cancelled') return;
+      final ctx = _navKey.currentContext;
+      if (e.code != 'already_linked' && ctx != null && ctx.mounted) {
+        await showLoginFailed(ctx, auth, 'link', e);
+      } else {
+        _snack(e.code);
+      }
     }
   }
 
