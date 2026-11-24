@@ -103,7 +103,11 @@ def feature(season, apply=False):
                                   data=fh, headers={'Content-Type': 'image/png'}, timeout=300))
     # 휴대전화 스크린샷: [시즌 표지] + 기존 1~7 (8번은 뺀다)
     for lang, codes in FEATURE_LANG.items():
-        shots = [f'docs/store/season/{season}/shot_{lang}.jpg'] + [f'docs/store/screenshots/{lang}/{i}.jpg' for i in range(1, 8)]
+        # 시즌판 2~8번(docs/store/season/<시즌>/<언어>_<n>.jpg)이 있으면 그것, 없으면 기본 스크린샷 1~7
+        rest = [f'docs/store/season/{season}/{lang}_{i}.jpg' for i in range(1, 8)]
+        if not all(os.path.exists(f) for f in rest):
+            rest = [f'docs/store/screenshots/{lang}/{i}.jpg' for i in range(1, 8)]
+        shots = [f'docs/store/season/{season}/shot_{lang}.jpg'] + rest
         for f in shots:
             if not os.path.exists(f):
                 print('missing', f); sys.exit(1)
