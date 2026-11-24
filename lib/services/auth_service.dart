@@ -72,7 +72,15 @@ class AuthService extends ChangeNotifier {
     if (firebaseEnabled) {
       // 단계마다 따로: 하나가 실패해도 나머지(특히 게스트)는 살린다.
       try {
-        await Firebase.initializeApp(options: AppConfig.firebaseOptions);
+        // 안드로이드는 앱 리소스(google_app_id 등)로 기본 앱을 먼저 만들어 둔다 (Analytics 용).
+        // 그 기본 앱이 있으면 그대로 쓴다: 옵션이 조금이라도 다르면 'duplicate-app' 으로 실패해
+        // 로그인이 모두 막혔다 (1.0.9).
+        try {
+          await Firebase.initializeApp(options: AppConfig.firebaseOptions);
+        } on FirebaseException catch (e) {
+          if (e.code != 'duplicate-app') rethrow;
+          await Firebase.initializeApp();
+        }
         user = FirebaseAuth.instance.currentUser;
         _sub = FirebaseAuth.instance.authStateChanges().listen((u) {
           user = u;

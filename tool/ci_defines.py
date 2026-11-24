@@ -16,6 +16,9 @@ if g:
         print(f"--dart-define=FB_APP_ID={c['client_info']['mobilesdk_app_id']}")
         print(f"--dart-define=FB_PROJECT_ID={g['project_info']['project_id']}")
         print(f"--dart-define=FB_SENDER_ID={g['project_info']['project_number']}")
+        if g['project_info'].get('storage_bucket'):
+            # 앱 리소스(google_storage_bucket)와 같은 값이어야 Firebase 기본 앱 옵션이 일치한다
+            print(f"--dart-define=FB_STORAGE_BUCKET={g['project_info']['storage_bucket']}")
         # 안드로이드 리소스 값 (google-services 플러그인이 만드는 것과 같음): Firebase Analytics 는
         # 이 google_app_id 리소스가 없으면 'Missing google_app_id' 로 꺼진다 (1.0.8 까지 지표가 0 이었던 원인)
         res = os.path.join(os.path.dirname(__file__), '..', 'android', 'app', 'src', 'main', 'res', 'values')
