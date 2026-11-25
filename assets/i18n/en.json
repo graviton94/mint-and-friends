@@ -1099,5 +1099,6 @@
   "pass.totalBody": "You skipped {ads} ads\nand got {gems} diamonds.",
   "pass.open": "See perks",
   "ctrl.shop.sub": "Gems · Market · Boosts",
-  "patch.1.0.15": "• The shop moved to the bottom right\n  Turn on boosts right from the menu\n• New Garden Pass perks screen\n  See today's perks left and what you've received so far\n• Merge sounds now change gently by level\n\nHere is some energy as an update gift!"
+  "patch.1.0.15": "• The shop moved to the bottom right\n  Turn on boosts right from the menu\n• New Garden Pass perks screen\n  See today's perks left and what you've received so far\n• Merge sounds now change gently by level\n\nHere is some energy as an update gift!",
+  "patch.1.0.16": "• Red dots no longer change the shape of cards\n• Fixed overlapping buttons at the top of the garden view\n• Fixed some clipped frame edges\n\nHere is some energy as an update gift!"
 }
