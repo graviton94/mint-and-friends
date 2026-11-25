@@ -38,6 +38,7 @@ class FrameBox extends StatelessWidget {
       ref.path,
       center,
       corner / Art.frameInset(frame),
+      pill: frame.startsWith('button_') || frame == 'capsule',
     );
   }
 
@@ -232,7 +233,59 @@ class GameDialog extends StatelessWidget {
 }
 
 /// 버튼 테마에 꽂는 프레임 배경. 프레임이 없으면 원래 색 배경을 그대로 쓴다.
+/// 버튼 기본 글자 (테마와 같은 값).
+const buttonTextStyle = TextStyle(fontSize: 16, fontWeight: FontWeight.w700);
+
+/// 연두 · 보라 버튼의 흰 글자 테두리 (밝은 바탕에서 글자가 묻히지 않게).
+List<Shadow> buttonTextOutline(String frame) {
+  final c = switch (frame) {
+    'button_green' => const Color(0xFF2E6410),
+    'button_purple' => const Color(0xFF4A2A72),
+    _ => null,
+  };
+  if (c == null) return const [];
+  return [
+    for (final o in const [
+      Offset(1.3, 0),
+      Offset(-1.3, 0),
+      Offset(0, 1.3),
+      Offset(0, -1.3),
+      Offset(0.9, 0.9),
+      Offset(-0.9, 0.9),
+      Offset(0.9, -0.9),
+      Offset(-0.9, -0.9),
+    ])
+      Shadow(color: c, offset: o),
+    Shadow(color: c.withValues(alpha: 0.6), offset: const Offset(0, 2.2)),
+  ];
+}
+
 ButtonStyle framedButton(ButtonStyle base, String frame) {
+  final outline = buttonTextOutline(frame);
+  // 글자 테두리는 버튼마다 정한다: 연두 · 보라만 테두리, 나머지는 없음 (테마 값이 다른 버튼으로 새지 않게).
+  // 원래 값을 잡아 둔다 (닫힘 안에서 base 를 읽으면 새 base = 자기 자신을 불러 끝없이 돈다)
+  final ts = base.textStyle;
+  base = base.copyWith(
+    textStyle: WidgetStateProperty.resolveWith(
+      (states) => (ts?.resolve(states) ?? buttonTextStyle).copyWith(
+        // 비활성(반투명)일 때는 테두리를 빼야 글자가 뭉개지지 않는다
+        shadows: states.contains(WidgetState.disabled) ? const [] : outline,
+      ),
+    ),
+  );
+
+  // 비활성 연두 · 보라 버튼: 흰 글자는 반투명 바탕에 묻히므로 진한 회녹색으로
+  if (outline.isNotEmpty) {
+    final fg = base.foregroundColor;
+    base = base.copyWith(
+      foregroundColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.disabled)
+            ? const Color(0xFF4F5E3C)
+            : fg?.resolve(states) ?? Colors.white,
+      ),
+    );
+  }
+
   // 프레임 그림이 있으면 버튼 자체 배경·그림자는 투명하게 (둥근 모서리 밖으로 색이 비치지 않게)
   if (Art.frame(frame).available) {
     base = base.copyWith(
@@ -271,8 +324,17 @@ ButtonStyle plainButton(ButtonStyle base) => base.copyWith(
 /// 9-slice 그리기: 원본을 9조각으로 나눠 모서리는 [k] 배율 고정 크기로, 가장자리·가운데만 늘린다.
 /// (렌더러마다 결과가 다른 DecorationImage.centerSlice 대신 조각을 직접 그린다.)
 class NineSliceDecoration extends Decoration {
-  const NineSliceDecoration(this.path, this.center, this.k);
+  const NineSliceDecoration(
+    this.path,
+    this.center,
+    this.k, {
+    this.pill = false,
+  });
   final String path;
+
+  /// 알약 모양 버튼: 높이에 맞춰 그림을 통째로 줄이고 가로 가운데만 늘린다
+  /// (둥근 끝이 잘려 늘어나지 않게, 9조각 대신 3조각).
+  final bool pill;
   final Rect center; // 원본 픽셀 기준 가운데(늘어나는) 영역
   final double k; // 원본 픽셀 → 화면 논리 px 배율 (모서리 크기 결정)
 
@@ -285,10 +347,11 @@ class NineSliceDecoration extends Decoration {
       other is NineSliceDecoration &&
       other.path == path &&
       other.center == center &&
-      other.k == k;
+      other.k == k &&
+      other.pill == pill;
 
   @override
-  int get hashCode => Object.hash(path, center, k);
+  int get hashCode => Object.hash(path, center, k, pill);
 }
 
 class _NineSlicePainter extends BoxPainter {
@@ -323,6 +386,37 @@ class _NineSlicePainter extends BoxPainter {
       return;
     }
     final w = img.width.toDouble(), h = img.height.toDouble();
+    final paint0 = Paint()..filterQuality = FilterQuality.medium;
+    if (d.pill) {
+      // 둥근 끝 = 원본 높이의 절반. 화면에서는 버튼 높이의 절반 (폭이 모자라면 폭의 절반)
+      final cap = h / 2;
+      final capDst = (size.height / 2).clamp(0.0, size.width / 2);
+      final sx = [0.0, cap, w - cap, w];
+      final dx = [
+        offset.dx,
+        offset.dx + capDst,
+        offset.dx + size.width - capDst,
+        offset.dx + size.width,
+      ];
+      const inset = 0.5, overlap = 0.75;
+      for (var j = 0; j < 3; j++) {
+        final src = Rect.fromLTRB(
+          sx[j] + (j > 0 ? inset : 0),
+          0,
+          sx[j + 1] - (j < 2 ? inset : 0),
+          h,
+        );
+        final dst = Rect.fromLTRB(
+          dx[j] - (j > 0 ? overlap : 0),
+          offset.dy,
+          dx[j + 1] + (j < 2 ? overlap : 0),
+          offset.dy + size.height,
+        );
+        if (src.isEmpty || dst.isEmpty) continue;
+        canvas.drawImageRect(img, src, dst, paint0);
+      }
+      return;
+    }
     final c = d.center;
     // 원본 열/행 경계와 화면 열/행 경계
     final sx = [0.0, c.left, c.right, w];

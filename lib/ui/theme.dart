@@ -39,7 +39,7 @@ ThemeData buildTheme() {
       style: framedButton(
         FilledButton.styleFrom(
           minimumSize: const Size(48, 48),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          textStyle: buttonTextStyle,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
