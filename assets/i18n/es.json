@@ -280,7 +280,7 @@
   "tip.ok": "Entendido",
   "tip.energyAd": "¿Poca energía? Toca aquí para recargar con un anuncio",
   "tip.upgrades": "Usa monedas en recarga de energía e ingresos",
-  "tip.boost": "Anuncios o diamantes:\nmonedas extra · ahorro de energía · cesta de la suerte",
+  "tip.boost": "Activa impulsos desde Impulso en el menú.\nUsa los tuyos, mira un anuncio o gasta diamantes.",
   "tip.snack": "Ahora la cesta también suelta dulces",
   "tip.coinBag": "Mira un anuncio para tomar una bolsa de monedas",
   "tip.storage": "Guarda objetos aquí cuando el tablero esté lleno",
@@ -597,7 +597,7 @@
   "tipTitle.checkIn": "[[calendar]] Regalos diarios",
   "tip.checkIn": "Pasa cada día por un regalo.\nSi faltas, no se reinicia.",
   "tipTitle.market": "[[shop]] Mercado de hoy",
-  "tip.market": "Objetos nuevos cada día,\npor monedas en la tienda.",
+  "tip.market": "Abre la tienda abajo a la derecha\npara objetos que cambian cada día.",
   "tipTitle.basket": "[[basket]] Cambiar cestas",
   "tip.basket": "Desliza la cesta a los lados\npara cambiar de cesta.",
   "tipTitle.design": "[[decorate]] Diseños de decoración",
@@ -1097,5 +1097,6 @@
   "pass.vaultUsed": "{n}/{max} usadas",
   "pass.total": "Ventajas hasta ahora",
   "pass.totalBody": "Saltaste {ads} anuncios\ny recibiste {gems} diamantes.",
-  "pass.open": "Ver ventajas"
+  "pass.open": "Ver ventajas",
+  "ctrl.shop.sub": "Gemas · Mercado · Impulsos"
 }

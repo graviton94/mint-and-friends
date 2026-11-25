@@ -455,15 +455,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     final w = switch (f) {
-      Feature.boost => SizedBox(
-        width: 84,
-        child: _BarTile(
-          icon: Art.icon('boost').available ? 'boost' : 'coinbag',
-          label: tr('ctrl.boost'),
-          ad: true,
-          onTap: () {},
-        ),
-      ),
+      Feature.boost => chip('boost', tr('ctrl.boost')),
       // 실제 정원 오른쪽 위의 코인 주머니 버튼 그대로 + 받는 양
       Feature.coinBag => Row(
         mainAxisSize: MainAxisSize.min,
@@ -650,10 +642,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   GlobalKey _tipTarget(String id) => switch (id) {
     'energyAd' => _kSpawner,
-    'boost' => _kBoost,
+    'boost' => _kMenu,
     'snack' || 'basket' => _kSpawner,
     'visitor' => _kGarden,
-    'gems' || 'market' => _kGems,
+    'gems' => _kGems,
+    'market' => _kShop,
     'checkIn' || 'friends' => _kMenu,
     'design' => _kDecor,
     'coinBag' when game.coinBagReady => _kCoinBag,
@@ -1425,7 +1418,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _kOrders = GlobalKey();
   final _kDecor = GlobalKey();
   final _kGarden = GlobalKey();
-  final _kBoost = GlobalKey();
+  final _kShop = GlobalKey();
   final _kCoinBag = GlobalKey();
   final _kStack = GlobalKey();
   final _kGems = GlobalKey();
@@ -1839,10 +1832,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: 'menu',
             fallback: Icons.menu_rounded,
             badge:
-                game.upgradeDot ||
-                    game.hasNewDiscovery ||
-                    game.shopDot ||
-                    widget.socialBadge()
+                game.upgradeDot || game.hasNewDiscovery || widget.socialBadge()
                 ? -1
                 : 0,
             onTap: _openMenu,
@@ -2271,12 +2261,17 @@ class _HomeScreenState extends State<HomeScreen> {
             () =>
                 showPassSheet(context, game, subscribed: widget.billing.adFree),
           ),
+        // 부스트: 가진 것 쓰기 · 광고 · 다이아로 바로 켜기 (상점은 오른쪽 아래로, D-075)
         MenuEntry(
-          'shop',
-          tr('menu.shop'),
-          _openShop,
-          badge: game.shopDot ? -1 : 0,
-          fallback: Icons.storefront,
+          game.isUnlocked(Feature.boost) ? 'boost' : 'lock',
+          tr('ctrl.boost'),
+          _watchBoost,
+          badge:
+              game.isUnlocked(Feature.boost) &&
+                  BoostKind.values.any((k) => game.boostTokenCount(k) > 0) &&
+                  BoostKind.values.every((k) => !game.boosted(k))
+              ? -1
+              : 0,
         ),
         MenuEntry(
           'settings',
@@ -2343,16 +2338,15 @@ class _HomeScreenState extends State<HomeScreen> {
             onLongPress: _energyDialog,
           ),
           SizedBox(width: game.openBaskets.length > 1 ? 4 : 10),
+          // 오른쪽 아래 = 상점 (D-075). 켜진 부스트가 있으면 남은 시간을 작게 보여 준다
           Expanded(
             child: _BarTile(
-              key: _kBoost,
-              icon: Art.icon('boost').available ? 'boost' : 'coinbag',
-              label: tr('ctrl.boost'),
-              sub: boostLine(),
-              ad: true,
-              active: activeBoosts.isNotEmpty,
-              locked: !boostOpen,
-              onTap: _watchBoost,
+              key: _kShop,
+              icon: 'shop',
+              label: tr('menu.shop'),
+              sub: activeBoosts.isNotEmpty ? boostLine() : tr('ctrl.shop.sub'),
+              badge: game.shopDot,
+              onTap: _openShop,
             ),
           ),
         ],
@@ -2730,31 +2724,18 @@ class _BarTile extends StatelessWidget {
     required this.label,
     required this.onTap,
     this.sub,
-    this.ad = false,
-    this.active = false,
     this.badge = false,
-    this.locked = false,
   });
   final String icon;
   final String label;
   final String? sub;
   final VoidCallback? onTap;
-  final bool ad;
-  final bool active;
   final bool badge;
-  final bool locked;
 
   @override
   Widget build(BuildContext context) {
-    final colors = locked
-        ? const [Color(0xFFE2DBCB), Color(0xFFCFC6B3)]
-        : active
-        ? const [Color(0xFFFFE38A), Color(0xFFF2B33D)]
-        : ad
-        ? const [Color(0xFFC9A5F2), Color(0xFF9C6ADE)]
-        : const [Color(0xFFFFFBF0), Color(0xFFF3E6C8)];
-    final light = ad && !locked && !active;
-    final ink = light ? Colors.white : const Color(0xFF4A3A22);
+    const colors = [Color(0xFFFFFBF0), Color(0xFFF3E6C8)];
+    const ink = Color(0xFF4A3A22);
     return GestureDetector(
       onTap: onTap == null
           ? null
@@ -2786,10 +2767,7 @@ class _BarTile extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(10, 8, 14, 8),
             child: Row(
               children: [
-                Opacity(
-                  opacity: locked ? 0.55 : 1,
-                  child: ArtImage(Art.icon(icon), size: 36),
-                ),
+                ArtImage(Art.icon(icon), size: 36),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Column(
@@ -2828,8 +2806,7 @@ class _BarTile extends StatelessWidget {
               ],
             ),
           ),
-          if (badge && !locked)
-            const Positioned(right: -4, top: -4, child: RedDot()),
+          if (badge) const Positioned(right: -4, top: -4, child: RedDot()),
         ],
       ),
     );

@@ -280,7 +280,7 @@
   "tip.ok": "わかった",
   "tip.energyAd": "エネルギーが足りない時はここから広告で回復",
   "tip.upgrades": "コインでエネルギー回復や収益を強化",
-  "tip.boost": "広告やダイヤで\nコインのつつみ・エネルギー節約・ラッキーかご",
+  "tip.boost": "メニューのブーストからオンにします。\n持っているもの・広告・ダイヤですぐ使えます。",
   "tip.snack": "かごからおやつも出るよ",
   "tip.coinBag": "広告でコイン袋をもらおう",
   "tip.storage": "盤面がいっぱいならここに預けよう",
@@ -597,7 +597,7 @@
   "tipTitle.checkIn": "[[calendar]] ログインギフト",
   "tip.checkIn": "毎日ログインでプレゼント。\n休んでも続きから。",
   "tipTitle.market": "[[shop]] 今日のマーケット",
-  "tip.market": "毎日変わるアイテムを\nショップでコインで買えます。",
+  "tip.market": "右下のショップで\n毎日変わるアイテムを買えます。",
   "tipTitle.basket": "[[basket]] かごの切りかえ",
   "tip.basket": "かごを横にスワイプすると\n切りかわります。",
   "tipTitle.design": "[[decorate]] 飾りのデザイン",
@@ -1097,5 +1097,6 @@
   "pass.vaultUsed": "{n}/{max} 使用",
   "pass.total": "これまでの特典",
   "pass.totalBody": "広告を{ads}回スキップし、\nダイヤを{gems}個受け取りました。",
-  "pass.open": "特典を見る"
+  "pass.open": "特典を見る",
+  "ctrl.shop.sub": "ダイヤ・市場・ブースト"
 }

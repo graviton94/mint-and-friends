@@ -281,7 +281,7 @@
   "tip.ok": "알겠어요",
   "tip.energyAd": "에너지가 모자라면 여기를 눌러 광고로 채워요",
   "tip.upgrades": "코인으로 에너지 충전 · 수익을 강화해요",
-  "tip.boost": "광고나 다이아로\n코인 꾸러미 · 에너지 절약 · 행운 바구니",
+  "tip.boost": "메뉴의 부스트에서 켜요.\n가진 부스트 · 광고 · 다이아로 바로 켤 수 있어요.",
   "tip.snack": "이제 바구니에서 간식도 나와요",
   "tip.coinBag": "광고를 보고 코인 주머니를 받아요",
   "tip.storage": "판이 가득하면 여기 맡겨 둬요",
@@ -598,7 +598,7 @@
   "tipTitle.checkIn": "[[calendar]] 출석 선물",
   "tip.checkIn": "매일 출석하면 선물을 받아요.\n빠진 날이 있어도 이어져요.",
   "tipTitle.market": "[[shop]] 오늘의 시장",
-  "tip.market": "날마다 바뀌는 아이템을\n상점에서 코인으로 사요.",
+  "tip.market": "오른쪽 아래 상점에서\n날마다 바뀌는 아이템을 사요.",
   "tipTitle.basket": "[[basket]] 바구니 바꾸기",
   "tip.basket": "바구니를 옆으로 밀면\n새 바구니로 바뀌어요.",
   "tipTitle.design": "[[decorate]] 장식 디자인",
@@ -1098,5 +1098,6 @@
   "pass.vaultUsed": "{n}/{max} 사용",
   "pass.total": "지금까지 받은 혜택",
   "pass.totalBody": "광고 {ads}번을 건너뛰었고\n다이아 {gems}개를 받았어요.",
-  "pass.open": "혜택 보기"
+  "pass.open": "혜택 보기",
+  "ctrl.shop.sub": "다이아 · 시장 · 부스트"
 }

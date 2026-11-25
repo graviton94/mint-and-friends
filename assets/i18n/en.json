@@ -280,7 +280,7 @@
   "tip.ok": "Got it",
   "tip.energyAd": "Low on energy? Tap here to refill with an ad",
   "tip.upgrades": "Spend coins on energy recharge and income",
-  "tip.boost": "Ads or diamonds:\ncoin bundle · energy saver · lucky basket",
+  "tip.boost": "Turn boosts on from Boost in the menu.\nUse ones you own, watch an ad, or spend diamonds.",
   "tip.snack": "The basket now drops snacks too",
   "tip.coinBag": "Watch an ad to grab a coin bag",
   "tip.storage": "Keep items here when the board is full",
@@ -597,7 +597,7 @@
   "tipTitle.checkIn": "[[calendar]] Daily gifts",
   "tip.checkIn": "Check in daily for a gift.\nMissed days don't reset it.",
   "tipTitle.market": "[[shop]] Today's market",
-  "tip.market": "New items every day,\nfor coins in the shop.",
+  "tip.market": "Open the shop at the bottom right\nfor items that change daily.",
   "tipTitle.basket": "[[basket]] Switch baskets",
   "tip.basket": "Swipe the basket sideways\nto switch baskets.",
   "tipTitle.design": "[[decorate]] Decor designs",
@@ -1097,5 +1097,6 @@
   "pass.vaultUsed": "{n}/{max} used",
   "pass.total": "Perks so far",
   "pass.totalBody": "You skipped {ads} ads\nand got {gems} diamonds.",
-  "pass.open": "See perks"
+  "pass.open": "See perks",
+  "ctrl.shop.sub": "Gems · Market · Boosts"
 }
