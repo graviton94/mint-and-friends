@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 import 'dart:math';
 
@@ -82,11 +83,15 @@ class NotifyService extends ChangeNotifier {
       priority: Priority.high,
       icon: 'ic_stat_notify',
       color: Color(0xFF5FA05A),
+      // 잠금화면에도 내용까지 보이게 (기본은 '비공개'라 기기에 따라 아이콘만 남는다, D-069)
+      visibility: NotificationVisibility.public,
+      category: AndroidNotificationCategory.reminder,
+      ticker: 'Mint & Friends',
     ),
   );
 
   /// 설정의 '알림 테스트': 지금 바로 하나 띄운다. 기기에서 알림이 막혀 있으면 false.
-  Future<bool> sendTest(String title, String body) async {
+  Future<bool> sendTest(String title, String body, {String? lockBody}) async {
     if (!_ready) return false;
     final android = _plugin
         .resolvePlatformSpecificImplementation<
@@ -102,6 +107,17 @@ class NotifyService extends ChangeNotifier {
         body: body,
         notificationDetails: _details,
       );
+      // 잠금화면 확인용: 10초 뒤 한 번 더 (그사이 화면을 끄면 잠금화면에서 보인다)
+      Timer(const Duration(seconds: 10), () {
+        _plugin
+            .show(
+              id: 98,
+              title: title,
+              body: lockBody ?? body,
+              notificationDetails: _details,
+            )
+            .catchError((Object _) {});
+      });
       return true;
     } catch (_) {
       return false;

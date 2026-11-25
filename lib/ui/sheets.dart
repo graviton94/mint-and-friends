@@ -2970,6 +2970,7 @@ Future<void> showSettingsSheet(
                     final ok = await NotifyService.instance.sendTest(
                       tr('notify.test.title'),
                       tr('notify.test.body'),
+                      lockBody: tr('notify.test.lockBody'),
                     );
                     if (context.mounted) {
                       TopToast.show(

@@ -1027,7 +1027,7 @@
   "notify.test.button": "Test notification",
   "notify.test.title": "Mint & Friends test",
   "notify.test.body": "This is how notifications look!",
-  "notify.test.sent": "Sent! Did it show up?",
+  "notify.test.sent": "Sent!\nAnother one comes in 10 seconds. Lock your screen to check.",
   "notify.test.blocked": "Notifications are off for this app in phone settings",
   "buy.confirmTitle": "Buy this?",
   "buy.confirm": "Buy",
@@ -1077,5 +1077,6 @@
   "refund.bodyDebt": "A purchase was refunded,\nso its items were removed.\n{n} spent diamonds are counted as a negative balance.",
   "refund.blockTitle": "Purchases limited",
   "refund.blockBody": "Purchases are limited on this account\nbecause of past refunds.\nContact us via Settings → Report a problem.",
-  "patch.1.0.12": "• The shop shows when your Garden Pass ends\n• New decor wears the seasonal design if the whole area does\n• Boost button text is easier to read\n• The upgrade dot shows once a day\n• Added refund and withdrawal info in the shop\n\nHere is some energy as an update gift!"
+  "patch.1.0.12": "• The shop shows when your Garden Pass ends\n• New decor wears the seasonal design if the whole area does\n• Boost button text is easier to read\n• The upgrade dot shows once a day\n• Added refund and withdrawal info in the shop\n\nHere is some energy as an update gift!",
+  "notify.test.lockBody": "This is how it looks on the lock screen!"
 }

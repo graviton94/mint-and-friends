@@ -1027,7 +1027,7 @@
   "notify.test.button": "Probar aviso",
   "notify.test.title": "Prueba de Mint & Friends",
   "notify.test.body": "¡Así se ven los avisos!",
-  "notify.test.sent": "¡Enviado! ¿Apareció?",
+  "notify.test.sent": "¡Enviado!\nLlegará otra en 10 segundos. Bloquea la pantalla para verla.",
   "notify.test.blocked": "Los avisos de esta app están desactivados en el teléfono",
   "buy.confirmTitle": "¿Comprar esto?",
   "buy.confirm": "Comprar",
@@ -1077,5 +1077,6 @@
   "refund.bodyDebt": "Se reembolsó una compra,\npor eso se retiraron sus objetos.\n{n} diamantes ya gastados quedan en negativo.",
   "refund.blockTitle": "Compras limitadas",
   "refund.blockBody": "Las compras están limitadas en esta cuenta\npor reembolsos anteriores.\nEscríbenos en Ajustes → Informar un problema.",
-  "patch.1.0.12": "• La tienda muestra cuándo termina tu Pase de jardín\n• La decoración nueva usa el diseño de temporada si toda el área lo usa\n• El texto de los botones de impulso se lee mejor\n• El punto de mejoras aparece una vez al día\n• Información de reembolso y desistimiento en la tienda\n\n¡Te enviamos energía como regalo!"
+  "patch.1.0.12": "• La tienda muestra cuándo termina tu Pase de jardín\n• La decoración nueva usa el diseño de temporada si toda el área lo usa\n• El texto de los botones de impulso se lee mejor\n• El punto de mejoras aparece una vez al día\n• Información de reembolso y desistimiento en la tienda\n\n¡Te enviamos energía como regalo!",
+  "notify.test.lockBody": "¡Así se ve en la pantalla bloqueada!"
 }
