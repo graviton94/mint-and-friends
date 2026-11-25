@@ -1163,6 +1163,8 @@ class _StyleCard extends StatelessWidget {
     if (!dot) return card;
     return Stack(
       clipBehavior: Clip.none,
+      // 점이 카드 크기를 바꾸지 않게 (Stack 이 받은 폭을 카드에 그대로 넘긴다, D-077)
+      fit: StackFit.passthrough,
       children: [
         card,
         const Positioned(right: 0, top: -4, child: RedDot()),
@@ -2867,6 +2869,8 @@ class _ShopRow extends StatelessWidget {
     if (!dot) return row;
     return Stack(
       clipBehavior: Clip.none,
+      // 점이 카드 크기를 바꾸지 않게 (Stack 이 받은 폭을 카드에 그대로 넘긴다, D-077)
+      fit: StackFit.passthrough,
       children: [
         row,
         const Positioned(left: -4, top: -4, child: RedDot()),

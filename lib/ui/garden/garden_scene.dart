@@ -1059,13 +1059,14 @@ class _GardenSceneState extends State<GardenScene>
       final p = Offset(gx(wk.pos.dx, s.width), wk.pos.dy * s.height);
       out.add(
         Positioned(
+          // 창 테두리 · 둥근 모서리에 잘리지 않게 안쪽으로 여유를 둔다 (D-077)
           left: (p.dx - 90).clamp(
-            visible.left + 4,
-            max(visible.left + 4, visible.right - 184),
+            visible.left + 16,
+            max(visible.left + 16, visible.right - 196),
           ),
           top: (p.dy - unit * GardenScene.friendK * 1.8).clamp(
-            visible.top + 4,
-            max(visible.top + 4, visible.bottom - 60),
+            visible.top + 16,
+            max(visible.top + 16, visible.bottom - 76),
           ),
           width: 180,
           child: _Bubble(text: '${friendName(e.key)}: ${wk.say}'),

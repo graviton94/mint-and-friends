@@ -177,38 +177,45 @@ class _GardenScreenState extends State<GardenScreen> {
                               onTap: () => Navigator.pop(context),
                             ),
                             const SizedBox(width: 8),
-                            if (_area > 0)
+                            if (_area > 0) ...[
                               _Circle(
                                 icon: Icons.chevron_left_rounded,
                                 onTap: () => setState(() => _area--),
                               ),
+                              const SizedBox(width: 6),
+                            ],
+                            // 이름 칸은 남은 폭 안에서만 (글자가 크면 줄여서 맞춘다, D-077)
                             Expanded(
                               child: Center(
-                                child: FrameBox(
-                                  frame: 'capsule',
-                                  fallback: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  corner: 14,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 6,
-                                  ),
-                                  child: FittedBox(
-                                    child: IconText(
-                                      areaLabel(game, _area),
-                                      style: const TextStyle(fontSize: 17),
+                                child: ClipRect(
+                                  child: FrameBox(
+                                    frame: 'capsule',
+                                    fallback: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    corner: 14,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 6,
+                                    ),
+                                    child: FittedBox(
+                                      child: IconText(
+                                        areaLabel(game, _area),
+                                        style: const TextStyle(fontSize: 17),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                            if (_area < game.currentArea)
+                            if (_area < game.currentArea) ...[
+                              const SizedBox(width: 6),
                               _Circle(
                                 icon: Icons.chevron_right_rounded,
                                 onTap: () => setState(() => _area++),
                               ),
+                            ],
                             const SizedBox(width: 6),
                             // 자랑하기: 보고 있는 구역의 정원 카드 (완성한 구역이면 '구역 완성' 카드)
                             ShareButton(

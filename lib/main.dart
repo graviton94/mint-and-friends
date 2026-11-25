@@ -703,21 +703,25 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         // 업데이트 받는 중 · 다 받음 알약 (모든 화면 위)
         // 아무 곳이나 만지면 '손대는 중' (자동 정원 보너스는 1분 동안 안 만질 때만, D-059)
-        builder: (context, child) => Stack(
-          children: [
-            if (child != null)
-              Listener(
-                behavior: HitTestBehavior.translucent,
-                onPointerDown: (_) => game.noteInput(),
-                child: child,
+        builder: (context, child) => MediaQuery.withClampedTextScaling(
+          // 휴대폰 글자 크기를 아주 크게 해도 게임 화면이 겹치지 않게 1.15배까지만 (D-077)
+          maxScaleFactor: 1.15,
+          child: Stack(
+            children: [
+              if (child != null)
+                Listener(
+                  behavior: HitTestBehavior.translucent,
+                  onPointerDown: (_) => game.noteInput(),
+                  child: child,
+                ),
+              UpdatePill(
+                onReadyTap: () {
+                  final ctx = _navKey.currentContext;
+                  if (ctx != null) showUpdateReady(ctx);
+                },
               ),
-            UpdatePill(
-              onReadyTap: () {
-                final ctx = _navKey.currentContext;
-                if (ctx != null) showUpdateReady(ctx);
-              },
-            ),
-          ],
+            ],
+          ),
         ),
         home: !auth.ready
             ? const Scaffold(body: Center(child: CircularProgressIndicator()))
