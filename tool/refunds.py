@@ -39,13 +39,16 @@ def sv(v):
 def main():
     meta = get('meta/refunds') or {}
     # 처음에는 30일 전부터 (Play 는 최대 30일까지 보여 준다)
-    last = int(meta.get('lastMs', {}).get('integerValue', 0)) or int((time.time() - 30 * 86400) * 1000)
     now = int(time.time() * 1000)
+    floor = now - 29 * 86400 * 1000  # Play 는 30일 안쪽만 받는다
+    last = max(int(meta.get('lastMs', {}).get('integerValue', 0)) - 3600 * 1000, floor)
     url = f'https://androidpublisher.googleapis.com/androidpublisher/v3/applications/{PKG}/purchases/voidedpurchases'
-    params = {'startTime': str(last), 'endTime': str(now), 'type': '0', 'maxResults': '1000'}
+    params = {'startTime': str(last)}
     voided = []
     while True:
         r = s.get(url, params=params)
+        if not r.ok:
+            print(r.status_code, r.text[:500])
         r.raise_for_status()
         j = r.json()
         voided += j.get('voidedPurchases', [])
