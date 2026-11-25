@@ -438,8 +438,7 @@ class GameState extends ChangeNotifier {
       upgrades.remove(t);
     }
     upgrades[UpgradeType.basketTier] = perkLv(SeedPerk.startBasket);
-    if (perkLv(SeedPerk.autoMemory) == 0)
-      upgrades.remove(UpgradeType.autoMerge);
+    // 자동 줄(에너지 충전 · 자동 놓기 · 자동 합치기)은 남는다 (D-059)
     coins = lastRun * 0.01 * perkLv(SeedPerk.startCoins);
     runStartCoins = lifetimeCoins;
     _featured = null;
@@ -477,6 +476,15 @@ class GameState extends ChangeNotifier {
     for (final u in UpgradeType.values) u: 0,
   };
   double autoMergeProgress = 0;
+  double autoSpawnProgress = 0;
+
+  /// 자동 놓기 켜기/끄기 (에너지를 아끼고 싶을 때 끈다).
+  bool autoSpawnOn = true;
+  void setAutoSpawn(bool v) {
+    autoSpawnOn = v;
+    autoSpawnProgress = 0;
+    notifyListeners();
+  }
 
   /// 체인별 발견한 최고 단계. 늦게 열리는 체인은 0 (첫 아이템도 발견 카드가 뜨게).
   final Map<Chain, int> highest = {
@@ -782,6 +790,9 @@ class GameState extends ChangeNotifier {
   double get energyRegenSeconds =>
       Upgrades.energyRegenSeconds(lv(UpgradeType.energyRegen)) /
       (1 + buff(FriendBuff.energyRegen) + setBonus(SetEffect.energyRegen));
+
+  double? get autoSpawnInterval =>
+      Upgrades.autoSpawnInterval(lv(UpgradeType.autoSpawn));
 
   double? get autoMergeInterval {
     final i = Upgrades.autoMergeInterval(lv(UpgradeType.autoMerge));
@@ -1311,6 +1322,14 @@ class GameState extends ChangeNotifier {
         autoMergeOnce();
       }
     }
+    final asi = autoSpawnInterval;
+    if (asi != null && autoSpawnOn) {
+      autoSpawnProgress += dt;
+      if (autoSpawnProgress >= asi) {
+        autoSpawnProgress = 0;
+        autoSpawnOnce();
+      }
+    }
 
     // 시간이 다 된 비눗방울은 터진다
     for (var i = 0; i < board.length; i++) {
@@ -1563,6 +1582,22 @@ class GameState extends ChangeNotifier {
     _bump(Stat.bubblesPopped);
     notifyListeners();
     return true;
+  }
+
+  /// 자동 놓기 한 번: 빈칸이 2칸 이상(직접 움직일 자리 1칸은 남긴다) · 에너지 · 바구니가 있을 때만.
+  /// 에너지가 없으면 조용히 쉰다 (에너지 없음 창을 띄우지 않는다).
+  bool autoSpawnOnce() {
+    var empty = 0;
+    for (var i = 0; i < board.length && empty < 2; i++) {
+      if (board[i] == null && isCellOpen(i)) empty++;
+    }
+    if (empty < 2) return false;
+    if (energy < GameConfig.energyPerTap) return false;
+    if (!basketOpen(basket)) basket = 0;
+    if (!basketReady(basket)) return false;
+    final r = tapSpawner();
+    if (r == TapResult.spawned) _bump(Stat.autoSpawns);
+    return r == TapResult.spawned;
   }
 
   bool _isOrderTarget(Item it) =>
@@ -2699,7 +2734,15 @@ class GameState extends ChangeNotifier {
   }
 
   /// 플레이어 레벨 상한에 걸렸는지.
-  bool upgradeCapped(UpgradeType t) => level < upgradeLevelNeeded(t);
+  bool upgradeCapped(UpgradeType t) =>
+      level < upgradeLevelNeeded(t) || upgradeRunCapped(t);
+
+  /// 자동 줄은 한 판에 [Upgrades.autoCap] 단계까지 (재단장할수록 열린다).
+  // 회차(renewCount)는 1부터 → 재단장한 횟수는 renewCount - 1
+  int get autoCap =>
+      Upgrades.autoCap(renewCount - 1, perkLv(SeedPerk.autoMemory));
+  bool upgradeRunCapped(UpgradeType t) =>
+      Upgrades.autoLines.contains(t) && lv(t) >= autoCap;
   int upgradeLevelNeeded(UpgradeType t) => Upgrades.of(t).levelFor(lv(t));
 
   bool canBuyUpgrade(UpgradeType t) =>
@@ -3053,6 +3096,8 @@ class GameState extends ChangeNotifier {
       'store': [for (final it in storage) it?.toJson()],
       'nextId': _nextId,
       'up': {for (final e in upgrades.entries) e.key.name: e.value},
+      'am2': true,
+      if (!autoSpawnOn) 'aso': false,
       'energy': energy,
       'ep': energyProgress,
       'adsDay': _adsDay,
@@ -3266,6 +3311,13 @@ class GameState extends ChangeNotifier {
           (t == UpgradeType.energyRegen ? up['spawnSpeed'] : null);
       upgrades[t] = (v as num?)?.toInt() ?? 0;
     }
+    // 1.0.11: 자동 합치기 10단계 → 60단계 (같은 간격 이하가 되는 단계로 옮긴다)
+    if (j['am2'] != true) {
+      upgrades[UpgradeType.autoMerge] = Upgrades.migrateAutoMerge(
+        lv(UpgradeType.autoMerge),
+      );
+    }
+    autoSpawnOn = j['aso'] as bool? ?? true;
     energy = (j['energy'] as num?)?.toInt() ?? GameConfig.energyStart;
     energyProgress = (j['ep'] as num?)?.toDouble() ?? 0;
     _adsDay = j['adsDay'] as String? ?? '';

@@ -418,6 +418,8 @@ class _UpgradeRow extends StatelessWidget {
       button = tr('common.lockedLevel', {'n': featureLevel});
     } else if (maxed) {
       button = tr('common.max');
+    } else if (game.upgradeRunCapped(t)) {
+      button = tr('upgrade.needRenew');
     } else if (capped) {
       button = tr('upgrade.needLevel', {'n': game.upgradeLevelNeeded(t)});
     } else {
@@ -440,9 +442,28 @@ class _UpgradeRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '${upgradeTitle(t)}  Lv.$lv',
-                      style: const TextStyle(fontSize: 17),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            Upgrades.autoLines.contains(t)
+                                ? '${upgradeTitle(t)}  Lv.$lv/${game.autoCap}'
+                                : '${upgradeTitle(t)}  Lv.$lv',
+                            style: const TextStyle(fontSize: 17),
+                          ),
+                        ),
+                        // 자동 놓기 켜기/끄기 (에너지를 아끼고 싶을 때)
+                        if (t == UpgradeType.autoSpawn && lv > 0)
+                          SizedBox(
+                            height: 28,
+                            child: FittedBox(
+                              child: Switch(
+                                value: game.autoSpawnOn,
+                                onChanged: game.setAutoSpawn,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 2),
                     FittedBox(

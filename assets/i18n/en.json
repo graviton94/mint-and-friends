@@ -838,8 +838,8 @@
   "seeds.startCoins.desc": "Start with 1% of last round's coins per level",
   "seeds.energyJar": "Energy jar",
   "seeds.energyJar.desc": "Max [[energy]] +10",
-  "seeds.autoMemory": "Auto-merge memory",
-  "seeds.autoMemory.desc": "Keep auto-merge levels through renewals",
+  "seeds.autoMemory": "Auto Memory",
+  "seeds.autoMemory.desc": "Auto upgrades (Energy Recharge, Auto Place, Auto Merge) can go 7 levels higher per run",
   "seeds.moonRest": "Moonlit rest",
   "seeds.moonRest.desc": "Offline income +10%",
   "seeds.starWish": "Star wish",
@@ -1046,5 +1046,13 @@
   "reward.toBoard": "{name} is on your board",
   "toast.rerollAd": "A new request arrived!",
   "notify.morning.title": "Good morning!",
-  "notify.morning.body": "Shall we tend the garden today?\nYour friends are waiting."
+  "notify.morning.body": "Shall we tend the garden today?\nYour friends are waiting.",
+  "unit.secF": "{n}s",
+  "upgrade.autoSpawn": "Auto Place",
+  "upgrade.autoSpawn.short": "Every",
+  "upgrade.needRenew": "[[lock]] Renew",
+  "feature.autoSpawn": "[[basket]] Auto Place",
+  "feature.autoSpawn.desc": "Spends energy to tap the basket for you and fill empty cells",
+  "tip.autoSpawn": "Open it in Upgrades to place items while the screen is on",
+  "upgrade.autoSpawn.desc": "Auto every {v}s"
 }

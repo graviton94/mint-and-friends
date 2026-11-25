@@ -258,6 +258,7 @@ enum Feature {
   coinBag,
   autoMerge,
   visitor,
+  autoSpawn,
   spawnLevel,
   offlineCap,
   storage,
@@ -286,6 +287,7 @@ class Leveling {
     Feature.autoMerge: 6,
     Feature.visitor: 7,
     Feature.offlineCap: 8,
+    Feature.autoSpawn: 9,
     Feature.spawnLevel: 10,
   };
 
@@ -493,6 +495,7 @@ enum UpgradeType {
   basketTier,
   teaPower,
   stardustPower,
+  autoSpawn,
 }
 
 class UpgradeDef {
@@ -508,7 +511,7 @@ class UpgradeDef {
 
   /// 단계마다 필요한 플레이어 레벨: 다음 단계 L(0부터) = gateStart + gateStep × L.
   final int gateStart;
-  final int gateStep;
+  final double gateStep;
 
   /// 높은 단계에서 더 가파르게 (애드캡처럼 비싼 줄일수록 성장률이 다르다): [lateFrom] 단계부터 단계마다 ×[lateGrowth].
   final int lateFrom;
@@ -534,7 +537,7 @@ class UpgradeDef {
                 pow(costGrowth, level) *
                 pow(lateGrowth / costGrowth, max(0, level - lateFrom))) *
       Tuning.coinScale;
-  int levelFor(int nextLevel) => gateStart + gateStep * nextLevel;
+  int levelFor(int nextLevel) => gateStart + (gateStep * nextLevel).floor();
   String get key => 'upgrade.${type.name}';
 }
 
@@ -600,16 +603,18 @@ class Upgrades {
       1.32,
       gateStart: 3,
     ),
-    // 에너지 회복: 150초 → 단계당 −2.5초, 20단계(100초)
+    // 에너지 회복 (자동 줄, D-059): 150초 → 20단계 100초(단계당 −2.5초) → 60단계 70초(단계당 −0.75초)
     UpgradeDef(
       UpgradeType.energyRegen,
       'timer',
-      20,
+      Upgrades.autoMax,
       1500,
       1.3,
       unlockCost: 4000,
       gateStart: 6,
-      gateStep: 2,
+      gateStep: 0.75,
+      lateFrom: 20,
+      lateGrowth: 1.42,
     ),
     // 바구니 품질: 한 단계 높게 나올 확률 +0.5%p × 20
     UpgradeDef(
@@ -635,21 +640,44 @@ class Upgrades {
       gateStart: 8,
       gateStep: 3,
     ),
-    // 자동 합치기: 30초 → 8초 (10단계), 합치는 상한 = 바구니 단계 + 2 + 단계/2
+    // 자동 합치기 (자동 줄, D-059): 30초 → 60단계 약 6초, 합치는 상한 = 바구니 단계 + 2 + 단계/10
     UpgradeDef(
       UpgradeType.autoMerge,
       'auto',
-      10,
+      Upgrades.autoMax,
       5000,
-      1.5,
+      1.4,
       feature: Feature.autoMerge,
       unlockCost: 20000,
       gateStart: 6,
-      gateStep: 3,
+      gateStep: 0.75,
+    ),
+    // 자동 놓기 (자동 줄, D-059): 에너지로 바구니를 대신 누른다. 36초 → 60단계 약 7초
+    UpgradeDef(
+      UpgradeType.autoSpawn,
+      'basket',
+      Upgrades.autoMax,
+      8000,
+      1.4,
+      feature: Feature.autoSpawn,
+      unlockCost: 40000,
+      gateStart: 9,
+      gateStep: 0.75,
     ),
   ];
 
   static const int endless = 9999;
+
+  /// 자동 줄 (에너지 충전 · 자동 놓기 · 자동 합치기, D-059): 재단장해도 남고,
+  /// 한 판에 올릴 수 있는 단계는 [autoCap] 까지 (재단장할수록 열린다).
+  static const int autoMax = 60;
+  static const List<UpgradeType> autoLines = [
+    UpgradeType.energyRegen,
+    UpgradeType.autoSpawn,
+    UpgradeType.autoMerge,
+  ];
+  static int autoCap(int renews, int memoryPerk) =>
+      min(autoMax, 15 + 7 * renews + 7 * memoryPerk);
 
   static UpgradeDef of(UpgradeType t) => all.firstWhere((u) => u.type == t);
 
@@ -673,23 +701,39 @@ class Upgrades {
     Chain.stardust => UpgradeType.stardustPower,
   };
 
-  static double energyRegenSeconds(int lv) => max(
-    min(100.0, Tuning.energyRegenSeconds),
-    Tuning.energyRegenSeconds - 2.5 * lv,
-  );
+  static double energyRegenSeconds(int lv) {
+    final early = max(
+      min(100.0, Tuning.energyRegenSeconds),
+      Tuning.energyRegenSeconds - 2.5 * min(lv, 20),
+    );
+    return lv <= 20 ? early : max(70.0, early - 0.75 * (lv - 20));
+  }
 
   /// 전체 수익 배율: 단계당 +3%.
   static double incomeMultiplier(int lv) => 1 + 0.03 * lv;
 
-  static const List<double> _autoIntervals = [
-    30, 27, 24, 21, 18, 16, 14, 12, 10, 8, //
-  ];
+  /// 자동 합치기 간격: 30초에서 단계마다 조금씩 (60단계 약 6초).
   static double? autoMergeInterval(int lv) =>
-      lv <= 0 ? null : _autoIntervals[min(lv, _autoIntervals.length) - 1];
+      lv <= 0 ? null : 4 + 26 * pow(0.955, min(lv, autoMax) - 1).toDouble();
 
-  /// 자동 합치기가 손대는 최고 단계: 바구니 기본 단계 + 2 + 단계/2.
+  /// 자동 놓기 간격: 합치기보다 조금 느리고 비율이 딱 떨어지지 않아 둘이 계속 엇갈린다 (36초 → 약 7초).
+  static double? autoSpawnInterval(int lv) =>
+      lv <= 0 ? null : 5 + 31 * pow(0.955, min(lv, autoMax) - 1).toDouble();
+
+  /// 예전 자동 합치기 단계(10단계, 30 → 8초)를 같은 간격 이하가 되는 새 단계로 (1.0.11).
+  static int migrateAutoMerge(int oldLv) {
+    if (oldLv <= 0) return 0;
+    const old = [30.0, 27, 24, 21, 18, 16, 14, 12, 10, 8];
+    final want = old[min(oldLv, 10) - 1];
+    for (var n = 1; n <= autoMax; n++) {
+      if (autoMergeInterval(n)! <= want) return n;
+    }
+    return autoMax;
+  }
+
+  /// 자동 합치기가 손대는 최고 단계: 바구니 기본 단계 + 2 + 단계/10.
   static int autoMergeMaxLevel(int lv, int spawnLevel) =>
-      spawnLevel + 2 + (min(lv, 10) + 1) ~/ 2;
+      spawnLevel + 2 + min(lv, autoMax) ~/ 10;
 
   /// 바구니 품질: 한 단계 높게 나올 확률 추가 (+0.5% / 단계).
   static double qualityChance(int lv) => 0.005 * lv;

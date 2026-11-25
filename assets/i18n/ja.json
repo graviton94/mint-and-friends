@@ -838,8 +838,8 @@
   "seeds.startCoins.desc": "前回のコインの1%ずつを持ってスタート",
   "seeds.energyJar": "エネルギーびん",
   "seeds.energyJar.desc": "最大[[energy]] +10",
-  "seeds.autoMemory": "自動合成の記憶",
-  "seeds.autoMemory.desc": "リニューアルしても自動合成の段階が残る",
+  "seeds.autoMemory": "自動そうちの記憶",
+  "seeds.autoMemory.desc": "自動強化(エネルギー回復・自動で置く・自動合成)を1回のプレイで7段階多く上げられます",
   "seeds.moonRest": "月光の休息",
   "seeds.moonRest.desc": "オフライン収益 +10%",
   "seeds.starWish": "星のお願い",
@@ -1046,5 +1046,13 @@
   "reward.toBoard": "{name}がボードに置かれました",
   "toast.rerollAd": "新しいお願いが来ました!",
   "notify.morning.title": "おはようございます!",
-  "notify.morning.body": "今日もお庭のお手入れをしましょうか?\nお友だちが待っています。"
+  "notify.morning.body": "今日もお庭のお手入れをしましょうか?\nお友だちが待っています。",
+  "unit.secF": "{n}秒",
+  "upgrade.autoSpawn": "自動で置く",
+  "upgrade.autoSpawn.short": "間隔",
+  "upgrade.needRenew": "[[lock]] リニューアル",
+  "feature.autoSpawn": "[[basket]] 自動で置く",
+  "feature.autoSpawn.desc": "エネルギーを使ってかごを代わりに押し、空きマスに置いてくれます",
+  "tip.autoSpawn": "強化で開くと、画面をつけている間に自動で置いてくれます",
+  "upgrade.autoSpawn.desc": "{v}秒ごとに自動"
 }

@@ -31,7 +31,12 @@ String upgradeValue(UpgradeType t, int lv) {
       final i = Upgrades.autoMergeInterval(lv);
       return i == null
           ? tr('upgrade.autoMerge.off')
-          : tr('unit.sec', {'n': i.round()});
+          : tr('unit.secF', {'n': i.toStringAsFixed(1)});
+    case UpgradeType.autoSpawn:
+      final i = Upgrades.autoSpawnInterval(lv);
+      return i == null
+          ? tr('upgrade.autoMerge.off')
+          : tr('unit.secF', {'n': i.toStringAsFixed(1)});
     case UpgradeType.spawnLevel:
       return '${((GameConfig.luckySpawnChance + Upgrades.qualityChance(lv)) * 100).toStringAsFixed(1)}%';
     case UpgradeType.offlineCap:

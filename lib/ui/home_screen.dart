@@ -437,6 +437,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       Feature.autoMerge => chip('auto', upgradeTitle(UpgradeType.autoMerge)),
+      Feature.autoSpawn => chip('basket', upgradeTitle(UpgradeType.autoSpawn)),
       Feature.offlineCap => chip('moon', upgradeTitle(UpgradeType.offlineCap)),
       Feature.spawnLevel => chip(
         'quality',
@@ -472,6 +473,7 @@ class _HomeScreenState extends State<HomeScreen> {
     'autoMerge',
     'visitor',
     'offlineCap',
+    'autoSpawn',
     'design',
     'spawnLevel',
     'basket',

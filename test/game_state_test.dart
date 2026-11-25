@@ -209,9 +209,59 @@ void main() {
       Upgrades.of(UpgradeType.energyRegen).unlockCost,
     );
     while (g.buyUpgrade(UpgradeType.energyRegen)) {}
-    expect(g.lv(UpgradeType.energyRegen), 1); // 다음 단계는 Lv8
+    expect(g.lv(UpgradeType.energyRegen), 2); // 다음 단계는 Lv7 (0.75 레벨마다 한 단계)
     expect(g.upgradeCapped(UpgradeType.energyRegen), isTrue);
-    expect(g.upgradeLevelNeeded(UpgradeType.energyRegen), 8);
+    expect(g.upgradeLevelNeeded(UpgradeType.energyRegen), 7);
+  });
+
+  test('자동 줄: 한 판 상한은 재단장마다 열리고, 재단장해도 남는다', () {
+    final g = make();
+    g.level = 99;
+    g.coins = 1e30;
+    for (final t in Upgrades.autoLines) {
+      while (g.buyUpgrade(t)) {}
+      expect(g.lv(t), 15, reason: t.name);
+      expect(g.upgradeRunCapped(t), isTrue);
+    }
+    g.renewCount = 2; // 재단장 1번
+    expect(g.upgradeRunCapped(UpgradeType.autoMerge), isFalse);
+    expect(g.autoCap, 22);
+    g.renewCount = 8;
+    expect(g.autoCap, Upgrades.autoMax);
+    // 간격: 놓기가 합치기보다 조금 느리고, 둘 다 단계마다 줄어든다
+    for (var n = 1; n <= Upgrades.autoMax; n++) {
+      final m = Upgrades.autoMergeInterval(n)!,
+          s = Upgrades.autoSpawnInterval(n)!;
+      expect(s, greaterThan(m));
+      if (n > 1) expect(m, lessThan(Upgrades.autoMergeInterval(n - 1)!));
+    }
+    expect(Upgrades.energyRegenSeconds(20), 100);
+    expect(Upgrades.energyRegenSeconds(60), 70);
+    // 예전 10단계(8초)는 8초 이하가 되는 단계로
+    final m = Upgrades.migrateAutoMerge(10);
+    expect(Upgrades.autoMergeInterval(m)!, lessThanOrEqualTo(8));
+    expect(Upgrades.autoMergeInterval(m - 1)!, greaterThan(8));
+  });
+
+  test('자동 놓기: 에너지를 쓰고, 빈칸 1칸은 남기고, 끌 수 있다', () {
+    final g = make();
+    g.level = 20;
+    g.upgrades[UpgradeType.autoSpawn] = 1;
+    g.energy = 100;
+    final e0 = g.energy;
+    expect(g.autoSpawnOnce(), isTrue);
+    expect(g.energy, e0 - GameConfig.energyPerTap);
+    while (g.autoSpawnOnce()) {}
+    final empty = [
+      for (var i = 0; i < g.board.length; i++)
+        if (g.board[i] == null && g.isCellOpen(i)) i,
+    ];
+    expect(empty.length, 1);
+    g.energy = 0;
+    g.board[empty.first] = null;
+    expect(g.autoSpawnOnce(), isFalse);
+    g.setAutoSpawn(false);
+    expect(g.autoSpawnOn, isFalse);
   });
 
   test('친구 호감도는 버프가 된다', () {

@@ -29,6 +29,7 @@ enum Stat {
   gemsSpent,
   shopBuys,
   stylesBought,
+  autoSpawns,
 }
 
 // ------------------------------------------------------------------ 업적

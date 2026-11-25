@@ -838,8 +838,8 @@
   "seeds.startCoins.desc": "Empieza con el 1% de las monedas de la ronda anterior por nivel",
   "seeds.energyJar": "Tarro de energía",
   "seeds.energyJar.desc": "[[energy]] máx. +10",
-  "seeds.autoMemory": "Memoria de autocombinar",
-  "seeds.autoMemory.desc": "Conserva los niveles de autocombinar al renovar",
+  "seeds.autoMemory": "Memoria auto",
+  "seeds.autoMemory.desc": "Las mejoras automáticas (Recarga, Colocar auto, Combinar auto) suben 7 niveles más por partida",
   "seeds.moonRest": "Descanso lunar",
   "seeds.moonRest.desc": "Ingresos offline +10%",
   "seeds.starWish": "Deseo estelar",
@@ -1046,5 +1046,13 @@
   "reward.toBoard": "{name} está en tu tablero",
   "toast.rerollAd": "¡Llegó un pedido nuevo!",
   "notify.morning.title": "¡Buenos días!",
-  "notify.morning.body": "¿Cuidamos el jardín hoy?\nTus amigos te esperan."
+  "notify.morning.body": "¿Cuidamos el jardín hoy?\nTus amigos te esperan.",
+  "unit.secF": "{n}s",
+  "upgrade.autoSpawn": "Colocar auto",
+  "upgrade.autoSpawn.short": "Cada",
+  "upgrade.needRenew": "[[lock]] Renovar",
+  "feature.autoSpawn": "[[basket]] Colocar auto",
+  "feature.autoSpawn.desc": "Gasta energía para tocar la cesta por ti y llenar casillas vacías",
+  "tip.autoSpawn": "Ábrelo en Mejoras para colocar objetos con la pantalla encendida",
+  "upgrade.autoSpawn.desc": "Auto cada {v}s"
 }

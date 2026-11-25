@@ -839,8 +839,8 @@
   "seeds.startCoins.desc": "재단장 뒤 지난 회차 코인의 1%씩 들고 시작",
   "seeds.energyJar": "에너지 통",
   "seeds.energyJar.desc": "최대 [[energy]] +10",
-  "seeds.autoMemory": "자동 합치기 기억",
-  "seeds.autoMemory.desc": "재단장해도 자동 합치기 단계가 남아요",
+  "seeds.autoMemory": "자동 장치 기억",
+  "seeds.autoMemory.desc": "자동 강화(에너지 충전 · 자동 놓기 · 자동 합치기)를 한 판에 7단계 더 올릴 수 있어요",
   "seeds.moonRest": "달빛 휴식",
   "seeds.moonRest.desc": "오프라인 수익 +10%",
   "seeds.starWish": "별 부탁",
@@ -1047,5 +1047,13 @@
   "reward.toBoard": "{name}(이)가 판에 놓였어요",
   "toast.rerollAd": "새 부탁이 왔어요!",
   "notify.morning.title": "좋은 아침이에요!",
-  "notify.morning.body": "오늘도 정원을 가꿔 볼까요?\n친구들이 기다리고 있어요."
+  "notify.morning.body": "오늘도 정원을 가꿔 볼까요?\n친구들이 기다리고 있어요.",
+  "unit.secF": "{n}초",
+  "upgrade.autoSpawn": "자동 놓기",
+  "upgrade.autoSpawn.short": "간격",
+  "upgrade.needRenew": "[[lock]] 재단장",
+  "feature.autoSpawn": "[[basket]] 자동 놓기",
+  "feature.autoSpawn.desc": "에너지로 바구니를 대신 눌러 빈칸에 놓아 줘요",
+  "tip.autoSpawn": "강화에서 열면 화면을 켜 둔 동안 알아서 놓아 줘요",
+  "upgrade.autoSpawn.desc": "{v}초마다 자동"
 }
