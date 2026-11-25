@@ -1,6 +1,6 @@
 """Google Analytics(Firebase) 지표 요약 (CI 전용, 서비스 계정 = GA 속성 뷰어).
 사용: python3 tool/ga_report.py [일수=7]"""
-import os, sys
+import datetime, os, sys
 import google.auth
 from google.auth.transport.requests import AuthorizedSession
 
@@ -52,7 +52,9 @@ report('나라별 사용자', ['country'], ['activeUsers'], limit=15,
 # 재방문: 첫 접속일 묶음별 1일 · 7일 뒤
 body = {'dimensions': [{'name': 'cohort'}, {'name': 'cohortNthDay'}], 'metrics': [{'name': 'cohortActiveUsers'}],
         'cohortSpec': {'cohorts': [{'name': 'all', 'dimension': 'firstSessionDate',
-                                    'dateRange': {'startDate': f'{max(DAYS, 8)}daysAgo', 'endDate': 'yesterday'}}],
+                                    # 코호트 기간은 YYYY-MM-DD 만 받는다 ('NdaysAgo' 는 400)
+                                    'dateRange': {'startDate': (datetime.date.today() - datetime.timedelta(days=max(DAYS, 8))).isoformat(),
+                                                  'endDate': (datetime.date.today() - datetime.timedelta(days=1)).isoformat()}}],
                        'cohortsRange': {'granularity': 'DAILY', 'startOffset': 0, 'endOffset': 7}}}
 r = s.post(URL, json=body)
 print('\n== 재방문 (첫 접속 이후 N일째 활성 사용자)')
