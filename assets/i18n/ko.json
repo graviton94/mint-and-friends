@@ -52,7 +52,7 @@
   "toast.featureLocked": "[[lock]] Lv.{n} 에 열려요",
   "levelUp.title": "레벨 업!",
   "levelUp.reward": "[[coin]]{coins}  [[energy]]+{energy}",
-  "levelUp.unlocked": "새로 열린 기능",
+  "levelUp.unlocked": "새 기능이 열렸어요!",
   "levelUp.ok": "좋아요!",
   "feature.upgrades": "[[upgrade]] 강화",
   "feature.boost": "부스트",
@@ -1054,7 +1054,10 @@
   "upgrade.needRenew": "[[lock]] 재단장",
   "feature.autoSpawn": "[[basket]] 자동 놓기",
   "feature.autoSpawn.desc": "에너지로 바구니를 대신 눌러 빈칸에 놓아 줘요",
-  "tip.autoSpawn": "강화에서 열면 화면을 켜 둔 동안 알아서 놓아 줘요",
+  "tip.autoSpawn": "강화에서 열어 보세요.\n화면을 켜 두면 알아서 놓아 줘요.",
   "upgrade.autoSpawn.desc": "{v}초마다 자동",
-  "hud.perHourAuto": "시간당 {v} (자동 +{p}%)"
+  "hud.perHourAuto": "시간당 {v} (자동 +{p}%)",
+  "unlock.title": "잠금 해제!",
+  "unlock.ok": "알아보기",
+  "tip.go": "강화 열기"
 }

@@ -1170,6 +1170,13 @@ class GameState extends ChangeNotifier {
 
   // ---------------------------------------------------------------- 경험치
 
+  /// 미리보기 · 테스트용: 경험치를 바로 준다.
+  @visibleForTesting
+  void debugGainXp(int amount) {
+    _gainXp(amount);
+    notifyListeners();
+  }
+
   void _gainXp(int amount) {
     xp += amount;
     while (xp >= xpToNext) {

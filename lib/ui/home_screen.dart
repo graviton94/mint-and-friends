@@ -325,29 +325,11 @@ class _HomeScreenState extends State<HomeScreen> {
               style: const TextStyle(fontSize: 20),
             ),
             if (e.unlocked.any((f) => f != Feature.storage)) ...[
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               IconText(
                 tr('levelUp.unlocked'),
                 style: const TextStyle(fontSize: 15, color: Colors.black54),
               ),
-              const SizedBox(height: 6),
-              for (final f in e.unlocked.where(
-                (f) => f != Feature.storage,
-              )) ...[
-                // 실제 화면의 그 버튼 모양 그대로 보여 준다
-                IgnorePointer(child: _featurePreview(f)),
-                const SizedBox(height: 6),
-                IconText(
-                  tr('feature.${f.name}.desc'),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: Color(0xFF5A4A36),
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
             ],
           ],
         ),
@@ -360,11 +342,98 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+    // 새로 열린 기능마다 '잠금 해제!' 창 → 확인을 누르면 바로 그 기능 안내로 (D-060)
+    for (final f in e.unlocked.where((f) => f != Feature.storage)) {
+      if (!mounted) break;
+      await _showUnlock(f);
+    }
     _levelDialogOpen = false;
-    // 새로 열린 기능은 실제 위치를 손으로 가리켜 안내한다
-    _queueFeatureTips(e.unlocked);
+    _startOnboarding(e.unlocked);
     _showLevelUps();
   }
+
+  /// 기능 하나의 '잠금 해제!' 창: 실제 화면의 그 버튼 모양 + 이름 + 설명.
+  Future<void> _showUnlock(Feature f) => showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) => GameDialog(
+      banner: 'gold',
+      title: IconText(tr('unlock.title'), textAlign: TextAlign.center),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GlowHalo(size: 150, child: IgnorePointer(child: _featurePreview(f))),
+          // 미리보기가 이름 칩이면 이름을 또 쓰지 않는다
+          if (!_chipPreview.contains(f)) ...[
+            const SizedBox(height: 8),
+            IconText(
+              featureName(f),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 20),
+            ),
+          ],
+          const SizedBox(height: 6),
+          IconText(
+            tr('feature.${f.name}.desc'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 15,
+              color: Color(0xFF5A4A36),
+              height: 1.35,
+            ),
+          ),
+        ],
+      ),
+      actionsAlignment: MainAxisAlignment.center,
+      actions: [
+        FilledButton(
+          onPressed: () {
+            sfx(Sfx.tap);
+            Navigator.pop(ctx);
+          },
+          child: IconText(tr('unlock.ok')),
+        ),
+      ],
+    ),
+  );
+
+  static const _chipPreview = {
+    Feature.autoMerge,
+    Feature.autoSpawn,
+    Feature.offlineCap,
+    Feature.spawnLevel,
+  };
+
+  /// 방금 연 기능들의 안내를 줄 맨 앞에 두고, 기다리지 않고 바로 띄운다.
+  Future<void> _startOnboarding(List<Feature> fs) async {
+    final ids = [
+      for (final f in fs)
+        if (f != Feature.storage) f.name,
+    ];
+    if (ids.isEmpty) return;
+    final seen = await _seenTips();
+    if (!mounted) return;
+    setState(() {
+      _tips.removeWhere(ids.contains);
+      _tips.insertAll(0, [
+        for (final id in ids)
+          if (!seen.contains(id)) id,
+      ]);
+      _onboardNow = true;
+    });
+  }
+
+  /// 잠금 해제 창 바로 뒤: 안내를 기다리지 않고 띄운다 (한 번).
+  bool _onboardNow = false;
+
+  /// 강화 화면에서 쓰는 기능: 안내 뒤 강화 화면을 바로 연다.
+  static const _upgradeTips = {
+    'upgrades',
+    'autoMerge',
+    'autoSpawn',
+    'offlineCap',
+    'spawnLevel',
+  };
 
   /// 레벨업 팝업 안에 보여 줄 기능 미리보기: 실제 화면의 버튼 · 칩과 같은 위젯.
   Widget _featurePreview(Feature f) {
@@ -452,12 +521,6 @@ class _HomeScreenState extends State<HomeScreen> {
   static const _tipsPref = 'feature_tips_seen';
   final List<String> _tips = [];
   Set<String>? _tipsSeen;
-
-  // 보관함은 판 맨 아랫줄 보관 칸으로 합쳐져 안내하지 않는다 (D-017)
-  Future<void> _queueFeatureTips(List<Feature> fs) => _queueTips([
-    for (final f in fs)
-      if (f != Feature.storage) f.name,
-  ]);
 
   /// 안내 순서 (게임 진행 순서): 줄은 늘 이 순서로 정렬한다.
   static const List<String> _tipOrder = [
@@ -607,7 +670,13 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_tut != _tutDone || _tips.isEmpty || _levelDialogOpen) return null;
     // 홈 화면이 맨 앞일 때만 (정원 · 시트 · 창이 열려 있으면 기다린다)
     final current = ModalRoute.of(context)?.isCurrent ?? true;
-    if (current && !_wasCurrent) {
+    if (current && _onboardNow) {
+      _onboardNow = false;
+      _quietUntil = DateTime.now().add(const Duration(milliseconds: 350));
+      Future.delayed(const Duration(milliseconds: 400), () {
+        if (mounted) setState(() {});
+      });
+    } else if (current && !_wasCurrent) {
       _quietUntil = DateTime.now().add(const Duration(milliseconds: 1500));
       Future.delayed(const Duration(milliseconds: 1600), () {
         if (mounted) setState(() {});
@@ -625,10 +694,25 @@ class _HomeScreenState extends State<HomeScreen> {
       hole: r,
       pointAt: swipe ? r.center + const Offset(24, 0) : r?.center,
       dragTo: swipe ? r.center - const Offset(24, 0) : null,
-      buttonLabel: tr('tip.ok'),
+      buttonLabel: tr(_upgradeTips.contains(id) ? 'tip.go' : 'tip.ok'),
       onNext: () {
         sfx(Sfx.tap);
         _doneTip();
+        // 강화로 여는 기능은 강화 화면까지 바로 데려간다
+        if (_upgradeTips.contains(id) && game.isUnlocked(Feature.upgrades)) {
+          showUpgradesSheet(
+            context,
+            game,
+            onRenew: _renew,
+            focus: switch (id) {
+              'autoMerge' => UpgradeType.autoMerge,
+              'autoSpawn' => UpgradeType.autoSpawn,
+              'offlineCap' => UpgradeType.offlineCap,
+              'spawnLevel' => UpgradeType.spawnLevel,
+              _ => null,
+            },
+          );
+        }
       },
     );
   }

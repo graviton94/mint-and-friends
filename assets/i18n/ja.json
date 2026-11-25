@@ -51,7 +51,7 @@
   "toast.featureLocked": "[[lock]] Lv.{n} で解放",
   "levelUp.title": "レベルアップ!",
   "levelUp.reward": "[[coin]]{coins}  [[energy]]+{energy}",
-  "levelUp.unlocked": "新しく解放された機能",
+  "levelUp.unlocked": "新しい機能が開きました!",
   "levelUp.ok": "やったね!",
   "feature.upgrades": "[[upgrade]] 強化",
   "feature.boost": "ブースト",
@@ -1053,7 +1053,10 @@
   "upgrade.needRenew": "[[lock]] リニューアル",
   "feature.autoSpawn": "[[basket]] 自動で置く",
   "feature.autoSpawn.desc": "エネルギーを使ってかごを代わりに押し、空きマスに置いてくれます",
-  "tip.autoSpawn": "強化で開くと、画面をつけている間に自動で置いてくれます",
+  "tip.autoSpawn": "強化で開いてみましょう。\n画面をつけている間、自動で置いてくれます。",
   "upgrade.autoSpawn.desc": "{v}秒ごとに自動",
-  "hud.perHourAuto": "1時間 {v} (自動 +{p}%)"
+  "hud.perHourAuto": "1時間 {v} (自動 +{p}%)",
+  "unlock.title": "アンロック!",
+  "unlock.ok": "見てみる",
+  "tip.go": "強化を開く"
 }

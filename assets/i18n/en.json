@@ -51,7 +51,7 @@
   "toast.featureLocked": "[[lock]] Opens at Lv.{n}",
   "levelUp.title": "Level up!",
   "levelUp.reward": "[[coin]]{coins}  [[energy]]+{energy}",
-  "levelUp.unlocked": "Newly unlocked",
+  "levelUp.unlocked": "A new feature is open!",
   "levelUp.ok": "Great!",
   "feature.upgrades": "[[upgrade]] Upgrades",
   "feature.boost": "Boosts",
@@ -1053,7 +1053,10 @@
   "upgrade.needRenew": "[[lock]] Renew",
   "feature.autoSpawn": "[[basket]] Auto Place",
   "feature.autoSpawn.desc": "Spends energy to tap the basket for you and fill empty cells",
-  "tip.autoSpawn": "Open it in Upgrades to place items while the screen is on",
+  "tip.autoSpawn": "Open it in Upgrades.\nIt places items while the screen is on.",
   "upgrade.autoSpawn.desc": "Auto every {v}s",
-  "hud.perHourAuto": "{v}/hour (auto +{p}%)"
+  "hud.perHourAuto": "{v}/hour (auto +{p}%)",
+  "unlock.title": "Unlocked!",
+  "unlock.ok": "Show me",
+  "tip.go": "Open Upgrades"
 }

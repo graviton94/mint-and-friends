@@ -51,7 +51,7 @@
   "toast.featureLocked": "[[lock]] Se abre en el Nv.{n}",
   "levelUp.title": "¡Nuevo nivel!",
   "levelUp.reward": "[[coin]]{coins}  [[energy]]+{energy}",
-  "levelUp.unlocked": "Recién desbloqueado",
+  "levelUp.unlocked": "¡Hay una función nueva!",
   "levelUp.ok": "¡Genial!",
   "feature.upgrades": "[[upgrade]] Mejoras",
   "feature.boost": "Potenciadores",
@@ -1053,7 +1053,10 @@
   "upgrade.needRenew": "[[lock]] Renovar",
   "feature.autoSpawn": "[[basket]] Colocar auto",
   "feature.autoSpawn.desc": "Gasta energía para tocar la cesta por ti y llenar casillas vacías",
-  "tip.autoSpawn": "Ábrelo en Mejoras para colocar objetos con la pantalla encendida",
+  "tip.autoSpawn": "Ábrelo en Mejoras.\nColoca objetos con la pantalla encendida.",
   "upgrade.autoSpawn.desc": "Auto cada {v}s",
-  "hud.perHourAuto": "{v}/hora (auto +{p}%)"
+  "hud.perHourAuto": "{v}/hora (auto +{p}%)",
+  "unlock.title": "¡Desbloqueado!",
+  "unlock.ok": "Ver",
+  "tip.go": "Abrir mejoras"
 }

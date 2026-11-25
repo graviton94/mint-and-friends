@@ -50,7 +50,34 @@ Future<void> showUpgradesSheet(
   BuildContext context,
   GameState game, {
   VoidCallback? onRenew,
-}) => showGameSheet(context, game, () {
+  UpgradeType? focus, // 새로 연 기능 안내: 그 줄까지 내려가 테두리로 강조 (D-060)
+}) {
+  final focusKey = GlobalKey();
+  if (focus != null) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(milliseconds: 350), () {
+        final c = focusKey.currentContext;
+        if (c != null && c.mounted) {
+          Scrollable.ensureVisible(
+            c,
+            alignment: 0.35,
+            duration: const Duration(milliseconds: 450),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    });
+  }
+  return _upgradesSheet(context, game, onRenew, focus, focusKey);
+}
+
+Future<void> _upgradesSheet(
+  BuildContext context,
+  GameState game,
+  VoidCallback? onRenew,
+  UpgradeType? focus,
+  GlobalKey focusKey,
+) => showGameSheet(context, game, () {
   // 이 화면의 모든 비용은 같은 단위로 (가장 큰 값 기준)
   final unit = UnitFmt.of([
     for (final u in Upgrades.all)
@@ -68,7 +95,13 @@ Future<void> showUpgradesSheet(
         if (onRenew != null && RenewCard.visible(game))
           RenewCard(game: game, onOpen: onRenew),
         for (final u in Upgrades.all)
-          _UpgradeRow(game: game, def: u, unit: unit),
+          _UpgradeRow(
+            key: u.type == focus ? focusKey : null,
+            game: game,
+            def: u,
+            unit: unit,
+            focused: u.type == focus,
+          ),
         // 정원 랜드마크 (D-048): 다 꾸민 구역마다, 그림이 들어온 것만
         if (landmarkAreas(game).isNotEmpty) ...[
           const SizedBox(height: 12),
@@ -395,13 +428,16 @@ Future<void> showWardrobePicker(BuildContext context, GameState game) =>
 
 class _UpgradeRow extends StatelessWidget {
   const _UpgradeRow({
+    super.key,
     required this.game,
     required this.def,
     required this.unit,
+    this.focused = false,
   });
   final GameState game;
   final UpgradeDef def;
   final UnitFmt unit;
+  final bool focused;
 
   @override
   Widget build(BuildContext context) {
@@ -430,8 +466,14 @@ class _UpgradeRow extends StatelessWidget {
     return Opacity(
       opacity: 1,
       child: Card(
-        color: Colors.white,
+        color: focused ? const Color(0xFFFFF6D8) : Colors.white,
         margin: const EdgeInsets.symmetric(vertical: 5),
+        shape: focused
+            ? RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: const BorderSide(color: Color(0xFFF2B53A), width: 3),
+              )
+            : null,
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
