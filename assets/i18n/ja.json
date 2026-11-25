@@ -267,7 +267,7 @@
   "feature.boost.desc": "広告やダイヤでしばらく速く",
   "feature.snack.desc": "かごからおやつも出るよ。おやつのお願いも登場",
   "feature.coinBag.desc": "ときどき広告で[[coin]]コイン袋がもらえる",
-  "feature.autoMerge.desc": "強化すると同じアイテムを自動で合体",
+  "feature.autoMerge.desc": "同じアイテムを自動で合成します。\n自分で発見した段階までが自動の対象です。",
   "feature.visitor.desc": "ときどきお客さんが[[gift]]プレゼントを持ってくる",
   "feature.spawnLevel.desc": "かごから高い段階のアイテムが出る",
   "feature.offlineCap.desc": "ゲームを閉じている間も長く[[coin]]コインを稼ぐ",

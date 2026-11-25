@@ -267,7 +267,7 @@
   "feature.boost.desc": "Acelera un rato con anuncios o diamantes",
   "feature.snack.desc": "Ahora la cesta también suelta dulces, y tus amigos los piden",
   "feature.coinBag.desc": "De vez en cuando, consigue una bolsa de [[coin]] monedas con un anuncio",
-  "feature.autoMerge.desc": "Mejóralo para que combine objetos iguales por ti",
+  "feature.autoMerge.desc": "Combina objetos iguales por ti.\nHasta el nivel más alto que hayas descubierto tú.",
   "feature.visitor.desc": "A veces pasa una visita con un [[gift]] regalo",
   "feature.spawnLevel.desc": "La cesta suelta objetos de mayor nivel",
   "feature.offlineCap.desc": "Gana [[coin]] monedas durante más tiempo mientras no estás",

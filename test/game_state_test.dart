@@ -161,6 +161,7 @@ void main() {
 
   test('자동 합치기는 부탁 아이템을 남기고 가장 낮은 쌍부터', () {
     final g = make();
+    g.highest[Chain.flower] = 5; // 발견한 단계 아래까지만 자동 (D-072)
     g.orders = [
       for (var i = 0; i < 3; i++) Order(900 + i, 'bori', Chain.flower, 3, 1),
     ];

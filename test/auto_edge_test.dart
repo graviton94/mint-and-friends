@@ -19,6 +19,9 @@ void main() {
       while (g.buyUpgrade(t)) {}
     }
     g.energy = 100;
+    for (final c in Chain.values) {
+      g.highest[c] = 20; // 꽤 진행한 플레이어
+    }
     return g;
   }
 
@@ -33,7 +36,6 @@ void main() {
     for (var i = 0; i < g.board.length; i++) {
       if (g.board[i] != null) expect(g.canTake(i), isTrue, reason: 'cell $i');
     }
-    // 자동 합치기 상한 단계에서 멈추면 판이 차서 놓기도 쉰다 (설계)
     expect(g.stat(Stat.autoSpawns), greaterThan(20));
     for (var i = GameConfig.coinCells; i < g.board.length; i++) {
       expect(g.board[i], isNull, reason: '보관 칸 $i 은 자동으로 채우지 않는다');
@@ -95,5 +97,23 @@ void main() {
     expect(d.tiers.length, greaterThan(d.base.length));
     g.stats[Stat.merges] = d.tiers[d.base.length];
     expect(g.achievementClaimable(d), isTrue);
+  });
+
+  test('자동 합치기는 발견한 최고 단계 바로 아래까지만 (발견은 손으로)', () {
+    final g = autoGame();
+    g.upgrades[UpgradeType.autoSpawn] = 0;
+    g.highest[Chain.flower] = 6;
+    final open = [
+      for (var i = 0; i < GameConfig.coinCells; i++)
+        if (g.isCellOpen(i)) i,
+    ];
+    for (final i in open) {
+      g.board[i] = null;
+    }
+    g.board[open[0]] = Item(1, Chain.flower, 5);
+    g.board[open[1]] = Item(2, Chain.flower, 5);
+    expect(g.autoMergeOnce(), isTrue); // 5+5 → 6 (이미 발견)
+    g.board[open[2]] = Item(3, Chain.flower, 6);
+    expect(g.autoMergeOnce(), isFalse); // 6+6 → 7 은 아직 발견 전
   });
 }

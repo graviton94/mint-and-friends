@@ -267,7 +267,7 @@
   "feature.boost.desc": "Speed up for a while with ads or diamonds",
   "feature.snack.desc": "The basket now drops snacks too, and friends ask for them",
   "feature.coinBag.desc": "Grab a [[coin]] coin bag with an ad every so often",
-  "feature.autoMerge.desc": "Upgrade it to merge matching items for you",
+  "feature.autoMerge.desc": "Merges matching items for you.\nIt merges up to the highest level you have discovered yourself.",
   "feature.visitor.desc": "A visitor sometimes drops by with a [[gift]] gift",
   "feature.spawnLevel.desc": "The basket drops higher-level items",
   "feature.offlineCap.desc": "Earn [[coin]] coins for longer while you're away",

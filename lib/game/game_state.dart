@@ -1702,11 +1702,8 @@ class GameState extends ChangeNotifier {
       if (it == null ||
           it.isBubble ||
           it.level >= Chains.maxLevel(it.chain) ||
-          it.level >=
-              Upgrades.autoMergeMaxLevel(
-                lv(UpgradeType.autoMerge),
-                spawnLevelOf(it.chain),
-              ) ||
+          // 발견한 최고 단계 바로 아래까지만 (새 단계를 처음 만드는 발견은 손으로, D-072)
+          it.level >= (highest[it.chain] ?? 1) ||
           _isOrderTarget(it))
         continue;
       groups

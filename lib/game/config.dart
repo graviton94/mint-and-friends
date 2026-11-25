@@ -738,10 +738,6 @@ class Upgrades {
     return autoMax;
   }
 
-  /// 자동 합치기가 손대는 최고 단계: 바구니 기본 단계 + 2 + 단계/10.
-  static int autoMergeMaxLevel(int lv, int spawnLevel) =>
-      spawnLevel + 2 + min(lv, autoMax) ~/ 10;
-
   /// 바구니 품질: 한 단계 높게 나올 확률 추가 (+0.5% / 단계).
   static double qualityChance(int lv) => 0.005 * lv;
 

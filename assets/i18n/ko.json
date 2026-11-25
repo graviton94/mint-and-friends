@@ -268,7 +268,7 @@
   "feature.boost.desc": "광고나 다이아로 잠깐 더 빠르게",
   "feature.snack.desc": "바구니에서 간식도 나와요. 간식 부탁도 생겨요",
   "feature.coinBag.desc": "잠깐마다 광고로 [[coin]]코인 주머니를 받아요",
-  "feature.autoMerge.desc": "강화하면 같은 아이템을 알아서 합쳐 줘요",
+  "feature.autoMerge.desc": "같은 아이템을 알아서 합쳐 줘요.\n새 단계 발견은 직접 해야 그 단계까지 자동으로 합쳐요.",
   "feature.visitor.desc": "가끔 정원에 손님이 와서 [[gift]]선물을 줘요",
   "feature.spawnLevel.desc": "바구니에서 더 높은 단계 아이템이 나와요",
   "feature.offlineCap.desc": "게임을 꺼 둔 동안 더 오래 [[coin]]코인을 벌어요",
