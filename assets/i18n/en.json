@@ -1069,5 +1069,8 @@
   "season.boxOn": "[[check]] Complete! Seasonal scene is on",
   "season.boxPlace": "[[check]] Complete! Use it on all 8 spots for the seasonal scene",
   "ach.lv": "Lv.{n}",
-  "patch.1.0.11": "• New upgrade 'Auto Place': keep the screen on and it places and merges for you\n• The 3 auto upgrades now have 60 levels and stay after renewal\n• New features show an 'Unlocked!' popup and a guide\n• Each decor design now adds a bit of its set effect\n• Tap a decor in the garden to change its design\n• Achievements now go on and on\n• Notifications only from 9 AM to 9 PM\n• Button and screen fixes\n\nHere is some energy as an update gift!"
+  "patch.1.0.11": "• New upgrade 'Auto Place': keep the screen on and it places and merges for you\n• The 3 auto upgrades now have 60 levels and stay after renewal\n• New features show an 'Unlocked!' popup and a guide\n• Each decor design now adds a bit of its set effect\n• Tap a decor in the garden to change its design\n• Achievements now go on and on\n• Notifications only from 9 AM to 9 PM\n• Button and screen fixes\n\nHere is some energy as an update gift!",
+  "pass.until": "[[garden_pass]] Garden Pass active · until {date} ({d} days left)",
+  "refund.title": "Refund applied",
+  "refund.body": "A purchase was refunded,\nso its items were removed.\nQuestions? Use Settings → Report a problem."
 }

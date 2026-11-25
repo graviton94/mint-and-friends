@@ -84,6 +84,9 @@ class BillingService extends ChangeNotifier {
 
   void Function()? _onStarter;
 
+  /// 지급한 소모형 결제 (주문번호, 상품): 환불 확인용으로 서버에 남긴다.
+  void Function(String orderId, String product)? onRecord;
+
   /// 지급할 곳이 아직 연결되지 않아 기다리는 소모형 결제.
   final List<PurchaseDetails> _waiting = [];
 
@@ -201,6 +204,11 @@ class BillingService extends ChangeNotifier {
         _onStarter?.call();
       } else {
         _onGems?.call(pack!);
+      }
+      // 환불 확인용 기록 (주문번호 GPA.… 가 있을 때만, D-066)
+      final order = p.purchaseID;
+      if (order != null && order.startsWith('GPA.')) {
+        onRecord?.call(order, p.productID);
       }
     }
     if (p.pendingCompletePurchase) await _complete(p);

@@ -1069,5 +1069,8 @@
   "season.boxOn": "[[check]] ¡Completo! El paisaje de temporada está activo",
   "season.boxPlace": "[[check]] ¡Completo! Úsalo en los 8 lugares para el paisaje",
   "ach.lv": "Nv.{n}",
-  "patch.1.0.11": "• Nueva mejora 'Colocar auto': con la pantalla encendida coloca y combina por ti\n• Las 3 mejoras automáticas tienen 60 niveles y se conservan al renovar\n• Las funciones nuevas muestran '¡Desbloqueado!' y una guía\n• Cada diseño de decoración suma parte del efecto de set\n• Toca una decoración del jardín para cambiar su diseño\n• Los logros ahora no terminan\n• Notificaciones solo de 9:00 a 21:00\n• Ajustes de botones y pantallas\n\n¡Te enviamos energía como regalo!"
+  "patch.1.0.11": "• Nueva mejora 'Colocar auto': con la pantalla encendida coloca y combina por ti\n• Las 3 mejoras automáticas tienen 60 niveles y se conservan al renovar\n• Las funciones nuevas muestran '¡Desbloqueado!' y una guía\n• Cada diseño de decoración suma parte del efecto de set\n• Toca una decoración del jardín para cambiar su diseño\n• Los logros ahora no terminan\n• Notificaciones solo de 9:00 a 21:00\n• Ajustes de botones y pantallas\n\n¡Te enviamos energía como regalo!",
+  "pass.until": "[[garden_pass]] Pase de jardín activo · hasta {date} (quedan {d} días)",
+  "refund.title": "Reembolso aplicado",
+  "refund.body": "Se reembolsó una compra,\npor eso se retiraron sus objetos.\n¿Dudas? Ajustes → Informar un problema."
 }

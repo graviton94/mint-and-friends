@@ -1,0 +1,28 @@
+name: Refunds
+
+# 환불(취소)된 결제를 찾아 회수 표시를 남긴다 (D-066). 매시간 + 손으로.
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: Project
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          P=$(printf %s "$SA" | python3 -c "import json,sys; print(json.load(sys.stdin)['project_id'])")
+          echo "PROJECT=$P" >> "$GITHUB_ENV"
+      - run: pip install google-auth requests
+      - run: python3 tool/refunds.py

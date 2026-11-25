@@ -1834,6 +1834,20 @@ Future<void> _shopSheet(
         ]),
         const SizedBox(height: 12),
         _ShopHeader(tr('shop.adFreeTitle')),
+        // 기간제 정원 패스(새싹 정원 등) 이용 중: 언제까지인지 (D-066)
+        if (!billing.adFree && game.passUntil != null && game.passActive)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: IconText(
+              tr('pass.until', {
+                'date':
+                    '${game.passUntil!.month}/${game.passUntil!.day} ${game.passUntil!.hour.toString().padLeft(2, '0')}:${game.passUntil!.minute.toString().padLeft(2, '0')}',
+                'd': (game.passLeft.inHours + 23) ~/ 24,
+              }),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16, color: Palette.primary),
+            ),
+          ),
         if (billing.adFree)
           IconText(
             tr('shop.active'),

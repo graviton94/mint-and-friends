@@ -2623,8 +2623,46 @@ class GameState extends ChangeNotifier {
 
   /// 결제 · 보상으로 받은 다이아.
   /// 다이아 팩 결제 완료: 그 팩을 처음 사면 2배. 받은 다이아 수를 돌려준다.
+  /// 마지막 결제로 준 다이아 (환불 기록용).
+  int lastPurchaseGems = 0;
+
+  /// 이미 되돌린 주문번호 (두 번 되돌리지 않게).
+  final Set<String> revokedOrders = {};
+
+  /// 환불된 결제 되돌리기 (D-066): 새싹 정원 → 정원 패스 · 계절 효과 · 의상 · 보관 부스트 회수 + 다이아,
+  /// 다이아 팩 → 준 다이아. 다이아는 0 아래로는 내리지 않는다. 되돌렸으면 true.
+  bool revokePurchase(String orderId, String product, int gemsGiven) {
+    if (!revokedOrders.add(orderId)) return false;
+    if (product == Starter.productId) {
+      passUntil = null;
+      effects.remove(Starter.effect);
+      if (effectOn == Starter.effect) effectOn = null;
+      final o = '${Starter.outfitFriend}:${Starter.outfit}';
+      ownedOutfits.remove(o);
+      if (outfits[Starter.outfitFriend] == Starter.outfit) {
+        outfits.remove(Starter.outfitFriend);
+      }
+      for (final e in Starter.boosts.entries) {
+        final left = (boostTokens[e.key] ?? 0) - e.value.inMinutes;
+        if (left > 0) {
+          boostTokens[e.key] = left;
+        } else {
+          boostTokens.remove(e.key);
+        }
+      }
+      gems = max(0, gems - (gemsGiven > 0 ? gemsGiven : Starter.gems));
+    } else {
+      final p = Gems.pack(product);
+      gems = max(0, gems - (gemsGiven > 0 ? gemsGiven : (p?.gems ?? 0)));
+    }
+    _trace('revoke', '$product $orderId');
+    notifyListeners();
+    return true;
+  }
+
   int grantGemPack(GemPack p) {
     final n = p.gems * (firstPackBonus(p) ? Gems.firstBuyMultiplier : 1);
+    lastPurchaseGems = n;
     boughtPacks.add(p.id);
     _trace('gemPack', '${p.id} +$n');
     grantGems(n);
@@ -3014,6 +3052,7 @@ class GameState extends ChangeNotifier {
   bool grantStarter() {
     if (starterBought) return false;
     starterBought = true;
+    lastPurchaseGems = Starter.gems;
     gems += Starter.gems;
     energy += Starter.energy;
     final from = passActive && passUntil != null && passUntil!.isAfter(now)
@@ -3210,6 +3249,7 @@ class GameState extends ChangeNotifier {
       'offersDay': _offersDay,
       'shopSeen': _shopSeenDay,
       'designSeen': _designSeenDay,
+      if (revokedOrders.isNotEmpty) 'revoked': revokedOrders.toList(),
       'gemRefills': _gemRefillsToday,
       'econ': econVersion,
       'life': lifetimeCoins,
@@ -3383,6 +3423,9 @@ class GameState extends ChangeNotifier {
     _offersDay = j['offersDay'] as String? ?? '';
     _shopSeenDay = j['shopSeen'] as String? ?? '';
     _designSeenDay = j['designSeen'] as String? ?? '';
+    revokedOrders
+      ..clear()
+      ..addAll([for (final x in (j['revoked'] as List?) ?? const []) '$x']);
     _gemRefillsToday = (j['gemRefills'] as num?)?.toInt() ?? 0;
     lifetimeCoins = (j['life'] as num?)?.toDouble() ?? coins;
     renewCount = (j['renew'] as num?)?.toInt() ?? 1;

@@ -21,6 +21,7 @@ import 'services/notify_service.dart';
 import 'services/auth_service.dart';
 import 'services/billing_service.dart';
 import 'services/invite_referrer.dart';
+import 'services/purchase_guard.dart';
 import 'services/save_service.dart';
 import 'services/social_service.dart';
 import 'ui/account_ui.dart';
@@ -199,6 +200,20 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
         );
       }
     };
+    // 환불 확인용 결제 기록 (D-066)
+    widget.billing.onRecord = (order, product) {
+      final uid = auth.uid;
+      if (uid != null) {
+        unawaited(
+          PurchaseGuard.instance.record(
+            uid,
+            order,
+            product,
+            game.lastPurchaseGems,
+          ),
+        );
+      }
+    };
     widget.billing.onGems = (pack) {
       final n = game.grantGemPack(pack);
       save.saveLocal(game);
@@ -282,7 +297,45 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
   }
 
   /// 친구 선물함 · 공지 확인, 공개 프로필 갱신 (실패해도 조용히, 모두 시간 제한).
+  /// 환불된 결제를 되돌린다 (접속 · 다시 열 때, D-066).
+  Future<void> _checkRefunds() async {
+    final uid = auth.uid;
+    if (uid == null || !auth.signedIn) return;
+    final list = await PurchaseGuard.instance.pending(uid);
+    if (list.isEmpty) return;
+    var any = false;
+    for (final (id, product, gems) in list) {
+      if (game.revokePurchase(id, product, gems)) any = true;
+    }
+    await PurchaseGuard.instance.done(uid, [for (final x in list) x.$1]);
+    if (!any) return;
+    save.saveLocal(game);
+    unawaited(save.upload(game));
+    final ctx = _navKey.currentContext;
+    if (ctx != null && ctx.mounted) {
+      await showDialog<void>(
+        context: ctx,
+        builder: (c) => GameDialog(
+          title: IconText(tr('refund.title'), textAlign: TextAlign.center),
+          content: IconText(
+            tr('refund.body'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, height: 1.4),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(c),
+              child: IconText(tr('common.ok')),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   void _refreshSocial({bool force = false}) {
+    unawaited(_checkRefunds());
     final s = social;
     if (s == null || !auth.signedIn) return;
     unawaited(s.refresh(game, force: force).then((_) => _applyPendingInvite()));

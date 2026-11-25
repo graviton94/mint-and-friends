@@ -584,4 +584,22 @@ void main() {
     g.placeDecor(2);
     expect(g.styleOf(a, 2), st);
   });
+
+  test('환불: 새싹 정원 · 다이아 팩을 되돌리고, 같은 주문은 한 번만', () {
+    final g = make();
+    g.grantStarter();
+    expect(g.passActive, isTrue);
+    final gems0 = g.gems;
+    expect(g.revokePurchase('GPA.1', Starter.productId, Starter.gems), isTrue);
+    expect(g.passActive, isFalse);
+    expect(g.gems, max(0, gems0 - Starter.gems));
+    expect(g.effects.contains(Starter.effect), isFalse);
+    expect(g.revokePurchase('GPA.1', Starter.productId, Starter.gems), isFalse);
+    g.gems = 50;
+    g.revokePurchase('GPA.2', Gems.packs.first.id, 200);
+    expect(g.gems, 0); // 0 아래로는 내리지 않는다
+    // 저장해도 되돌린 주문을 기억한다
+    final g2 = make()..load(g.encode());
+    expect(g2.revokedOrders, containsAll(['GPA.1', 'GPA.2']));
+  });
 }

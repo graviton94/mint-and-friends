@@ -132,6 +132,26 @@ service cloud.firestore {
       allow read, update, delete: if false;
     }
 
+    // 결제 기록 (D-066): 앱이 지급할 때 남긴다 (환불 확인용). 만들기만, 읽기 · 고치기는 운영 도구만.
+    match /purchases/{orderId} {
+      allow create: if signedIn()
+        && resource == null
+        && request.resource.data.keys().hasOnly(['uid', 'product', 'gems', 'at'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.product is string
+        && request.resource.data.product.size() <= 64
+        && request.resource.data.gems is int
+        && request.resource.data.gems >= 0 && request.resource.data.gems <= 1000000
+        && request.resource.data.at == request.time;
+      allow read, update, delete: if false;
+    }
+
+    // 환불 회수 표시 (D-066): tool/refunds.py 가 만들고, 본인이 읽고 반영한 뒤 지운다.
+    match /revocations/{uid}/items/{orderId} {
+      allow read, delete: if isMe(uid);
+      allow create, update: if false;
+    }
+
     // 운영 공지: 읽기만 (쓰기는 tool/post_notice.py, 관리자 권한).
     match /notices/{id} {
       allow read: if signedIn();
