@@ -2359,7 +2359,10 @@ class GameState extends ChangeNotifier {
 
   int stat(Stat s) => stats[s] ?? 0;
   void _bump(Stat s, [int n = 1]) {
-    stats[s] = stat(s) + n;
+    // 누적 코인은 9e18(정수 한계)을 넘으면 거기서 멈춘다 (넘치면 음수가 된다)
+    const top = 9000000000000000000;
+    final v = stat(s);
+    stats[s] = n > 0 && v > top - n ? top : v + n;
     if (!_detailed.contains(s)) _trace('act', '${s.name},$n');
   }
 
@@ -2423,11 +2426,26 @@ class GameState extends ChangeNotifier {
   int get claimableAchievements =>
       Achievements.all.where(achievementClaimable).length;
 
+  /// 업적 보상: 정해진 보상 + 뒤 단계는 지금 수입 몇 분치 코인 (인플레이션을 따라간다, D-064).
+  Reward achievementReward(AchievementDef d, int tier) {
+    final r = d.rewardFor(tier);
+    final live = tier < 6
+        ? 0.0
+        : hourlyIncome * (0.03 + 0.0015 * min(tier, 40)); // 6단계부터 수입 약 2~5분치
+    final c = max(r.coins.toDouble(), live);
+    return Reward(
+      coins: min(c, 9e18).round(),
+      energy: r.energy,
+      stars: r.stars,
+      gems: r.gems,
+    );
+  }
+
   /// 다음 단계 보상을 받는다.
   Reward? claimAchievement(AchievementDef d) {
     if (!achievementClaimable(d)) return null;
     final tier = achievementClaimedTiers(d);
-    final r = d.rewardFor(tier);
+    final r = achievementReward(d, tier);
     achClaimed[d.id] = tier + 1;
     _applyReward(r);
     notifyListeners();

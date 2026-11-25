@@ -1068,5 +1068,6 @@
   "season.boxNow": "지금 정원 매력 +{v}% (하나마다 +{p}%)",
   "season.boxGoal": "8종을 다 모으면 +{v}% 더, 계절 풍경까지!",
   "season.boxOn": "[[check]] 완성! 계절 풍경이 켜져 있어요",
-  "season.boxPlace": "[[check]] 완성! 8자리에 모두 입히면 계절 풍경이 켜져요"
+  "season.boxPlace": "[[check]] 완성! 8자리에 모두 입히면 계절 풍경이 켜져요",
+  "ach.lv": "Lv.{n}"
 }

@@ -25,8 +25,16 @@ void main() {
 
   test('업적 보상은 단계마다 커진다', () {
     final d = ach('merges');
-    for (var t = 1; t < d.tiers.length; t++) {
+    for (var t = 1; t <= 12; t++) {
       expect(d.rewardFor(t).coins, greaterThan(d.rewardFor(t - 1).coins));
+    }
+    // 끝없는 단계 (D-064): 곱하기 줄은 수백 단계, 다이아 · 별은 상한
+    expect(d.tiers.length, greaterThan(60));
+    expect(d.endless, isTrue);
+    expect(ach('flowerLevel').tiers.last, 30);
+    for (var t = 0; t < 400; t++) {
+      expect(d.rewardFor(t).gems, lessThanOrEqualTo(7));
+      expect(d.rewardFor(t).stars, lessThanOrEqualTo(200));
     }
     expect(d.rewardFor(0).stars, 0);
     expect(d.rewardFor(2).stars, greaterThan(0));

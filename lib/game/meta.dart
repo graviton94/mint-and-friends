@@ -75,102 +75,143 @@ class AchievementDef {
   final String icon; // 아이콘 토큰 (예: 'sparkle', 'item:flower:5')
   final AchKind kind;
   final Stat? stat;
-  final List<int> tiers;
-  const AchievementDef(this.id, this.icon, this.kind, this.tiers, {this.stat});
 
-  /// 단계별 보상: 앞 단계는 코인 위주, 뒤로 갈수록 별 · 에너지가 붙는다.
-  /// 인플레이션에 맞춰 코인은 단계마다 커진다 (50 × 1.8^단계).
+  /// 손으로 정한 앞 단계들. 실제 단계는 [tiers] (사이 단계를 채우고 뒤로 끝없이 늘린다, D-064).
+  final List<int> base;
+
+  /// 뒤로 늘리는 방법: 곱하기([grow]) 또는 더하기([step]), [cap] 까지. 둘 다 없으면 [base] 그대로.
+  final double? grow;
+  final int? step;
+  final int cap;
+  const AchievementDef(
+    this.id,
+    this.icon,
+    this.kind,
+    this.base, {
+    this.stat,
+    this.grow,
+    this.step,
+    this.cap = 9000000000000000000,
+  });
+
+  static final Map<String, List<int>> _cache = {};
+
+  /// 단계 목표: 손으로 정한 단계 뒤로 끝없이 (최대 [maxTiers]).
+  List<int> get tiers => _cache[id] ??= _build();
+  static const int maxTiers = 400;
+
+  /// 보기 좋은 수 (앞 두 자리만 남김: 1234 → 1200).
+  static int nice(double v) {
+    if (v < 100) return v.round();
+    final p = pow(10, (log(v) / ln10).floor() - 1).toDouble();
+    return ((v / p).round() * p).round();
+  }
+
+  List<int> _build() {
+    // 앞 단계는 손으로 정한 그대로 (초반 속도 · 보상은 예전과 같게), 그 뒤로 끝없이
+    final out = [...base];
+    if (grow == null && step == null) return out;
+    while (out.length < maxTiers) {
+      final last = out.last;
+      final next = grow != null ? nice(last * grow!) : last + step!;
+      if (next <= last || next > cap) break;
+      out.add(next);
+    }
+    return out;
+  }
+
+  /// 끝이 없는 업적인지 (화면에 '몇 / 몇' 대신 단계만).
+  bool get endless => grow != null || (step != null && cap > 1000000000);
+
+  /// 단계별 보상 (코인은 game_state 가 지금 수입에 맞춰 더 준다, D-064).
+  /// 에너지 · 별 · 다이아는 상한을 둬서 끝없는 단계가 경제를 흔들지 않게.
   Reward rewardFor(int tier) => Reward(
-    coins: (50 * pow(1.8, tier)).round(),
+    coins: (50 * pow(1.8, min(tier, 12))).round(),
     energy: tier >= 1 ? 5 + 5 * min(tier, 6) : 0,
-    stars: tier >= 2 ? (3 * pow(1.5, tier)).round() : 0,
-    // 상위 단계는 다이아도 (장기 목표의 무게)
-    gems: tier >= 3 ? tier - 2 : 0,
+    // 별: 9단계까지는 예전 그대로, 그 뒤는 5단계마다 20개
+    stars: tier < 2
+        ? 0
+        : tier < 10
+        ? (3 * pow(1.5, tier)).round()
+        : (tier % 5 == 0 ? 20 : 0),
+    // 다이아: 3~9단계는 1~7개, 그 뒤는 5단계마다 5개
+    gems: tier < 3
+        ? 0
+        : tier < 10
+        ? tier - 2
+        : (tier % 5 == 0 ? 5 : 0),
   );
 }
 
 class Achievements {
   static const List<AchievementDef> all = [
     // 합치기 · 생산
-    AchievementDef('merges', 'sparkle', AchKind.stat, [
-      10,
-      50,
-      200,
-      500,
-      1000,
-      2500,
-      5000,
-      10000,
-      25000,
-      50000,
-    ], stat: Stat.merges),
-    AchievementDef('maxMerges', 'trophy', AchKind.stat, [
-      1,
-      3,
-      10,
-      25,
-      50,
-      100,
-    ], stat: Stat.maxMerges),
-    AchievementDef('spawns', 'basket', AchKind.stat, [
-      50,
-      200,
-      1000,
-      3000,
-      8000,
-      20000,
-      50000,
-      100000,
-    ], stat: Stat.spawns),
-    AchievementDef('energySpent', 'energy', AchKind.stat, [
-      100,
-      500,
-      2000,
-      6000,
-      15000,
-      40000,
-      100000,
-    ], stat: Stat.energySpent),
+    AchievementDef(
+      'merges',
+      'sparkle',
+      AchKind.stat,
+      [10, 50, 200, 500, 1000, 2500, 5000, 10000, 25000, 50000],
+      stat: Stat.merges,
+      grow: 1.6,
+    ),
+    AchievementDef(
+      'maxMerges',
+      'trophy',
+      AchKind.stat,
+      [1, 3, 10, 25, 50, 100],
+      stat: Stat.maxMerges,
+      grow: 1.6,
+    ),
+    AchievementDef(
+      'spawns',
+      'basket',
+      AchKind.stat,
+      [50, 200, 1000, 3000, 8000, 20000, 50000, 100000],
+      stat: Stat.spawns,
+      grow: 1.6,
+    ),
+    AchievementDef(
+      'energySpent',
+      'energy',
+      AchKind.stat,
+      [100, 500, 2000, 6000, 15000, 40000, 100000],
+      stat: Stat.energySpent,
+      grow: 1.6,
+    ),
     // 도감
-    AchievementDef('flowerLevel', 'item:flower:8', AchKind.flowerLevel, [
-      3,
-      5,
-      7,
-      9,
-      11,
-      13,
-      15,
-    ]),
-    AchievementDef('snackLevel', 'item:snack:8', AchKind.snackLevel, [
-      3,
-      5,
-      7,
-      9,
-      11,
-      13,
-      15,
-    ]),
+    AchievementDef(
+      'flowerLevel',
+      'item:flower:8',
+      AchKind.flowerLevel,
+      [3, 5, 7, 9, 11, 13, 15],
+      step: 1,
+      cap: 30,
+    ),
+    AchievementDef(
+      'snackLevel',
+      'item:snack:8',
+      AchKind.snackLevel,
+      [3, 5, 7, 9, 11, 13, 15],
+      step: 1,
+      cap: 30,
+    ),
     // 부탁 · 친구
-    AchievementDef('orders', 'letter', AchKind.stat, [
-      5,
-      25,
-      100,
-      250,
-      500,
-      1000,
-      2500,
-      5000,
-      10000,
-    ], stat: Stat.orders),
-    AchievementDef('orderStars', 'star', AchKind.stat, [
-      10,
-      50,
-      150,
-      400,
-      1000,
-      2500,
-      6000,
-    ], stat: Stat.orderStars),
+    AchievementDef(
+      'orders',
+      'letter',
+      AchKind.stat,
+      [5, 25, 100, 250, 500, 1000, 2500, 5000, 10000],
+      stat: Stat.orders,
+      grow: 1.6,
+    ),
+    AchievementDef(
+      'orderStars',
+      'star',
+      AchKind.stat,
+      [10, 50, 150, 400, 1000, 2500, 6000],
+      stat: Stat.orderStars,
+      grow: 1.6,
+    ),
     AchievementDef('friends', 'heart', AchKind.friends, [2, 3, 4, 5, 6, 7, 8]),
     AchievementDef('maxAffection', 'heart', AchKind.maxAffection, [
       1,
@@ -179,44 +220,39 @@ class Achievements {
       6,
       8,
     ]),
-    AchievementDef('friendTaps', 'heart', AchKind.stat, [
-      10,
-      50,
-      200,
-      500,
-      1500,
-      4000,
-    ], stat: Stat.friendTaps),
-    AchievementDef('visitors', 'gift', AchKind.stat, [
-      1,
-      5,
-      20,
-      50,
-      100,
-      250,
-      500,
-    ], stat: Stat.visitors),
+    AchievementDef(
+      'friendTaps',
+      'heart',
+      AchKind.stat,
+      [10, 50, 200, 500, 1500, 4000],
+      stat: Stat.friendTaps,
+      grow: 1.6,
+    ),
+    AchievementDef(
+      'visitors',
+      'gift',
+      AchKind.stat,
+      [1, 5, 20, 50, 100, 250, 500],
+      stat: Stat.visitors,
+      grow: 1.6,
+    ),
     // 정원
-    AchievementDef('decor', 'decorate', AchKind.stat, [
-      1,
-      8,
-      16,
-      32,
-      48,
-      64,
-      96,
-      128,
-    ], stat: Stat.decor),
-    AchievementDef('areas', 'area_yard', AchKind.stat, [
-      1,
-      2,
-      3,
-      4,
-      6,
-      8,
-      12,
-      16,
-    ], stat: Stat.areas),
+    AchievementDef(
+      'decor',
+      'decorate',
+      AchKind.stat,
+      [1, 8, 16, 32, 48, 64, 96, 128],
+      stat: Stat.decor,
+      step: 16,
+    ),
+    AchievementDef(
+      'areas',
+      'area_yard',
+      AchKind.stat,
+      [1, 2, 3, 4, 6, 8, 12, 16],
+      stat: Stat.areas,
+      step: 2,
+    ),
     // 성장
     AchievementDef('level', 'upgrade', AchKind.level, [
       5,
@@ -230,7 +266,7 @@ class Achievements {
       60,
       75,
       100,
-    ]),
+    ], step: 5),
     AchievementDef('cellsBought', 'lock', AchKind.stat, [
       1,
       3,
@@ -239,83 +275,80 @@ class Achievements {
       14,
       18,
     ], stat: Stat.cellsBought),
-    AchievementDef('upgradesBought', 'upgrade', AchKind.stat, [
-      1,
-      10,
-      30,
-      60,
-      100,
-      150,
-      200,
-    ], stat: Stat.upgradesBought),
-    AchievementDef('coinsEarned', 'coinbag', AchKind.stat, [
-      1000,
-      5000,
-      20000,
-      75000,
-      250000,
-      1000000,
-      5000000,
-    ], stat: Stat.coinsEarned),
+    AchievementDef(
+      'upgradesBought',
+      'upgrade',
+      AchKind.stat,
+      [1, 10, 30, 60, 100, 150, 200],
+      stat: Stat.upgradesBought,
+      grow: 1.5,
+    ),
+    AchievementDef(
+      'coinsEarned',
+      'coinbag',
+      AchKind.stat,
+      [1000, 5000, 20000, 75000, 250000, 1000000, 5000000],
+      stat: Stat.coinsEarned,
+      grow: 4,
+    ),
     // 정리
-    AchievementDef('sells', 'coin', AchKind.stat, [
-      5,
-      25,
-      100,
-      300,
-      1000,
-    ], stat: Stat.sells),
-    AchievementDef('stored', 'storage', AchKind.stat, [
-      5,
-      25,
-      100,
-      300,
-      1000,
-    ], stat: Stat.stored),
-    AchievementDef('bubblesPopped', 'bubble', AchKind.stat, [
-      1,
-      5,
-      20,
-      50,
-      150,
-    ], stat: Stat.bubblesPopped),
+    AchievementDef(
+      'sells',
+      'coin',
+      AchKind.stat,
+      [5, 25, 100, 300, 1000],
+      stat: Stat.sells,
+      grow: 1.6,
+    ),
+    AchievementDef(
+      'stored',
+      'storage',
+      AchKind.stat,
+      [5, 25, 100, 300, 1000],
+      stat: Stat.stored,
+      grow: 1.6,
+    ),
+    AchievementDef(
+      'bubblesPopped',
+      'bubble',
+      AchKind.stat,
+      [1, 5, 20, 50, 150],
+      stat: Stat.bubblesPopped,
+      grow: 1.6,
+    ),
     // 꾸준함 · 소셜
-    AchievementDef('daysPlayed', 'moon', AchKind.stat, [
-      1,
-      3,
-      7,
-      14,
-      30,
-      60,
-      100,
-      200,
-      365,
-      500,
-      1000,
-    ], stat: Stat.daysPlayed),
-    AchievementDef('mailClaimed', 'letter', AchKind.stat, [
-      1,
-      10,
-      50,
-      150,
-      400,
-      1000,
-    ], stat: Stat.mailClaimed),
-    AchievementDef('giftsSent', 'gift', AchKind.stat, [
-      1,
-      10,
-      50,
-      150,
-      400,
-      1000,
-    ], stat: Stat.giftsSent),
-    AchievementDef('adsWatched', 'ad', AchKind.stat, [
-      5,
-      25,
-      100,
-      300,
-      1000,
-    ], stat: Stat.adsWatched),
+    AchievementDef(
+      'daysPlayed',
+      'moon',
+      AchKind.stat,
+      [1, 3, 7, 14, 30, 60, 100, 200, 365, 500, 1000],
+      stat: Stat.daysPlayed,
+      step: 50,
+    ),
+    AchievementDef(
+      'mailClaimed',
+      'letter',
+      AchKind.stat,
+      [1, 10, 50, 150, 400, 1000],
+      stat: Stat.mailClaimed,
+      grow: 1.6,
+    ),
+    AchievementDef(
+      'giftsSent',
+      'gift',
+      AchKind.stat,
+      [1, 10, 50, 150, 400, 1000],
+      stat: Stat.giftsSent,
+      grow: 1.6,
+    ),
+    AchievementDef(
+      'adsWatched',
+      'ad',
+      AchKind.stat,
+      [5, 25, 100, 300, 1000],
+      stat: Stat.adsWatched,
+      grow: 1.6,
+    ),
   ];
 
   static int get totalGoals => all.fold(0, (a, d) => a + d.tiers.length);

@@ -34,6 +34,7 @@ Future<void> showAchievementsSheet(BuildContext context, GameState game) =>
           int rank(AchievementDef d) => game.achievementClaimable(d)
               ? 0
               : (game.achievementClaimedTiers(d) >= d.tiers.length ? 2 : 1);
+          // 같은 줄 안에서는 다음 목표까지 많이 온 것부터
           return rank(a).compareTo(rank(b));
         });
       return SheetFrame(
@@ -81,7 +82,7 @@ class _AchRow extends StatelessWidget {
     final claimable = game.achievementClaimable(def);
     final target = def.tiers[done ? def.tiers.length - 1 : claimed];
     final value = game.achievementValue(def);
-    final reward = def.rewardFor(claimed);
+    final reward = game.achievementReward(def, claimed);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
@@ -115,7 +116,12 @@ class _AchRow extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      tr('ach.tier', {'a': claimed, 'b': def.tiers.length}),
+                      def.endless
+                          ? tr('ach.lv', {'n': claimed})
+                          : tr('ach.tier', {
+                              'a': claimed,
+                              'b': def.tiers.length,
+                            }),
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.black45,
@@ -715,9 +721,6 @@ Future<void> showMenuSheet(
     ),
   ),
 );
-
-// 레벨 등 표시용 (사용하지 않으면 지워도 됨)
-int get achievementGoalCount => Achievements.totalGoals;
 
 // ---------------------------------------------------------------- 출석
 

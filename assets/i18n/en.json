@@ -1067,5 +1067,6 @@
   "season.boxNow": "Garden charm now +{v}% (+{p}% each)",
   "season.boxGoal": "Collect all 8 for +{v}% more and a seasonal scene!",
   "season.boxOn": "[[check]] Complete! Seasonal scene is on",
-  "season.boxPlace": "[[check]] Complete! Use it on all 8 spots for the seasonal scene"
+  "season.boxPlace": "[[check]] Complete! Use it on all 8 spots for the seasonal scene",
+  "ach.lv": "Lv.{n}"
 }

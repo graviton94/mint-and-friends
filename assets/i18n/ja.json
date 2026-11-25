@@ -1067,5 +1067,6 @@
   "season.boxNow": "いまの庭の魅力 +{v}% (1つごとに +{p}%)",
   "season.boxGoal": "8種そろえるとさらに +{v}%、季節の景色も!",
   "season.boxOn": "[[check]] 完成! 季節の景色がついています",
-  "season.boxPlace": "[[check]] 完成! 8か所すべてに置くと季節の景色がつきます"
+  "season.boxPlace": "[[check]] 完成! 8か所すべてに置くと季節の景色がつきます",
+  "ach.lv": "Lv.{n}"
 }

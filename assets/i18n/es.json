@@ -1067,5 +1067,6 @@
   "season.boxNow": "Encanto ahora +{v}% (+{p}% cada una)",
   "season.boxGoal": "¡Reúne las 8 para +{v}% más y un paisaje de temporada!",
   "season.boxOn": "[[check]] ¡Completo! El paisaje de temporada está activo",
-  "season.boxPlace": "[[check]] ¡Completo! Úsalo en los 8 lugares para el paisaje"
+  "season.boxPlace": "[[check]] ¡Completo! Úsalo en los 8 lugares para el paisaje",
+  "ach.lv": "Nv.{n}"
 }
