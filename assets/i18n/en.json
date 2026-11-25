@@ -1098,5 +1098,6 @@
   "pass.total": "Perks so far",
   "pass.totalBody": "You skipped {ads} ads\nand got {gems} diamonds.",
   "pass.open": "See perks",
-  "ctrl.shop.sub": "Gems · Market · Boosts"
+  "ctrl.shop.sub": "Gems · Market · Boosts",
+  "patch.1.0.15": "• The shop moved to the bottom right\n  Turn on boosts right from the menu\n• New Garden Pass perks screen\n  See today's perks left and what you've received so far\n• Merge sounds now change gently by level\n\nHere is some energy as an update gift!"
 }

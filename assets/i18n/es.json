@@ -1098,5 +1098,6 @@
   "pass.total": "Ventajas hasta ahora",
   "pass.totalBody": "Saltaste {ads} anuncios\ny recibiste {gems} diamantes.",
   "pass.open": "Ver ventajas",
-  "ctrl.shop.sub": "Gemas · Mercado · Impulsos"
+  "ctrl.shop.sub": "Gemas · Mercado · Impulsos",
+  "patch.1.0.15": "• La tienda ahora está abajo a la derecha\n  Activa impulsos desde el menú\n• Nueva pantalla de ventajas del Pase de jardín\n  Mira las ventajas de hoy y lo recibido hasta ahora\n• Los sonidos de combinar cambian suavemente según el nivel\n\n¡Te enviamos energía como regalo!"
 }
