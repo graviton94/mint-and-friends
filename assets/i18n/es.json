@@ -1074,5 +1074,5 @@
   "refund.title": "Reembolso aplicado",
   "refund.body": "Se reembolsó una compra,\npor eso se retiraron sus objetos.\n¿Dudas? Ajustes → Informar un problema.",
   "shop.refundNote": "Solo los artículos sin usar se pueden desistir en 7 días.\nLos diamantes usados y artículos recibidos no.\nSi hay reembolso, se retiran y lo gastado queda en negativo.",
-  "refund.bodyDebt": "Se reembolsó una compra,\npor eso se retiraron sus objetos.\n{n} diamantes ya gastados quedan en negativo\nhasta recuperarlos."
+  "refund.bodyDebt": "Se reembolsó una compra,\npor eso se retiraron sus objetos.\n{n} diamantes ya gastados quedan en negativo."
 }
