@@ -1036,6 +1036,20 @@ class GameState extends ChangeNotifier {
       [for (var i = 0; i < Garden.slotsPerArea; i++) i]
           .any((i) => designDot(currentArea, i));
 
+  /// 강화 빨간 점 (D-068): 방치 게임은 늘 살 게 있어 점이 꺼지지 않으므로, 살 수 있는 강화가 있어도
+  /// 그날 강화 화면을 한 번 열면 꺼진다. 재단장 추천은 늘.
+  bool get upgradeDot =>
+      renewRecommended ||
+      (_upgradeSeenDay != _dayKey(now) &&
+          Upgrades.all.any((u) => canBuyUpgrade(u.type)));
+  String _upgradeSeenDay = '';
+  void markUpgradesSeen() {
+    final k = _dayKey(now);
+    if (_upgradeSeenDay == k) return;
+    _upgradeSeenDay = k;
+    notifyListeners();
+  }
+
   String _designSeenDay = '';
   void markDesignSeen() {
     final k = _dayKey(now);
@@ -3254,6 +3268,7 @@ class GameState extends ChangeNotifier {
       'offersDay': _offersDay,
       'shopSeen': _shopSeenDay,
       'designSeen': _designSeenDay,
+      'upgSeen': _upgradeSeenDay,
       if (revokedOrders.isNotEmpty) 'revoked': revokedOrders.toList(),
       'gemRefills': _gemRefillsToday,
       'econ': econVersion,
@@ -3428,6 +3443,7 @@ class GameState extends ChangeNotifier {
     _offersDay = j['offersDay'] as String? ?? '';
     _shopSeenDay = j['shopSeen'] as String? ?? '';
     _designSeenDay = j['designSeen'] as String? ?? '';
+    _upgradeSeenDay = j['upgSeen'] as String? ?? '';
     revokedOrders
       ..clear()
       ..addAll([for (final x in (j['revoked'] as List?) ?? const []) '$x']);

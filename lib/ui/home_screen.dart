@@ -701,6 +701,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _doneTip();
         // 강화로 여는 기능은 강화 화면까지 바로 데려간다
         if (_upgradeTips.contains(id) && game.isUnlocked(Feature.upgrades)) {
+          game.markUpgradesSeen();
           showUpgradesSheet(
             context,
             game,
@@ -1838,7 +1839,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: 'menu',
             fallback: Icons.menu_rounded,
             badge:
-                Upgrades.all.any((u) => game.canBuyUpgrade(u.type)) ||
+                game.upgradeDot ||
                     game.hasNewDiscovery ||
                     game.shopDot ||
                     widget.socialBadge()
@@ -2236,14 +2237,11 @@ class _HomeScreenState extends State<HomeScreen> {
           tr('menu.upgrade'),
           () {
             if (_gate(Feature.upgrades)) {
+              game.markUpgradesSeen();
               showUpgradesSheet(context, game, onRenew: _renew);
             }
           },
-          badge:
-              game.renewRecommended ||
-                  Upgrades.all.any((u) => game.canBuyUpgrade(u.type))
-              ? -1
-              : 0,
+          badge: game.upgradeDot ? -1 : 0,
         ),
         if (game.friends.any(
           (id) => Art.outfitsFor(Friends.byId(id)).isNotEmpty,

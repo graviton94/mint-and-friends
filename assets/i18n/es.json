@@ -1076,5 +1076,6 @@
   "shop.refundNote": "Solo los artículos sin usar se pueden desistir en 7 días.\nLos diamantes usados y artículos recibidos no.\nSi hay reembolso, se retiran y lo gastado queda en negativo.",
   "refund.bodyDebt": "Se reembolsó una compra,\npor eso se retiraron sus objetos.\n{n} diamantes ya gastados quedan en negativo.",
   "refund.blockTitle": "Compras limitadas",
-  "refund.blockBody": "Las compras están limitadas en esta cuenta\npor reembolsos anteriores.\nEscríbenos en Ajustes → Informar un problema."
+  "refund.blockBody": "Las compras están limitadas en esta cuenta\npor reembolsos anteriores.\nEscríbenos en Ajustes → Informar un problema.",
+  "patch.1.0.12": "• La tienda muestra cuándo termina tu Pase de jardín\n• La decoración nueva usa el diseño de temporada si toda el área lo usa\n• El texto de los botones de impulso se lee mejor\n• El punto de mejoras aparece una vez al día\n• Información de reembolso y desistimiento en la tienda\n\n¡Te enviamos energía como regalo!"
 }
