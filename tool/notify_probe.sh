@@ -20,6 +20,12 @@ sleep 150
 adb shell dumpsys notification --noredact > probe/notif_all_kill.txt || true
 grep -A25 "pkg=$PKG" probe/notif_all_kill.txt > probe/notif_after_kill.txt || true
 adb shell dumpsys alarm | grep -A3 "$PKG" > probe/alarm_after_home.txt || true
+# 앱을 다시 열어(예약 정리가 도는 때) 이미 뜬 알림이 알림창에 남는지 본다 (D-070)
+adb shell monkey -p "$PKG" -c android.intent.category.LAUNCHER 1 >/dev/null
+sleep 15
+adb shell dumpsys notification --noredact > probe/notif_all_reopen.txt || true
+grep -A25 "pkg=$PKG" probe/notif_all_reopen.txt > probe/notif_after_reopen.txt || true
+adb shell cmd notification list 2>/dev/null | grep "$PKG" > probe/notif_list_reopen.txt || true
 adb logcat -d > probe/logcat.txt
 {
   echo "## Notify probe"
@@ -31,6 +37,11 @@ adb logcat -d > probe/logcat.txt
   grep -E "android.title|probe now|probe scheduled" probe/notif_30s.txt | head -10
   echo '...'
   grep -E "android.title|probe now|probe scheduled" probe/notif_after_kill.txt | head -10
+  echo '--- after reopen (should still list probe scheduled) ---'
+  grep -E "android.title|probe scheduled" probe/notif_after_reopen.txt | head -10
+  cat probe/notif_list_reopen.txt | head -10
+  echo '--- channel garden_alerts ---'
+  grep -A6 "garden_alerts" probe/notif_all_reopen.txt | grep -E "mImportance|importance|mLockscreenVisibility|lockscreen" | head -4
   echo '--- process alive? ---'; adb shell pidof "$PKG" || echo 'not running'
   echo '--- alarms (after home) ---'
   grep -cE "$PKG" probe/alarm_after_home.txt

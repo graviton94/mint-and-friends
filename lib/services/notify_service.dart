@@ -132,11 +132,24 @@ class NotifyService extends ChangeNotifier {
     await _cancelAll();
   }
 
+  /// 아직 안 울린 예약만 지운다 (D-070). 예전에는 cancelAll 이라 이미 도착해 알림창에 있던 알림까지
+  /// 앱을 열 때 지워 버려, 아이콘 배지만 보고 들어오면 알림창에는 아무것도 남지 않았다.
   Future<void> _cancelAll() async {
     if (!_ready) return;
     try {
-      await _plugin.cancelAll();
+      final pending = await _plugin.pendingNotificationRequests();
+      for (final p in pending) {
+        await _plugin.cancel(id: p.id);
+      }
     } catch (_) {}
+  }
+
+  /// 예약 번호: 예약할 때마다 다른 번호대를 써서, 이미 떠 있는 알림과 겹쳐 지워지지 않게.
+  Future<int> _nextBase() async {
+    final p = await SharedPreferences.getInstance();
+    final n = ((p.getInt('notify_base') ?? 0) + 1) % 40;
+    await p.setInt('notify_base', n);
+    return 1000 + n * 20;
   }
 
   /// 알림이 울리는 시간: 09시부터 21시 전까지.
@@ -279,12 +292,14 @@ class NotifyService extends ChangeNotifier {
     ].take(morningDays).toList();
 
     final kept = arrange(now, events, morning, rng);
-    for (var i = 0; i < kept.length; i++) {
+    final base = await _nextBase();
+    if (gen != _gen) return;
+    for (var i = 0; i < kept.length && i < 20; i++) {
       if (gen != _gen) return; // 그사이 앱이 다시 켜졌다
       final (t, title, body) = kept[i];
       try {
         await _plugin.zonedSchedule(
-          id: 100 + i,
+          id: base + i,
           scheduledDate: tz.TZDateTime.from(t.toUtc(), tz.UTC),
           notificationDetails: _details,
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -344,7 +359,7 @@ class NotifyService extends ChangeNotifier {
         id: 901,
         scheduledDate: tz.TZDateTime.now(tz.UTC)
             .add(const Duration(seconds: 90)),
-        notificationDetails: details,
+        notificationDetails: _details, // 실제 게임 알림과 같은 채널 · 설정
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         title: 'probe scheduled',
         body: '90s',
