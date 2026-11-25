@@ -1079,5 +1079,6 @@
   "refund.blockBody": "Las compras están limitadas en esta cuenta\npor reembolsos anteriores.\nEscríbenos en Ajustes → Informar un problema.",
   "patch.1.0.12": "• La tienda muestra cuándo termina tu Pase de jardín\n• La decoración nueva usa el diseño de temporada si toda el área lo usa\n• El texto de los botones de impulso se lee mejor\n• El punto de mejoras aparece una vez al día\n• Información de reembolso y desistimiento en la tienda\n\n¡Te enviamos energía como regalo!",
   "notify.test.lockBody": "¡Así se ve en la pantalla bloqueada!",
-  "patch.1.0.13": "• Las notificaciones ya no desaparecen al abrir la app\n• El texto se ve en la pantalla bloqueada\n• Combinar auto ya no toca los objetos guardados\n• Botones ajustados en la pantalla de diseño\n\n¡Te enviamos energía como regalo!"
+  "patch.1.0.13": "• Las notificaciones ya no desaparecen al abrir la app\n• El texto se ve en la pantalla bloqueada\n• Combinar auto ya no toca los objetos guardados\n• Botones ajustados en la pantalla de diseño\n\n¡Te enviamos energía como regalo!",
+  "patch.1.0.14": "• Combinar auto llega justo debajo del nivel más alto que descubriste\n  Descubre niveles nuevos para ampliar su alcance\n\n¡Te enviamos energía como regalo!"
 }
