@@ -1016,7 +1016,7 @@
   "reward.ad": "광고 보상!",
   "reward.purchase": "구매해 주셔서 고마워요!",
   "reward.quotaAd": "{name}의 별 부탁 +{n}번",
-  "reward.boostAd": "부스트 {n}분 시작!",
+  "reward.boostAd": "{name} {n}분 시작!",
   "reward.adFree": "광고가 사라졌어요",
   "reward.offline": "쉬는 동안 번 코인",
   "reward.bought": "구매 완료!",
@@ -1042,5 +1042,10 @@
   "report.send": "보내기",
   "report.sent": "고마워요! 꼭 확인할게요",
   "report.saved": "저장해 두었어요. 연결되면 보낼게요",
-  "patch.1.0.10": "• 일부 기기에서 구글 · 카카오 로그인이 안 되던 문제를 고쳤어요\n• 로그인에 실패하면 안내가 뜨고, 문제가 저희에게 자동으로 전달돼요\n• 설정에 '문제 알리기'를 넣었어요\n\n업데이트 선물로 에너지를 보내요!"
+  "patch.1.0.10": "• 일부 기기에서 구글 · 카카오 로그인이 안 되던 문제를 고쳤어요\n• 로그인에 실패하면 안내가 뜨고, 문제가 저희에게 자동으로 전달돼요\n• 설정에 '문제 알리기'를 넣었어요\n\n업데이트 선물로 에너지를 보내요!",
+  "reward.bubble": "{name} 꺼냈어요!",
+  "reward.toBoard": "{name}(이)가 판에 놓였어요",
+  "toast.rerollAd": "새 부탁이 왔어요!",
+  "notify.morning.title": "좋은 아침이에요!",
+  "notify.morning.body": "오늘도 정원을 가꿔 볼까요?\n친구들이 기다리고 있어요."
 }

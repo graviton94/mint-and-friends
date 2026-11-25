@@ -1670,6 +1670,21 @@ Widget _offerCard(
       }
       if (game.buyOffer(index, adWatched: watched) == BuyResult.ok) {
         sfx(Sfx.coin);
+        if (context.mounted) {
+          RewardPopup.show(
+            context,
+            const Reward(),
+            title: tr(switch (o.kind) {
+              4 => 'reward.ad',
+              1 => 'reward.got',
+              _ => 'reward.bought',
+            }),
+            art: Art.item(o.chain, o.level),
+            sub: tr('reward.toBoard', {
+              'name': itemName(Chains.item(o.chain, o.level)),
+            }),
+          );
+        }
       }
     },
   );
@@ -2754,6 +2769,7 @@ void _boostBought(BuildContext context, BoostKind k, {bool gems = false}) =>
       title: tr(gems ? 'reward.bought' : 'reward.ad'),
       art: IconText.resolve(boostIcon(k)),
       sub: tr('reward.boostAd', {
+        'name': tr('boost.${k.name}'),
         'n': (gems ? Boosts.perGems[k]! : Boosts.perAd[k]!).inMinutes,
       }),
     );

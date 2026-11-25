@@ -1015,7 +1015,7 @@
   "reward.ad": "¡Premio del anuncio!",
   "reward.purchase": "¡Gracias por tu compra!",
   "reward.quotaAd": "{name}: +{n} pedidos con estrellas",
-  "reward.boostAd": "¡Impulso de {n} min activo!",
+  "reward.boostAd": "¡{name} activo {n} min!",
   "reward.adFree": "Ya no hay anuncios",
   "reward.offline": "Monedas ganadas mientras no estabas",
   "reward.bought": "¡Comprado!",
@@ -1041,5 +1041,10 @@
   "report.send": "Enviar",
   "report.sent": "¡Gracias! Lo revisaremos",
   "report.saved": "Guardado. Lo enviaremos cuando haya conexión",
-  "patch.1.0.10": "• Arreglamos el inicio de sesión con Google y Kakao en algunos dispositivos\n• Si falla el inicio de sesión verás un aviso y nos llegará automáticamente\n• Añadimos 'Informar un problema' en Ajustes\n\n¡Te enviamos energía como regalo de actualización!"
+  "patch.1.0.10": "• Arreglamos el inicio de sesión con Google y Kakao en algunos dispositivos\n• Si falla el inicio de sesión verás un aviso y nos llegará automáticamente\n• Añadimos 'Informar un problema' en Ajustes\n\n¡Te enviamos energía como regalo de actualización!",
+  "reward.bubble": "¡Sacaste {name}!",
+  "reward.toBoard": "{name} está en tu tablero",
+  "toast.rerollAd": "¡Llegó un pedido nuevo!",
+  "notify.morning.title": "¡Buenos días!",
+  "notify.morning.body": "¿Cuidamos el jardín hoy?\nTus amigos te esperan."
 }

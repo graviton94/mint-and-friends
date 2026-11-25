@@ -1015,7 +1015,7 @@
   "reward.ad": "Ad reward!",
   "reward.purchase": "Thanks for your purchase!",
   "reward.quotaAd": "{name}: +{n} star requests",
-  "reward.boostAd": "Boost on for {n} min!",
+  "reward.boostAd": "{name} on for {n} min!",
   "reward.adFree": "Ads are gone",
   "reward.offline": "Coins earned while away",
   "reward.bought": "Purchased!",
@@ -1041,5 +1041,10 @@
   "report.send": "Send",
   "report.sent": "Thanks! We'll take a look",
   "report.saved": "Saved. We'll send it once you're online",
-  "patch.1.0.10": "• Fixed Google and Kakao sign-in not working on some devices\n• If sign-in fails, you'll see a notice and we're notified automatically\n• Added 'Report a problem' in Settings\n\nHere is some energy as an update gift!"
+  "patch.1.0.10": "• Fixed Google and Kakao sign-in not working on some devices\n• If sign-in fails, you'll see a notice and we're notified automatically\n• Added 'Report a problem' in Settings\n\nHere is some energy as an update gift!",
+  "reward.bubble": "Got {name}!",
+  "reward.toBoard": "{name} is on your board",
+  "toast.rerollAd": "A new request arrived!",
+  "notify.morning.title": "Good morning!",
+  "notify.morning.body": "Shall we tend the garden today?\nYour friends are waiting."
 }

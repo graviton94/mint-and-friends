@@ -1110,6 +1110,8 @@ class _HomeScreenState extends State<HomeScreen> {
       _toast(tr('toast.rerollFree', {'n': game.freeRerollsLeft}));
     } else if (await _rewardedCapped(AdKind.refresh)) {
       game.refreshOrder(i);
+      sfx(Sfx.open);
+      _toast(tr('toast.rerollAd'));
     }
   }
 
@@ -1215,7 +1217,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     if (pick == 'ad') {
       // 붙잡은 채로 꺼낸다 (원래 시간이 지났어도 받는다)
-      if (await _rewarded() && game.popBubble(cell)) sfx(Sfx.unlock);
+      if (await _rewarded() && game.popBubble(cell)) {
+        sfx(Sfx.unlock);
+        _showFreed(cell, tr('reward.ad'));
+      }
     } else if (pick == 'gems') {
       release(); // 비용은 원래 남은 시간으로 (판에서는 아직 안 터졌다)
       final it = game.board[cell];
@@ -1223,11 +1228,27 @@ class _HomeScreenState extends State<HomeScreen> {
       final need = game.bubbleGemCost(cell);
       if (game.popBubbleWithGems(cell)) {
         sfx(Sfx.unlock);
+        _showFreed(cell, tr('reward.bought'));
       } else if (game.gems < need) {
         _toast(tr('shop.notEnough'));
         _openShop();
       }
     }
+  }
+
+  /// 비눗방울에서 꺼낸 아이템을 그림 · 이름으로 알려 준다.
+  void _showFreed(int cell, String title) {
+    final it = game.board[cell];
+    if (it == null || !mounted) return;
+    RewardPopup.show(
+      context,
+      const Reward(),
+      title: title,
+      art: Art.item(it.chain, it.level),
+      sub: tr('reward.bubble', {
+        'name': itemName(Chains.item(it.chain, it.level)),
+      }),
+    );
   }
 
   Future<void> _onVisitorTap() async {
@@ -1281,6 +1302,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     if (withAd == null) return;
     final ok = withAd ? await widget.ads.showRewarded() : false;
+    if (withAd && !ok) {
+      // 광고가 없으면 손님을 그대로 두고 알린다 (기본 보상으로 몰래 넘기지 않는다)
+      _toast(tr('toast.adLoading'));
+      Analytics.instance.adUnavailable();
+      return;
+    }
     final r = game.claimVisitor(withAd: ok); // 붙잡은 채로 받는다
     if (r != null && mounted) {
       RewardPopup.show(

@@ -909,31 +909,40 @@ void main() {
     expect(GameConfig.roundStarBonus(30), 0.5);
   });
 
-  test('알림 조용한 시간: 21시~08시는 다음 08시로', () {
-    expect(
-      NotifyService.quiet(DateTime(2026, 11, 21, 14, 30)),
-      DateTime(2026, 11, 21, 14, 30),
-    );
-    expect(
-      NotifyService.quiet(DateTime(2026, 11, 21, 21, 0)),
-      DateTime(2026, 11, 22, 8),
-    );
-    expect(
-      NotifyService.quiet(DateTime(2026, 11, 21, 23, 40)),
-      DateTime(2026, 11, 22, 8),
-    );
-    expect(
-      NotifyService.quiet(DateTime(2026, 11, 22, 3, 10)),
-      DateTime(2026, 11, 22, 8),
-    );
-    expect(
-      NotifyService.quiet(DateTime(2026, 11, 22, 7, 59)),
-      DateTime(2026, 11, 22, 8),
-    );
-    expect(
-      NotifyService.quiet(DateTime(2026, 11, 22, 8, 0)),
-      DateTime(2026, 11, 22, 8),
-    );
+  test('알림: 09~21시만, 밤 소식은 버리고 아침 알림은 09시 하루 하나', () {
+    final m = [('a', ''), ('b', ''), ('c', '')];
+    (DateTime, String, String) ev(DateTime t, String n) => (t, n, '');
+    // 20시에 내림: 밤 23시 · 새벽 3시 소식은 버린다 (아침에 몰아서 울리지 않는다)
+    var now = DateTime(2026, 11, 21, 20);
+    var r = NotifyService.arrange(now, [
+      ev(DateTime(2026, 11, 21, 23), 'night'),
+      ev(DateTime(2026, 11, 22, 3), 'dawn'),
+      ev(DateTime(2026, 11, 22, 9, 30), 'nearMorning'),
+      ev(DateTime(2026, 11, 22, 13), 'noon'),
+    ], m);
+    expect(r.map((e) => e.$2).toList(), ['a', 'noon', 'b', 'c']);
+    expect(r.first.$1, DateTime(2026, 11, 22, 9));
+    expect(r[2].$1, DateTime(2026, 11, 23, 9));
+    // 모든 알림은 09~21시
+    expect(r.every((e) => NotifyService.inDay(e.$1)), true);
+    // 새벽 2시에 내리면 오늘 09시가 첫 아침 알림
+    now = DateTime(2026, 11, 22, 2);
+    r = NotifyService.arrange(now, const [], m);
+    expect(r.first.$1, DateTime(2026, 11, 22, 9));
+    // 아침 8시에 내리면 (09시까지 3시간 안) 내일 09시
+    now = DateTime(2026, 11, 22, 8);
+    r = NotifyService.arrange(now, const [], m);
+    expect(r.first.$1, DateTime(2026, 11, 23, 9));
+    // 낮 소식: 90분 간격 · 하루 3개까지
+    now = DateTime(2026, 11, 22, 10);
+    r = NotifyService.arrange(now, [
+      for (var h = 11; h <= 20; h++) ev(DateTime(2026, 11, 22, h), 'e$h'),
+    ], m);
+    final today = r.where((e) => e.$1.day == 22).toList();
+    expect(today.length, 3);
+    for (var i = 1; i < r.length; i++) {
+      expect(r[i].$1.difference(r[i - 1].$1) >= NotifyService.minGap, true);
+    }
   });
 
   test('출시 전 점검: 친구당 부탁 하나 · 예전 저장 씨앗 · 시장 최고 단계', () {

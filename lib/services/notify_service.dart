@@ -14,18 +14,15 @@ import '../i18n/l10n.dart';
 import '../i18n/names.dart';
 
 /// 게임 밖 알림 (기기 안에서 예약, 서버 없음).
-/// 앱을 내릴 때 예약하고, 다시 켜면 모두 지운다. 08~21시에만 울린다 (그 밖이면 다음 08시로).
-/// - 에너지가 가득 찼어요 · 정원 수입 주머니가 가득 찼어요
-/// - 친구가 선물을 두고 갔어요 · 오늘의 출석 선물
-/// - 친구가 보고 싶대요 (하루 · 사흘 동안 안 들어오면)
+/// 앱을 내릴 때 예약하고, 다시 켜면 모두 지운다. 09~21시에만 울린다 (규칙은 [arrange]).
+/// - 아침 알림 (매일 09시, 들어오지 않으면 사흘까지): 출석 선물 · 친구가 보고 싶대요 · 친구들이 기다려요
+/// - 소식 알림 (그 시각에): 에너지 가득 · 수입 주머니 가득 · 친구 선물 · 안 읽은 편지
 class NotifyService extends ChangeNotifier {
   NotifyService._();
   static final NotifyService instance = NotifyService._();
 
   static const _key = 'notify_on';
   static const _askedKey = 'notify_asked';
-  static const int quietStart = 21; // 이 시각부터
-  static const int quietEnd = 8; // 이 시각까지는 울리지 않는다
 
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _ready = false;
@@ -126,17 +123,65 @@ class NotifyService extends ChangeNotifier {
     } catch (_) {}
   }
 
-  /// 조용한 시간(21시~다음 날 08시)이면 다음 08시(+0~20분)로 미룬다.
-  static DateTime quiet(DateTime t, [Random? rng]) {
-    final jitter = Duration(minutes: rng?.nextInt(20) ?? 0);
-    if (t.hour >= quietStart) {
-      final d = t.add(const Duration(days: 1));
-      return DateTime(d.year, d.month, d.day, quietEnd).add(jitter);
+  /// 알림이 울리는 시간: 09시부터 21시 전까지.
+  static const int dayStart = 9;
+  static const int dayEnd = 21;
+
+  /// 알림 사이 최소 간격 · 하루에 울리는 소식 알림(아침 알림 빼고) 최대 개수.
+  static const minGap = Duration(minutes: 90);
+  static const maxEventsPerDay = 3;
+
+  /// 아침 알림을 며칠치 예약하는지 (하루 · 이틀 · 사흘 동안 안 들어오면).
+  static const morningDays = 3;
+
+  /// 첫 아침 알림 날: 오늘 09시가 3시간 넘게 남았으면 오늘(새벽에 잠깐 들어온 경우), 아니면 내일.
+  static DateTime firstMorning(DateTime now) {
+    final today = DateTime(now.year, now.month, now.day, dayStart);
+    if (!now.add(const Duration(hours: 3)).isAfter(today)) return today;
+    final d = now.add(const Duration(days: 1));
+    return DateTime(d.year, d.month, d.day, dayStart);
+  }
+
+  static bool inDay(DateTime t) => t.hour >= dayStart && t.hour < dayEnd;
+
+  /// 알림 일정 정하기 (순수 함수, 테스트용).
+  /// - 아침 알림: 접속이 없으면 매일 09시(+0~14분)에 하나 (morning 의 순서대로 하루씩).
+  /// - 소식 알림(에너지 · 수입 · 선물 · 편지): 그 시각이 09~21시일 때만. 밤에 생긴 것은 미루지 않고 버린다
+  ///   (아침에 몰아서 울리지 않게, 다음 날은 아침 알림부터 다시).
+  /// - 어떤 두 알림도 90분 안에 붙지 않고, 소식 알림은 하루 3개까지.
+  static List<(DateTime, String, String)> arrange(
+    DateTime now,
+    List<(DateTime, String, String)> events,
+    List<(String, String)> morning, [
+    Random? rng,
+  ]) {
+    final kept = <(DateTime, String, String)>[];
+    final m0 = firstMorning(now);
+    for (var i = 0; i < morning.length; i++) {
+      final d = m0.add(Duration(days: i));
+      final t = DateTime(
+        d.year,
+        d.month,
+        d.day,
+        dayStart,
+        rng?.nextInt(15) ?? 0,
+      );
+      kept.add((t, morning[i].$1, morning[i].$2));
     }
-    if (t.hour < quietEnd) {
-      return DateTime(t.year, t.month, t.day, quietEnd).add(jitter);
+    final perDay = <int, int>{};
+    int day(DateTime t) => t.year * 10000 + t.month * 100 + t.day;
+    final sorted = [...events]..sort((x, y) => x.$1.compareTo(y.$1));
+    for (final e in sorted) {
+      final t = e.$1;
+      if (t.isBefore(now.add(const Duration(minutes: 5)))) continue;
+      if (!inDay(t)) continue; // 밤 · 새벽 소식은 버린다
+      if ((perDay[day(t)] ?? 0) >= maxEventsPerDay) continue;
+      if (kept.any((k) => k.$1.difference(t).abs() < minGap)) continue;
+      kept.add(e);
+      perDay[day(t)] = (perDay[day(t)] ?? 0) + 1;
     }
-    return t;
+    kept.sort((x, y) => x.$1.compareTo(y.$1));
+    return kept;
   }
 
   /// 앱을 내릴 때: 지금 상태로 다음 알림들을 예약한다.
@@ -148,7 +193,7 @@ class NotifyService extends ChangeNotifier {
     if (gen != _gen || !_on) return;
     final now = DateTime.now();
     final rng = Random();
-    final plans = <(DateTime, String, String)>[];
+    final events = <(DateTime, String, String)>[];
     String friend() {
       final fs = g.friends.toList();
       return fs.isEmpty
@@ -164,7 +209,7 @@ class NotifyService extends ChangeNotifier {
             seconds: ((g.energyCap - g.energy - 1) * g.energyRegenSeconds)
                 .round(),
           );
-      plans.add((
+      events.add((
         now.add(left),
         tr('notify.energy.title'),
         tr('notify.energy.body', {'n': g.energyCap}),
@@ -172,7 +217,7 @@ class NotifyService extends ChangeNotifier {
     }
     // 2) 정원 수입 주머니 가득 (오프라인 한도)
     if (g.baseIncomePerSec > 0) {
-      plans.add((
+      events.add((
         now.add(g.offlineCap),
         tr('notify.offline.title'),
         tr('notify.offline.body'),
@@ -181,20 +226,20 @@ class NotifyService extends ChangeNotifier {
     // 3) 친구 선물
     final gift = g.nextFriendGiftAt;
     if (gift != null && g.friends.length >= 2 && gift.isAfter(now)) {
-      plans.add((
+      events.add((
         gift,
         tr('notify.gift.title'),
         tr('notify.gift.body', {'name': friend()}),
       ));
     }
-    // 3-1) 안 읽은 편지 (3시간 뒤): 친구 편지면 그 친구 이름으로, 여럿이면 개수로
+    // 4) 안 읽은 편지 (3시간 뒤): 친구 편지면 그 친구 이름으로, 여럿이면 개수로
     final unread = g.mail.where((m) => !m.claimed).toList();
     if (unread.isNotEmpty) {
       final fromFriend = unread
           .where((m) => Friends.all.any((f) => f.id == m.from))
           .firstOrNull;
       final v = rng.nextInt(2);
-      plans.add((
+      events.add((
         now.add(const Duration(hours: 3)),
         unread.length > 1
             ? tr('notify.mailMany.title', {'n': unread.length})
@@ -204,40 +249,20 @@ class NotifyService extends ChangeNotifier {
         tr('notify.mail.body.$v'),
       ));
     }
-    // 4) 내일 출석 선물 (09시 무렵)
-    if (g.level >= 3) {
-      final d = now.add(const Duration(days: 1));
-      plans.add((
-        DateTime(d.year, d.month, d.day, 9, rng.nextInt(30)),
-        tr('notify.checkIn.title'),
-        tr('notify.checkIn.body'),
-      ));
-    }
-    // 5) 돌아오세요 (하루 · 사흘)
+    // 아침 알림: 첫날은 출석 선물(Lv3+) 또는 아침 인사, 이튿날은 친구가 보고 싶대요, 사흗날은 친구들이 기다려요
     final n1 = friend();
-    plans.add((
-      now.add(const Duration(hours: 24)),
-      tr('notify.miss.title', {'name': n1}),
-      tr('notify.miss.body', {'name': n1}),
-    ));
-    plans.add((
-      now.add(const Duration(days: 3)),
-      tr('notify.miss3.title'),
-      tr('notify.miss3.body'),
-    ));
+    final morning = <(String, String)>[
+      g.level >= 3
+          ? (tr('notify.checkIn.title'), tr('notify.checkIn.body'))
+          : (tr('notify.morning.title'), tr('notify.morning.body')),
+      (
+        tr('notify.miss.title', {'name': n1}),
+        tr('notify.miss.body', {'name': n1}),
+      ),
+      (tr('notify.miss3.title'), tr('notify.miss3.body')),
+    ].take(morningDays).toList();
 
-    // 조용한 시간 피하기 · 30분 안에 겹치는 알림은 하나만
-    final fixed = [for (final (t, a, b) in plans) (quiet(t, rng), a, b)]
-      ..sort((x, y) => x.$1.compareTo(y.$1));
-    final kept = <(DateTime, String, String)>[];
-    for (final p in fixed) {
-      if (p.$1.isBefore(now.add(const Duration(minutes: 5)))) continue;
-      if (kept.isNotEmpty &&
-          p.$1.difference(kept.last.$1) < const Duration(minutes: 30)) {
-        continue;
-      }
-      kept.add(p);
-    }
+    final kept = arrange(now, events, morning, rng);
     for (var i = 0; i < kept.length; i++) {
       if (gen != _gen) return; // 그사이 앱이 다시 켜졌다
       final (t, title, body) = kept[i];
