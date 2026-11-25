@@ -1054,5 +1054,6 @@
   "feature.autoSpawn": "[[basket]] Auto Place",
   "feature.autoSpawn.desc": "Spends energy to tap the basket for you and fill empty cells",
   "tip.autoSpawn": "Open it in Upgrades to place items while the screen is on",
-  "upgrade.autoSpawn.desc": "Auto every {v}s"
+  "upgrade.autoSpawn.desc": "Auto every {v}s",
+  "hud.perHourAuto": "{v}/hour (auto +{p}%)"
 }

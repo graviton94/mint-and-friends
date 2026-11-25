@@ -344,6 +344,7 @@ class Sim {
   }
 
   void tap() {
+    g.noteInput(); // 손으로 하는 중: 자동 정원 보너스 없음
     final open = g.openBaskets.where(basketReady).toList();
     if (open.isEmpty) open.add(0);
     if (p.focusZone) {
@@ -417,8 +418,68 @@ class Sim {
         session(d, h);
       }
       rows.add(dayRow(d + 1));
+      if (const [
+        3,
+        7,
+        14,
+        30,
+        45,
+        60,
+        90,
+        120,
+        180,
+        270,
+        365,
+      ].contains(d + 1)) {
+        idleRows.add(idleProbe(d + 1));
+      }
       afterDay?.call(d + 1);
     }
+  }
+
+  final List<String> idleRows = [];
+
+  /// 화면 켜 둔 채 1시간 방치(자동 줄만 일함) vs 자동 없이 방치 vs 오프라인 1시간.
+  /// 값 = 번 코인 + 판 가치 변화(초당 수입 증가분 × 1시간).
+  String idleProbe(int day) {
+    final saved = g.encode();
+    (double, double, int) run(bool auto) {
+      var t = now;
+      final c = GameState(random: Random(5), clock: () => t);
+      c.load(saved);
+      if (!auto) {
+        c.upgrades[UpgradeType.autoSpawn] = 0;
+        c.upgrades[UpgradeType.autoMerge] = 0;
+      }
+      final l0 = c.lifetimeCoins, i0 = c.baseIncomePerSec;
+      final s0 = c.stat(Stat.spawns);
+      for (var k = 0; k < 3600; k++) {
+        t = t.add(const Duration(seconds: 1));
+        c.tick(1);
+      }
+      return (
+        c.lifetimeCoins - l0,
+        (c.baseIncomePerSec - i0) * 3600,
+        c.stat(Stat.spawns) - s0,
+      );
+    }
+
+    final (onC, onV, onS) = run(true);
+    final (noC, noV, _) = run(false);
+    var t = now;
+    final o = GameState(random: Random(5), clock: () => t);
+    o.load(saved);
+    t = t.add(const Duration(hours: 1));
+    final off = o.computeOffline()?.coins ?? 0;
+    String f(double v) => v.toStringAsExponential(2);
+    final e = g.lv(UpgradeType.energyRegen),
+        sp = g.lv(UpgradeType.autoSpawn),
+        m = g.lv(UpgradeType.autoMerge);
+    final r1 = off > 0 ? (onC + onV) / off : 0;
+    final r0 = off > 0 ? (noC + noV) / off : 0;
+    return 'idle D$day R${g.renewCount} cap${g.autoCap} E$e S$sp M$m energy${g.energy} '
+        'on=${f(onC)}+${f(onV)} spawns$onS | noAuto=${f(noC)}+${f(noV)} | offline=${f(off)} '
+        '| on/off=${r1.toStringAsFixed(2)} noAuto/off=${r0.toStringAsFixed(2)}';
   }
 
   final List<String> renews = [];
@@ -560,6 +621,7 @@ class Sim {
       'ads: boost=$adsBoost other=$adsOther delivered=$delivered',
       auditReport(),
       'tiers: ${tierLog.take(40).join(' | ')}',
+      ...idleRows,
     ].join('\n');
   }
 }

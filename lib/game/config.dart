@@ -614,7 +614,7 @@ class Upgrades {
       gateStart: 6,
       gateStep: 0.75,
       lateFrom: 20,
-      lateGrowth: 1.42,
+      lateGrowth: 1.75,
     ),
     // 바구니 품질: 한 단계 높게 나올 확률 +0.5%p × 20
     UpgradeDef(
@@ -646,7 +646,7 @@ class Upgrades {
       'auto',
       Upgrades.autoMax,
       5000,
-      1.4,
+      1.7,
       feature: Feature.autoMerge,
       unlockCost: 20000,
       gateStart: 6,
@@ -658,7 +658,7 @@ class Upgrades {
       'basket',
       Upgrades.autoMax,
       8000,
-      1.4,
+      1.7,
       feature: Feature.autoSpawn,
       unlockCost: 40000,
       gateStart: 9,
@@ -676,6 +676,13 @@ class Upgrades {
     UpgradeType.autoSpawn,
     UpgradeType.autoMerge,
   ];
+
+  /// 자동 정원 보너스 (D-059): 화면을 켜 두고 [idleAfter] 동안 손대지 않으면, 자동 줄 단계 합(최대 180)에 따라
+  /// 정원 수입 +0% → 최대 +180%. 처음엔 조금, 중반부터 확실히 (제곱근 1.5 곡선).
+  static const Duration idleAfter = Duration(seconds: 60);
+  static double autoIdleBonus(int levelSum) =>
+      1.8 * pow(min(levelSum, 3 * autoMax) / (3 * autoMax), 1.5).toDouble();
+
   static int autoCap(int renews, int memoryPerk) =>
       min(autoMax, 15 + 7 * renews + 7 * memoryPerk);
 

@@ -1054,5 +1054,6 @@
   "feature.autoSpawn": "[[basket]] 自動で置く",
   "feature.autoSpawn.desc": "エネルギーを使ってかごを代わりに押し、空きマスに置いてくれます",
   "tip.autoSpawn": "強化で開くと、画面をつけている間に自動で置いてくれます",
-  "upgrade.autoSpawn.desc": "{v}秒ごとに自動"
+  "upgrade.autoSpawn.desc": "{v}秒ごとに自動",
+  "hud.perHourAuto": "1時間 {v} (自動 +{p}%)"
 }

@@ -791,6 +791,26 @@ class GameState extends ChangeNotifier {
       Upgrades.energyRegenSeconds(lv(UpgradeType.energyRegen)) /
       (1 + buff(FriendBuff.energyRegen) + setBonus(SetEffect.energyRegen));
 
+  /// 마지막으로 화면을 만진 때 (자동 정원 보너스용, UI 가 [noteInput] 으로 알린다).
+  DateTime? _lastInput;
+  void noteInput() => _lastInput = now;
+
+  /// 자동 정원 보너스 크기 (자동 놓기 · 합치기 중 하나라도 있어야).
+  double get autoIdleBonus =>
+      lv(UpgradeType.autoMerge) == 0 && lv(UpgradeType.autoSpawn) == 0
+      ? 0
+      : Upgrades.autoIdleBonus(
+          lv(UpgradeType.energyRegen) +
+              lv(UpgradeType.autoSpawn) +
+              lv(UpgradeType.autoMerge),
+        );
+
+  /// 지금 보너스가 붙는 중인지: 화면을 켜 두고 1분 넘게 손대지 않았다.
+  bool get autoIdle =>
+      autoIdleBonus > 0 &&
+      (_lastInput == null || now.difference(_lastInput!) >= Upgrades.idleAfter);
+  double get idleMult => autoIdle ? 1 + autoIdleBonus : 1;
+
   double? get autoSpawnInterval =>
       Upgrades.autoSpawnInterval(lv(UpgradeType.autoSpawn));
 
@@ -1308,7 +1328,7 @@ class GameState extends ChangeNotifier {
     // 날이 바뀌어 한도가 다시 차거나 친구가 새로 오면 부탁을 채운다
     _fillOrders();
     _maybeFriendGift();
-    _earn(incomePerSec * dt);
+    _earn(incomePerSec * idleMult * dt);
     _sampleEarn(dt);
     _regenEnergy(dt);
     _rechargeBaskets(dt);

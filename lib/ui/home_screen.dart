@@ -1699,7 +1699,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   _Pill(
                     icon: Art.coin,
                     text: fmt(game.coins),
-                    sub: tr('hud.perHour', {'v': fmt(game.incomePerHour)}),
+                    sub: game.autoIdle
+                        ? tr('hud.perHourAuto', {
+                            'v': fmt(game.incomePerHour * game.idleMult),
+                            'p': (game.autoIdleBonus * 100).round(),
+                          })
+                        : tr('hud.perHour', {'v': fmt(game.incomePerHour)}),
                   ),
                   const SizedBox(width: 6),
                   _Pill(icon: Art.star, text: fmt(game.stars.toDouble())),

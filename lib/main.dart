@@ -602,9 +602,15 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
         supportedLocales: [for (final c in L10n.supported.keys) Locale(c)],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,
         // 업데이트 받는 중 · 다 받음 알약 (모든 화면 위)
+        // 아무 곳이나 만지면 '손대는 중' (자동 정원 보너스는 1분 동안 안 만질 때만, D-059)
         builder: (context, child) => Stack(
           children: [
-            ?child,
+            if (child != null)
+              Listener(
+                behavior: HitTestBehavior.translucent,
+                onPointerDown: (_) => game.noteInput(),
+                child: child,
+              ),
             UpdatePill(
               onReadyTap: () {
                 final ctx = _navKey.currentContext;

@@ -1054,5 +1054,6 @@
   "feature.autoSpawn": "[[basket]] Colocar auto",
   "feature.autoSpawn.desc": "Gasta energía para tocar la cesta por ti y llenar casillas vacías",
   "tip.autoSpawn": "Ábrelo en Mejoras para colocar objetos con la pantalla encendida",
-  "upgrade.autoSpawn.desc": "Auto cada {v}s"
+  "upgrade.autoSpawn.desc": "Auto cada {v}s",
+  "hud.perHourAuto": "{v}/hora (auto +{p}%)"
 }

@@ -1055,5 +1055,6 @@
   "feature.autoSpawn": "[[basket]] 자동 놓기",
   "feature.autoSpawn.desc": "에너지로 바구니를 대신 눌러 빈칸에 놓아 줘요",
   "tip.autoSpawn": "강화에서 열면 화면을 켜 둔 동안 알아서 놓아 줘요",
-  "upgrade.autoSpawn.desc": "{v}초마다 자동"
+  "upgrade.autoSpawn.desc": "{v}초마다 자동",
+  "hud.perHourAuto": "시간당 {v} (자동 +{p}%)"
 }
