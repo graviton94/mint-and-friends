@@ -1536,6 +1536,7 @@ Future<void> _shopSheet(
                 : tr('shop.adGemsDone'),
             ad: true,
             enabled: game.gemAdAvailable,
+            dot: game.gemAdAvailable,
             onTap: () async {
               if (await watchAd(AdKind.gems)) {
                 game.grantGemAd();
@@ -1724,6 +1725,7 @@ Widget _offerCard(
     ad: o.kind == 4,
     button: button,
     enabled: enabled,
+    dot: game.offerDot(o),
     confirm: o.kind != 1 && o.kind != 4 && o.price > 0,
     onTap: () async {
       var watched = false;
@@ -1865,10 +1867,14 @@ class _ShopCard extends StatelessWidget {
     this.sticker,
     this.ad = false,
     this.confirm = false,
+    this.dot = false,
   });
 
   /// 재화로 사는 칸: 누르면 '구매하시겠어요?' 를 먼저 묻는다 (결제 · 광고 · 무료 칸은 묻지 않음).
   final bool confirm;
+
+  /// 빨간 점: 무료 · 광고 남음 · 코인으로 살 수 있음 (다이아 · 결제는 없음, D-062).
+  final bool dot;
   final ArtRef icon;
   final String title;
   final String? note;
@@ -1963,6 +1969,7 @@ class _ShopCard extends StatelessWidget {
               ),
             ],
           ),
+          if (dot) const Positioned(left: -4, top: -4, child: RedDot()),
           if (sticker != null)
             Positioned(
               top: -16,
@@ -2610,7 +2617,9 @@ class _ShopRow extends StatelessWidget {
     this.note,
     this.tag,
     this.ad = false,
+    this.dot = false,
   });
+  final bool dot;
   final ArtRef icon;
   final String title;
   final String? note;
@@ -2622,6 +2631,18 @@ class _ShopRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final row = _row(context);
+    if (!dot) return row;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        row,
+        const Positioned(left: -4, top: -4, child: RedDot()),
+      ],
+    );
+  }
+
+  Widget _row(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.fromLTRB(12, 10, 14, 10),

@@ -862,6 +862,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openShop() {
     sfx(Sfx.open);
+    game.markShopSeen(); // 코인 물건 점은 그날 한 번 보면 꺼진다
     showShopSheet(
       context,
       widget.billing,
@@ -1804,7 +1805,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         onTap: _openShop,
                       ),
                       // 상점에 오늘의 무료 선물이 있으면
-                      if (game.freeOfferReady)
+                      if (game.shopDot)
                         const Positioned(right: -3, top: -3, child: RedDot()),
                     ],
                   ),
@@ -1828,7 +1829,7 @@ class _HomeScreenState extends State<HomeScreen> {
             badge:
                 Upgrades.all.any((u) => game.canBuyUpgrade(u.type)) ||
                     game.hasNewDiscovery ||
-                    game.freeOfferReady ||
+                    game.shopDot ||
                     widget.socialBadge()
                 ? -1
                 : 0,
@@ -2257,7 +2258,7 @@ class _HomeScreenState extends State<HomeScreen> {
           'shop',
           tr('menu.shop'),
           _openShop,
-          badge: game.freeOfferReady ? -1 : 0,
+          badge: game.shopDot ? -1 : 0,
           fallback: Icons.storefront,
         ),
         MenuEntry(

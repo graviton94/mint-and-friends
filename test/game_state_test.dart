@@ -539,4 +539,32 @@ void main() {
     expect(UnitFmt.of([300, 800])(300), '300');
     expect(UnitFmt.of([300, 2.5e6])(2.5e6), '2.50M');
   });
+
+  test('상점 빨간 점: 다이아 · 결제는 빼고, 무료 · 광고는 늘, 코인은 그날 열어 보기 전까지', () {
+    final g = make();
+    g.level = 20;
+    g.coins = 1e12;
+    g.gems = 1e6.toInt();
+    for (final k in AdKind.values) {
+      while (g.canWatchAd(k)) {
+        g.recordAd(k);
+      }
+    }
+    final offers = g.offers;
+    expect(offers, isNotEmpty);
+    for (final o in offers) {
+      if (o.kind == 3) expect(g.offerDot(o), isFalse); // 다이아 물건은 점 없음
+    }
+    // 무료 물건을 받고 광고도 다 쓰면, 남는 건 코인 물건 → 상점을 열면 꺼진다
+    for (final o in offers) {
+      if (o.kind == 1) o.sold = true;
+    }
+    expect(g.shopFreeDot, isFalse);
+    final coinItem = offers.any(
+      (o) => o.kind != 1 && o.kind != 4 && o.kind != 3 && !o.sold,
+    );
+    expect(g.shopDot, coinItem);
+    g.markShopSeen();
+    expect(g.shopDot, isFalse);
+  });
 }

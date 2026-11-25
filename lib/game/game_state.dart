@@ -2490,6 +2490,41 @@ class GameState extends ChangeNotifier {
   bool get freeOfferReady =>
       dailyShopOpen && offers.any((o) => o.kind == 1 && !o.sold);
 
+  // ---------------------------------------------------------------- 상점 빨간 점 (D-062)
+  // 장르 보편 방식: 다이아(유료 재화) · 결제 상품은 점을 띄우지 않는다.
+  // 무료 · 광고로 받을 수 있는 것은 늘, 코인으로 살 수 있는 시장 물건은 그날 상점을 열어 보기 전까지만.
+
+  /// 이 시장 물건에 점: 무료 · 광고(남은 횟수) · 코인으로 지금 살 수 있음. 판이 가득하면 못 받으니 없음.
+  bool offerDot(ShopOffer o) {
+    if (o.sold || boardFull || !dailyShopOpen) return false;
+    return switch (o.kind) {
+      1 => true,
+      4 => canWatchAd(AdKind.market),
+      3 => false, // 다이아
+      _ => coins >= o.price,
+    };
+  }
+
+  /// 무료 · 광고로 받을 것 (늘 점).
+  bool get shopFreeDot =>
+      gemAdAvailable ||
+      offers.any((o) => (o.kind == 1 || o.kind == 4) && offerDot(o));
+
+  /// 코인으로 살 수 있는 시장 물건 (그날 상점을 열어 보면 꺼짐).
+  bool get shopCoinDot =>
+      _shopSeenDay != _dayKey(now) &&
+      offers.any((o) => o.kind != 1 && o.kind != 4 && offerDot(o));
+
+  bool get shopDot => shopFreeDot || shopCoinDot;
+
+  String _shopSeenDay = '';
+  void markShopSeen() {
+    final k = _dayKey(now);
+    if (_shopSeenDay == k) return;
+    _shopSeenDay = k;
+    notifyListeners();
+  }
+
   BuyResult buyOffer(int i, {bool adWatched = false}) {
     final o = offers[i];
     if (o.sold) return BuyResult.sold;
@@ -3101,6 +3136,7 @@ class GameState extends ChangeNotifier {
       'checkInDay': _checkInDay,
       'offers': [for (final o in _offers) o.toJson()],
       'offersDay': _offersDay,
+      'shopSeen': _shopSeenDay,
       'gemRefills': _gemRefillsToday,
       'econ': econVersion,
       'life': lifetimeCoins,
@@ -3272,6 +3308,7 @@ class GameState extends ChangeNotifier {
         ShopOffer.fromJson((o as Map).cast<String, dynamic>()),
     ];
     _offersDay = j['offersDay'] as String? ?? '';
+    _shopSeenDay = j['shopSeen'] as String? ?? '';
     _gemRefillsToday = (j['gemRefills'] as num?)?.toInt() ?? 0;
     lifetimeCoins = (j['life'] as num?)?.toDouble() ?? coins;
     renewCount = (j['renew'] as num?)?.toInt() ?? 1;
