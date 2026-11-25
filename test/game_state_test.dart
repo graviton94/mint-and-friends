@@ -602,5 +602,6 @@ void main() {
     // 저장해도 되돌린 주문을 기억한다
     final g2 = make()..load(g.encode());
     expect(g2.revokedOrders, containsAll(['GPA.1', 'GPA.2']));
+    expect(g2.purchaseBlocked, isTrue); // 환불 2번이면 결제 제한 (D-068)
   });
 }

@@ -201,6 +201,37 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
         );
       }
     };
+    // 반복 환불 계정은 결제를 막는다 (D-068)
+    widget.billing.blocked = () => game.purchaseBlocked;
+    widget.billing.onBlocked = () {
+      final ctx = _navKey.currentContext;
+      if (ctx == null) return;
+      showDialog<void>(
+        context: ctx,
+        builder: (c) => GameDialog(
+          title: IconText(tr('refund.blockTitle'), textAlign: TextAlign.center),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ArtImage(Art.mint('sorry'), size: 110),
+              const SizedBox(height: 8),
+              IconText(
+                tr('refund.blockBody'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16, height: 1.4),
+              ),
+            ],
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(c),
+              child: IconText(tr('common.ok')),
+            ),
+          ],
+        ),
+      );
+    };
     // 환불 확인용 결제 기록 (D-066)
     widget.billing.onRecord = (order, product) {
       final uid = auth.uid;

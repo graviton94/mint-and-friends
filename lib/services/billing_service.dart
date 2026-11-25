@@ -84,6 +84,17 @@ class BillingService extends ChangeNotifier {
 
   void Function()? _onStarter;
 
+  /// 결제가 막힌 계정인지 (반복 환불, D-068) · 막혔을 때 안내.
+  bool Function()? blocked;
+  VoidCallback? onBlocked;
+  bool _deny() {
+    if (blocked?.call() ?? false) {
+      onBlocked?.call();
+      return true;
+    }
+    return false;
+  }
+
   /// 지급한 소모형 결제 (주문번호, 상품): 환불 확인용으로 서버에 남긴다.
   void Function(String orderId, String product)? onRecord;
 
@@ -267,6 +278,7 @@ class BillingService extends ChangeNotifier {
   Future<void> buyRemoveAds() async {
     final p = product;
     if (p == null || purchasing) return;
+    if (_deny()) return;
     purchasing = true;
     notifyListeners();
     Analytics.instance.iapBegin(p.id);
@@ -283,6 +295,7 @@ class BillingService extends ChangeNotifier {
   Future<void> buyStarter() async {
     final d = starter;
     if (d == null || purchasing) return;
+    if (_deny()) return;
     purchasing = true;
     notifyListeners();
     Analytics.instance.iapBegin(d.id);
@@ -301,6 +314,7 @@ class BillingService extends ChangeNotifier {
   Future<void> buyGems(GemPack pack) async {
     final d = gemProducts[pack.id];
     if (d == null || purchasing) return;
+    if (_deny()) return;
     purchasing = true;
     notifyListeners();
     Analytics.instance.iapBegin(d.id);

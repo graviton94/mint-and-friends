@@ -2629,6 +2629,10 @@ class GameState extends ChangeNotifier {
   /// 이미 되돌린 주문번호 (두 번 되돌리지 않게).
   final Set<String> revokedOrders = {};
 
+  /// 환불이 이만큼 쌓이면 결제를 막는다 (D-068: 악용 방지, 문의로 풀어 준다).
+  static const int refundBlockAfter = 2;
+  bool get purchaseBlocked => revokedOrders.length >= refundBlockAfter;
+
   /// 환불된 결제 되돌리기 (D-066): 새싹 정원 → 정원 패스 · 계절 효과 · 의상 · 보관 부스트 회수 + 다이아,
   /// 다이아 팩 → 준 다이아. 이미 써서 모자라면 다이아가 마이너스(빚)가 되고, 0 이상이 될 때까지
   /// 다이아로 사는 것은 모두 막힌다 (D-067, 장르 관행). 되돌렸으면 true.

@@ -1074,5 +1074,7 @@
   "refund.title": "Refund applied",
   "refund.body": "A purchase was refunded,\nso its items were removed.\nQuestions? Use Settings → Report a problem.",
   "shop.refundNote": "Only unused items can be withdrawn within 7 days of purchase.\nUsed diamonds and claimed items can't be withdrawn.\nIf refunded, items are taken back and spent diamonds become a negative balance.",
-  "refund.bodyDebt": "A purchase was refunded,\nso its items were removed.\n{n} spent diamonds are counted as a negative balance."
+  "refund.bodyDebt": "A purchase was refunded,\nso its items were removed.\n{n} spent diamonds are counted as a negative balance.",
+  "refund.blockTitle": "Purchases limited",
+  "refund.blockBody": "Purchases are limited on this account\nbecause of past refunds.\nContact us via Settings → Report a problem."
 }
