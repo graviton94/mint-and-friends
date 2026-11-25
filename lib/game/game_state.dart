@@ -2630,7 +2630,8 @@ class GameState extends ChangeNotifier {
   final Set<String> revokedOrders = {};
 
   /// 환불된 결제 되돌리기 (D-066): 새싹 정원 → 정원 패스 · 계절 효과 · 의상 · 보관 부스트 회수 + 다이아,
-  /// 다이아 팩 → 준 다이아. 다이아는 0 아래로는 내리지 않는다. 되돌렸으면 true.
+  /// 다이아 팩 → 준 다이아. 이미 써서 모자라면 다이아가 마이너스(빚)가 되고, 0 이상이 될 때까지
+  /// 다이아로 사는 것은 모두 막힌다 (D-067, 장르 관행). 되돌렸으면 true.
   bool revokePurchase(String orderId, String product, int gemsGiven) {
     if (!revokedOrders.add(orderId)) return false;
     if (product == Starter.productId) {
@@ -2650,10 +2651,10 @@ class GameState extends ChangeNotifier {
           boostTokens.remove(e.key);
         }
       }
-      gems = max(0, gems - (gemsGiven > 0 ? gemsGiven : Starter.gems));
+      gems -= gemsGiven > 0 ? gemsGiven : Starter.gems;
     } else {
       final p = Gems.pack(product);
-      gems = max(0, gems - (gemsGiven > 0 ? gemsGiven : (p?.gems ?? 0)));
+      gems -= gemsGiven > 0 ? gemsGiven : (p?.gems ?? 0);
     }
     _trace('revoke', '$product $orderId');
     notifyListeners();

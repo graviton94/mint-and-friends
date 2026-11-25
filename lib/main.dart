@@ -309,6 +309,12 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
     }
     await PurchaseGuard.instance.done(uid, [for (final x in list) x.$1]);
     if (!any) return;
+    // 운영자가 알 수 있게 (반복 환불 확인용)
+    CrashService.issue('refund_revoked', {
+      'orders': '${list.length}',
+      'total': '${game.revokedOrders.length}',
+      'gems': '${game.gems}',
+    });
     save.saveLocal(game);
     unawaited(save.upload(game));
     final ctx = _navKey.currentContext;
@@ -318,7 +324,9 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
         builder: (c) => GameDialog(
           title: IconText(tr('refund.title'), textAlign: TextAlign.center),
           content: IconText(
-            tr('refund.body'),
+            tr(game.gems < 0 ? 'refund.bodyDebt' : 'refund.body', {
+              'n': -game.gems,
+            }),
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 16, height: 1.4),
           ),

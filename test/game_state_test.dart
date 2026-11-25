@@ -592,12 +592,13 @@ void main() {
     final gems0 = g.gems;
     expect(g.revokePurchase('GPA.1', Starter.productId, Starter.gems), isTrue);
     expect(g.passActive, isFalse);
-    expect(g.gems, max(0, gems0 - Starter.gems));
+    expect(g.gems, gems0 - Starter.gems);
     expect(g.effects.contains(Starter.effect), isFalse);
     expect(g.revokePurchase('GPA.1', Starter.productId, Starter.gems), isFalse);
     g.gems = 50;
     g.revokePurchase('GPA.2', Gems.packs.first.id, 200);
-    expect(g.gems, 0); // 0 아래로는 내리지 않는다
+    expect(g.gems, -150); // 이미 쓴 만큼은 빚 (D-067)
+    expect(g.buyBoost(BoostKind.coins), isFalse); // 빚이 있으면 다이아로 못 산다
     // 저장해도 되돌린 주문을 기억한다
     final g2 = make()..load(g.encode());
     expect(g2.revokedOrders, containsAll(['GPA.1', 'GPA.2']));

@@ -1739,6 +1739,15 @@ Future<void> _shopSheet(
           for (var i = 0; i < Gems.packs.length; i++)
             _gemPackCard(billing, game, Gems.packs[i], i),
         ]),
+        // 청약철회 안내 (전자상거래법 제17조 제6항: 제한 사유를 미리 알린다, D-067)
+        Padding(
+          padding: const EdgeInsets.only(top: 2, bottom: 6),
+          child: IconText(
+            tr('shop.refundNote'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 11.5, color: Colors.black45),
+          ),
+        ),
         if (!billing.available || billing.gemProducts.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 4, bottom: 8),
