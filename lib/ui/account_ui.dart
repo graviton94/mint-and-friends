@@ -7,6 +7,7 @@ import 'package:material_ui/material_ui.dart';
 import '../art/art.dart';
 import '../game/config.dart';
 import '../i18n/l10n.dart';
+import '../services/analytics_service.dart';
 import '../services/audio_service.dart';
 import '../services/auth_service.dart';
 import '../services/crash_service.dart';
@@ -40,7 +41,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
   AuthService get auth => widget.auth;
 
+  @override
+  void initState() {
+    super.initState();
+    unawaited(Analytics.instance.funnel('login_view'));
+  }
+
   Future<void> _go(String which, Future<void> Function() f) async {
+    unawaited(Analytics.instance.funnel('login_tap', {'method': which}));
     sfx(Sfx.tap);
     setState(() {
       _pending = which;
@@ -51,6 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
     try {
       await f();
+      unawaited(Analytics.instance.funnel('login_ok', {'method': which}));
     } on AuthException catch (e) {
       if (e.code != 'cancelled' && mounted) {
         sfx(Sfx.error);

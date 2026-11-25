@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../game/game_state.dart';
 
@@ -12,7 +15,37 @@ class Analytics {
   Analytics._();
   static final Analytics instance = Analytics._();
 
-  bool get _on => Firebase.apps.isNotEmpty;
+  bool get _on => Firebase.apps.isNotEmpty && !_testDevice;
+
+  /// Play 출시 전 보고서 · Test Lab 기기 (지표에서 뺀다, D-068).
+  bool _testDevice = false;
+  static const _device = MethodChannel('mint/device');
+
+  /// 앱 시작 때 한 번: 테스트 기기면 수집을 끈다 (진짜 사람 숫자만 남게).
+  Future<void> checkTestDevice() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+    try {
+      _testDevice = await _device.invokeMethod<bool>('testLab') ?? false;
+    } catch (_) {}
+    if (_testDevice && Firebase.apps.isNotEmpty) {
+      unawaited(
+        _fa.setAnalyticsCollectionEnabled(false).catchError((Object _) {}),
+      );
+    }
+  }
+
+  // ---------------------------------------------------------------- 첫 실행 깔때기 (D-068)
+  // 기기마다 한 번씩: login_view → login_tap(방식) → login_ok(방식) → home_view → first_spawn →
+  // first_merge → first_order. 어디서 멈추는지 본다.
+  Set<String>? _funnelDone;
+  Future<void> funnel(String step, [Map<String, Object>? params]) async {
+    final p = await SharedPreferences.getInstance();
+    final done = _funnelDone ??= (p.getStringList('funnel_done') ?? []).toSet();
+    if (!done.add(step)) return;
+    await p.setStringList('funnel_done', done.toList());
+    log('funnel_$step', params);
+  }
+
   FirebaseAnalytics get _fa => FirebaseAnalytics.instance;
   StreamSubscription<GameEvent>? _sub;
 
@@ -50,6 +83,10 @@ class Analytics {
           _prop('area', '${e.area + 1}');
         case FriendJoinedEvent():
           log('friend_joined', {'friend': e.friendId});
+        case MergedEvent():
+          unawaited(funnel('first_merge'));
+        case OrderDeliveredEvent():
+          unawaited(funnel('first_order'));
         case MaxMergeEvent():
           log('max_merge');
         case EnergyEmptyEvent():

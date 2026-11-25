@@ -79,6 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
+    unawaited(Analytics.instance.funnel('home_view'));
     super.initState();
     _viewArea = game.currentArea;
     _sub = game.events.listen(_onEvent);
@@ -767,6 +768,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       default:
         sfx(Sfx.spawn);
+        unawaited(Analytics.instance.funnel('first_spawn'));
     }
   }
 

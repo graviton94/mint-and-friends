@@ -71,6 +71,7 @@ Future<Widget> _boot(void Function(double) report) async {
   report(0.55);
   await AudioService.instance.init();
   await NotifyService.instance.init();
+  await Analytics.instance.checkTestDevice();
   await DevLog.instance.init();
   report(0.75);
 

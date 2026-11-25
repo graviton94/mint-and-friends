@@ -31,6 +31,18 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         configureUpdates(flutterEngine)
+        // Play 출시 전 보고서 · Firebase Test Lab 기기인지 (지표에서 빼기, D-068)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "mint/device")
+            .setMethodCallHandler { call, result ->
+                if (call.method == "testLab") {
+                    val v = try {
+                        android.provider.Settings.System.getString(contentResolver, "firebase.test.lab")
+                    } catch (e: Exception) { null }
+                    result.success(v == "true")
+                } else {
+                    result.notImplemented()
+                }
+            }
         // Play 설치 추천인 (초대 링크의 친구 코드, D-045): 첫 실행 때 한 번 읽는다.
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "mint/referrer")
             .setMethodCallHandler { call, result ->
