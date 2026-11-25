@@ -3050,44 +3050,55 @@ class SheetFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 손잡이 · 제목은 고정, 내용만 프레임 안쪽에서 스크롤 (테두리 위로 넘쳐 그려지지 않게 잘라 낸다)
     return FrameBox(
       frame: 'panel',
       fallback: const BoxDecoration(),
       corner: 26,
+      padding: const EdgeInsets.fromLTRB(6, 10, 6, 12),
       child: SafeArea(
+        top: false,
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.85,
           ),
-          child: SproutScrollbar(
-            builder: (c) => SingleChildScrollView(
-              controller: c,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: Colors.black26,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.black26,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: IconText(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 22),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Flexible(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: SproutScrollbar(
+                    builder: (c) => SingleChildScrollView(
+                      controller: c,
+                      padding: const EdgeInsets.fromLTRB(10, 2, 14, 8),
+                      child: child,
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  IconText(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 22),
-                  ),
-                  const SizedBox(height: 12),
-                  child,
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
