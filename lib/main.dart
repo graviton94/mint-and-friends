@@ -323,12 +323,19 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
         context: ctx,
         builder: (c) => GameDialog(
           title: IconText(tr('refund.title'), textAlign: TextAlign.center),
-          content: IconText(
-            tr(game.gems < 0 ? 'refund.bodyDebt' : 'refund.body', {
-              'n': -game.gems,
-            }),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, height: 1.4),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ArtImage(Art.mint('sorry'), size: 110),
+              const SizedBox(height: 8),
+              IconText(
+                tr(game.gems < 0 ? 'refund.bodyDebt' : 'refund.body', {
+                  'n': -game.gems,
+                }),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 16, height: 1.4),
+              ),
+            ],
           ),
           actionsAlignment: MainAxisAlignment.center,
           actions: [
