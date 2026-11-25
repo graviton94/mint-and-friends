@@ -688,7 +688,14 @@ class _GardenSceneState extends State<GardenScene>
           top: p.dy - sz * 0.6,
           width: sz * 1.2,
           height: sz * 1.2,
-          child: Center(child: child),
+          // 놓은 장식을 누르면 디자인 화면 (D-063). 앞에 선 친구가 먼저 눌린다 (깊이 순서)
+          child: GestureDetector(
+            behavior: HitTestBehavior.deferToChild,
+            onTap: widget.area == game.currentArea
+                ? () => widget.onSlotTap(i)
+                : null,
+            child: Center(child: child),
+          ),
         ),
       ));
     }

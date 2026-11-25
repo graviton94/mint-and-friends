@@ -44,6 +44,7 @@ class Art {
     } catch (_) {
       _available = {};
     }
+    Garden.styleReady = (d, st) => decorStyle(d, st).available;
     // 새 구역은 배경 · 장식 · 데려오는 친구 그림이 모두 들어와야 연다
     Garden.ready = (a) =>
         Garden.areas.indexOf(a) < Garden.coreAreas ||

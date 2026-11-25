@@ -1042,6 +1042,9 @@ class Garden {
   /// 구역 그림이 준비됐는지 (Art.init 이 바꿔 낀다). 기본: 1~4구역만.
   static bool Function(AreaDef a) ready = (a) => areas.indexOf(a) < coreAreas;
 
+  /// 이 장식의 이 디자인 그림이 있는지 (Art.init 이 바꿔 낀다).
+  static bool Function(DecorDef d, int style) styleReady = (_, _) => true;
+
   /// 지금 열 수 있는 구역들 (순환은 이 목록 기준).
   static List<AreaDef> get live => [
     for (final a in areas)
@@ -1109,6 +1112,11 @@ class Garden {
 
   /// 계절 세트(한 구역 8종) 완성마다 정원 매력 보너스 (D-046: 고과금 쏠림을 줄여 +5% → +2%).
   static const double seasonSetBonus = 0.02;
+
+  /// 부분 효과 (D-063): 시즌 장식 하나마다 +0.1%, 8종을 다 모으면 나머지 +1.2% (합 +2%, 예전과 같음).
+  static const double seasonPieceBonus = 0.001;
+  static double get seasonCompleteBonus =>
+      seasonSetBonus - 8 * seasonPieceBonus;
 
   /// 지금 달의 시즌 디자인 (그 시즌에만 살 수 있고, 산 것은 계속 쓴다).
   static int seasonStyleFor(int month) => switch (month) {
@@ -1194,6 +1202,14 @@ class DecorSets {
 
   /// 고급 세트 효과 = 특별 세트의 이 비율.
   static const double premiumRatio = 0.4;
+
+  /// 부분 효과 (D-063): 효과의 절반은 장식 하나하나에 나눠 붙고(특별 1/16 · 고급 0.4/16),
+  /// 나머지 절반은 8자리를 다 모았을 때 세트 보너스로 켜진다. 다 모으면 예전과 같은 값.
+  static const double pieceShare = 0.5;
+  static double piece(SetEffect e, {bool special = true}) =>
+      full[e]! * pieceShare / 8 * (special ? 1 : premiumRatio);
+  static double setPart(SetEffect e, {bool special = true}) =>
+      full[e]! * (1 - pieceShare) * (special ? 1 : premiumRatio);
 
   /// 구역 i 의 특별 세트 효과 (고급은 [premiumRatio] 배). 단위: 에너지 통 +칸 · 비율 · 분 · 확률.
   static const List<SetEffect> effects = [

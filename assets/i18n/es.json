@@ -688,7 +688,7 @@
   "outfit.offSeason": "A la venta {from}–{to}",
   "toast.seasonSet": "¡Set de {season} de {area} completo! Paisaje de temporada activado, encanto del jardín +{n}%",
   "book.seasons": "Colección de temporada",
-  "book.seasonsNote": "Reúne las 8 piezas de temporada de una zona para su paisaje de temporada y +{n}% de encanto del jardín",
+  "book.seasonsNote": "Cada pieza de temporada da +0.1% de encanto.\n¡Reúne las 8 de un área para +1.2% más y un paisaje!",
   "boost.count": "x{n}",
   "boost.use": "Usar ({n} min)",
   "boost.free": "Gratis",
@@ -1058,5 +1058,14 @@
   "hud.perHourAuto": "{v}/hora (auto +{p}%)",
   "unlock.title": "¡Desbloqueado!",
   "unlock.ok": "Ver",
-  "tip.go": "Abrir mejoras"
+  "tip.go": "Abrir mejoras",
+  "set.now": "Activo ahora: {v}",
+  "set.pieces": "Cada pieza: especial +{sp} · premium +{pr} (ahora +{now})",
+  "set.bonusTitle": "Reúne las 8 para el bono de set",
+  "style.pieceCharm": "Encanto +{v}%",
+  "season.box": "Colección {season}",
+  "season.boxNow": "Encanto ahora +{v}% (+{p}% cada una)",
+  "season.boxGoal": "¡Reúne las 8 para +{v}% más y un paisaje de temporada!",
+  "season.boxOn": "[[check]] ¡Completo! El paisaje de temporada está activo",
+  "season.boxPlace": "[[check]] ¡Completo! Úsalo en los 8 lugares para el paisaje"
 }

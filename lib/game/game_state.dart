@@ -859,7 +859,8 @@ class GameState extends ChangeNotifier {
       1 +
       decorCount * GameConfig.decorIncomeBonus +
       currentArea * GameConfig.areaIncomeBonus +
-      completedSeasonSets * Garden.seasonSetBonus +
+      seasonPiecesOwned * Garden.seasonPieceBonus +
+      completedSeasonSets * Garden.seasonCompleteBonus +
       decorScore * DecorSets.incomePerPoint +
       landmarkCharm;
 
@@ -971,9 +972,17 @@ class GameState extends ChangeNotifier {
   /// 이 구역 세트로 받는 효과 크기 (특별 1 · 고급 0.4 · 없음 0) × 그 효과의 최대치.
   double setBonus(SetEffect e) {
     final i = DecorSets.effects.indexOf(e);
+    if (i > currentArea) return 0;
     final t = setTier(i);
-    final k = t == 2 ? 1.0 : (t == 1 ? DecorSets.premiumRatio : 0.0);
-    return k * DecorSets.full[e]!;
+    final p = setProgress(i);
+    // 장식 하나하나 (특별 · 고급) + 8자리를 다 모으면 세트 보너스 (D-063)
+    return p.special * DecorSets.piece(e) +
+        (p.premium - p.special) * DecorSets.piece(e, special: false) +
+        (t == 2
+            ? DecorSets.setPart(e)
+            : t == 1
+            ? DecorSets.setPart(e, special: false)
+            : 0);
   }
 
   /// 꾸밈 점수: 특별 디자인 1점 · 고급 0.4점 (6구역까지).
@@ -1000,6 +1009,40 @@ class GameState extends ChangeNotifier {
     for (var i = 0; i < Garden.slotsPerArea; i++)
       if (ownedStyles.contains('$area:$i:$style')) i,
   ].length;
+
+  /// 가진 시즌 장식 수 (모든 구역 · 시즌).
+  int get seasonPiecesOwned {
+    var n = 0;
+    for (var a = 0; a < Garden.areas.length; a++) {
+      for (final st in Garden.seasonStyles.keys) {
+        n += seasonSetOwned(a, st);
+      }
+    }
+    return n;
+  }
+
+  // ---------------------------------------------------------------- 디자인 빨간 점 (D-063)
+  // 상점과 같은 규칙: 코인(고급)으로 지금 살 수 있는 디자인만. 다이아(특별 · 시즌)는 점 없음.
+
+  bool designDot(int area, int slot) =>
+      isPlaced(area, slot) &&
+      Garden.styleReady(Garden.areaAt(area).decor[slot], 1) &&
+      !ownsStyle(area, slot, 1) &&
+      coins >= styleCost(area, slot);
+
+  /// 꾸미기 버튼의 점: 지금 구역에 코인으로 살 디자인이 있고, 오늘 꾸미기를 아직 안 열어 봤을 때.
+  bool get designDotAny =>
+      _designSeenDay != _dayKey(now) &&
+      [for (var i = 0; i < Garden.slotsPerArea; i++) i]
+          .any((i) => designDot(currentArea, i));
+
+  String _designSeenDay = '';
+  void markDesignSeen() {
+    final k = _dayKey(now);
+    if (_designSeenDay == k) return;
+    _designSeenDay = k;
+    notifyListeners();
+  }
 
   int get completedSeasonSets {
     var n = 0;
@@ -3137,6 +3180,7 @@ class GameState extends ChangeNotifier {
       'offers': [for (final o in _offers) o.toJson()],
       'offersDay': _offersDay,
       'shopSeen': _shopSeenDay,
+      'designSeen': _designSeenDay,
       'gemRefills': _gemRefillsToday,
       'econ': econVersion,
       'life': lifetimeCoins,
@@ -3309,6 +3353,7 @@ class GameState extends ChangeNotifier {
     ];
     _offersDay = j['offersDay'] as String? ?? '';
     _shopSeenDay = j['shopSeen'] as String? ?? '';
+    _designSeenDay = j['designSeen'] as String? ?? '';
     _gemRefillsToday = (j['gemRefills'] as num?)?.toInt() ?? 0;
     lifetimeCoins = (j['life'] as num?)?.toDouble() ?? coins;
     renewCount = (j['renew'] as num?)?.toInt() ?? 1;

@@ -688,7 +688,7 @@
   "outfit.offSeason": "On sale {from}–{to}",
   "toast.seasonSet": "{area} {season} set complete! Seasonal scenery on, garden charm +{n}%",
   "book.seasons": "Seasonal collection",
-  "book.seasonsNote": "Collect all 8 seasonal pieces of an area for its seasonal scenery and +{n}% garden charm",
+  "book.seasonsNote": "Each seasonal piece adds +0.1% garden charm.\nCollect all 8 in an area for +1.2% more and a seasonal scene!",
   "boost.count": "x{n}",
   "boost.use": "Use ({n} min)",
   "boost.free": "Free",
@@ -1058,5 +1058,14 @@
   "hud.perHourAuto": "{v}/hour (auto +{p}%)",
   "unlock.title": "Unlocked!",
   "unlock.ok": "Show me",
-  "tip.go": "Open Upgrades"
+  "tip.go": "Open Upgrades",
+  "set.now": "Active now: {v}",
+  "set.pieces": "Each piece: special +{sp} · premium +{pr} (now +{now})",
+  "set.bonusTitle": "Collect all 8 for a set bonus",
+  "style.pieceCharm": "Garden charm +{v}%",
+  "season.box": "{season} collection",
+  "season.boxNow": "Garden charm now +{v}% (+{p}% each)",
+  "season.boxGoal": "Collect all 8 for +{v}% more and a seasonal scene!",
+  "season.boxOn": "[[check]] Complete! Seasonal scene is on",
+  "season.boxPlace": "[[check]] Complete! Use it on all 8 spots for the seasonal scene"
 }

@@ -689,7 +689,7 @@
   "outfit.offSeason": "{from}~{to}월 판매",
   "toast.seasonSet": "{area} {season} 세트 완성! 계절 풍경이 켜지고 정원 매력 +{n}%",
   "book.seasons": "계절 컬렉션",
-  "book.seasonsNote": "한 구역의 계절 장식 8종을 모으면 그 계절 풍경이 켜지고 정원 매력 +{n}%",
+  "book.seasonsNote": "계절 장식 하나마다 정원 매력 +0.1%.\n한 구역 8종을 모으면 +1.2% 더, 계절 풍경까지!",
   "boost.count": "{n}개",
   "boost.use": "사용하기 ({n}분)",
   "boost.free": "무료",
@@ -1059,5 +1059,14 @@
   "hud.perHourAuto": "시간당 {v} (자동 +{p}%)",
   "unlock.title": "잠금 해제!",
   "unlock.ok": "알아보기",
-  "tip.go": "강화 열기"
+  "tip.go": "강화 열기",
+  "set.now": "지금 받는 효과 {v}",
+  "set.pieces": "장식 하나마다 특별 +{sp} · 고급 +{pr} (지금 +{now})",
+  "set.bonusTitle": "8자리를 다 모으면 세트 보너스",
+  "style.pieceCharm": "정원 매력 +{v}%",
+  "season.box": "{season} 컬렉션",
+  "season.boxNow": "지금 정원 매력 +{v}% (하나마다 +{p}%)",
+  "season.boxGoal": "8종을 다 모으면 +{v}% 더, 계절 풍경까지!",
+  "season.boxOn": "[[check]] 완성! 계절 풍경이 켜져 있어요",
+  "season.boxPlace": "[[check]] 완성! 8자리에 모두 입히면 계절 풍경이 켜져요"
 }

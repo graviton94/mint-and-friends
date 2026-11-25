@@ -688,7 +688,7 @@
   "outfit.offSeason": "{from}〜{to}月 販売",
   "toast.seasonSet": "{area}の{season}セット完成! 季節の風景がついて庭の魅力+{n}%",
   "book.seasons": "季節コレクション",
-  "book.seasonsNote": "エリアの季節飾り8種を集めると季節の風景がつき、庭の魅力+{n}%",
+  "book.seasonsNote": "季節の飾り1つごとに庭の魅力 +0.1%。\n1エリア8種そろえるとさらに +1.2%、季節の景色も!",
   "boost.count": "{n}個",
   "boost.use": "使う ({n}分)",
   "boost.free": "無料",
@@ -1058,5 +1058,14 @@
   "hud.perHourAuto": "1時間 {v} (自動 +{p}%)",
   "unlock.title": "アンロック!",
   "unlock.ok": "見てみる",
-  "tip.go": "強化を開く"
+  "tip.go": "強化を開く",
+  "set.now": "いまの効果 {v}",
+  "set.pieces": "飾り1つごとに 特別 +{sp} · 高級 +{pr} (いま +{now})",
+  "set.bonusTitle": "8か所そろえるとセットボーナス",
+  "style.pieceCharm": "庭の魅力 +{v}%",
+  "season.box": "{season}コレクション",
+  "season.boxNow": "いまの庭の魅力 +{v}% (1つごとに +{p}%)",
+  "season.boxGoal": "8種そろえるとさらに +{v}%、季節の景色も!",
+  "season.boxOn": "[[check]] 完成! 季節の景色がついています",
+  "season.boxPlace": "[[check]] 完成! 8か所すべてに置くと季節の景色がつきます"
 }

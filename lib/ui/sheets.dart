@@ -678,11 +678,23 @@ class _DecorRow extends StatelessWidget {
             : null,
         trailing: placed
             ? (Art.decorStyles(d).length > 1
-                  ? CostButton(
-                      label: tr('style.change'),
-                      frame: 'button_white',
-                      onPressed: () =>
-                          showStyleSheet(context, game, game.currentArea, slot),
+                  ? Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        CostButton(
+                          label: tr('style.change'),
+                          frame: 'button_white',
+                          onPressed: () => showStyleSheet(
+                            context,
+                            game,
+                            game.currentArea,
+                            slot,
+                          ),
+                        ),
+                        // 코인(고급)으로 지금 살 수 있는 디자인 (D-063)
+                        if (game.designDot(game.currentArea, slot))
+                          const Positioned(right: -3, top: -3, child: RedDot()),
+                      ],
                     )
                   : SizedBox(
                       width: 108,
@@ -794,6 +806,9 @@ Future<void> showStyleSheet(
               ),
             ),
           ),
+        // 계절 컬렉션: 지금 시즌 (그림이 있는 구역만)
+        if (setSlots.length >= 2)
+          _SeasonBox(game: game, area: area, style: season),
         if (area < DecorSets.areas) _SetEffectBox(game: game, area: area),
         IconText(
           tr('style.note'),
@@ -807,10 +822,12 @@ Future<void> showStyleSheet(
 
 /// 세트 효과 글자: 에너지 통 +5 · 에너지 회복 +5% · 오프라인 최대 +60분 …
 String setEffectText(SetEffect e, double v) {
+  String dec(double x) => x.toStringAsFixed(
+    (x - x.roundToDouble()).abs() < 0.05 ? 0 : (x < 1 ? 2 : 1),
+  );
   final n = switch (e) {
-    SetEffect.energyCap => '${v.round()}',
-    SetEffect.offline => '${v.round()}',
-    _ => (v * 100).toStringAsFixed(v * 100 % 1 == 0 ? 0 : 1),
+    SetEffect.energyCap || SetEffect.offline => dec(v),
+    _ => dec(v * 100),
   };
   return tr('set.effect.${e.name}', {'v': n});
 }
@@ -824,26 +841,53 @@ class _SetEffectBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final e = DecorSets.effects[area];
-    final full = DecorSets.full[e]!;
     final p = game.setProgress(area);
     final tier = game.setTier(area);
-    Widget row(String label, double v, int have, bool on) => Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+    const n = Garden.slotsPerArea;
+    const ink = Color(0xFF6B5A44);
+    // 장식 하나하나로 지금 받는 효과 (세트 보너스 빼고)
+    final pieces =
+        p.special * DecorSets.piece(e) +
+        (p.premium - p.special) * DecorSets.piece(e, special: false);
+    Widget dots(int have, Color on) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < n; i++)
+          Container(
+            width: 11,
+            height: 11,
+            margin: const EdgeInsets.only(left: 3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: i < have ? on : const Color(0xFFE8DCC4),
+            ),
+          ),
+      ],
+    );
+    Widget setRow(
+      String label,
+      double v,
+      int have,
+      bool done,
+      Color c,
+    ) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
           Expanded(
-            child: IconText(
-              '$label  ${setEffectText(e, v)}',
-              style: TextStyle(
-                fontSize: 15,
-                color: on ? Palette.primary : const Color(0xFF6B5A44),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: IconText(
+                '${done ? '[[check]] ' : ''}$label  +${setEffectText(e, v).split('+').last}',
+                style: TextStyle(
+                  fontSize: 14.5,
+                  color: done ? Palette.primary : ink,
+                ),
               ),
             ),
           ),
-          IconText(
-            on ? '[[check]]' : '$have/${Garden.slotsPerArea}',
-            style: const TextStyle(fontSize: 15, color: Color(0xFF6B5A44)),
-          ),
+          dots(have, c),
         ],
       ),
     );
@@ -862,12 +906,40 @@ class _SetEffectBox extends StatelessWidget {
             tr('set.title', {'area': areaName(Garden.areaAt(area))}),
             style: const TextStyle(fontSize: 16),
           ),
-          row(tr('set.special'), full, p.special, tier == 2),
-          row(
+          // 지금 받는 효과 합 (장식 조각 + 켜진 세트 보너스)
+          IconText(
+            tr('set.now', {'v': setEffectText(e, game.setBonus(e))}),
+            style: const TextStyle(fontSize: 17, color: Palette.primary),
+          ),
+          IconText(
+            tr('set.pieces', {
+              'sp': setEffectText(e, DecorSets.piece(e)).split('+').last,
+              'pr': setEffectText(
+                e,
+                DecorSets.piece(e, special: false),
+              ).split('+').last,
+              'now': setEffectText(e, pieces).split('+').last,
+            }),
+            style: const TextStyle(fontSize: 13, color: ink),
+          ),
+          const SizedBox(height: 4),
+          IconText(
+            tr('set.bonusTitle'),
+            style: const TextStyle(fontSize: 14, color: ink),
+          ),
+          setRow(
             tr('set.premium'),
-            full * DecorSets.premiumRatio,
+            DecorSets.setPart(e, special: false),
             p.premium,
             tier >= 1,
+            const Color(0xFF8BC34A),
+          ),
+          setRow(
+            tr('set.special'),
+            DecorSets.setPart(e),
+            p.special,
+            tier == 2,
+            const Color(0xFFB07CE0),
           ),
           IconText(
             tr('set.score', {
@@ -875,7 +947,85 @@ class _SetEffectBox extends StatelessWidget {
               'pct': (game.decorScore * DecorSets.incomePerPoint * 100)
                   .toStringAsFixed(1),
             }),
-            style: const TextStyle(fontSize: 13, color: Colors.black54),
+            style: const TextStyle(fontSize: 12.5, color: Colors.black54),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 계절 컬렉션 (D-063): 이 구역의 시즌 장식 n/8, 하나마다 매력 +0.1%, 다 모으면 +1.2% + 계절 풍경.
+class _SeasonBox extends StatelessWidget {
+  const _SeasonBox({
+    required this.game,
+    required this.area,
+    required this.style,
+  });
+  final GameState game;
+  final int area;
+  final int style;
+
+  @override
+  Widget build(BuildContext context) {
+    final have = game.seasonSetOwned(area, style);
+    final done = game.seasonSetComplete(area, style);
+    final on = game.landscapeOf(area) == style;
+    String pct(double v) => (v * 100).toStringAsFixed(1);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4ECFB),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFCDB2E6), width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: IconText(
+                  tr('season.box', {'season': tr('style.$style')}),
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ),
+              IconText(
+                '$have/${Garden.slotsPerArea}',
+                style: const TextStyle(fontSize: 16, color: Color(0xFF6B4A8A)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(5),
+            child: LinearProgressIndicator(
+              value: have / Garden.slotsPerArea,
+              minHeight: 8,
+              backgroundColor: const Color(0xFFE6DAF2),
+              color: const Color(0xFFB07CE0),
+            ),
+          ),
+          const SizedBox(height: 4),
+          IconText(
+            tr('season.boxNow', {
+              'v': pct(
+                have * Garden.seasonPieceBonus +
+                    (done ? Garden.seasonCompleteBonus : 0),
+              ),
+              'p': pct(Garden.seasonPieceBonus),
+            }),
+            style: const TextStyle(fontSize: 13.5, color: Color(0xFF5A4470)),
+          ),
+          IconText(
+            done
+                ? tr(on ? 'season.boxOn' : 'season.boxPlace')
+                : tr('season.boxGoal', {'v': pct(Garden.seasonCompleteBonus)}),
+            style: TextStyle(
+              fontSize: 13.5,
+              color: done ? Palette.primary : const Color(0xFF5A4470),
+            ),
           ),
         ],
       ),
@@ -916,7 +1066,16 @@ class _StyleCard extends StatelessWidget {
                   (Garden.isSeasonStyle(style)
                       ? Garden.seasonGems
                       : Garden.styleGems(area)));
-    return Container(
+    // 이 디자인 하나가 주는 효과 (D-063): 고급 · 특별 = 구역 세트 효과 조각, 시즌 = 정원 매력
+    final e = area < DecorSets.areas ? DecorSets.effects[area] : null;
+    final String? effect = Garden.isSeasonStyle(style)
+        ? tr('style.pieceCharm', {
+            'v': (Garden.seasonPieceBonus * 100).toStringAsFixed(1),
+          })
+        : (style == 1 || style == 2) && e != null
+        ? setEffectText(e, DecorSets.piece(e, special: style == 2))
+        : null;
+    final card = Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
       decoration: BoxDecoration(
@@ -938,7 +1097,24 @@ class _StyleCard extends StatelessWidget {
             style == 0 ? Art.decor(d) : Art.decorStyle(d, style),
             size: 72,
           ),
-          const SizedBox(height: 6),
+          SizedBox(
+            height: 20,
+            child: effect == null
+                ? null
+                : FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: IconText(
+                      owned ? '[[check]] $effect' : effect,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: owned
+                            ? Palette.primary
+                            : const Color(0xFF8A7656),
+                      ),
+                    ),
+                  ),
+          ),
+          const SizedBox(height: 2),
           FilledButton(
             style: framedButton(
               FilledButton.styleFrom(
@@ -980,6 +1156,15 @@ class _StyleCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+    final dot = style == 1 && !owned && affordable;
+    if (!dot) return card;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        card,
+        const Positioned(right: 0, top: -4, child: RedDot()),
+      ],
     );
   }
 }

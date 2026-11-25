@@ -1203,6 +1203,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onSlotTap(int slot) {
+    // 놓은 장식: 디자인 화면으로 (D-063)
+    if (game.isPlaced(game.currentArea, slot)) {
+      final d = Garden.areaAt(game.currentArea).decor[slot];
+      if (Art.decorStyles(d).length > 1) {
+        sfx(Sfx.open);
+        showStyleSheet(context, game, game.currentArea, slot);
+      }
+      return;
+    }
     if (game.areaLocked) {
       _toast(tr('toast.areaLocked', {'n': game.areaRequiredLevel}));
     } else if (game.canPlace(slot)) {
@@ -2309,10 +2318,11 @@ class _HomeScreenState extends State<HomeScreen> {
               sub: nextCost == null
                   ? '[[check]]'
                   : '[[star]]${game.stars} / $nextCost',
-              badge: canDecorate,
+              badge: canDecorate || game.designDotAny,
               onTap: () {
                 sfx(Sfx.open);
                 setState(() => _viewArea = game.currentArea);
+                game.markDesignSeen();
                 showDecorSheet(context, game);
               },
             ),
