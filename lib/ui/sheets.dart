@@ -2636,7 +2636,11 @@ class _BoostRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 17,
                     height: 1.1,
-                    color: light ? Colors.white : null,
+                    color: onTap == null
+                        ? const Color(0xFF4F5E3C) // 비활성: 진한 회녹색
+                        : light
+                        ? Colors.white
+                        : null,
                   ),
                 ),
               ),
@@ -2647,8 +2651,10 @@ class _BoostRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 13,
                     height: 1.2,
-                    color: light
-                        ? const Color(0xE6FFFFFF)
+                    color: onTap == null
+                        ? const Color(0xFF4F5E3C)
+                        : light
+                        ? const Color(0xF2FFFFFF)
                         : const Color(0xFF4A3A22),
                   ),
                 ),
@@ -2741,7 +2747,7 @@ class _BoostRow extends StatelessWidget {
                       top:
                           '[[${boostIcon(kind)}]] ${tr('boost.count', {'n': tokens})}',
                       bottom: tr('boost.use', {'n': pack}),
-                      light: false,
+                      light: true,
                       onTap: room
                           ? () {
                               if (game.useBoostToken(kind)) sfx(Sfx.coin);
@@ -2754,7 +2760,7 @@ class _BoostRow extends StatelessWidget {
                       bottom: tr('boost.minutes', {
                         'n': Boosts.perGems[kind]!.inMinutes,
                       }),
-                      light: false,
+                      light: true,
                       onTap: game.canBuyBoostOf(kind) && game.gems >= cost
                           ? () async {
                               final go = await confirmPurchase(

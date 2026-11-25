@@ -2208,6 +2208,17 @@ class GameState extends ChangeNotifier {
     _bump(Stat.decor);
     final area = currentArea;
     final def = Garden.areaAt(area).decor[slot];
+    // 이 구역이 모두 같은 계절 디자인을 입고 있고 이 장식의 것도 가졌으면 그대로 입혀 놓는다 (D-065)
+    final others = [
+      for (final i in placed)
+        if (i != slot) styleOf(area, i),
+    ];
+    if (others.isNotEmpty &&
+        Garden.isSeasonStyle(others.first) &&
+        others.every((x) => x == others.first) &&
+        ownsStyle(area, slot, others.first)) {
+      decorStyle['$area:$slot'] = others.first;
+    }
     _events.add(DecorPlacedEvent(area, slot));
     final f = def.bringsFriend;
     if (f != null && !friends.contains(f)) {

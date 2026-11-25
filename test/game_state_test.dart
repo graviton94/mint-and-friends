@@ -567,4 +567,21 @@ void main() {
     g.markShopSeen();
     expect(g.shopDot, isFalse);
   });
+
+  test('계절 세트를 입은 구역: 새로 놓는 장식도 가진 계절 디자인을 입는다', () {
+    final g = make();
+    g.level = 99;
+    g.stars = 100000;
+    final a = g.currentArea;
+    const st = 4; // 봄
+    for (var i = 0; i < Garden.slotsPerArea; i++) {
+      g.ownedStyles.add('$a:$i:$st');
+    }
+    g.placeDecor(0);
+    g.placeDecor(1);
+    g.decorStyle['$a:0'] = st;
+    g.decorStyle['$a:1'] = st;
+    g.placeDecor(2);
+    expect(g.styleOf(a, 2), st);
+  });
 }
