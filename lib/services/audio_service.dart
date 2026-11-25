@@ -13,11 +13,13 @@ enum Sfx {
   tap(['tap'], throttleMs: 60),
   spawn(['spawn_1', 'spawn_2', 'spawn_3'], throttleMs: 60),
   merge(['merge_1', 'merge_2', 'merge_3'], throttleMs: 60),
-  // 합치기 소리 6계층 (D-076): 2~5 · 6~10 · 11~15 · 16~20 · 21~25 · 26~ (마지막 = merge_big)
+  // 합치기 소리 6계층 (D-076): 2~5 · 6~10 · 11~15 · 16~20 · 21~25 · 26~. 차분하게 (낮은 음 · 작은 소리).
+  // merge_big 은 최고 단계 합치기(코인)에만
   merge2(['merge_t2'], throttleMs: 60),
   merge3(['merge_t3'], throttleMs: 60),
   merge4(['merge_t4'], throttleMs: 60),
   merge5(['merge_t5'], throttleMs: 60),
+  merge6(['merge_t6'], throttleMs: 60),
   mergeBig(['merge_big']),
   coin(['coin']),
   deliver(['deliver']),
@@ -264,14 +266,14 @@ class AudioService extends ChangeNotifier {
   }
 }
 
-/// 합친 결과 단계에 맞는 합치기 소리 (5단계마다 한 계층, 26단계부터 가장 큰 소리).
+/// 합친 결과 단계에 맞는 합치기 소리 (5단계마다 한 계층).
 Sfx mergeSfx(int level) => switch (level) {
   <= 5 => Sfx.merge,
   <= 10 => Sfx.merge2,
   <= 15 => Sfx.merge3,
   <= 20 => Sfx.merge4,
   <= 25 => Sfx.merge5,
-  _ => Sfx.mergeBig,
+  _ => Sfx.merge6,
 };
 
 /// 짧게 쓰는 효과음 호출: `sfx(Sfx.merge)`.
