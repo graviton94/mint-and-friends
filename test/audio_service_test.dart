@@ -38,7 +38,14 @@ void main() {
 
   test('효과음 파일 이름', () {
     expect(Sfx.mergeBig.asset, 'audio/merge_big.ogg');
-    expect(Sfx.values.length, 14);
+    expect(Sfx.values.length, 18);
+    // 합치기 소리 6계층 (D-076)
+    expect(mergeSfx(5), Sfx.merge);
+    expect(mergeSfx(6), Sfx.merge2);
+    expect(mergeSfx(15), Sfx.merge3);
+    expect(mergeSfx(20), Sfx.merge4);
+    expect(mergeSfx(25), Sfx.merge5);
+    expect(mergeSfx(26), Sfx.mergeBig);
     expect(Sfx.spawn.assets, hasLength(3));
     expect(Sfx.merge.throttleMs, 60);
     expect(Sfx.coin.throttleMs, 40);

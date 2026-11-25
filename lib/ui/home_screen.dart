@@ -256,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
         sfx(Sfx.sell);
         _toast(tr('toast.sold', {'coins': fmt(price)}));
       case MergedEvent(:final level):
-        sfx(level >= 6 ? Sfx.mergeBig : Sfx.merge);
+        sfx(mergeSfx(level));
         _tutorialEvent(e);
       case MailEvent(:final mail):
         _mailArrived(mail);
