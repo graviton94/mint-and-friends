@@ -2263,6 +2263,14 @@ class _HomeScreenState extends State<HomeScreen> {
             badge: widget.socialBadge() ? -1 : 0,
             fallback: Icons.people_alt_rounded,
           ),
+        // 정원 패스 이용 중: 혜택 보기 (D-074)
+        if (game.passActive)
+          MenuEntry(
+            'garden_pass',
+            tr('menu.removeAds'),
+            () =>
+                showPassSheet(context, game, subscribed: widget.billing.adFree),
+          ),
         MenuEntry(
           'shop',
           tr('menu.shop'),

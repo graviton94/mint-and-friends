@@ -608,6 +608,22 @@ class GameState extends ChangeNotifier {
   /// 지금 활성 게임 (광고 서비스가 기간제 패스를 확인할 때).
   static GameState? active;
   String _passDay = '';
+
+  /// 정원 패스로 아낀 광고 수 · 받은 다이아 (패스 화면 '지금까지 받은 혜택', D-074).
+  int passAdsSkipped = 0;
+  int passGemsGiven = 0;
+
+  /// 오늘 패스 다이아(쪽지)를 받았는지.
+  bool get passGemsClaimedToday {
+    final id = 'pass-${_dayKey(now)}';
+    return mail.any((m) => m.id == id && m.claimed);
+  }
+
+  /// 패스 보관 칸 중 쓰고 있는 칸 수.
+  int get passVaultUsed => [
+    for (final i in GameConfig.passVault)
+      if (board[i] != null) i,
+  ].length;
   DateTime? coinBagReadyAt;
   late DateTime lastSeen;
   late DateTime nextVisitorAt;
@@ -1375,6 +1391,7 @@ class GameState extends ChangeNotifier {
     final k = _dayKey(now);
     if (k == _passDay) return;
     _passDay = k;
+    passGemsGiven += OrderQuota.passDailyGems;
     addMail(
       Mail(
         id: 'pass-$k',
@@ -1556,6 +1573,7 @@ class GameState extends ChangeNotifier {
     _rollAdDay();
     adsToday[kind] = (adsToday[kind] ?? 0) + 1;
     _bump(Stat.adsWatched);
+    if (passActive) passAdsSkipped++;
     notifyListeners();
   }
 
@@ -3323,6 +3341,8 @@ class GameState extends ChangeNotifier {
       'rerolls': rerollsToday,
       'vault': vaultOwned.toList()..sort(),
       'passDay': _passDay,
+      'passAds': passAdsSkipped,
+      'passGems': passGemsGiven,
       'friendLv': friendLevels,
       'passUntil': passUntil?.millisecondsSinceEpoch,
       'starter': starterBought,
@@ -3603,6 +3623,8 @@ class GameState extends ChangeNotifier {
       for (final c in (j['vault'] as List? ?? [])) (c as num).toInt(),
     };
     _passDay = j['passDay'] as String? ?? '';
+    passAdsSkipped = (j['passAds'] as num?)?.toInt() ?? 0;
+    passGemsGiven = (j['passGems'] as num?)?.toInt() ?? 0;
     friendLevels.clear();
     if (j['friendLv'] is Map) {
       for (final e in (j['friendLv'] as Map).entries) {

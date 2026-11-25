@@ -1080,5 +1080,22 @@
   "patch.1.0.12": "• The shop shows when your Garden Pass ends\n• New decor wears the seasonal design if the whole area does\n• Boost button text is easier to read\n• The upgrade dot shows once a day\n• Added refund and withdrawal info in the shop\n\nHere is some energy as an update gift!",
   "notify.test.lockBody": "This is how it looks on the lock screen!",
   "patch.1.0.13": "• Fixed notifications disappearing from the shade when opening the app\n• Notification text now shows on the lock screen\n• Auto Merge no longer touches items in storage cells\n• Polished buttons on the design screen\n\nHere is some energy as an update gift!",
-  "patch.1.0.14": "• Auto Merge now merges up to just below the highest level you have discovered\n  Discover new levels to widen its range\n\nHere is some energy as an update gift!"
+  "patch.1.0.14": "• Auto Merge now merges up to just below the highest level you have discovered\n  Discover new levels to widen its range\n\nHere is some energy as an update gift!",
+  "pass.sub": "[[garden_pass]] Garden Pass subscribed",
+  "pass.left": "{n}/{max} left",
+  "pass.ad.energy": "Energy +{n}",
+  "pass.ad.refresh": "New request",
+  "pass.ad.market": "Market ad item",
+  "pass.todayAds": "Free without ads today",
+  "pass.daily": "Daily perks",
+  "pass.gems": "{n} diamonds a day",
+  "pass.got": "Claimed",
+  "pass.inMail": "In your mailbox",
+  "pass.quota": "Friend star requests +{n}",
+  "pass.on": "Active",
+  "pass.vault": "{n} storage cells",
+  "pass.vaultUsed": "{n}/{max} used",
+  "pass.total": "Perks so far",
+  "pass.totalBody": "You skipped {ads} ads\nand got {gems} diamonds.",
+  "pass.open": "See perks"
 }

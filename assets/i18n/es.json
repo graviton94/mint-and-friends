@@ -1080,5 +1080,22 @@
   "patch.1.0.12": "• La tienda muestra cuándo termina tu Pase de jardín\n• La decoración nueva usa el diseño de temporada si toda el área lo usa\n• El texto de los botones de impulso se lee mejor\n• El punto de mejoras aparece una vez al día\n• Información de reembolso y desistimiento en la tienda\n\n¡Te enviamos energía como regalo!",
   "notify.test.lockBody": "¡Así se ve en la pantalla bloqueada!",
   "patch.1.0.13": "• Las notificaciones ya no desaparecen al abrir la app\n• El texto se ve en la pantalla bloqueada\n• Combinar auto ya no toca los objetos guardados\n• Botones ajustados en la pantalla de diseño\n\n¡Te enviamos energía como regalo!",
-  "patch.1.0.14": "• Combinar auto llega justo debajo del nivel más alto que descubriste\n  Descubre niveles nuevos para ampliar su alcance\n\n¡Te enviamos energía como regalo!"
+  "patch.1.0.14": "• Combinar auto llega justo debajo del nivel más alto que descubriste\n  Descubre niveles nuevos para ampliar su alcance\n\n¡Te enviamos energía como regalo!",
+  "pass.sub": "[[garden_pass]] Pase de jardín suscrito",
+  "pass.left": "quedan {n}/{max}",
+  "pass.ad.energy": "Energía +{n}",
+  "pass.ad.refresh": "Nuevo pedido",
+  "pass.ad.market": "Objeto con anuncio",
+  "pass.todayAds": "Gratis sin anuncios hoy",
+  "pass.daily": "Ventajas diarias",
+  "pass.gems": "{n} diamantes al día",
+  "pass.got": "Recibido",
+  "pass.inMail": "En tu buzón",
+  "pass.quota": "Pedidos con estrella +{n}",
+  "pass.on": "Activo",
+  "pass.vault": "{n} casillas de almacén",
+  "pass.vaultUsed": "{n}/{max} usadas",
+  "pass.total": "Ventajas hasta ahora",
+  "pass.totalBody": "Saltaste {ads} anuncios\ny recibiste {gems} diamantes.",
+  "pass.open": "Ver ventajas"
 }

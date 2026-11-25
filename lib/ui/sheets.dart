@@ -8,6 +8,7 @@ import '../art/art.dart';
 import '../game/config.dart';
 import '../game/format.dart';
 import '../game/game_state.dart';
+import '../game/tuning.dart';
 import '../i18n/l10n.dart';
 import '../i18n/names.dart';
 import '../services/audio_service.dart';
@@ -1858,6 +1859,22 @@ Future<void> _shopSheet(
               style: const TextStyle(fontSize: 16, color: Palette.primary),
             ),
           ),
+        // 패스 이용 중: 혜택 화면으로 (D-074)
+        if (game.passActive)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Center(
+              child: FilledButton(
+                style: framedButton(
+                  FilledButton.styleFrom(minimumSize: const Size(160, 44)),
+                  'button_green',
+                ),
+                onPressed: () =>
+                    showPassSheet(context, game, subscribed: billing.adFree),
+                child: IconText(tr('pass.open')),
+              ),
+            ),
+          ),
         if (billing.adFree)
           IconText(
             tr('shop.active'),
@@ -3363,6 +3380,133 @@ Future<void> _showDevLog(
               child: const Text('비우기'),
             ),
           ],
+        ),
+      ],
+    ),
+  );
+});
+
+// ---------------------------------------------------------------- 정원 패스 혜택 (D-074)
+
+/// 정원 패스 이용 중: 무엇을 얼마나 쓰고 있는지 (오늘 남은 광고 없는 보상 · 다이아 · 칸 · 누적).
+Future<void> showPassSheet(
+  BuildContext context,
+  GameState game, {
+  bool subscribed = false,
+}) => showGameSheet(context, game, () {
+  String until() {
+    final u = game.passUntil;
+    if (subscribed || u == null) return tr('pass.sub');
+    return tr('pass.until', {
+      'date':
+          '${u.month}/${u.day} ${u.hour.toString().padLeft(2, '0')}:${u.minute.toString().padLeft(2, '0')}',
+      'd': (game.passLeft.inHours + 23) ~/ 24,
+    });
+  }
+
+  Widget row(String icon, String label, String value, {bool done = false}) =>
+      Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.fromLTRB(10, 8, 12, 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2D3B5), width: 1.5),
+        ),
+        child: Row(
+          children: [
+            ArtImage(IconText.resolve(icon), size: 30),
+            const SizedBox(width: 10),
+            Expanded(
+              child: IconText(label, style: const TextStyle(fontSize: 15)),
+            ),
+            IconText(
+              done ? '[[check]] $value' : value,
+              style: TextStyle(
+                fontSize: 15,
+                color: done ? Palette.primary : const Color(0xFF6B5A44),
+              ),
+            ),
+          ],
+        ),
+      );
+  String left(AdKind k) => tr('pass.left', {
+    'n': game.adsLeft(k),
+    'max': GameConfig.adDailyCap[k] ?? 0,
+  });
+  final ads = <(String, String, AdKind, bool)>[
+    (
+      'energy',
+      tr('pass.ad.energy', {'n': Tuning.energyAdAmount}),
+      AdKind.energy,
+      game.isUnlocked(Feature.energyAd),
+    ),
+    ('boost', tr('boost.title'), AdKind.boost, game.isUnlocked(Feature.boost)),
+    (
+      'coinbag',
+      tr('ctrl.coinBag'),
+      AdKind.coinBag,
+      game.isUnlocked(Feature.coinBag),
+    ),
+    (
+      'diamond',
+      tr('shop.adGemsShort', {'n': GameConfig.adGems}),
+      AdKind.gems,
+      true,
+    ),
+    ('heart', tr('order.quotaMore'), AdKind.quota, true),
+    ('refresh', tr('pass.ad.refresh'), AdKind.refresh, true),
+    ('shop', tr('pass.ad.market'), AdKind.market, game.dailyShopOpen),
+  ];
+  return SheetFrame(
+    title: tr('menu.removeAds'),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Center(child: ArtImage(Art.icon('garden_pass'), size: 72)),
+        const SizedBox(height: 4),
+        IconText(
+          until(),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 16, color: Palette.primary),
+        ),
+        const SizedBox(height: 12),
+        IconText(tr('pass.todayAds'), style: const TextStyle(fontSize: 17)),
+        const SizedBox(height: 6),
+        for (final (icon, label, k, open) in ads)
+          if (open) row(icon, label, left(k), done: game.adsLeft(k) == 0),
+        const SizedBox(height: 10),
+        IconText(tr('pass.daily'), style: const TextStyle(fontSize: 17)),
+        const SizedBox(height: 6),
+        row(
+          'diamond',
+          tr('pass.gems', {'n': OrderQuota.passDailyGems}),
+          tr(game.passGemsClaimedToday ? 'pass.got' : 'pass.inMail'),
+          done: game.passGemsClaimedToday,
+        ),
+        row(
+          'star',
+          tr('pass.quota', {'n': OrderQuota.pass}),
+          tr('pass.on'),
+          done: true,
+        ),
+        row(
+          'storage',
+          tr('pass.vault', {'n': GameConfig.passVault.length}),
+          tr('pass.vaultUsed', {
+            'n': game.passVaultUsed,
+            'max': GameConfig.passVault.length,
+          }),
+        ),
+        const SizedBox(height: 10),
+        IconText(tr('pass.total'), style: const TextStyle(fontSize: 17)),
+        const SizedBox(height: 4),
+        IconText(
+          tr('pass.totalBody', {
+            'ads': game.passAdsSkipped,
+            'gems': game.passGemsGiven,
+          }),
+          style: const TextStyle(fontSize: 15, color: Color(0xFF6B5A44)),
         ),
       ],
     ),
