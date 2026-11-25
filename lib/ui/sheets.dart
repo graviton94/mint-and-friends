@@ -1118,7 +1118,8 @@ class _StyleCard extends StatelessWidget {
           FilledButton(
             style: framedButton(
               FilledButton.styleFrom(
-                minimumSize: const Size(0, 40),
+                // 글자가 짧아도('놓기') 알약 모양이 유지되게 최소 폭 (D-071)
+                minimumSize: const Size(104, 40),
                 padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
               current ? 'button_white' : 'button_green',

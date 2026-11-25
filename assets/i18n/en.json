@@ -1078,5 +1078,6 @@
   "refund.blockTitle": "Purchases limited",
   "refund.blockBody": "Purchases are limited on this account\nbecause of past refunds.\nContact us via Settings → Report a problem.",
   "patch.1.0.12": "• The shop shows when your Garden Pass ends\n• New decor wears the seasonal design if the whole area does\n• Boost button text is easier to read\n• The upgrade dot shows once a day\n• Added refund and withdrawal info in the shop\n\nHere is some energy as an update gift!",
-  "notify.test.lockBody": "This is how it looks on the lock screen!"
+  "notify.test.lockBody": "This is how it looks on the lock screen!",
+  "patch.1.0.13": "• Fixed notifications disappearing from the shade when opening the app\n• Notification text now shows on the lock screen\n• Auto Merge no longer touches items in storage cells\n• Polished buttons on the design screen\n\nHere is some energy as an update gift!"
 }

@@ -806,9 +806,13 @@ class GameState extends ChangeNotifier {
         );
 
   /// 지금 보너스가 붙는 중인지: 화면을 켜 두고 1분 넘게 손대지 않았다.
-  bool get autoIdle =>
-      autoIdleBonus > 0 &&
-      (_lastInput == null || now.difference(_lastInput!) >= Upgrades.idleAfter);
+  bool get autoIdle {
+    if (autoIdleBonus <= 0) return false;
+    // 앱을 막 켰으면 그때부터 1분을 잰다 (켜자마자 보너스가 붙지 않게, D-071)
+    _lastInput ??= now;
+    return now.difference(_lastInput!) >= Upgrades.idleAfter;
+  }
+
   double get idleMult => autoIdle ? 1 + autoIdleBonus : 1;
 
   double? get autoSpawnInterval =>
@@ -1672,8 +1676,9 @@ class GameState extends ChangeNotifier {
   /// 에너지가 없으면 조용히 쉰다 (에너지 없음 창을 띄우지 않는다).
   bool autoSpawnOnce() {
     var empty = 0;
+    // 보관 칸은 세지 않는다 (자동으로 보관 칸을 채우지 않게, D-071)
     for (var i = 0; i < board.length && empty < 2; i++) {
-      if (board[i] == null && isCellOpen(i)) empty++;
+      if (board[i] == null && isCellOpen(i) && !GameConfig.isVault(i)) empty++;
     }
     if (empty < 2) return false;
     if (energy < GameConfig.energyPerTap) return false;
@@ -1692,6 +1697,8 @@ class GameState extends ChangeNotifier {
     final groups = <String, List<int>>{};
     for (var i = 0; i < board.length; i++) {
       final it = board[i];
+      // 보관 칸(맨 아랫줄)은 일부러 맡겨 둔 것이라 손대지 않는다 (D-071)
+      if (GameConfig.isVault(i) || !isCellOpen(i)) continue;
       if (it == null ||
           it.isBubble ||
           it.level >= Chains.maxLevel(it.chain) ||
