@@ -2440,16 +2440,16 @@ class _ShopCard extends StatelessWidget {
                 ),
               ),
             ),
+          // 판촉 딱지(왼쪽 위)와 빨간 점(오른쪽 위)은 카드 안쪽, 같은 높이 (D-086)
           if (tag != null && sticker == null)
             Positioned(
-              top: -12,
-              left: -4,
+              top: 6,
+              left: 6,
               child: Shine(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 2,
-                  ),
+                  height: RedDot.size,
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 7),
                   decoration: BoxDecoration(
                     color: tagColor(tag!),
                     borderRadius: BorderRadius.circular(10),
@@ -2457,13 +2457,17 @@ class _ShopCard extends StatelessWidget {
                   ),
                   child: Text(
                     tag!,
-                    style: const TextStyle(fontSize: 11, color: Colors.white),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      height: 1,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
             ),
           // 살 수 있음 점은 다른 화면처럼 오른쪽 위 (판촉 딱지는 왼쪽 위)
-          if (dot) const Positioned(right: -4, top: -4, child: RedDot()),
+          if (dot) const Positioned(right: 6, top: 6, child: RedDot()),
         ],
       ),
     );

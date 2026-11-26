@@ -177,19 +177,48 @@ class SlotMarker extends StatelessWidget {
 
 /// 메뉴 · 버튼 오른쪽 위의 빨간 알림 점 (숫자가 있으면 숫자).
 /// 알림 점: 빨간 동그라미가 2.4초마다 한 번 살짝 밝아지며 커진다 (D-080).
+/// 빨간 점 · 판촉 딱지가 함께 쓰는 박자 (D-086): 모두 같은 시계에 맞춰 한꺼번에 움직인다.
+class Pulse {
+  static const int periodMs = 2400;
+
+  /// 지금 시각 기준 주기 안 위치 (0~1). 새로 생긴 점도 다른 점과 박자가 같다.
+  static double phase() =>
+      (DateTime.now().millisecondsSinceEpoch % periodMs) / periodMs;
+
+  static AnimationController controller(TickerProvider vsync) {
+    final c = AnimationController(
+      vsync: vsync,
+      duration: const Duration(milliseconds: periodMs),
+    );
+    c.value = phase();
+    c.repeat();
+    return c;
+  }
+
+  /// 콩닥 (두 번 짧게): 주기 끝 25% 안에서 0→1→0 두 번.
+  static double beat(double v) {
+    double bump(double a, double b) =>
+        v < a || v > b ? 0 : sin((v - a) / (b - a) * pi);
+    return max(bump(0.75, 0.84), 0.7 * bump(0.86, 0.95));
+  }
+
+  /// 판촉 딱지 빛줄기: 콩닥과 같은 때 (주기 끝 25%) 지나간다. 0~1, 그 밖은 -1.
+  static double sweep(double v) => v < 0.75 ? -1 : (v - 0.75) / 0.25;
+}
+
 class RedDot extends StatefulWidget {
   const RedDot({super.key, this.count});
   final int? count;
+
+  /// 모든 빨간 점의 높이 (숫자가 있어도 없어도 같은 크기).
+  static const double size = 20;
 
   @override
   State<RedDot> createState() => _RedDotState();
 }
 
 class _RedDotState extends State<RedDot> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 2400),
-  )..repeat();
+  late final AnimationController _c = Pulse.controller(this);
 
   @override
   void dispose() {
@@ -204,30 +233,29 @@ class _RedDotState extends State<RedDot> with SingleTickerProviderStateMixin {
     return AnimatedBuilder(
       animation: _c,
       builder: (_, _) {
-        // 주기의 마지막 25% 동안만 한 번 반짝
-        final t = _c.value < 0.75 ? 0.0 : sin((_c.value - 0.75) / 0.25 * pi);
+        // 잘게 콩닥: 작게 (최대 +7%) 두 번
+        final t = Pulse.beat(_c.value);
         return Transform.scale(
-          scale: 1 + 0.12 * t,
+          scale: 1 + 0.07 * t,
           child: Container(
-            constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-            padding: EdgeInsets.symmetric(horizontal: text == null ? 0 : 4),
+            height: RedDot.size,
+            constraints: const BoxConstraints(minWidth: RedDot.size),
+            padding: EdgeInsets.symmetric(
+              horizontal: text == null || text.length < 2 ? 0 : 4,
+            ),
             decoration: BoxDecoration(
               color: Color.lerp(
                 const Color(0xFFE84A3C),
-                const Color(0xFFFF8A72),
+                const Color(0xFFFF7A62),
                 t,
               ),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(RedDot.size / 2),
               border: Border.all(color: Colors.white, width: 2),
-              boxShadow: [
+              boxShadow: const [
                 BoxShadow(
-                  color: Color.lerp(
-                    const Color(0x44000000),
-                    const Color(0x88FF6A50),
-                    t,
-                  )!,
-                  blurRadius: 2 + 4 * t,
-                  offset: const Offset(0, 1),
+                  color: Color(0x44000000),
+                  blurRadius: 2,
+                  offset: Offset(0, 1),
                 ),
               ],
             ),
@@ -239,7 +267,7 @@ class _RedDotState extends State<RedDot> with SingleTickerProviderStateMixin {
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 11,
-                      height: 1.1,
+                      height: 1,
                     ),
                   ),
           ),
@@ -251,19 +279,15 @@ class _RedDotState extends State<RedDot> with SingleTickerProviderStateMixin {
 
 /// 판촉 딱지 반짝임: 주기마다 흰 빛줄기가 한 번 지나간다 (D-080).
 class Shine extends StatefulWidget {
-  const Shine({super.key, required this.child, this.periodMs = 3000});
+  const Shine({super.key, required this.child});
   final Widget child;
-  final int periodMs;
 
   @override
   State<Shine> createState() => _ShineState();
 }
 
 class _ShineState extends State<Shine> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: Duration(milliseconds: widget.periodMs),
-  )..repeat();
+  late final AnimationController _c = Pulse.controller(this);
 
   @override
   void dispose() {
@@ -275,9 +299,9 @@ class _ShineState extends State<Shine> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: _c,
     builder: (_, child) {
-      // 주기의 앞 30% 동안 왼쪽 → 오른쪽으로 지나간다
-      final p = (_c.value / 0.3).clamp(0.0, 1.0);
-      if (p >= 1) return child!;
+      // 빨간 점이 콩닥일 때 같이 왼쪽 → 오른쪽으로 지나간다 (D-086)
+      final p = Pulse.sweep(_c.value);
+      if (p < 0) return child!;
       final x = -1.5 + 3 * p;
       return ShaderMask(
         blendMode: BlendMode.srcATop,

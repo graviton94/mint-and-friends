@@ -1086,6 +1086,57 @@ class _HomeScreenState extends State<HomeScreen> {
   );
 
   /// 코인 캡슐을 누르면: 수입이 어떻게 정해지는지 (수입 요약, D-080).
+  final _kHudRow = GlobalKey();
+  double _hudScale = 1;
+
+  /// 위쪽 재화 줄 (코인 · 별 · 다이아). 폭이 모자라면 통째로 줄어든다.
+  Widget _hudPills() => FittedBox(
+    fit: BoxFit.scaleDown,
+    alignment: Alignment.centerLeft,
+    child: Row(
+      key: _kHudRow,
+      children: [
+        _Pill(
+          onTap: _incomeInfo,
+          icon: Art.coin,
+          text: fmt(game.coins),
+          sub: game.autoIdle
+              ? tr('hud.perHourAuto', {
+                  'v': fmt(game.incomePerHour * game.idleMult),
+                  'p': (game.autoIdleBonus * 100).round(),
+                })
+              : tr('hud.perHour', {'v': fmt(game.incomePerHour)}),
+        ),
+        const SizedBox(width: 6),
+        _Pill(icon: Art.star, text: fmt(game.stars.toDouble())),
+        const SizedBox(width: 6),
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            _Pill(
+              key: _kGems,
+              icon: Art.icon('diamond'),
+              text: fmt(game.gems.toDouble()),
+              plus: true,
+              onTap: _openShop,
+            ),
+            // 상점에 오늘의 무료 선물이 있으면
+            if (game.shopDot)
+              Positioned(
+                right: -3,
+                top: -3,
+                child: Transform.scale(
+                  scale: 1 / _hudScale,
+                  alignment: Alignment.topRight,
+                  child: const RedDot(),
+                ),
+              ),
+          ],
+        ),
+      ],
+    ),
+  );
+
   Future<void> _incomeInfo() {
     // 계산서처럼 (D-082): 아이템별 기본 수입 → 소계 → 곱해지는 효과 → 곱 합계 → 총합
     final byChain = <Chain, double>{};
@@ -1935,42 +1986,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(width: 6),
           Expanded(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Row(
-                children: [
-                  _Pill(
-                    onTap: _incomeInfo,
-                    icon: Art.coin,
-                    text: fmt(game.coins),
-                    sub: game.autoIdle
-                        ? tr('hud.perHourAuto', {
-                            'v': fmt(game.incomePerHour * game.idleMult),
-                            'p': (game.autoIdleBonus * 100).round(),
-                          })
-                        : tr('hud.perHour', {'v': fmt(game.incomePerHour)}),
-                  ),
-                  const SizedBox(width: 6),
-                  _Pill(icon: Art.star, text: fmt(game.stars.toDouble())),
-                  const SizedBox(width: 6),
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      _Pill(
-                        key: _kGems,
-                        icon: Art.icon('diamond'),
-                        text: fmt(game.gems.toDouble()),
-                        plus: true,
-                        onTap: _openShop,
-                      ),
-                      // 상점에 오늘의 무료 선물이 있으면
-                      if (game.shopDot)
-                        const Positioned(right: -3, top: -3, child: RedDot()),
-                    ],
-                  ),
-                ],
-              ),
+            child: LayoutBuilder(
+              builder: (_, box) {
+                // 재화 줄은 폭에 맞춰 줄어든다: 그 안의 빨간 점만 원래 크기로 되돌린다 (D-086)
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  final w = _kHudRow.currentContext?.size?.width;
+                  if (w == null || w <= 0) return;
+                  final s = min(1.0, box.maxWidth / w);
+                  if (mounted && (s - _hudScale).abs() > 0.01) {
+                    setState(() => _hudScale = s);
+                  }
+                });
+                return _hudPills();
+              },
             ),
           ),
           const SizedBox(width: 6),
