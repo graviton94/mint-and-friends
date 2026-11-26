@@ -38,7 +38,7 @@ class FrameBox extends StatelessWidget {
       ref.path,
       center,
       corner / Art.frameInset(frame),
-      pill: frame.startsWith('button_') || frame == 'capsule',
+      pill: frame.startsWith('button_') || frame.startsWith('capsule'),
     );
   }
 

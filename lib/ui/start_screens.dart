@@ -8,6 +8,7 @@ import '../game/config.dart';
 import '../i18n/l10n.dart';
 import '../services/audio_service.dart';
 import 'theme.dart';
+import 'widgets/frame_box.dart';
 
 /// 켜기 → ① 스플래시(실제 로딩) → ② 타이틀(눌러서 시작) → ③ 짧은 전환 → 게임.
 /// [boot] 는 무거운 준비(로그인 확인 · 저장 · 원격 설정 · 소리)를 하며 진행도를 알리고, 다 되면 게임 화면을 돌려준다.
@@ -443,48 +444,76 @@ class _TitleViewState extends State<TitleView> with TickerProviderStateMixin {
   }
 }
 
-/// 로고 아래 시즌 부제 띠: 계절 색 리본 + 흰 글자.
+/// 로고 아래 시즌 부제: 계절 색 알약(capsule_<계절>) + 앞머리 계절 그림 + 흰 글자 (D-079).
 class _SeasonBadge extends StatelessWidget {
   const _SeasonBadge({required this.season});
   final String season;
 
-  static const Map<String, (Color, Color)> _colors = {
-    'spring': (Color(0xFFF59AB8), Color(0xFFB8486F)),
-    'summer': (Color(0xFF5FC0F0), Color(0xFF1F6F9E)),
-    'autumn': (Color(0xFFF29A4A), Color(0xFF9A4A16)),
-    'winter': (Color(0xFF8DB3F2), Color(0xFF3A5A9A)),
+  static const Map<String, (String, Color)> _style = {
+    'spring': ('cherry_petal', Color(0xFFA8345E)),
+    'summer': ('sun_sparkle', Color(0xFF1C6390)),
+    'autumn': ('maple_leaf', Color(0xFF8C3A0E)),
+    'winter': ('snowflake', Color(0xFF34548F)),
   };
 
   @override
   Widget build(BuildContext context) {
-    final (fill, ink) = _colors[season]!;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-      decoration: BoxDecoration(
-        color: fill,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFF5A3A1E), width: 3),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x33000000),
-            blurRadius: 6,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Text(
-        tr('title.season.$season'),
-        style: TextStyle(
-          fontSize: 20,
+    final (fx, ink) = _style[season]!;
+    const h = 44.0; // 알약 높이 (둥근 끝 = h/2)
+    return SizedBox(
+      height: h,
+      child: FrameBox(
+        frame: 'capsule_$season',
+        fallback: BoxDecoration(
           color: Colors.white,
-          shadows: [
-            for (final o in const [
-              Offset(1.4, 0),
-              Offset(-1.4, 0),
-              Offset(0, 1.4),
-              Offset(0, -1.4),
-            ])
-              Shadow(color: ink, offset: o),
+          borderRadius: BorderRadius.circular(h / 2),
+        ),
+        corner: h / 2,
+        // 왼쪽은 머리 그림 자리만큼, 오른쪽은 둥근 끝만큼 (글과 그림 묶음이 알약 가운데에 오게)
+        padding: const EdgeInsets.fromLTRB(8, 0, 20, 0),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // 말머리: 크림색 동그라미 안에 계절 그림 (알약 색에 묻히지 않게)
+            Container(
+              width: 30,
+              height: 30,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF8EA),
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFF5A3A1E), width: 2),
+              ),
+              child: ArtImage(
+                ArtRef('assets/art/fx/${fx}_badge.webp', ''),
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              tr('title.season.$season'),
+              textHeightBehavior: const TextHeightBehavior(
+                applyHeightToFirstAscent: false,
+                applyHeightToLastDescent: false,
+              ),
+              style: TextStyle(
+                fontSize: 19,
+                height: 1.0,
+                color: Colors.white,
+                shadows: [
+                  for (final o in const [
+                    Offset(1.4, 0),
+                    Offset(-1.4, 0),
+                    Offset(0, 1.4),
+                    Offset(0, -1.4),
+                    Offset(1, 1),
+                    Offset(-1, 1),
+                  ])
+                    Shadow(color: ink, offset: o),
+                ],
+              ),
+            ),
           ],
         ),
       ),
