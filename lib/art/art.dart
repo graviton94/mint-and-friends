@@ -306,6 +306,9 @@ class Art {
     return sz == null ? 0 : min(sz.width, sz.height) * 0.4;
   }
 
+  /// 시작 화면용 계절 이름 (spring · summer · autumn · winter).
+  static String titleSeason([DateTime? t]) => _titleSeason(t);
+
   /// 시작 · 로그인 화면 배경과 덤불 (계절마다, D-078). 계절 = 게임 계절 장식과 같은 달 기준.
   /// 미리보기용: 계절을 정해 보여 준다.
   static String? debugTitleSeason;

@@ -1100,5 +1100,9 @@
   "pass.open": "Ver ventajas",
   "ctrl.shop.sub": "Gemas · Mercado · Impulsos",
   "patch.1.0.15": "• La tienda ahora está abajo a la derecha\n  Activa impulsos desde el menú\n• Nueva pantalla de ventajas del Pase de jardín\n  Mira las ventajas de hoy y lo recibido hasta ahora\n• Los sonidos de combinar cambian suavemente según el nivel\n\n¡Te enviamos energía como regalo!",
-  "patch.1.0.16": "• Los puntos rojos ya no deforman las tarjetas\n• Botones superpuestos arriba en la vista del jardín corregidos\n• Bordes recortados corregidos\n\n¡Te enviamos energía como regalo!"
+  "patch.1.0.16": "• Los puntos rojos ya no deforman las tarjetas\n• Botones superpuestos arriba en la vista del jardín corregidos\n• Bordes recortados corregidos\n\n¡Te enviamos energía como regalo!",
+  "title.season.spring": "Jardín de primavera",
+  "title.season.summer": "Jardín de verano",
+  "title.season.autumn": "Jardín de otoño",
+  "title.season.winter": "Jardín de invierno"
 }

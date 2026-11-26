@@ -277,6 +277,7 @@ class _TitleViewState extends State<TitleView> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final bg = Art.titleBg();
     final fg = Art.titleFg();
+    final season = Art.titleSeason();
     return Scaffold(
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -327,8 +328,20 @@ class _TitleViewState extends State<TitleView> with TickerProviderStateMixin {
                         ),
                       ),
                     ),
+                    // 2-1. 시즌 부제 (로고 아래, 로고가 떨어진 뒤 톡)
+                    Positioned(
+                      top: h * 0.11 + min(w * 0.86, 420) * 0.34,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Transform.scale(
+                          scale: _pop(0.45, 0.7),
+                          child: _SeasonBadge(season: season),
+                        ),
+                      ),
+                    ),
                     // 3. 친구들: 정해진 자리 · 정해진 앞뒤 순서(뒷줄 → 앞줄 → 가운데 민트)로 하나씩 통통
-                    for (final m in _cast)
+                    for (final m in _seasonCast[season]!)
                       Positioned(
                         left: w * m.x - _size(w, m) / 2,
                         bottom: h * m.bottom,
@@ -339,7 +352,12 @@ class _TitleViewState extends State<TitleView> with TickerProviderStateMixin {
                             angle: sway * m.swing,
                             alignment: Alignment.bottomCenter,
                             child: ArtImage(
-                              Art.friend(Friends.byId(m.id), happy: true),
+                              Art.friendPose(
+                                    Friends.byId(m.id),
+                                    m.pose,
+                                    outfit: _seasonOutfit[season],
+                                  ) ??
+                                  Art.friend(Friends.byId(m.id), happy: true),
                               size: _size(w, m),
                               flipX: m.flip,
                             ),
@@ -425,6 +443,55 @@ class _TitleViewState extends State<TitleView> with TickerProviderStateMixin {
   }
 }
 
+/// 로고 아래 시즌 부제 띠: 계절 색 리본 + 흰 글자.
+class _SeasonBadge extends StatelessWidget {
+  const _SeasonBadge({required this.season});
+  final String season;
+
+  static const Map<String, (Color, Color)> _colors = {
+    'spring': (Color(0xFFF59AB8), Color(0xFFB8486F)),
+    'summer': (Color(0xFF5FC0F0), Color(0xFF1F6F9E)),
+    'autumn': (Color(0xFFF29A4A), Color(0xFF9A4A16)),
+    'winter': (Color(0xFF8DB3F2), Color(0xFF3A5A9A)),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final (fill, ink) = _colors[season]!;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFF5A3A1E), width: 3),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x33000000),
+            blurRadius: 6,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Text(
+        tr('title.season.$season'),
+        style: TextStyle(
+          fontSize: 20,
+          color: Colors.white,
+          shadows: [
+            for (final o in const [
+              Offset(1.4, 0),
+              Offset(-1.4, 0),
+              Offset(0, 1.4),
+              Offset(0, -1.4),
+            ])
+              Shadow(color: ink, offset: o),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// 타이틀 친구 배치 (뒤 → 앞 순서가 곧 그리는 순서).
 /// x: 화면 너비 비율(가운데), bottom: 화면 높이 비율(발 위치), scale: 화면 너비 대비 크기,
 /// at: 나오는 시점(연출 0~1), swing: 살랑 흔들림 크기, flip: 좌우 반전(가운데를 보게).
@@ -432,6 +499,7 @@ class _Member {
   final String id;
   final double x, bottom, scale, at, swing;
   final bool flip;
+  final String pose;
   const _Member(
     this.id,
     this.x,
@@ -440,19 +508,48 @@ class _Member {
     this.at, {
     this.swing = 0.04,
     this.flip = false,
+    this.pose = 'happy',
   });
 }
 
-const List<_Member> _cast = [
-  // 뒷줄 (작게, 조금 위)
-  _Member('dubu', 0.17, 0.205, 0.3, 0.36, flip: true),
-  _Member('kwak', 0.83, 0.205, 0.29, 0.42),
-  // 앞줄
-  _Member('nabi', 0.3, 0.135, 0.32, 0.48, flip: true),
-  _Member('mochi', 0.7, 0.135, 0.32, 0.54),
-  // 가운데 주인공 민트 (가장 크게, 맨 앞)
-  _Member('bori', 0.5, 0.15, 0.4, 0.6, swing: 0.02),
-];
+/// 계절마다 다른 친구 · 자세 · 계절 의상 (D-079). 자리는 같고(뒷줄 2 · 앞줄 2 · 가운데 민트) 얼굴만 바뀐다.
+const Map<String, String> _seasonOutfit = {
+  'spring': 'picnic',
+  'summer': 'summer',
+  'autumn': 'autumn',
+  'winter': 'winter',
+};
+
+const Map<String, List<_Member>> _seasonCast = {
+  'spring': [
+    _Member('kongtteok', 0.17, 0.205, 0.29, 0.36, flip: true, pose: 'wave'),
+    _Member('nabi', 0.83, 0.205, 0.29, 0.42, pose: 'happy'),
+    _Member('dubu', 0.3, 0.135, 0.32, 0.48, flip: true, pose: 'happy'),
+    _Member('danpung', 0.7, 0.135, 0.32, 0.54, pose: 'wave'),
+    _Member('bori', 0.5, 0.15, 0.4, 0.6, swing: 0.02, pose: 'happy'),
+  ],
+  'summer': [
+    _Member('pposong', 0.17, 0.205, 0.29, 0.36, flip: true, pose: 'happy'),
+    _Member('dotori', 0.83, 0.205, 0.29, 0.42, pose: 'wave'),
+    _Member('bogeul', 0.3, 0.135, 0.32, 0.48, flip: true, pose: 'wave'),
+    _Member('kwak', 0.7, 0.135, 0.32, 0.54, pose: 'happy'),
+    _Member('bori', 0.5, 0.15, 0.4, 0.6, swing: 0.02, pose: 'wave'),
+  ],
+  'autumn': [
+    _Member('dotori', 0.17, 0.205, 0.29, 0.36, flip: true, pose: 'happy'),
+    _Member('nabi', 0.83, 0.205, 0.29, 0.42, pose: 'wave'),
+    _Member('mochi', 0.3, 0.135, 0.32, 0.48, flip: true, pose: 'idle'),
+    _Member('danpung', 0.7, 0.135, 0.32, 0.54, pose: 'happy'),
+    _Member('bori', 0.5, 0.15, 0.4, 0.6, swing: 0.02, pose: 'happy'),
+  ],
+  'winter': [
+    _Member('pposong', 0.17, 0.205, 0.29, 0.36, flip: true, pose: 'wave'),
+    _Member('dubu', 0.83, 0.205, 0.29, 0.42, pose: 'happy'),
+    _Member('kwak', 0.3, 0.135, 0.32, 0.48, flip: true, pose: 'happy'),
+    _Member('bogeul', 0.7, 0.135, 0.32, 0.54, pose: 'idle'),
+    _Member('bori', 0.5, 0.15, 0.4, 0.6, swing: 0.02, pose: 'wave'),
+  ],
+};
 
 double _size(double w, _Member m) => min(w * m.scale, 220.0 * m.scale / 0.32);
 
