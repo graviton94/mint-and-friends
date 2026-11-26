@@ -241,7 +241,8 @@ class GameDialog extends StatelessWidget {
 
 /// 버튼 테마에 꽂는 프레임 배경. 프레임이 없으면 원래 색 배경을 그대로 쓴다.
 /// 버튼 기본 글자 (테마와 같은 값).
-const buttonTextStyle = TextStyle(fontSize: 16, fontWeight: FontWeight.w700);
+// 굵게(fontWeight) 없이: Jua · Mochiy Pop 은 굵은 글꼴이 없어 억지로 두껍게 그려 다른 글씨체처럼 보였다 (D-088)
+const buttonTextStyle = TextStyle(fontSize: 16);
 
 /// 연두 · 보라 버튼의 흰 글자 테두리 (밝은 바탕에서 글자가 묻히지 않게).
 List<Shadow> buttonTextOutline(String frame) {
@@ -610,7 +611,6 @@ class _OutlinedNumber extends StatelessWidget {
             style: TextStyle(
               fontSize: size,
               height: 1.2,
-              fontWeight: FontWeight.w900,
               foreground: Paint()
                 ..style = PaintingStyle.stroke
                 ..strokeWidth = 6
@@ -620,12 +620,7 @@ class _OutlinedNumber extends StatelessWidget {
           ),
           Text(
             text,
-            style: TextStyle(
-              fontSize: size,
-              height: 1.2,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-            ),
+            style: TextStyle(fontSize: size, height: 1.2, color: Colors.white),
           ),
         ],
       ),

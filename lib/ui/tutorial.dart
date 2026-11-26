@@ -249,11 +249,7 @@ class _Bubble extends StatelessWidget {
                     IconText(
                       title!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Palette.text,
-                      ),
+                      style: const TextStyle(fontSize: 18, color: Palette.text),
                     ),
                     const SizedBox(height: 4),
                   ],
