@@ -913,7 +913,7 @@
   "share.dialogTitle": "じまんする",
   "share.button": "じまんする",
   "share.gardenTitle": "わたしのお庭に遊びに来て!",
-  "share.gardenSub": "{name}  Lv.{level}",
+  "share.gardenSub": "{name}",
   "share.areaTitle": "{name} 完成!",
   "share.areaSub": "飾りを8つぜんぶ置いたよ",
   "share.renewTitle": "{n}回目のリニューアル!",
@@ -1272,5 +1272,7 @@
   "area.friendsNote": "このエリアに飾りを置くと来てくれるよ",
   "basket.newTitle": "新しいバスケット！",
   "basket.newName": "{name} 登場！",
-  "basket.newNote": "{chain}のアイテムが出るようになったよ。\nボード下のバスケットを横にスワイプして切りかえてね。"
+  "basket.newNote": "{chain}のアイテムが出るようになったよ。\nボード下のバスケットを横にスワイプして切りかえてね。",
+  "share.lv": "Lv.{n}",
+  "patch.1.0.18": "• 自慢カードが新しくなったよ。お庭の写真が大きく入るよ\n• 自慢するを押すと招待文とリンクがコピーされるよ\n  文とリンクだけ送ることもできるよ\n• 新しいエリアがひらくとお祝いするよ\n  新しい飾り・友だち・バスケットを順に紹介するよ\n• お庭の拡大画面でエリア切りかえボタンがいつも同じ場所に\n• 「花かおる温室」が「ひだまり菜園」になったよ\n\nアップデートのお礼にエネルギーをどうぞ！"
 }

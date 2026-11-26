@@ -27,7 +27,7 @@ Drag two matching flowers, treats, tea leaves or stardust together to make somet
 Sage, Basil, Lavender... bring your friends what they ask for and collect stars and coins. Level up each friend to 30 for bigger helping bonuses.
 
 ■ Your own garden
-Sunny Yard, Sparkle Pond, Fragrant Greenhouse, Starlight Hill, Wave Beach and Snowflake Village. Place decorations with stars and pick a basic, deluxe or special design for each, plus seasonal decor and outfits that change through the year.
+Sunny Yard, Sparkle Pond, Sunny Veggie Patch, Starlight Hill, Wave Beach and Snowflake Village. Place decorations with stars and pick a basic, deluxe or special design for each, plus seasonal decor and outfits that change through the year.
 
 ■ Grows while you're away
 Your garden keeps earning coins when the app is closed. Upgrade your basket, production and income, then renew your garden for Golden Seeds that boost your income for good.
@@ -68,7 +68,7 @@ Please send bugs or anything confusing through the contact email in Settings.
 세이지, 바질, 라벤더… 친구들이 원하는 아이템을 전해 주고 별과 코인을 모아요. 친구 레벨을 30까지 올리면 더 크게 도와줘요.
 
 ■ 나만의 정원
-햇살 앞마당, 반짝 연못, 꽃향기 온실, 별빛 언덕, 파도 모래사장, 눈꽃 마을까지. 별로 장식을 놓고 기본 · 고급 · 특별 디자인을 골라요. 계절마다 바뀌는 시즌 장식과 친구 의상도 있어요.
+햇살 앞마당, 반짝 연못, 햇살 텃밭, 별빛 언덕, 파도 모래사장, 눈꽃 마을까지. 별로 장식을 놓고 기본 · 고급 · 특별 디자인을 골라요. 계절마다 바뀌는 시즌 장식과 친구 의상도 있어요.
 
 ■ 방치해도 자라요
 앱을 꺼 둬도 정원이 코인을 모아요. 바구니 · 생산력 · 수익을 강화하고, 정원을 재단장하면 영원히 수입을 늘려 주는 황금 씨앗을 받아요.
@@ -109,7 +109,7 @@ Please send bugs or anything confusing through the contact email in Settings.
 セージ、バジル、ラベンダー…仲間が欲しいアイテムを届けて、星とコインを集めましょう。仲間のレベルを30まで上げると、もっと手伝ってくれます。
 
 ■ 自分だけのお庭
-ひだまりの前庭、きらきら池、花かおる温室、星あかりの丘、波の砂浜、雪の花の村まで。星で飾りを置き、ベーシック・デラックス・スペシャルのデザインから選べます。季節ごとの飾りや仲間の衣装も。
+ひだまりの前庭、きらきら池、ひだまり菜園、星あかりの丘、波の砂浜、雪の花の村まで。星で飾りを置き、ベーシック・デラックス・スペシャルのデザインから選べます。季節ごとの飾りや仲間の衣装も。
 
 ■ 放置でも育つ
 アプリを閉じていてもお庭がコインを集めます。かご・生産力・収益を強化し、お庭をリニューアルすると、ずっと収益を増やす金の種がもらえます。

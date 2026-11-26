@@ -605,4 +605,28 @@ void main() {
     expect(g2.revokedOrders, containsAll(['GPA.1', 'GPA.2']));
     expect(g2.purchaseBlocked, isTrue); // 환불 2번이면 결제 제한 (D-068)
   });
+
+  test('새 바구니는 구역 + 레벨이 맞을 때 한 번만 알린다 (D-085)', () {
+    final g = make();
+    expect(g.takeNewBaskets(), isEmpty); // 처음엔 정원 바구니뿐
+    g.currentArea = Chains.basketArea[1];
+    g.level = Leveling.areaLevel(Chains.basketArea[1]) - 1;
+    expect(g.takeNewBaskets(), isEmpty); // 레벨 모자람
+    g.level = Leveling.areaLevel(Chains.basketArea[1]);
+    final ready = Chains.baskets[1].every(Chains.ready);
+    expect(g.takeNewBaskets(), ready ? [1] : isEmpty);
+    expect(g.takeNewBaskets(), isEmpty); // 두 번 알리지 않음
+    // 저장 → 불러오기 뒤에도 알린 기록 유지
+    final g2 = make()..loadJson(g.toJson());
+    expect(g2.takeNewBaskets(), isEmpty);
+  });
+
+  test('예전 저장(bSeen 없음)은 지금 열린 바구니를 이미 본 것으로', () {
+    final g = make();
+    g.currentArea = 4;
+    g.level = 30;
+    final j = g.toJson()..remove('bSeen');
+    final g2 = make()..loadJson(j);
+    expect(g2.takeNewBaskets(), isEmpty);
+  });
 }

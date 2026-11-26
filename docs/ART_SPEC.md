@@ -80,7 +80,7 @@ python3 tool/slice_sheet.py yard.png 1 1 assets/art/areas/yard_bg.webp --keep-bg
 |---|---|
 | 햇살 앞마당 | `big_tree` `bench` `mailbox` `veggie_patch` `lantern` `bird_feeder` `hut` `fountain` |
 | 반짝 연못 | `stepping_stones` `water_lily` `fishing_spot` `rowboat` `reeds` `log_chair` `tent` `wooden_bridge` |
-| 꽃향기 온실 | `glasshouse` `cactus` `mushroom_bed` `watering_can` `sunflower_field` `tea_table` `bamboo` `wind_chime` |
+| 햇살 텃밭 | `glasshouse` `cactus` `mushroom_bed` `watering_can` `sunflower_field` `tea_table` `bamboo` `wind_chime` |
 | 별빛 언덕 | `telescope` `camp_tent` `campfire` `ferris_wheel` `carousel` `moon_statue` `little_castle` `fireworks` |
 
 (각각 `.png`)

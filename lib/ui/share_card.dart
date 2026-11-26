@@ -387,7 +387,7 @@ class ShareCard {
       }
     }
     final chips = <(String?, String)>[
-      (null, 'Lv.${game.level}'),
+      (null, tr('share.lv', {'n': game.level})),
       (Art.icon('decorate').path, '$placed'),
       (Art.icon('friends').path, '${game.friends.length}'),
     ];

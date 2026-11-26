@@ -914,7 +914,7 @@
   "share.dialogTitle": "자랑하기",
   "share.button": "자랑하기",
   "share.gardenTitle": "우리 정원 놀러 와!",
-  "share.gardenSub": "{name}  Lv.{level}",
+  "share.gardenSub": "{name}",
   "share.areaTitle": "{name} 완성!",
   "share.areaSub": "장식 8개를 모두 놓았어요",
   "share.renewTitle": "{n}번째 재단장!",
@@ -1273,5 +1273,7 @@
   "area.friendsNote": "이 구역에 장식을 놓으면 친구가 찾아와요",
   "basket.newTitle": "새 바구니!",
   "basket.newName": "{name} 등장!",
-  "basket.newNote": "이제 {chain} 아이템이 나와요.\n판 아래 바구니를 옆으로 넘겨 바꿔요."
+  "basket.newNote": "이제 {chain} 아이템이 나와요.\n판 아래 바구니를 옆으로 넘겨 바꿔요.",
+  "share.lv": "Lv.{n}",
+  "patch.1.0.18": "• 자랑 카드가 새로워졌어요. 정원 사진이 크게 들어가요\n• 자랑하기를 누르면 초대 글과 링크가 복사돼요\n  글과 링크만 따로 보낼 수도 있어요\n• 새 구역이 열리면 축하해 드려요\n  새 장식 · 새 친구 · 새 바구니를 차례로 알려 줘요\n• 정원 크게 보기에서 구역 넘기기 버튼이 늘 같은 자리에 있어요\n• '꽃향기 온실'이 '햇살 텃밭'으로 이름을 바꿨어요\n\n업데이트 선물로 에너지를 보내요!"
 }

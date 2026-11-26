@@ -913,7 +913,7 @@
   "share.dialogTitle": "Presumir",
   "share.button": "Compartir",
   "share.gardenTitle": "¡Ven a ver mi jardín!",
-  "share.gardenSub": "{name}  Nv.{level}",
+  "share.gardenSub": "{name}",
   "share.areaTitle": "¡{name} completo!",
   "share.areaSub": "Las 8 decoraciones en su sitio",
   "share.renewTitle": "¡Renovación n.º {n}!",
@@ -1272,5 +1272,7 @@
   "area.friendsNote": "Coloca decoración en esta zona y vendrán",
   "basket.newTitle": "¡Cesta nueva!",
   "basket.newName": "¡{name} desbloqueada!",
-  "basket.newNote": "Ahora salen objetos de {chain}.\nDesliza la cesta bajo el tablero para cambiarla."
+  "basket.newNote": "Ahora salen objetos de {chain}.\nDesliza la cesta bajo el tablero para cambiarla.",
+  "share.lv": "Nv.{n}",
+  "patch.1.0.18": "• Nuevas tarjetas para presumir con una gran foto de tu jardín\n• Al compartir se copian el texto de invitación y el enlace\n  También puedes enviar solo el texto y el enlace\n• Al abrir una zona nueva hay celebración\n  con nueva decoración, amigos y cestas\n• Las flechas de zona en la vista del jardín siempre están en su sitio\n• El Invernadero Fragante ahora es el Huerto Soleado\n\n¡Te enviamos energía como regalo!"
 }
