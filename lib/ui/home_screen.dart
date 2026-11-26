@@ -1490,6 +1490,7 @@ class _HomeScreenState extends State<HomeScreen> {
             IconText(
               tr('pass.notice.body', {
                 'gems': OrderQuota.passDailyGems,
+                'energy': OrderQuota.passEnergyCap,
                 'quota': OrderQuota.pass,
                 'cells': GameConfig.passVault.length,
               }),

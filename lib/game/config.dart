@@ -245,6 +245,9 @@ class OrderQuota {
 
   /// 정원 패스: 매일 다이아.
   static const int passDailyGems = 10;
+
+  /// 정원 패스: 에너지 통 +50 (D-080).
+  static const int passEnergyCap = 50;
 }
 
 // ------------------------------------------------------------------ 레벨, 해금

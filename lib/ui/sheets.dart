@@ -14,7 +14,6 @@ import '../i18n/names.dart';
 import '../services/audio_service.dart';
 import '../services/analytics_service.dart';
 import '../services/billing_service.dart';
-import '../services/dev_log.dart';
 import '../services/feedback_service.dart';
 import '../services/notify_service.dart';
 import 'renew_ui.dart';
@@ -1890,6 +1889,7 @@ Future<void> _shopSheet(
             tag: tr('shop.passTag'),
             note: tr('shop.body', {
               'gems': OrderQuota.passDailyGems,
+              'energy': OrderQuota.passEnergyCap,
               'quota': OrderQuota.pass,
               'cells': GameConfig.passVault.length,
             }),
@@ -2984,29 +2984,6 @@ Future<void> showSettingsSheet(
                   onChanged: NotifyService.instance.setOn,
                 ),
               ),
-              // 알림이 오는지 바로 확인 (기기 설정 · 배터리 절약 때문에 막혔는지 알 수 있게)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: () async {
-                    final ok = await NotifyService.instance.sendTest(
-                      tr('notify.test.title'),
-                      tr('notify.test.body'),
-                      lockBody: tr('notify.test.lockBody'),
-                    );
-                    if (context.mounted) {
-                      TopToast.show(
-                        context,
-                        tr(ok ? 'notify.test.sent' : 'notify.test.blocked'),
-                      );
-                    }
-                  },
-                  child: IconText(
-                    tr('notify.test.button'),
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ),
-              ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(
@@ -3074,8 +3051,11 @@ Future<void> showSettingsSheet(
         ),
         if (version.isNotEmpty) ...[
           const SizedBox(height: 18),
-          // 버전 글자를 7번 누르면 개발자 모드 (성장 로그)
-          _VersionTap(version: version, game: game),
+          IconText(
+            tr('settings.version', {'v': version}),
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.black45),
+          ),
         ],
       ],
     ),
@@ -3227,169 +3207,6 @@ Future<void> showReportDialog(
   }
 }
 
-class _VersionTap extends StatefulWidget {
-  const _VersionTap({required this.version, this.game});
-  final String version;
-  final GameState? game;
-
-  @override
-  State<_VersionTap> createState() => _VersionTapState();
-}
-
-class _VersionTapState extends State<_VersionTap> {
-  int _taps = 0;
-  DateTime _last = DateTime(2000);
-
-  void _tap() {
-    final now = DateTime.now();
-    _taps = now.difference(_last).inSeconds > 2 ? 1 : _taps + 1;
-    _last = now;
-    if (_taps >= 7) {
-      _taps = 0;
-      DevLog.instance.toggle().then((_) {
-        if (!mounted) return;
-        TopToast.show(
-          context,
-          DevLog.instance.on ? '개발자 모드 켜짐: 성장 로그 보기 가능' : '개발자 모드 꺼짐',
-        );
-        setState(() {});
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: DevLog.instance,
-      builder: (context, _) => Column(
-        children: [
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: _tap,
-            child: Padding(
-              padding: const EdgeInsets.all(6),
-              child: IconText(
-                tr('settings.version', {'v': widget.version}),
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.black45),
-              ),
-            ),
-          ),
-          if (DevLog.instance.on) ...[
-            const SizedBox(height: 6),
-            OutlinedButton(
-              onPressed: () => _showDevLog(context, widget.game),
-              child: Text('성장 로그 (약 ${DevLog.instance.lineCount}줄)'),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// 개발자 전용: 성장 로그 보기 · 파일로 내보내기 · 비우기.
-Future<void> _showDevLog(
-  BuildContext context,
-  GameState? game,
-) => showGameSheet(context, DevLog.instance, () {
-  final log = DevLog.instance;
-  final kb = (log.bytes / 1024).round();
-  return SheetFrame(
-    title: '성장 로그',
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          '약 ${log.lineCount}줄 · ${kb}KB\n행동마다 · 1분마다 재화 · 5분마다 판 상태'
-          '${log.problem == null ? '' : '\n저장 문제: ${log.problem}'}',
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 13, color: Colors.black54),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          height: 180,
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF3F0E8),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: SingleChildScrollView(
-            reverse: true,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Text(
-                log.recent.join('\n'),
-                style: const TextStyle(fontSize: 10, fontFamily: 'monospace'),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          alignment: WrapAlignment.center,
-          children: [
-            FilledButton(
-              onPressed: () async {
-                final r = await log.exportFile();
-                if (!context.mounted) return;
-                final p = r.split(':');
-                // 결과는 창 위에 뜨는 대화상자로 (아래 알림은 이 창에 가려진다)
-                await showDialog<void>(
-                  context: context,
-                  builder: (c) => AlertDialog(
-                    content: Text(
-                      p.first == 'ok'
-                          ? '${p[1]}줄을 공유 창으로 보냈어요.\n드라이브 · 카톡 등에 저장해서 Claude 에게 올려 주세요.'
-                          : '공유 창을 열 수 없어 ${p[1]}줄 전체를 클립보드에 복사했어요.\n메모 앱 등에 붙여 넣어 보내 주세요.\n(${p.skip(2).join(':')})',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(c),
-                        child: const Text('확인'),
-                      ),
-                    ],
-                  ),
-                );
-              },
-              child: const Text('파일로 내보내기'),
-            ),
-            if (game != null && !game.starterBought)
-              OutlinedButton(
-                onPressed: game.grantStarter,
-                child: const Text('패키지 테스트 지급'),
-              ),
-            OutlinedButton(
-              onPressed: () async {
-                final ok = await showDialog<bool>(
-                  context: context,
-                  builder: (c) => AlertDialog(
-                    content: const Text('기록을 모두 지울까요?'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(c, false),
-                        child: const Text('아니요'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(c, true),
-                        child: const Text('지우기'),
-                      ),
-                    ],
-                  ),
-                );
-                if (ok == true) await log.clear();
-              },
-              child: const Text('비우기'),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-});
-
 // ---------------------------------------------------------------- 정원 패스 혜택 (D-074)
 
 /// 정원 패스 이용 중: 무엇을 얼마나 쓰고 있는지 (오늘 남은 광고 없는 보상 · 다이아 · 칸 · 누적).
@@ -3487,6 +3304,12 @@ Future<void> showPassSheet(
           tr('pass.gems', {'n': OrderQuota.passDailyGems}),
           tr(game.passGemsClaimedToday ? 'pass.got' : 'pass.inMail'),
           done: game.passGemsClaimedToday,
+        ),
+        row(
+          'energy',
+          tr('pass.energy', {'n': OrderQuota.passEnergyCap}),
+          tr('pass.on'),
+          done: true,
         ),
         row(
           'star',

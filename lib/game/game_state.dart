@@ -396,6 +396,7 @@ class GameState extends ChangeNotifier {
   /// 최대 에너지 (씨앗 강화 '에너지 통'으로 +10씩).
   int get energyCap =>
       GameConfig.energyCap +
+      (passActive ? OrderQuota.passEnergyCap : 0) +
       10 * perkLv(SeedPerk.energyJar) +
       setBonus(SetEffect.energyCap).round();
 
@@ -2898,7 +2899,13 @@ class GameState extends ChangeNotifier {
     final reward = roll < 0.5
         ? Reward(energy: 5 + _rng.nextInt(3) * 5)
         : roll < 0.9
-        ? Reward(coins: (20 + level * 5) * (1 + _rng.nextInt(2)))
+        // 코인은 지금 수입 15~30분치 (진행도를 따라간다, D-080)
+        ? Reward(
+            coins: max(
+              (20 + level * 5) * (1 + _rng.nextInt(2)),
+              (hourlyIncome * (0.25 + 0.25 * _rng.nextDouble())).round(),
+            ),
+          )
         : Reward(stars: 4 + level);
     addMail(
       Mail(
