@@ -61,14 +61,7 @@ class UnitFmt {
     return t;
   }
 
-  String call(num value) {
-    final v = value.toDouble();
-    if (!v.isFinite) return '∞';
-    if (tier == 0) return v.floor().toString();
-    final scaled = v / pow(10, tier * 3);
-    // 너무 작아 0.00 이 되면 그 값만 제 단위로
-    if (scaled < 0.005) return fmt(v);
-    final digits = scaled >= 100 ? 0 : (scaled >= 10 ? 1 : 2);
-    return '${scaled.toStringAsFixed(digits)}${_unit(tier)}';
-  }
+  /// 화면마다 단위가 달라 보이던 문제(같은 값이 강화 창 K · 상점 M, 시장 '0.01K')로
+  /// 모든 값을 제 단위로 표기한다 (D-087). 어디서나 같은 값은 같은 글자.
+  String call(num value) => fmt(value.toDouble());
 }

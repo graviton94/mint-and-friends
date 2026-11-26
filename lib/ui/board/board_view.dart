@@ -48,7 +48,8 @@ class _Burst {
   final int cell;
   final int key;
   final int level; // 0 = 행운 바구니
-  _Burst(this.cell, this.key, this.level);
+  final bool label; // 행운 글자를 띄울지 (연달아 나오면 첫 번째만)
+  _Burst(this.cell, this.key, this.level, {this.label = true});
 }
 
 class _BoardViewState extends State<BoardView> {
@@ -63,6 +64,15 @@ class _BoardViewState extends State<BoardView> {
 
   GameState get game => widget.game;
 
+  // 행운 글자는 1.5초에 한 번만 (빠르게 누르거나 자동 놓기가 겹치면 글자가 여러 개 떠 보였다, D-087)
+  DateTime _lastLuckyLabel = DateTime(2000);
+  bool _luckyLabelOk() {
+    final now = DateTime.now();
+    if (now.difference(_lastLuckyLabel).inMilliseconds < 1500) return false;
+    _lastLuckyLabel = now;
+    return true;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -70,7 +80,7 @@ class _BoardViewState extends State<BoardView> {
       final b = e is MergedEvent
           ? _Burst(e.cell, _burstKey++, e.level)
           : e is LuckySpawnEvent
-          ? _Burst(e.cell, _burstKey++, 0)
+          ? _Burst(e.cell, _burstKey++, 0, label: _luckyLabelOk())
           : null;
       if (b != null) {
         setState(() => _bursts.add(b));
@@ -224,7 +234,11 @@ class _BoardViewState extends State<BoardView> {
                       b.cell,
                       IgnorePointer(
                         child: b.level == 0
-                            ? _LuckyFx(key: ValueKey(b.key), size: cell)
+                            ? _LuckyFx(
+                                key: ValueKey(b.key),
+                                size: cell,
+                                label: b.label,
+                              )
                             : _BurstFx(
                                 key: ValueKey(b.key),
                                 size: cell,
@@ -571,8 +585,9 @@ class _BurstFx extends StatelessWidget {
 
 /// 행운 바구니 (+1단계)가 나왔을 때 (D-080): 금빛 후광이 번지고 '+1' 이 떠오른다.
 class _LuckyFx extends StatelessWidget {
-  const _LuckyFx({super.key, required this.size});
+  const _LuckyFx({super.key, required this.size, this.label = true});
   final double size;
+  final bool label;
 
   @override
   Widget build(BuildContext context) {
@@ -596,27 +611,28 @@ class _LuckyFx extends StatelessWidget {
               ),
             ),
           ),
-          Transform.translate(
-            offset: Offset(0, -size * (0.2 + 0.45 * v)),
-            child: Opacity(
-              opacity: v < 0.7 ? 1 : (1 - v) / 0.3,
-              child: Text(
-                tr('board.lucky'),
-                softWrap: false,
-                overflow: TextOverflow.visible,
-                style: TextStyle(
-                  fontSize: size * 0.24,
-                  color: Colors.white,
-                  shadows: const [
-                    Shadow(color: Color(0xFFB8860B), offset: Offset(1.5, 0)),
-                    Shadow(color: Color(0xFFB8860B), offset: Offset(-1.5, 0)),
-                    Shadow(color: Color(0xFFB8860B), offset: Offset(0, 1.5)),
-                    Shadow(color: Color(0xFFB8860B), offset: Offset(0, -1.5)),
-                  ],
+          if (label)
+            Transform.translate(
+              offset: Offset(0, -size * (0.2 + 0.45 * v)),
+              child: Opacity(
+                opacity: v < 0.7 ? 1 : (1 - v) / 0.3,
+                child: Text(
+                  tr('board.lucky'),
+                  softWrap: false,
+                  overflow: TextOverflow.visible,
+                  style: TextStyle(
+                    fontSize: size * 0.24,
+                    color: Colors.white,
+                    shadows: const [
+                      Shadow(color: Color(0xFFB8860B), offset: Offset(1.5, 0)),
+                      Shadow(color: Color(0xFFB8860B), offset: Offset(-1.5, 0)),
+                      Shadow(color: Color(0xFFB8860B), offset: Offset(0, 1.5)),
+                      Shadow(color: Color(0xFFB8860B), offset: Offset(0, -1.5)),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

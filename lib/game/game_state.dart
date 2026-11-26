@@ -2934,7 +2934,13 @@ class GameState extends ChangeNotifier {
               (hourlyIncome * (0.25 + 0.25 * _rng.nextDouble())).round(),
             ),
           )
-        : Reward(stars: 4 + level);
+        // 별은 지금 구역의 가장 싼 장식 값의 12% (구역이 뒤일수록 장식이 비싸져 같이 늘어난다, D-087)
+        : Reward(
+            stars: max(
+              4 + level,
+              (Garden.decorCost(currentArea, 0) * 0.12).round(),
+            ),
+          );
     addMail(
       Mail(
         id: 'fg-${t.millisecondsSinceEpoch}',

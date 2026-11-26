@@ -2119,32 +2119,50 @@ class _HomeScreenState extends State<HomeScreen> {
         content: PopupHero(
           art: ArtImage(Art.item(o.chain, o.level), size: 76),
           big: '${itemName(Chains.item(o.chain, o.level))} Lv${o.level}',
-          note: tr('order.wantsNote', {'stars': o.stars}),
-          extra: IconText(
-            tr('order.reward', {
-              'stars': game.orderGivesStars(o) ? o.stars : 0,
-              'xp': Leveling.xpForOrder(game.relLevel(o.chain, o.level)),
-            }),
-            style: const TextStyle(fontSize: 16, color: Color(0xFF7A5230)),
+          // 안내 문구 대신 그 아이템의 도감 한 줄 (도감 팝업과 같은 모양, 한 줄로, D-087)
+          extra: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  '“${tr('lore.${o.chain.name}.${o.level}')}”',
+                  maxLines: 1,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic,
+                    color: Color(0xFF8A6E4E),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              IconText(
+                tr('order.reward', {
+                  'stars': game.orderGivesStars(o) ? o.stars : 0,
+                  'xp': Leveling.xpForOrder(game.relLevel(o.chain, o.level)),
+                }),
+                style: const TextStyle(fontSize: 16, color: Color(0xFF7A5230)),
+              ),
+            ],
           ),
         ),
         actionsAlignment: MainAxisAlignment.center,
         onClose: () => Navigator.pop(ctx, false),
         actions: [
+          // 다른 부탁: 새로고침 그림 + 다른 버튼과 같은 초록 버튼 · 글자 (D-087)
           FilledButton(
             style: framedButton(
               FilledButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Palette.text,
+                minimumSize: const Size(double.infinity, 56),
               ),
-              'button_white',
+              'button_green',
             ),
             onPressed: () => Navigator.pop(ctx, true),
             child: IconText(
               game.freeRerollsLeft > 0
-                  ? tr('order.changeFree', {'n': game.freeRerollsLeft})
-                  : '${adFree ? '' : '[[ad]] '}${tr('order.change')}',
-              style: const TextStyle(fontSize: 17),
+                  ? '[[refresh]] ${tr('order.changeFree', {'n': game.freeRerollsLeft})}'
+                  : '${adFree ? '' : '[[ad]] '}[[refresh]] ${tr('order.change')}',
+              style: const TextStyle(fontSize: 18),
             ),
           ),
         ],

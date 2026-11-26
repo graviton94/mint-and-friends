@@ -531,14 +531,12 @@ void main() {
     expect(g.stars, st + GameConfig.maxGiftStars);
   });
 
-  test('한 화면 단위 통일: 가장 큰 값 기준', () {
-    final u = UnitFmt.of([800, 2000, 12500]);
-    expect(u(800), '0.80K');
+  test('비용 표기는 어디서나 같은 값 = 같은 글자 (D-087)', () {
+    final u = UnitFmt.of([800, 2000, 2.5e6]);
+    expect(u(800), fmt(800));
     expect(u(2000), '2.00K');
-    expect(u(12500), '12.5K');
-    expect(u(125000), '125K');
-    expect(UnitFmt.of([300, 800])(300), '300');
-    expect(UnitFmt.of([300, 2.5e6])(2.5e6), '2.50M');
+    expect(u(2.5e6), '2.50M');
+    expect(u(10), '10');
   });
 
   test('상점 빨간 점: 다이아 · 결제는 빼고, 무료 · 광고는 늘, 코인은 그날 열어 보기 전까지', () {
