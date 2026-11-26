@@ -89,6 +89,7 @@ Future<void> _upgradesSheet(
   ]);
   return SheetFrame(
     title: tr('upgrade.title'),
+    wallet: ['[[coin]]${fmt(game.coins)}'],
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -608,6 +609,10 @@ Future<void> showDecorSheet(BuildContext context, GameState game) =>
       final done = game.placed.length;
       return SheetFrame(
         title: tr('decor.title', {'name': areaName(area)}),
+        wallet: [
+          '[[decorate]]$done/${Garden.slotsPerArea}',
+          '[[star]]${fmt(game.stars.toDouble())}',
+        ],
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -750,6 +755,10 @@ Future<void> showStyleSheet(
   ];
   return SheetFrame(
     title: tr('style.title', {'name': decorName(d)}),
+    wallet: [
+      '[[coin]]${fmt(game.coins)}',
+      '[[diamond]]${fmt(game.gems.toDouble())}',
+    ],
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1686,16 +1695,13 @@ Future<void> _shopSheet(
   final feat = game.featuredItem;
   return SheetFrame(
     title: tr('shop.title'),
+    wallet: [
+      '[[coin]]${fmt(game.coins)}',
+      '[[diamond]]${fmt(game.gems.toDouble())}',
+    ],
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(
-          child: IconText(
-            tr('shop.have', {'n': fmt(game.gems.toDouble())}),
-            style: const TextStyle(fontSize: 18),
-          ),
-        ),
-        const SizedBox(height: 12),
         if (game.starterVisible) ...[
           StarterCard(billing: billing, game: game),
           const SizedBox(height: 14),
@@ -2197,13 +2203,12 @@ class _ShopCard extends StatelessWidget {
               ),
             ],
           ),
-          if (dot) const Positioned(left: -4, top: -4, child: RedDot()),
           if (sticker != null)
             Positioned(
               top: -16,
-              right: -12,
+              left: -12,
               child: Transform.rotate(
-                angle: 0.16,
+                angle: -0.16,
                 child: Container(
                   width: 62,
                   height: 62,
@@ -2249,24 +2254,59 @@ class _ShopCard extends StatelessWidget {
           if (tag != null && sticker == null)
             Positioned(
               top: -12,
-              right: -4,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0533D),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white, width: 1.5),
-                ),
-                child: Text(
-                  tag!,
-                  style: const TextStyle(fontSize: 11, color: Colors.white),
+              left: -4,
+              child: Shine(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: tagColor(tag!),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: Text(
+                    tag!,
+                    style: const TextStyle(fontSize: 11, color: Colors.white),
+                  ),
                 ),
               ),
             ),
+          // 살 수 있음 점은 다른 화면처럼 오른쪽 위 (판촉 딱지는 왼쪽 위)
+          if (dot) const Positioned(right: -4, top: -4, child: RedDot()),
         ],
       ),
     );
   }
+}
+
+/// 시트 위쪽 보유 재화 캡슐.
+class _WalletPill extends StatelessWidget {
+  const _WalletPill(this.text);
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(6, 3, 10, 3),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: const Color(0xFF7A5230), width: 2),
+    ),
+    child: IconText(text, style: const TextStyle(fontSize: 15)),
+  );
+}
+
+/// 판촉 딱지 색: 성격마다 다르게 (무료 초록 · 부탁용 파랑 · 희귀 보라 · 추천 주황 · 그 밖 빨강).
+Color tagColor(String tag) {
+  if (tag == tr('market.freeTag') || tag == tr('shop.freeTag')) {
+    return const Color(0xFF3FA65A);
+  }
+  if (tag == tr('market.helperTag')) return const Color(0xFF3D8FD8);
+  if (tag == tr('market.rareTag')) return const Color(0xFF9B5FD6);
+  if (tag == tr('shop.featuredTag')) return const Color(0xFFF08A24);
+  return const Color(0xFFE0533D);
 }
 
 /// 새싹 정원 패키지 카드 (상점 맨 위 · 팝업 공용).
@@ -2608,16 +2648,10 @@ Future<void> showBoostSheet(
   game,
   () => SheetFrame(
     title: tr('boost.title'),
+    wallet: ['[[diamond]]${fmt(game.gems.toDouble())}'],
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Center(
-          child: IconText(
-            tr('shop.have', {'n': fmt(game.gems.toDouble())}),
-            style: const TextStyle(fontSize: 17),
-          ),
-        ),
-        const SizedBox(height: 10),
         for (final k in BoostKind.values)
           _BoostRow(game: game, kind: k, watchAd: watchAd, adFree: adFree),
         IconText(
@@ -2873,7 +2907,7 @@ class _ShopRow extends StatelessWidget {
       fit: StackFit.passthrough,
       children: [
         row,
-        const Positioned(left: -4, top: -4, child: RedDot()),
+        const Positioned(right: -4, top: -4, child: RedDot()),
       ],
     );
   }
@@ -3076,9 +3110,17 @@ void _boostBought(BuildContext context, BoostKind k, {bool gems = false}) =>
     );
 
 class SheetFrame extends StatelessWidget {
-  const SheetFrame({super.key, required this.title, required this.child});
+  const SheetFrame({
+    super.key,
+    required this.title,
+    required this.child,
+    this.wallet = const [],
+  });
   final String title;
   final Widget child;
+
+  /// 제목 오른쪽에 고정하는 보유 재화 캡슐 (이 화면에서 쓰는 재화, D-080). 예: '[[star]]1240'
+  final List<String> wallet;
 
   @override
   Widget build(BuildContext context) {
@@ -3111,11 +3153,31 @@ class SheetFrame extends StatelessWidget {
               const SizedBox(height: 10),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: IconText(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 22),
-                ),
+                child: wallet.isEmpty
+                    ? IconText(
+                        title,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 22),
+                      )
+                    // 재화를 쓰는 화면: 제목은 왼쪽, 보유 재화는 오른쪽에 고정 (스크롤해도 보인다)
+                    : Row(
+                        children: [
+                          Expanded(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: IconText(
+                                title,
+                                style: const TextStyle(fontSize: 21),
+                              ),
+                            ),
+                          ),
+                          for (final w in wallet) ...[
+                            const SizedBox(width: 6),
+                            _WalletPill(w),
+                          ],
+                        ],
+                      ),
               ),
               const SizedBox(height: 10),
               Flexible(

@@ -80,7 +80,7 @@
   "upgrade.offlineCap": "オフライン収益時間",
   "upgrade.offlineCap.desc": "最大 {v}",
   "decor.title": "[[decorate]] {name}を飾る",
-  "decor.progress": "{done}/{total} 完成 · [[star]]{stars}",
+  "decor.progress": "{done}/{total} 完成",
   "decor.done": "[[check]]",
   "decor.bringsFriend": "{emoji} {name} 登場!",
   "decor.areaLocked": "[[lock]] Lv.{n}から飾れます",

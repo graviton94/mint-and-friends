@@ -80,7 +80,7 @@
   "upgrade.offlineCap": "Offline earnings time",
   "upgrade.offlineCap.desc": "Up to {v}",
   "decor.title": "[[decorate]] Decorate {name}",
-  "decor.progress": "{done}/{total} built · [[star]]{stars}",
+  "decor.progress": "{done}/{total} built",
   "decor.done": "[[check]]",
   "decor.bringsFriend": "{emoji} {name} joins!",
   "decor.areaLocked": "[[lock]] Unlocks at Lv.{n}",

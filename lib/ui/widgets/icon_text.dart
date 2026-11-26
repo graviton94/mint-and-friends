@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../../art/art.dart';
@@ -174,40 +176,123 @@ class SlotMarker extends StatelessWidget {
 }
 
 /// 메뉴 · 버튼 오른쪽 위의 빨간 알림 점 (숫자가 있으면 숫자).
-class RedDot extends StatelessWidget {
+/// 알림 점: 빨간 동그라미가 2.4초마다 한 번 살짝 밝아지며 커진다 (D-080).
+class RedDot extends StatefulWidget {
   const RedDot({super.key, this.count});
   final int? count;
 
   @override
+  State<RedDot> createState() => _RedDotState();
+}
+
+class _RedDotState extends State<RedDot> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2400),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final n = count;
+    final n = widget.count;
     final text = n == null || n <= 0 ? null : (n > 99 ? '99+' : '$n');
-    return Container(
-      constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
-      padding: EdgeInsets.symmetric(horizontal: text == null ? 0 : 4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE84A3C),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white, width: 2),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x44000000),
-            blurRadius: 2,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
-      alignment: Alignment.center,
-      child: text == null
-          ? null
-          : Text(
-              text,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                height: 1.1,
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (_, _) {
+        // 주기의 마지막 25% 동안만 한 번 반짝
+        final t = _c.value < 0.75 ? 0.0 : sin((_c.value - 0.75) / 0.25 * pi);
+        return Transform.scale(
+          scale: 1 + 0.12 * t,
+          child: Container(
+            constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+            padding: EdgeInsets.symmetric(horizontal: text == null ? 0 : 4),
+            decoration: BoxDecoration(
+              color: Color.lerp(
+                const Color(0xFFE84A3C),
+                const Color(0xFFFF8A72),
+                t,
               ),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Color.lerp(
+                    const Color(0x44000000),
+                    const Color(0x88FF6A50),
+                    t,
+                  )!,
+                  blurRadius: 2 + 4 * t,
+                  offset: const Offset(0, 1),
+                ),
+              ],
             ),
+            alignment: Alignment.center,
+            child: text == null
+                ? null
+                : Text(
+                    text,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      height: 1.1,
+                    ),
+                  ),
+          ),
+        );
+      },
     );
   }
+}
+
+/// 판촉 딱지 반짝임: 주기마다 흰 빛줄기가 한 번 지나간다 (D-080).
+class Shine extends StatefulWidget {
+  const Shine({super.key, required this.child, this.periodMs = 3000});
+  final Widget child;
+  final int periodMs;
+
+  @override
+  State<Shine> createState() => _ShineState();
+}
+
+class _ShineState extends State<Shine> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: Duration(milliseconds: widget.periodMs),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _c,
+    builder: (_, child) {
+      // 주기의 앞 30% 동안 왼쪽 → 오른쪽으로 지나간다
+      final p = (_c.value / 0.3).clamp(0.0, 1.0);
+      if (p >= 1) return child!;
+      final x = -1.5 + 3 * p;
+      return ShaderMask(
+        blendMode: BlendMode.srcATop,
+        shaderCallback: (r) => LinearGradient(
+          begin: Alignment(x - 0.5, -0.3),
+          end: Alignment(x + 0.5, 0.3),
+          colors: const [
+            Color(0x00FFFFFF),
+            Color(0x99FFFFFF),
+            Color(0x00FFFFFF),
+          ],
+        ).createShader(r),
+        child: child,
+      );
+    },
+    child: widget.child,
+  );
 }

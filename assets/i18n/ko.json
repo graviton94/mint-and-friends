@@ -81,7 +81,7 @@
   "upgrade.offlineCap": "오프라인 수익 시간",
   "upgrade.offlineCap.desc": "최대 {v}",
   "decor.title": "[[decorate]] {name} 꾸미기",
-  "decor.progress": "{done}/{total} 완성 · [[star]]{stars} 보유",
+  "decor.progress": "{done}/{total} 완성",
   "decor.done": "[[check]]",
   "decor.bringsFriend": "{emoji} {name} 등장!",
   "decor.areaLocked": "[[lock]] Lv.{n}부터 꾸밀 수 있어요",

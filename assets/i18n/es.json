@@ -80,7 +80,7 @@
   "upgrade.offlineCap": "Tiempo de ganancias offline",
   "upgrade.offlineCap.desc": "Hasta {v}",
   "decor.title": "[[decorate]] Decorar {name}",
-  "decor.progress": "{done}/{total} hechos · [[star]]{stars}",
+  "decor.progress": "{done}/{total} hechos",
   "decor.done": "[[check]]",
   "decor.bringsFriend": "¡{emoji} {name} llega!",
   "decor.areaLocked": "[[lock]] Se desbloquea en el Nv.{n}",
