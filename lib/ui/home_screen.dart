@@ -1053,26 +1053,18 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
+          // 레벨업 방법 (D-082): 수치 없이 세 줄만
+          IconText(tr('xp.how'), style: const TextStyle(fontSize: 16)),
+          const SizedBox(height: 4),
           for (final k in ['order', 'decor', 'discover'])
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: 3),
               child: IconText(
-                tr('xp.$k', {
-                  'a': Leveling.xpForOrder(4),
-                  'b': Leveling.xpForOrder(7),
-                  'n': Leveling.xpForDiscovery,
-                }),
-                textAlign: TextAlign.center,
+                tr('xp.$k'),
                 style: const TextStyle(fontSize: 15, color: Color(0xFF5E4B36)),
               ),
             ),
-          const SizedBox(height: 6),
-          IconText(
-            tr('xp.note'),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 13, color: Colors.black45),
-          ),
         ],
       ),
     ),
@@ -1080,31 +1072,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// 코인 캡슐을 누르면: 수입이 어떻게 정해지는지 (수입 요약, D-080).
   Future<void> _incomeInfo() {
+    // 계산서처럼 (D-082): 아이템별 기본 수입 → 소계 → 곱해지는 효과 → 곱 합계 → 총합
     final byChain = <Chain, double>{};
     for (final it in game.board) {
-      if (it == null) continue;
+      if (it == null || it.isBubble) continue;
       byChain[it.chain] =
-          (byChain[it.chain] ?? 0) + game.itemIncomePerSec(it) * 3600;
+          (byChain[it.chain] ?? 0) +
+          GameConfig.incomeOf(it.chain, it.level) *
+              Upgrades.chainPower(game.lv(Upgrades.powerOf(it.chain))) *
+              3600;
     }
-    String pct(double m) =>
-        '+${((m - 1) * 100).toStringAsFixed(m < 1.1 ? 1 : 0)}%';
-    Widget line(String a, String b, {bool strong = false}) => Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        children: [
-          Expanded(
-            child: IconText(a, style: TextStyle(fontSize: strong ? 17 : 15)),
-          ),
-          IconText(
-            b,
-            style: TextStyle(
-              fontSize: strong ? 17 : 15,
-              color: strong ? Palette.primary : const Color(0xFF5E4B36),
-            ),
-          ),
-        ],
-      ),
-    );
+    // 줄마다 반올림한 값으로 더해야 계산서가 딱 맞는다
+    if (byChain.values.every((v) => v < 1000)) {
+      byChain.updateAll((_, v) => v.roundToDouble());
+    }
+    final items = byChain.values.fold<double>(0, (a, b) => a + b);
     final mults = <(String, double)>[
       (
         tr('income.upgrade'),
@@ -1114,7 +1096,35 @@ class _HomeScreenState extends State<HomeScreen> {
       (tr('income.seeds'), game.seedMultiplier),
       if (game.boostActive) (tr('income.boost'), 2.0),
       if (game.autoIdle) (tr('income.auto'), game.idleMult),
-    ];
+    ].where((e) => e.$2 > 1.0005).toList();
+    final mult = mults.fold<double>(1, (a, e) => a * e.$2);
+    String pct(double m) => '${(m * 100).toStringAsFixed(m < 1.1 ? 1 : 0)}%';
+    const ink = Color(0xFF5E4B36);
+    Widget line(String a, String b, {bool sub = false, bool total = false}) =>
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: total ? 6 : 3),
+          child: Row(
+            children: [
+              Expanded(
+                child: IconText(
+                  a,
+                  style: TextStyle(
+                    fontSize: total ? 18 : 15,
+                    color: sub || total ? Palette.primary : ink,
+                  ),
+                ),
+              ),
+              IconText(
+                b,
+                style: TextStyle(
+                  fontSize: total ? 20 : 15,
+                  color: sub || total ? Palette.primary : ink,
+                ),
+              ),
+            ],
+          ),
+        );
+    const rule = Divider(height: 10, thickness: 1.2, color: Color(0xFFE2D3B5));
     return showDialog<void>(
       context: context,
       builder: (ctx) => GameDialog(
@@ -1124,15 +1134,9 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            line(
-              tr('income.total'),
-              '[[coin]]${fmt(game.incomePerHour * game.idleMult)}',
-              strong: true,
-            ),
-            const Divider(),
             IconText(
               tr('income.board'),
-              style: const TextStyle(fontSize: 14, color: Colors.black54),
+              style: const TextStyle(fontSize: 13, color: Colors.black45),
             ),
             for (final c in Chain.values)
               if ((byChain[c] ?? 0) > 0)
@@ -1140,22 +1144,28 @@ class _HomeScreenState extends State<HomeScreen> {
                   '[[item:${c.name}:3]] ${chainName(c)}',
                   '[[coin]]${fmt(byChain[c]!)}',
                 ),
-            const Divider(),
-            IconText(
-              tr('income.mults'),
-              style: const TextStyle(fontSize: 14, color: Colors.black54),
+            rule,
+            line(tr('income.items'), '[[coin]]${fmt(items)}', sub: true),
+            if (mults.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              for (final (a, m) in mults)
+                line(
+                  a,
+                  '+${((m - 1) * 100).toStringAsFixed(m < 1.1 ? 1 : 0)}%',
+                ),
+              rule,
+              line(tr('income.multTotal'), '×${pct(mult)}', sub: true),
+            ],
+            const Divider(height: 14, thickness: 2, color: Color(0xFFB89A6E)),
+            line(
+              tr('income.total'),
+              '[[coin]]${fmt(items * mult)}',
+              total: true,
             ),
-            for (final (a, m) in mults)
-              if (m > 1.0005) line(a, pct(m)),
-            const Divider(),
+            const SizedBox(height: 8),
             line(
               tr('income.offline'),
               tr('unit.hour', {'n': game.offlineCap.inHours}),
-            ),
-            IconText(
-              tr('income.note'),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: Colors.black45),
             ),
           ],
         ),
