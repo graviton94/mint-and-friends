@@ -1883,6 +1883,13 @@ Future<void> _shopSheet(
           StarterCard(billing: billing, game: game),
           const SizedBox(height: 14),
         ],
+        // 정원 패스: 첫 구매처럼 크게, 상시 (D-089) + 바로 아래 가치표
+        PassCard(billing: billing, game: game),
+        if (!billing.adFree) ...[
+          const SizedBox(height: 10),
+          const PassValueTable(),
+        ],
+        const SizedBox(height: 16),
         // 오늘의 시장: 코인 4칸 + 다이아 1칸 + 광고 1칸 (3열 카드)
         if (game.dailyShopOpen) ...[
           // 시장은 날짜가 바뀌는 0시에 새로 들어온다 (game.offers 의 날짜 키)
@@ -2028,72 +2035,6 @@ Future<void> _shopSheet(
           ),
         ]),
         const SizedBox(height: 12),
-        _ShopHeader(tr('shop.adFreeTitle')),
-        // 기간제 정원 패스(새싹 정원 등) 이용 중: 언제까지인지 (D-066)
-        if (!billing.adFree && game.passUntil != null && game.passActive)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: IconText(
-              tr('pass.until', {
-                'date':
-                    '${game.passUntil!.month}/${game.passUntil!.day} ${game.passUntil!.hour.toString().padLeft(2, '0')}:${game.passUntil!.minute.toString().padLeft(2, '0')}',
-                'd': (game.passLeft.inHours + 23) ~/ 24,
-              }),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, color: Palette.primary),
-            ),
-          ),
-        // 패스 이용 중: 혜택 화면으로 (D-074)
-        if (game.passActive)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Center(
-              child: FilledButton(
-                style: framedButton(
-                  FilledButton.styleFrom(minimumSize: const Size(160, 44)),
-                  'button_green',
-                ),
-                onPressed: () =>
-                    showPassSheet(context, game, subscribed: billing.adFree),
-                child: IconText(tr('pass.open')),
-              ),
-            ),
-          ),
-        if (billing.adFree)
-          IconText(
-            tr('shop.active'),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 17),
-          )
-        else
-          _ShopRow(
-            icon: Art.icon('garden_pass'),
-            title: tr('shop.adFree'),
-            tag: tr('shop.passTag', {'x': PassValue.timesPack}),
-            note: tr('shop.body', {
-              'gems': OrderQuota.passDailyGems,
-              'energy': OrderQuota.passEnergyCap,
-              'quota': OrderQuota.pass,
-              'cells': GameConfig.passVault.length,
-            }),
-            button: billing.product == null
-                ? tr('shop.connecting')
-                : tr('shop.subscribe', {'price': billing.product!.price}),
-            enabled: billing.product != null && !billing.purchasing,
-            onTap: billing.buyRemoveAds,
-          ),
-        if (!billing.adFree)
-          TextButton(
-            onPressed: () => showDialog<void>(
-              context: context,
-              builder: (ctx) => GameDialog(
-                title: IconText(tr('pass.value'), textAlign: TextAlign.center),
-                onClose: () => Navigator.pop(ctx),
-                content: const PassValueTable(),
-              ),
-            ),
-            child: IconText(tr('shop.valueInfo')),
-          ),
         TextButton(
           onPressed: billing.restore,
           child: IconText(tr('shop.restore')),
@@ -2749,6 +2690,237 @@ class StarterCard extends StatelessWidget {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 정원 패스 카드 (D-089): 첫 구매 카드와 같은 무게로. 혜택 6칸 + 숨 쉬는 구매 버튼 + '최대 n배' 톱니 딱지.
+/// 구독 중이면 '이용 중' + 혜택 화면 버튼, 기간제 패스 이용 중이면 언제까지인지.
+class PassCard extends StatelessWidget {
+  const PassCard({super.key, required this.billing, required this.game});
+  final BillingService billing;
+  final GameState game;
+
+  @override
+  Widget build(BuildContext context) {
+    final subscribed = billing.adFree;
+    final items = [
+      ('no_ads', tr('pass.card.noAds')),
+      ('diamond', tr('pass.card.gems', {'n': OrderQuota.passDailyGems})),
+      ('energy', '+${OrderQuota.passEnergyCap}'),
+      ('star', tr('pass.card.quota', {'n': OrderQuota.pass})),
+      ('storage', tr('pass.card.vault', {'n': GameConfig.passVault.length})),
+      ('boost', tr('pass.card.instant')),
+    ];
+    String two(int n) => n.toString().padLeft(2, '0');
+    final until = game.passUntil;
+    return Padding(
+      padding: const EdgeInsets.only(top: 14, right: 8),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFE6F7C8), Color(0xFFC9EBD9)],
+              ),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: const Color(0xFF5FA83A), width: 3),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x445FA83A),
+                  blurRadius: 14,
+                  offset: Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(right: subscribed ? 0 : 70),
+                  child: Row(
+                    children: [
+                      ArtImage(Art.icon('garden_pass'), size: 64),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            IconText(
+                              IconText.plain(tr('shop.adFree')),
+                              style: const TextStyle(
+                                fontSize: 22,
+                                color: Color(0xFF2F5E1E),
+                              ),
+                            ),
+                            IconText(
+                              subscribed
+                                  ? tr('shop.active')
+                                  : tr('pass.card.hook'),
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                color: Color(0xFF3F7F34),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                GridView.count(
+                  crossAxisCount: 3,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 6,
+                  crossAxisSpacing: 6,
+                  childAspectRatio: 1.2,
+                  children: [
+                    for (final (icon, label) in items)
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xE6FFFFFF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: const Color(0xFFBFE0A8),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ArtImage(Art.icon(icon), size: 36),
+                            const SizedBox(height: 2),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: IconText(
+                                  label,
+                                  maxLines: 1,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    color: Color(0xFF2F4A22),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                if (!subscribed && until != null && game.passActive)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: IconText(
+                      tr('pass.until', {
+                        'date':
+                            '${until.month}/${until.day} ${two(until.hour)}:${two(until.minute)}',
+                        'd': (game.passLeft.inHours + 23) ~/ 24,
+                      }),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Palette.primary,
+                      ),
+                    ),
+                  ),
+                if (game.passActive)
+                  Padding(
+                    padding: EdgeInsets.only(bottom: subscribed ? 0 : 8),
+                    child: FilledButton(
+                      style: framedButton(
+                        FilledButton.styleFrom(minimumSize: const Size(0, 48)),
+                        'button_white',
+                      ),
+                      onPressed: () =>
+                          showPassSheet(context, game, subscribed: subscribed),
+                      child: IconText(
+                        tr('pass.open'),
+                        style: const TextStyle(fontSize: 17),
+                      ),
+                    ),
+                  ),
+                if (!subscribed)
+                  _Pulse(
+                    child: FilledButton(
+                      style: framedButton(
+                        FilledButton.styleFrom(minimumSize: const Size(0, 58)),
+                        'button_gold',
+                      ),
+                      onPressed: billing.product == null || billing.purchasing
+                          ? null
+                          : billing.buyRemoveAds,
+                      child: IconText(
+                        billing.product == null
+                            ? tr('shop.connecting')
+                            : tr('shop.subscribe', {
+                                'price': billing.product!.price,
+                              }),
+                        style: const TextStyle(fontSize: 21),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          // '최대 n배' 톱니 딱지: 첫 구매 할인 딱지와 같은 모양
+          if (!subscribed)
+            Positioned(
+              top: -16,
+              right: -12,
+              child: Transform.rotate(
+                angle: 0.18,
+                child: Container(
+                  width: 88,
+                  height: 88,
+                  alignment: Alignment.center,
+                  decoration: Art.frame('sale_badge').available
+                      ? BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage(Art.frame('sale_badge').path),
+                            fit: BoxFit.contain,
+                          ),
+                        )
+                      : const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFFE0533D),
+                        ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        tr('pass.card.badgeTop'),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          height: 1.1,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        tr('pass.card.badgeBig', {'x': PassValue.timesPack}),
+                        style: const TextStyle(
+                          fontSize: 26,
+                          height: 1,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

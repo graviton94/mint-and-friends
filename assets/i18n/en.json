@@ -1122,7 +1122,6 @@
   "book.itemNext": "Merge two of these to make the next level",
   "book.seasonTitle": "{area} · {season}",
   "book.seasonInfo": "{n}/{total} collected.\nBuy them in the design screen during that season.",
-  "shop.valueInfo": "See value",
   "pass.value": "Pass value (30 days)",
   "pass.value.energy": "Energy ads ×{n}",
   "pass.value.boost": "Boost ads ×{n}",
@@ -1274,5 +1273,13 @@
   "basket.newName": "{name} unlocked!",
   "basket.newNote": "{chain} items now appear.\nSwipe the basket below the board to switch.",
   "share.lv": "Lv.{n}",
-  "patch.1.0.18": "• New brag cards with a big photo of your garden\n• Sharing now copies your invite text and link\n  You can also send just the text and link\n• Opening a new area now comes with a celebration\n  showing new decor, new friends and new baskets\n• Area arrows in the garden view always stay in place\n• Fragrant Greenhouse is now Sunny Veggie Patch\n\nHere's some energy as an update gift!"
+  "patch.1.0.18": "• New brag cards with a big photo of your garden\n• Sharing now copies your invite text and link\n  You can also send just the text and link\n• Opening a new area now comes with a celebration\n  showing new decor, new friends and new baskets\n• Area arrows in the garden view always stay in place\n• Fragrant Greenhouse is now Sunny Veggie Patch\n\nHere's some energy as an update gift!",
+  "pass.card.hook": "Rewards without ads, plus daily gems!",
+  "pass.card.noAds": "No ads",
+  "pass.card.gems": "{n} daily",
+  "pass.card.quota": "Requests +{n}",
+  "pass.card.vault": "{n} vault slots",
+  "pass.card.instant": "Instant rewards",
+  "pass.card.badgeTop": "Up to",
+  "pass.card.badgeBig": "{x}x"
 }

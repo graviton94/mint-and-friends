@@ -1122,7 +1122,6 @@
   "book.itemNext": "Combina dos iguales para el siguiente nivel",
   "book.seasonTitle": "{area} · {season}",
   "book.seasonInfo": "{n}/{total} reunidos.\nCómpralos en la pantalla de diseño en esa temporada.",
-  "shop.valueInfo": "Ver valor",
   "pass.value": "Valor del pase (30 días)",
   "pass.value.energy": "Anuncios de energía ×{n}",
   "pass.value.boost": "Anuncios de impulso ×{n}",
@@ -1274,5 +1273,13 @@
   "basket.newName": "¡{name} desbloqueada!",
   "basket.newNote": "Ahora salen objetos de {chain}.\nDesliza la cesta bajo el tablero para cambiarla.",
   "share.lv": "Nv.{n}",
-  "patch.1.0.18": "• Nuevas tarjetas para presumir con una gran foto de tu jardín\n• Al compartir se copian el texto de invitación y el enlace\n  También puedes enviar solo el texto y el enlace\n• Al abrir una zona nueva hay celebración\n  con nueva decoración, amigos y cestas\n• Las flechas de zona en la vista del jardín siempre están en su sitio\n• El Invernadero Fragante ahora es el Huerto Soleado\n\n¡Te enviamos energía como regalo!"
+  "patch.1.0.18": "• Nuevas tarjetas para presumir con una gran foto de tu jardín\n• Al compartir se copian el texto de invitación y el enlace\n  También puedes enviar solo el texto y el enlace\n• Al abrir una zona nueva hay celebración\n  con nueva decoración, amigos y cestas\n• Las flechas de zona en la vista del jardín siempre están en su sitio\n• El Invernadero Fragante ahora es el Huerto Soleado\n\n¡Te enviamos energía como regalo!",
+  "pass.card.hook": "¡Premios sin anuncios y gemas diarias!",
+  "pass.card.noAds": "Sin anuncios",
+  "pass.card.gems": "{n} diarias",
+  "pass.card.quota": "Pedidos +{n}",
+  "pass.card.vault": "{n} casillas",
+  "pass.card.instant": "Premio al instante",
+  "pass.card.badgeTop": "Hasta",
+  "pass.card.badgeBig": "{x}x"
 }
