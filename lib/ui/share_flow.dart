@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:material_ui/material_ui.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:path_provider/path_provider.dart';
@@ -92,6 +93,16 @@ Future<void> showShareDialog(
             ),
           ),
         ),
+        // 그림 없이 초대 글과 링크만 (메신저에서 링크가 바로 눌리게)
+        TextButton(
+          onPressed: () async {
+            if (busy || !ctx.mounted) return;
+            busy = true;
+            Navigator.pop(ctx);
+            await _shareText(context, game, kind);
+          },
+          child: IconText(tr('share.linkOnly')),
+        ),
       ],
     ),
   );
@@ -109,6 +120,9 @@ Future<void> _share(
     code == null || code.isEmpty ? 'share.textNoCode' : 'share.text',
     {'code': code ?? '', 'link': Invite.link(code)},
   );
+  // 카카오톡 등은 그림을 붙이면 글을 버린다: 초대 글 · 링크를 미리 복사해 두고 알려 준다 (D-083)
+  await Clipboard.setData(ClipboardData(text: text));
+  if (context.mounted) TopToast.show(context, tr('share.copied'));
   try {
     final dir = await getTemporaryDirectory();
     final f = File('${dir.path}/mint_and_friends_${kind.name}.png');
@@ -226,4 +240,30 @@ Future<void> runShareProbe(GameState game) async {
     log('stack ${st.toString().split('\n').take(6).join(' | ')}');
   }
   log('done');
+}
+
+/// 글과 링크만 공유 (그림 없이).
+Future<void> _shareText(
+  BuildContext context,
+  GameState game,
+  ShareKind kind,
+) async {
+  sfx(Sfx.tap);
+  final code = ShareInfo.code();
+  final text = tr(
+    code == null || code.isEmpty ? 'share.textNoCode' : 'share.text',
+    {'code': code ?? '', 'link': Invite.link(code)},
+  );
+  try {
+    final r = await SharePlus.instance.share(ShareParams(text: text));
+    if (r.status == ShareResultStatus.dismissed) return;
+    Analytics.instance.shareDone(kind.name, 'text');
+    final got = game.claimShareReward();
+    if (got > 0 && context.mounted) {
+      sfx(Sfx.coin);
+      TopToast.show(context, tr('share.reward', {'n': got}));
+    }
+  } catch (_) {
+    if (context.mounted) TopToast.show(context, tr('share.failed'));
+  }
 }

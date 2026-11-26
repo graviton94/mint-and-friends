@@ -22,23 +22,6 @@ enum ShareKind { garden, area, renew, legendary }
 class ShareCard {
   static const double w = 1080, h = 1350;
 
-  // 프레임 그림(share_frame, 1024 정사각) 안에서 그림 부분 · 사진 창 · 글자 띠 위치.
-  // 프레임 그림 전체 (잎 · 꽃 끝까지, 잘리지 않게) · 사진 창 갈색 선 안쪽 · 글자 띠.
-  static const Rect _frameSrc = Rect.fromLTRB(121, 62, 903, 963);
-
-  /// 사진을 그리는 칸: 프레임의 뚫린 창(share_frame_cut)보다 조금 크게, 프레임 아래에 깐다.
-  static const Rect _windowSrc = Rect.fromLTRB(220, 224, 794, 620);
-  static const Rect _bandSrc = Rect.fromLTRB(214, 700, 812, 812);
-  static const double _frameW = 1040, _frameX = (w - _frameW) / 2;
-  static const double _frameY = 18;
-  static double get _s => _frameW / _frameSrc.width;
-  static Rect _map(Rect r) => Rect.fromLTRB(
-    _frameX + (r.left - _frameSrc.left) * _s,
-    _frameY + (r.top - _frameSrc.top) * _s,
-    _frameX + (r.right - _frameSrc.left) * _s,
-    _frameY + (r.bottom - _frameSrc.top) * _s,
-  );
-
   static final Map<String, ui.Image> _cache = {};
 
   static Future<ui.Image?> _img(String path) async {
@@ -258,12 +241,13 @@ class ShareCard {
           Color(0xFFEAF6DC),
         ]),
     );
-    final win = _map(_windowSrc);
-    final band = _map(_bandSrc);
+    // 새 배치 (D-083): 위쪽은 정원 사진을 크게, 아래 크림 칸에 제목 · 숫자 칩 · 친구 코드
+    const win = Rect.fromLTWH(40, 40, 1000, 820);
+    final winR = RRect.fromRectAndRadius(win, const Radius.circular(48));
 
     // ① 사진 (프레임 아래 층). 창 밖으로 나간 부분은 ② 프레임이 덮는다.
     c.save();
-    c.clipRect(win);
+    c.clipRRect(winR);
     final a = area ?? game.currentArea;
     var title = '', sub = '';
     int? legendLevel;
@@ -327,16 +311,21 @@ class ShareCard {
     }
     c.restore();
 
-    // ② 프레임 (창 안쪽을 뚫은 그림) 을 사진 위에
-    final frame = await _img(Art.frame('share_frame_cut').path);
-    if (frame != null) {
-      c.drawImageRect(
-        frame,
-        _frameSrc,
-        Rect.fromLTWH(_frameX, _frameY, _frameW, _frameSrc.height * _s),
-        Paint()..filterQuality = FilterQuality.high,
-      );
-    }
+    // ② 사진 테두리 (갈색 굵은 선 + 안쪽 흰 선)
+    c.drawRRect(
+      winR,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 10
+        ..color = const Color(0xFF7A5230),
+    );
+    c.drawRRect(
+      winR.deflate(9),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4
+        ..color = Colors.white.withValues(alpha: 0.85),
+    );
 
     // ③ 전설 아이템만: 창 오른쪽 위에 레벨 딱지 (프레임 위 맨 앞), 글자는 딱지 그림의 정가운데
     if (legendLevel != null) {
@@ -363,62 +352,135 @@ class ShareCard {
       }
     }
 
-    // 로고: 프레임 위쪽 나무 위
+    // 로고: 사진 왼쪽 위 모서리에 스티커처럼
     final lang = L10n.instance.lang;
     final logo =
         await _img('assets/art/title/logo_$lang.webp') ??
         await _img('assets/art/title/logo_en.webp');
     if (logo != null) {
-      _fit(
-        c,
-        logo,
-        Rect.fromCenter(
-          center: const Offset(w / 2, 104),
-          width: 430,
-          height: 150,
-        ),
-      );
+      _fit(c, logo, const Rect.fromLTWH(46, 52, 380, 140));
     }
 
-    // 제목 (창 아래 크림 칸) · 띠 안에 한 줄 설명 + 친구 코드
+    // 제목
     _text(
       c,
       title,
-      Offset(w / 2, (win.bottom + band.top) / 2 + 4),
-      60,
+      const Offset(w / 2, 945),
+      72,
       const Color(0xFF5C402C),
-      maxW: 900,
+      maxW: 960,
     );
-    final hasCode = code != null && code.isNotEmpty;
     _text(
       c,
       sub,
-      Offset(w / 2, band.top + band.height * (hasCode ? 0.3 : 0.5)),
+      const Offset(w / 2, 1018),
       34,
-      const Color(0xFF4E6B3A),
-      maxW: band.width - 40,
+      const Color(0xFF8A6A4C),
+      maxW: 900,
     );
+
+    // 숫자 칩: 레벨 · 놓은 장식 · 친구
+    var placed = 0;
+    for (var i = 0; i < Garden.areas.length; i++) {
+      for (var j = 0; j < Garden.areaAt(i).decor.length; j++) {
+        if (game.isPlaced(i, j)) placed++;
+      }
+    }
+    final chips = <(String?, String)>[
+      (null, 'Lv.${game.level}'),
+      (Art.icon('decorate').path, '$placed'),
+      (Art.icon('friends').path, '${game.friends.length}'),
+    ];
+    const chipH = 76.0, gap = 18.0;
+    final widths = <double>[];
+    final painters = <TextPainter>[];
+    for (final (icon, label) in chips) {
+      final tp = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: TextStyle(
+            fontFamily: lang == 'ja' ? 'MochiyPop' : 'Jua',
+            fontSize: 40,
+            color: const Color(0xFF5C402C),
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      painters.add(tp);
+      widths.add(tp.width + 56 + (icon == null ? 0 : 58));
+    }
+    var x =
+        (w -
+            widths.fold<double>(0, (a, b) => a + b) -
+            gap * (chips.length - 1)) /
+        2;
+    const chipY = 1062.0;
+    for (var i = 0; i < chips.length; i++) {
+      final r = RRect.fromRectAndRadius(
+        Rect.fromLTWH(x, chipY, widths[i], chipH),
+        const Radius.circular(chipH / 2),
+      );
+      c.drawRRect(r, Paint()..color = Colors.white);
+      c.drawRRect(
+        r,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 4
+          ..color = const Color(0xFFE2C48E),
+      );
+      var tx = x + 28;
+      final icon = chips[i].$1;
+      if (icon != null) {
+        final im = await _img(icon);
+        if (im != null) _fit(c, im, Rect.fromLTWH(tx, chipY + 12, 52, 52));
+        tx += 58;
+      }
+      painters[i].paint(
+        c,
+        Offset(tx, chipY + (chipH - painters[i].height) / 2),
+      );
+      x += widths[i] + gap;
+    }
+
+    // 친구 코드 알약 (초록)
+    final hasCode = code != null && code.isNotEmpty;
     if (hasCode) {
+      final pill = RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: const Offset(w / 2, 1198),
+          width: 600,
+          height: 92,
+        ),
+        const Radius.circular(46),
+      );
+      c.drawRRect(pill, Paint()..color = const Color(0xFF6BBF59));
+      c.drawRRect(
+        pill,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 6
+          ..color = const Color(0xFF3F7F34),
+      );
       _text(
         c,
         tr('share.code', {'code': FriendCode.display(code)}),
-        Offset(w / 2, band.top + band.height * 0.72),
-        42,
-        const Color(0xFF2F7D4A),
-        maxW: band.width - 40,
+        const Offset(w / 2, 1198),
+        44,
+        Colors.white,
+        maxW: 560,
+        stroke: const Color(0xFF3F7F34),
       );
     }
-
-    // 아래: 스토어 안내 + 두 친구 (카드마다 다르게)
     _text(
       c,
       tr('share.store'),
-      const Offset(w / 2, 1300),
-      32,
+      Offset(w / 2, hasCode ? 1294 : 1210),
+      30,
       const Color(0xFF8A6A4C),
       maxW: 560,
     );
-    // 두 친구는 카드 안쪽(가운데)을 바라본다. 친구 그림은 대부분 왼쪽을 보고, 카메라 토끼만 오른쪽을 본다.
+
+    // 아래 양쪽 모서리에 친구 둘 (카드 안쪽을 바라본다)
     final corners = _cornerPaths(game, rng);
     bool facesRight(String path) => _facingRight.any(path.contains);
     final l = await _img(corners[0]);
@@ -427,7 +489,7 @@ class ShareCard {
       _fit(
         c,
         l,
-        const Rect.fromLTWH(-4, 1046, 280, 300),
+        const Rect.fromLTWH(-10, 1110, 230, 245),
         flip: !facesRight(corners[0]),
       );
     }
@@ -435,7 +497,7 @@ class ShareCard {
       _fit(
         c,
         r,
-        const Rect.fromLTWH(804, 1046, 280, 300),
+        const Rect.fromLTWH(860, 1110, 230, 245),
         flip: facesRight(corners[1]),
       );
     }

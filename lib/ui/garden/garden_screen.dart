@@ -177,45 +177,50 @@ class _GardenScreenState extends State<GardenScreen> {
                               onTap: () => Navigator.pop(context),
                             ),
                             const SizedBox(width: 8),
-                            if (_area > 0) ...[
-                              _Circle(
-                                icon: Icons.chevron_left_rounded,
-                                onTap: () => setState(() => _area--),
-                              ),
-                              const SizedBox(width: 6),
-                            ],
-                            // 이름 칸은 남은 폭 안에서만 (글자가 크면 줄여서 맞춘다, D-077)
+                            // (<) 이름 (>) 를 한 알약 안에: 늘 같은 자리 · 같은 크기, 끝이면 흐리게 (D-083)
                             Expanded(
-                              child: Center(
-                                child: ClipRect(
-                                  child: FrameBox(
-                                    frame: 'capsule',
-                                    fallback: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(16),
+                              child: FrameBox(
+                                frame: 'capsule',
+                                fallback: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(22),
+                                ),
+                                corner: 14,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 4,
+                                ),
+                                child: Row(
+                                  children: [
+                                    _Circle(
+                                      icon: Icons.chevron_left_rounded,
+                                      size: 32,
+                                      enabled: _area > 0,
+                                      onTap: () => setState(() => _area--),
                                     ),
-                                    corner: 14,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 14,
-                                      vertical: 6,
-                                    ),
-                                    child: FittedBox(
-                                      child: IconText(
-                                        areaLabel(game, _area),
-                                        style: const TextStyle(fontSize: 17),
+                                    Expanded(
+                                      child: Center(
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: IconText(
+                                            areaLabel(game, _area),
+                                            style: const TextStyle(
+                                              fontSize: 17,
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
+                                    _Circle(
+                                      icon: Icons.chevron_right_rounded,
+                                      size: 32,
+                                      enabled: _area < game.currentArea,
+                                      onTap: () => setState(() => _area++),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
-                            if (_area < game.currentArea) ...[
-                              const SizedBox(width: 6),
-                              _Circle(
-                                icon: Icons.chevron_right_rounded,
-                                onTap: () => setState(() => _area++),
-                              ),
-                            ],
                             const SizedBox(width: 6),
                             // 자랑하기: 보고 있는 구역의 정원 카드 (완성한 구역이면 '구역 완성' 카드)
                             ShareButton(
@@ -429,12 +434,36 @@ class _DecorCard extends StatelessWidget {
 }
 
 class _Circle extends StatelessWidget {
-  const _Circle({required this.icon, required this.onTap});
+  const _Circle({
+    required this.icon,
+    required this.onTap,
+    this.enabled = true,
+    this.size = 44,
+  });
+  final double size;
   final IconData icon;
   final VoidCallback onTap;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
+    if (!enabled) {
+      // 끝 구역: 자리는 그대로, 흐리게 · 누를 수 없게
+      return IgnorePointer(
+        child: Opacity(
+          opacity: 0.35,
+          child: ColorFiltered(
+            colorFilter: const ColorFilter.matrix([
+              0.33, 0.33, 0.33, 0, 0, //
+              0.33, 0.33, 0.33, 0, 0, //
+              0.33, 0.33, 0.33, 0, 0, //
+              0, 0, 0, 1, 0,
+            ]),
+            child: _Circle(icon: icon, onTap: onTap, size: size),
+          ),
+        ),
+      );
+    }
     // 그림 아이콘이 있으면 그것으로 (뒤로 · 좌우 넘기기)
     final art = icon == Icons.arrow_back_rounded
         ? Art.icon('back')
@@ -450,7 +479,7 @@ class _Circle extends StatelessWidget {
         },
         child: Transform.flip(
           flipX: icon == Icons.chevron_left_rounded,
-          child: ArtImage(art, size: 44),
+          child: ArtImage(art, size: size),
         ),
       );
     }
@@ -463,8 +492,8 @@ class _Circle extends StatelessWidget {
       onTap();
     },
     child: Container(
-      width: 42,
-      height: 42,
+      width: size - 2,
+      height: size - 2,
       decoration: BoxDecoration(
         color: Colors.white,
         shape: BoxShape.circle,

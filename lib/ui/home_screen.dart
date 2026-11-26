@@ -240,6 +240,11 @@ class _HomeScreenState extends State<HomeScreen> {
           await showShareDialog(context, game, ShareKind.area, area: area);
           if (!mounted) return;
           setState(() => _viewArea = game.currentArea);
+          // 새 구역 열림 축하 (D-083)
+          if (game.currentArea < Garden.areas.length) {
+            await showNewAreaDialog(context, game, game.currentArea);
+            if (!mounted) return;
+          }
           if (area == 0 && game.showStarterOffer()) {
             await Future.delayed(const Duration(milliseconds: 600));
             if (mounted) showStarterSheet(context, widget.billing, game);
@@ -3263,4 +3268,114 @@ class _ToastView extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 새 구역이 열렸을 때: 새 배경을 크게 + 기다리는 장식 · 친구 (D-083).
+Future<void> showNewAreaDialog(BuildContext context, GameState game, int area) {
+  final def = Garden.areaAt(area);
+  sfx(Sfx.levelup);
+  final newFriends = [
+    for (final d in def.decor)
+      if (d.bringsFriend != null && !game.friends.contains(d.bringsFriend))
+        d.bringsFriend!,
+  ];
+  return showDialog<void>(
+    context: context,
+    builder: (ctx) => GameDialog(
+      banner: 'gold',
+      title: IconText(tr('area.newTitle'), textAlign: TextAlign.center),
+      onClose: () => Navigator.pop(ctx),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 새 구역 배경: 반짝이며 커지는 사진 카드
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 700),
+            curve: Curves.elasticOut,
+            builder: (_, v, child) =>
+                Transform.scale(scale: 0.6 + 0.4 * v, child: child),
+            child: Container(
+              height: 150,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFF7A5230), width: 3),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(Art.areaBackground(def).path, fit: BoxFit.cover),
+                  Align(
+                    alignment: const Alignment(-0.92, -0.85),
+                    child: ArtImage(Art.areaIcon(def), size: 44),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          IconText(
+            areaName(def),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 24, color: Color(0xFF5C402C)),
+          ),
+          const SizedBox(height: 8),
+          // 기다리는 장식 8종 미리보기
+          for (var row = 0; row < def.decor.length; row += 4)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (final d in def.decor.skip(row).take(4))
+                  Padding(
+                    padding: const EdgeInsets.all(3),
+                    child: ArtImage(Art.decor(d), size: 46),
+                  ),
+              ],
+            ),
+          const SizedBox(height: 8),
+          IconText(
+            tr('area.newNote', {'n': def.decor.length}),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 15, color: Color(0xFF5E4B36)),
+          ),
+          if (newFriends.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (final f in newFriends)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: ArtImage(Art.friend(Friends.byId(f)), size: 54),
+                  ),
+              ],
+            ),
+            IconText(
+              tr('area.newFriends', {
+                'names': newFriends.map(friendName).join(', '),
+              }),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15, color: Palette.primary),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        FilledButton(
+          style: framedButton(
+            FilledButton.styleFrom(
+              minimumSize: const Size(double.infinity, 56),
+            ),
+            'button_gold',
+          ),
+          onPressed: () => Navigator.pop(ctx),
+          child: IconText(
+            tr('area.newGo'),
+            style: const TextStyle(fontSize: 18),
+          ),
+        ),
+      ],
+    ),
+  );
 }
