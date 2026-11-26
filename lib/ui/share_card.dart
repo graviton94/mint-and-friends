@@ -182,7 +182,7 @@ class ShareCard {
       final d = a.decor[i];
       final img = await _img(Art.decor(d, style: g.styleOf(area, i)).path);
       if (img == null) continue;
-      final sz = unit * GardenScene.decorK;
+      final sz = unit * GardenScene.decorK * 1.5; // 카드에서는 크게 (조금 겹쳐도 됨)
       final px = ox + d.x.clamp(0.08, 0.92) * sw, py = oy + d.y * sh;
       layers.add((
         py + sz * 0.44,
@@ -207,7 +207,7 @@ class ShareCard {
       if (img == null) continue;
       final fx = zone.x0 + 0.06 + rng.nextDouble() * (zone.x1 - zone.x0 - 0.12);
       final fy = zone.y0 + 0.15 + rng.nextDouble() * (zone.y1 - zone.y0 - 0.2);
-      final sz = unit * GardenScene.friendK;
+      final sz = unit * GardenScene.friendK * 1.5;
       final px = ox + fx * sw, py = oy + fy * sh;
       layers.add((py, img, Rect.fromLTWH(px - sz / 2, py - sz, sz, sz)));
     }
@@ -335,9 +335,9 @@ class ShareCard {
           c,
           badge,
           Rect.fromCenter(
-            center: win.topRight.translate(-46, 30),
-            width: 210,
-            height: 210,
+            center: win.topRight.translate(-130, 124),
+            width: 190,
+            height: 190,
           ),
         );
         _text(
@@ -358,7 +358,7 @@ class ShareCard {
         await _img('assets/art/title/logo_$lang.webp') ??
         await _img('assets/art/title/logo_en.webp');
     if (logo != null) {
-      _fit(c, logo, const Rect.fromLTWH(46, 52, 380, 140));
+      _fit(c, logo, const Rect.fromLTWH(76, 74, 340, 126)); // 테두리에서 띄워서
     }
 
     // 제목

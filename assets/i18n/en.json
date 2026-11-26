@@ -140,7 +140,7 @@
   "area.round": "{name} (#{n})",
   "area.yard": "Sunny Yard",
   "area.pond": "Sparkle Pond",
-  "area.greenhouse": "Fragrant Greenhouse",
+  "area.greenhouse": "Sunny Veggie Patch",
   "area.starry_hill": "Starlight Hill",
   "decor.big_tree": "Big tree",
   "decor.bench": "Wooden bench",
@@ -1264,7 +1264,7 @@
   "patch.1.0.17": "• The title screen changes with the seasons\n• Merged items now bounce with a squishy boing\n• Lucky basket items get a golden sparkle\n• Spending shows a small cost pop-up\n• The hedgehog visitor now strolls around your garden\n• Tap coins to see your income breakdown\n• Every collection item has a little story\n• Garden Pass now adds +50 to your energy cap\n• Friend gift coins now grow with your income\n\nHere's some energy as an update gift!",
   "share.copied": "Invite text and link copied. Paste it under the picture!",
   "share.linkOnly": "Send text and link only",
-  "area.newTitle": "A new area is open!",
+  "area.newTitle": "New area!",
   "area.newNote": "{n} new decorations are waiting",
   "area.newFriends": "New friends will visit too: {names}",
   "area.newGo": "Let's decorate"

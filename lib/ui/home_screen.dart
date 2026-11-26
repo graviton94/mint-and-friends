@@ -3297,7 +3297,11 @@ Future<void> showNewAreaDialog(BuildContext context, GameState game, int area) {
                 Transform.scale(scale: 0.6 + 0.4 * v, child: child),
             child: Container(
               height: 150,
+              // 테두리는 그림 위에 (foregroundDecoration)
               decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+              ),
+              foregroundDecoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: const Color(0xFF7A5230), width: 3),
               ),
@@ -3307,7 +3311,7 @@ Future<void> showNewAreaDialog(BuildContext context, GameState game, int area) {
                 children: [
                   Image.asset(Art.areaBackground(def).path, fit: BoxFit.cover),
                   Align(
-                    alignment: const Alignment(-0.92, -0.85),
+                    alignment: const Alignment(-0.88, -0.78),
                     child: ArtImage(Art.areaIcon(def), size: 44),
                   ),
                 ],

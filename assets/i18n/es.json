@@ -140,7 +140,7 @@
   "area.round": "{name} (#{n})",
   "area.yard": "Patio Soleado",
   "area.pond": "Estanque Brillante",
-  "area.greenhouse": "Invernadero Fragante",
+  "area.greenhouse": "Huerto Soleado",
   "area.starry_hill": "Colina Estelar",
   "decor.big_tree": "Árbol grande",
   "decor.bench": "Banco de madera",
@@ -1264,7 +1264,7 @@
   "patch.1.0.17": "• La pantalla de inicio cambia con las estaciones\n• Los objetos fusionados rebotan con un boing blandito\n• Los objetos de la cesta de la suerte brillan\n• Al gastar se muestra lo que gastaste\n• El erizo visitante pasea por tu jardín\n• Toca las monedas para ver el detalle de ingresos\n• Cada objeto del álbum tiene una pequeña historia\n• El Pase de Jardín suma +50 al límite de energía\n• Las monedas de regalo de amigos crecen con tus ingresos\n\n¡Te enviamos energía como regalo!",
   "share.copied": "Copiamos el texto y el enlace. ¡Pégalo debajo de la foto!",
   "share.linkOnly": "Enviar solo texto y enlace",
-  "area.newTitle": "¡Se abrió una zona nueva!",
+  "area.newTitle": "¡Nueva zona!",
   "area.newNote": "Te esperan {n} decoraciones nuevas",
   "area.newFriends": "También vendrán amigos nuevos: {names}",
   "area.newGo": "A decorar"
