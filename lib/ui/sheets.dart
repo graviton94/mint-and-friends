@@ -2493,7 +2493,7 @@ class StarterCard extends StatelessWidget {
               children: [
                 // 제목 + 한 줄 미끼 (배지 자리만큼 오른쪽을 비운다)
                 Padding(
-                  padding: const EdgeInsets.only(right: 70),
+                  padding: const EdgeInsets.only(right: 80),
                   child: Row(
                     children: [
                       if (Art.frame('promo_hero').available) ...[
@@ -2636,14 +2636,15 @@ class StarterCard extends StatelessWidget {
             ),
           ),
           // 할인 배지: 크게, 오른쪽 위 테두리에 걸쳐서 살짝 기울여
+          // 딱지는 카드 안쪽으로 내려서 (가장자리에서 잘리지 않게, D-090)
           Positioned(
-            top: -16,
-            right: -12,
+            top: 2,
+            right: 2,
             child: Transform.rotate(
               angle: 0.18,
               child: Container(
-                width: 88,
-                height: 88,
+                width: 78,
+                height: 78,
                 alignment: Alignment.center,
                 decoration: Art.frame('sale_badge').available
                     ? BoxDecoration(
@@ -2743,7 +2744,7 @@ class PassCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
-                  padding: EdgeInsets.only(right: subscribed ? 0 : 70),
+                  padding: EdgeInsets.only(right: subscribed ? 0 : 80),
                   child: Row(
                     children: [
                       ArtImage(Art.icon('garden_pass'), size: 64),
@@ -2877,14 +2878,15 @@ class PassCard extends StatelessWidget {
           ),
           // '최대 n배' 톱니 딱지: 첫 구매 할인 딱지와 같은 모양
           if (!subscribed)
+            // 딱지는 카드 안쪽으로 내려서 (가장자리에서 잘리지 않게, D-090)
             Positioned(
-              top: -16,
-              right: -12,
+              top: 2,
+              right: 2,
               child: Transform.rotate(
                 angle: 0.18,
                 child: Container(
-                  width: 88,
-                  height: 88,
+                  width: 78,
+                  height: 78,
                   alignment: Alignment.center,
                   decoration: Art.frame('sale_badge').available
                       ? BoxDecoration(
