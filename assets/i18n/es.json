@@ -1260,5 +1260,6 @@
   "pass.total.min": "{n} min",
   "xp.how": "Cómo subir de nivel",
   "income.items": "Subtotal de objetos",
-  "income.multTotal": "Multiplicador total"
+  "income.multTotal": "Multiplicador total",
+  "patch.1.0.17": "• La pantalla de inicio cambia con las estaciones\n• Los objetos fusionados rebotan con un boing blandito\n• Los objetos de la cesta de la suerte brillan\n• Al gastar se muestra lo que gastaste\n• El erizo visitante pasea por tu jardín\n• Toca las monedas para ver el detalle de ingresos\n• Cada objeto del álbum tiene una pequeña historia\n• El Pase de Jardín suma +50 al límite de energía\n• Las monedas de regalo de amigos crecen con tus ingresos\n\n¡Te enviamos energía como regalo!"
 }

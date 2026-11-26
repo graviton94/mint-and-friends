@@ -1260,5 +1260,6 @@
   "pass.total.min": "{n} min",
   "xp.how": "How to level up",
   "income.items": "Items subtotal",
-  "income.multTotal": "Total multiplier"
+  "income.multTotal": "Total multiplier",
+  "patch.1.0.17": "• The title screen changes with the seasons\n• Merged items now bounce with a squishy boing\n• Lucky basket items get a golden sparkle\n• Spending shows a small cost pop-up\n• The hedgehog visitor now strolls around your garden\n• Tap coins to see your income breakdown\n• Every collection item has a little story\n• Garden Pass now adds +50 to your energy cap\n• Friend gift coins now grow with your income\n\nHere's some energy as an update gift!"
 }
