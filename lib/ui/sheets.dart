@@ -1250,7 +1250,14 @@ class _OutfitCard extends StatelessWidget {
             'to': outfit!.months!.last,
           })
         : '[[diamond]] ${outfit!.gems}';
-    return Container(
+    // 지금 판매 중인 계절 옷: 왼쪽 위 판촉 딱지 (D-080)
+    final onSale =
+        !owned &&
+        outfit != null &&
+        !outfit!.limited &&
+        outfit!.months != null &&
+        outfit!.onSaleIn(game.now.month);
+    final card = Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
       decoration: BoxDecoration(
@@ -1311,6 +1318,32 @@ class _OutfitCard extends StatelessWidget {
         ],
       ),
     );
+    if (!onSale) return card;
+    return Stack(
+      clipBehavior: Clip.none,
+      fit: StackFit.passthrough,
+      children: [
+        card,
+        Positioned(
+          left: -2,
+          top: -10,
+          child: Shine(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF08A24),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white, width: 1.5),
+              ),
+              child: Text(
+                tr('outfit.onSale'),
+                style: const TextStyle(fontSize: 11, color: Colors.white),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -1365,30 +1398,33 @@ Future<void> showCollectionSheet(
                   const SizedBox(width: 6),
                   for (final st in Garden.seasonOrder)
                     Expanded(
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 2),
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        decoration: BoxDecoration(
-                          color: game.seasonSetComplete(a, st)
-                              ? const Color(0xFFFFF0B8)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
+                      child: GestureDetector(
+                        onTap: () => _seasonInfo(context, game, a, st),
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          decoration: BoxDecoration(
                             color: game.seasonSetComplete(a, st)
-                                ? const Color(0xFFE0A21B)
-                                : const Color(0xFFE2D3B5),
-                            width: 1.5,
+                                ? const Color(0xFFFFF0B8)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: game.seasonSetComplete(a, st)
+                                  ? const Color(0xFFE0A21B)
+                                  : const Color(0xFFE2D3B5),
+                              width: 1.5,
+                            ),
                           ),
-                        ),
-                        alignment: Alignment.center,
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: IconText(
-                            game.seasonSetComplete(a, st)
-                                ? '[[check]]${tr('style.$st')}'
-                                : '${tr('style.$st')} ${game.seasonSetOwned(a, st)}/${Garden.slotsPerArea}',
-                            iconScale: 1.0,
-                            style: const TextStyle(fontSize: 13),
+                          alignment: Alignment.center,
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: IconText(
+                              game.seasonSetComplete(a, st)
+                                  ? '[[check]]${tr('style.$st')}'
+                                  : '${tr('style.$st')} ${game.seasonSetOwned(a, st)}/${Garden.slotsPerArea}',
+                              iconScale: 1.0,
+                              style: const TextStyle(fontSize: 13),
+                            ),
                           ),
                         ),
                       ),
@@ -1433,7 +1469,7 @@ class _FriendCard extends StatelessWidget {
     final aff = game.affection(def.id);
     final flv = game.friendLevel(def.id);
     final dress = has && Art.outfitsFor(def).isNotEmpty;
-    return GestureDetector(
+    final body = GestureDetector(
       onTap: dress ? () => showOutfitSheet(context, game, def) : null,
       child: Container(
         padding: const EdgeInsets.all(8),
@@ -1496,6 +1532,31 @@ class _FriendCard extends StatelessWidget {
         ),
       ),
     );
+    if (!dress) return body;
+    // 옷장으로 가는 버튼 (카드를 눌러도 열린다)
+    return Stack(
+      clipBehavior: Clip.none,
+      fit: StackFit.passthrough,
+      children: [
+        body,
+        Positioned(
+          right: -4,
+          top: -6,
+          child: GestureDetector(
+            onTap: () => showOutfitSheet(context, game, def),
+            child: Container(
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF6E0),
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFF7A5230), width: 1.5),
+              ),
+              child: ArtImage(Art.icon('outfit'), size: 20),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -1511,10 +1572,8 @@ class _ItemChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: found
-          ? 'Lv$level ${itemName(Chains.item(chain, level))}'
-          : tr('book.unknown'),
+    return GestureDetector(
+      onTap: () => _itemInfo(context, chain, level, found),
       child: Container(
         width: 46,
         height: 46,
@@ -1533,6 +1592,118 @@ class _ItemChip extends StatelessWidget {
     );
   }
 }
+
+/// 계절 컬렉션 한 칸을 누르면: 이 구역의 그 계절 장식 8종 (가진 것만 보이고 나머지는 실루엣).
+Future<void> _seasonInfo(
+  BuildContext context,
+  GameState game,
+  int area,
+  int st,
+) => showDialog<void>(
+  context: context,
+  builder: (ctx) {
+    final def = Garden.areaAt(area);
+    return GameDialog(
+      title: IconText(
+        tr('book.seasonTitle', {
+          'area': areaName(def),
+          'season': tr('style.$st'),
+        }),
+        textAlign: TextAlign.center,
+      ),
+      onClose: () => Navigator.pop(ctx),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            alignment: WrapAlignment.center,
+            children: [
+              for (var i = 0; i < Garden.slotsPerArea; i++)
+                Container(
+                  width: 64,
+                  height: 64,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: game.ownsStyle(area, i, st)
+                        ? Colors.white
+                        : const Color(0xFFEDE8DC),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Opacity(
+                    opacity: game.ownsStyle(area, i, st) ? 1 : 0.25,
+                    child: ArtImage(Art.decorStyle(def.decor[i], st), size: 52),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          IconText(
+            tr('book.seasonInfo', {
+              'n': game.seasonSetOwned(area, st),
+              'total': Garden.slotsPerArea,
+            }),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 14, color: Color(0xFF5E4B36)),
+          ),
+        ],
+      ),
+    );
+  },
+);
+
+/// 도감 아이템 한 칸을 누르면: 그림 · 이름 · 단계 · 시간당 수입 · 어디서 나오는지 (D-080).
+Future<void> _itemInfo(
+  BuildContext context,
+  Chain chain,
+  int level,
+  bool found,
+) => showDialog<void>(
+  context: context,
+  builder: (ctx) => GameDialog(
+    title: IconText(
+      found ? itemName(Chains.item(chain, level)) : tr('book.unknown'),
+      textAlign: TextAlign.center,
+    ),
+    onClose: () => Navigator.pop(ctx),
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        GlowHalo(
+          size: 150,
+          child: found
+              ? ArtImage(Art.item(chain, level), size: 100)
+              : Opacity(
+                  opacity: 0.3,
+                  child: ArtImage(Art.icon('unknown'), size: 70),
+                ),
+        ),
+        IconText(
+          '${chainName(chain)} · Lv.$level',
+          style: const TextStyle(fontSize: 17),
+        ),
+        const SizedBox(height: 6),
+        IconText(
+          found
+              ? tr('book.itemIncome', {
+                  'v': fmt(GameConfig.incomeOf(chain, level) * 3600),
+                })
+              : tr('book.itemHint'),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 15, color: Color(0xFF5E4B36)),
+        ),
+        if (found && level < Chains.maxLevel(chain)) ...[
+          const SizedBox(height: 6),
+          IconText(
+            tr('book.itemNext'),
+            style: const TextStyle(fontSize: 13, color: Colors.black45),
+          ),
+        ],
+      ],
+    ),
+  ),
+);
 
 // ---------------------------------------------------------------- 보관함
 

@@ -1010,7 +1010,48 @@ class _HomeScreenState extends State<HomeScreen> {
               backgroundColor: const Color(0xFFE8E0CC),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
+          // 다음 레벨에 받는 것 · 열리는 것 (D-080)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF6E0),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2C48E), width: 1.5),
+            ),
+            child: Column(
+              children: [
+                IconText(
+                  tr('xp.next', {'lv': game.level + 1}),
+                  style: const TextStyle(fontSize: 15),
+                ),
+                const SizedBox(height: 4),
+                IconText(
+                  '[[coin]]${fmt(Leveling.levelUpCoins(game.level + 1))}  [[energy]]+${Leveling.levelUpEnergy(game.level + 1, 0)}  [[diamond]]+${Gems.levelUp}',
+                  style: const TextStyle(fontSize: 17),
+                ),
+                for (final f in Feature.values)
+                  if (Leveling.unlockLevel[f] == game.level + 1)
+                    IconText(
+                      tr('xp.unlock', {'name': featureName(f)}),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Palette.primary,
+                      ),
+                    ),
+                if (Leveling.areaLevel(game.currentArea + 1) == game.level + 1)
+                  IconText(
+                    tr('xp.area'),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: Palette.primary,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
           for (final k in ['order', 'decor', 'discover'])
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
@@ -1034,6 +1075,91 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     ),
   );
+
+  /// 코인 캡슐을 누르면: 수입이 어떻게 정해지는지 (수입 요약, D-080).
+  Future<void> _incomeInfo() {
+    final byChain = <Chain, double>{};
+    for (final it in game.board) {
+      if (it == null) continue;
+      byChain[it.chain] =
+          (byChain[it.chain] ?? 0) + game.itemIncomePerSec(it) * 3600;
+    }
+    String pct(double m) =>
+        '+${((m - 1) * 100).toStringAsFixed(m < 1.1 ? 1 : 0)}%';
+    Widget line(String a, String b, {bool strong = false}) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          Expanded(
+            child: IconText(a, style: TextStyle(fontSize: strong ? 17 : 15)),
+          ),
+          IconText(
+            b,
+            style: TextStyle(
+              fontSize: strong ? 17 : 15,
+              color: strong ? Palette.primary : const Color(0xFF5E4B36),
+            ),
+          ),
+        ],
+      ),
+    );
+    final mults = <(String, double)>[
+      (
+        tr('income.upgrade'),
+        Upgrades.incomeMultiplier(game.lv(UpgradeType.income)),
+      ),
+      (tr('income.friends'), 1 + game.buff(FriendBuff.income)),
+      (tr('income.seeds'), game.seedMultiplier),
+      if (game.boostActive) (tr('income.boost'), 2.0),
+      if (game.autoIdle) (tr('income.auto'), game.idleMult),
+    ];
+    return showDialog<void>(
+      context: context,
+      builder: (ctx) => GameDialog(
+        title: IconText(tr('income.title'), textAlign: TextAlign.center),
+        onClose: () => Navigator.pop(ctx),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            line(
+              tr('income.total'),
+              '[[coin]]${fmt(game.incomePerHour * game.idleMult)}',
+              strong: true,
+            ),
+            const Divider(),
+            IconText(
+              tr('income.board'),
+              style: const TextStyle(fontSize: 14, color: Colors.black54),
+            ),
+            for (final c in Chain.values)
+              if ((byChain[c] ?? 0) > 0)
+                line(
+                  '[[item:${c.name}:3]] ${chainName(c)}',
+                  '[[coin]]${fmt(byChain[c]!)}',
+                ),
+            const Divider(),
+            IconText(
+              tr('income.mults'),
+              style: const TextStyle(fontSize: 14, color: Colors.black54),
+            ),
+            for (final (a, m) in mults)
+              if (m > 1.0005) line(a, pct(m)),
+            const Divider(),
+            line(
+              tr('income.offline'),
+              tr('unit.hour', {'n': game.offlineCap.inHours}),
+            ),
+            IconText(
+              tr('income.note'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13, color: Colors.black45),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   /// 계절 세트 완성: 레벨 업처럼 화면 가운데 축하 창.
   Future<void> _seasonSetDialog(int area, int style) => showDialog<void>(
@@ -1788,6 +1914,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Row(
                 children: [
                   _Pill(
+                    onTap: _incomeInfo,
                     icon: Art.coin,
                     text: fmt(game.coins),
                     sub: game.autoIdle
