@@ -191,6 +191,12 @@ class MergedEvent extends GameEvent {
   MergedEvent(this.cell, this.level);
 }
 
+/// 바구니에서 한 단계 높은 아이템이 나왔다 (행운, D-080).
+class LuckySpawnEvent extends GameEvent {
+  final int cell;
+  LuckySpawnEvent(this.cell);
+}
+
 class BubbleEvent extends GameEvent {
   final int cell;
   BubbleEvent(this.cell);
@@ -300,6 +306,9 @@ class GameState extends ChangeNotifier {
   final DateTime Function() _clock;
   final _events = StreamController<GameEvent>.broadcast();
   Stream<GameEvent> get events => _events.stream;
+
+  /// 미리보기 · 테스트용: 이벤트를 직접 흘려보낸다.
+  void debugEmit(GameEvent e) => _events.add(e);
 
   double coins = 0;
   int stars = 0;
@@ -1588,9 +1597,11 @@ class GameState extends ChangeNotifier {
     ];
     final chain = chains[_rng.nextInt(chains.length)];
     var lvl = spawnLevelOf(chain);
-    if (_rng.nextDouble() < luckyChance) lvl += 1;
+    final lucky = _rng.nextDouble() < luckyChance;
+    if (lucky) lvl += 1;
     lvl = min(lvl, Chains.maxLevel(chain));
     board[cell] = Item(_nextId++, chain, lvl);
+    if (lucky) _events.add(LuckySpawnEvent(cell));
     _trace('spawn', '${chain.name},$lvl,$basket');
     _checkDiscovery(chain, lvl);
     return cell;

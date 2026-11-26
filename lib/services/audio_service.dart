@@ -22,6 +22,7 @@ enum Sfx {
   merge6(['merge_t6'], throttleMs: 60),
   mergeBig(['merge_big']),
   coin(['coin']),
+  spend(['spend']), // 재화를 쓸 때 (coin 을 낮고 부드럽게, D-080)
   deliver(['deliver']),
   levelup(['levelup']),
   unlock(['unlock']),

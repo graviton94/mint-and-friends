@@ -40,6 +40,7 @@ import 'ui/share_flow.dart';
 import 'ui/update_ui.dart';
 import 'ui/start_screens.dart';
 import 'ui/widgets/top_toast.dart';
+import 'ui/widgets/spend_float.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -284,7 +285,32 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
   }
 
   /// 중요한 순간(레벨업, 장식, 구역 완성)에는 바로 클라우드에 올린다.
+  // 재화가 줄면 누른 자리에서 '-[[star]]5' 가 떠오른다 (D-080). 재단장으로 비는 것은 빼고.
+  double _seenCoins = 0, _seenStars = 0, _seenGems = 0;
+  int _seenRenew = 0;
+  void _watchSpend() {
+    final ov = _navKey.currentState?.overlay;
+    if (game.renewCount == _seenRenew && ov != null) {
+      if (game.stars < _seenStars)
+        SpendFloat.show(ov, 'star', _seenStars - game.stars);
+      if (game.gems < _seenGems)
+        SpendFloat.show(ov, 'diamond', _seenGems - game.gems);
+      if (game.coins < _seenCoins - 0.5)
+        SpendFloat.show(ov, 'coin', _seenCoins - game.coins);
+    }
+    _seenCoins = game.coins;
+    _seenStars = game.stars.toDouble();
+    _seenGems = game.gems.toDouble();
+    _seenRenew = game.renewCount;
+  }
+
   void _bindGame() {
+    game.removeListener(_watchSpend);
+    game.addListener(_watchSpend);
+    _seenCoins = game.coins;
+    _seenStars = game.stars.toDouble();
+    _seenGems = game.gems.toDouble();
+    _seenRenew = game.renewCount;
     Analytics.instance.attach(game);
     _gameSub?.cancel();
     _gameSub = game.events.listen((e) {
@@ -711,7 +737,10 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
               if (child != null)
                 Listener(
                   behavior: HitTestBehavior.translucent,
-                  onPointerDown: (_) => game.noteInput(),
+                  onPointerDown: (d) {
+                    game.noteInput();
+                    SpendFloat.lastTap = d.position;
+                  },
                   child: child,
                 ),
               UpdatePill(

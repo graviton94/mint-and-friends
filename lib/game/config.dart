@@ -117,9 +117,9 @@ class GameConfig {
   static const Duration friendTapCooldown = Duration(seconds: 30);
 
   /// 깜짝 손님.
-  static const Duration visitorMinGap = Duration(minutes: 6);
-  static const Duration visitorMaxGap = Duration(minutes: 12);
-  static const Duration visitorStay = Duration(seconds: 50);
+  static const Duration visitorMinGap = Duration(minutes: 12);
+  static const Duration visitorMaxGap = Duration(minutes: 28);
+  static const Duration visitorStay = Duration(seconds: 60);
 
   /// 손님 선물: 기본 + 지금 방치 수익 10분치.
   static double visitorCoinsOf(int playerLevel, double incomePerSec) =>

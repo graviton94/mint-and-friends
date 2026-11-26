@@ -249,6 +249,8 @@ class _HomeScreenState extends State<HomeScreen> {
         sfx(Sfx.levelup);
         _levelUps.add(e);
         _showLevelUps();
+      case LuckySpawnEvent():
+        sfx(Sfx.merge2); // 행운 바구니: 종소리 하나 (D-080)
       case BubbleEvent():
         sfx(Sfx.bubble);
         _toast(tr('toast.bubble'));

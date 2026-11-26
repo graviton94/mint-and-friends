@@ -120,7 +120,51 @@ class _GardenSceneState extends State<GardenScene>
   StreamSubscription<GameEvent>? _sub;
   Duration _last = Duration.zero;
   double _t = 0;
-  double _visitorX = 1.1;
+  // 손님(고슴도치): 정원 여기저기를 천천히 걸어 다닌다 (D-080). 오른쪽 밖에서 들어와 떠날 때 다시 나간다.
+  Offset? _vPos;
+  Offset _vTarget = Offset.zero;
+  double _vWait = 0;
+  bool _vLeft = false; // 왼쪽을 보는지
+  bool _vWalking = false;
+  final _vRng = Random();
+
+  Offset _visitorSpot() {
+    final w = Garden.areaAt(widget.area).walk.first;
+    return Offset(
+      w.x0 + (w.x1 - w.x0) * (0.1 + 0.8 * _vRng.nextDouble()),
+      w.y0 + (w.y1 - w.y0) * (0.35 + 0.6 * _vRng.nextDouble()),
+    );
+  }
+
+  void _updateVisitor(double dt) {
+    if (!game.visitorVisible) {
+      _vPos = null;
+      return;
+    }
+    final w = Garden.areaAt(widget.area).walk.first;
+    if (_vPos == null) {
+      _vPos = Offset(1.12, w.y0 + (w.y1 - w.y0) * 0.6);
+      _vTarget = _visitorSpot();
+      _vWait = 0;
+    }
+    final left = game.visitorUntil!.difference(game.now).inMilliseconds / 1000;
+    if (left < 5) _vTarget = Offset(1.15, _vPos!.dy); // 떠날 때는 오른쪽으로
+    final d = _vTarget - _vPos!;
+    if (d.distance < 0.01) {
+      _vWalking = false;
+      _vWait -= dt;
+      if (_vWait <= 0 && left >= 5) {
+        _vTarget = _visitorSpot();
+        _vWait = 1.5 + 2.5 * _vRng.nextDouble(); // 멈춰서 두리번 1.5~4초
+      }
+      return;
+    }
+    _vWalking = true;
+    const speed = 0.055; // 화면 폭 / 초 (친구보다 조금 느리게)
+    final step = min(d.distance, speed * dt);
+    _vPos = _vPos! + d / d.distance * step;
+    if (d.dx.abs() > 0.002) _vLeft = d.dx < 0;
+  }
 
   static const groundTop = 0.28; // 씬 높이 대비 땅 시작 위치
   static const _speed = 0.07; // 초당 이동량 (씬 크기 대비)
@@ -353,7 +397,7 @@ class _GardenSceneState extends State<GardenScene>
     }
     _floats.removeWhere((f) => f.age > 1.2);
 
-    _visitorX = game.visitorVisible ? max(0.5, _visitorX - dt * 0.05) : 1.1;
+    _updateVisitor(dt);
     setState(() {});
   }
 
@@ -776,10 +820,13 @@ class _GardenSceneState extends State<GardenScene>
       ));
     }
 
-    if (game.visitorVisible) {
-      final p = px(_visitorX, Garden.areaAt(widget.area).walk.first.y1 - 0.04);
+    if (game.visitorVisible && _vPos != null) {
+      final p = px(_vPos!.dx, _vPos!.dy);
       final sz = unit * GardenScene.friendK;
-      final bounce = sin(_t * 6).abs() * sz * 0.1;
+      // 걸을 때만 종종걸음으로 살짝 들썩, 멈추면 숨쉬듯 아주 작게
+      final bounce = _vWalking
+          ? sin(_t * 9).abs() * sz * 0.05
+          : (sin(_t * 2) + 1) * sz * 0.008;
       layers.add((
         y: p.dy, // 발 위치
         child: Positioned(
@@ -794,7 +841,10 @@ class _GardenSceneState extends State<GardenScene>
               mainAxisSize: MainAxisSize.min,
               children: [
                 ArtImage(Art.gift, size: sz * 0.55),
-                ArtImage(Art.visitor(), size: sz),
+                Transform.flip(
+                  flipX: !_vLeft,
+                  child: ArtImage(Art.visitor(), size: sz),
+                ),
               ],
             ),
           ),
