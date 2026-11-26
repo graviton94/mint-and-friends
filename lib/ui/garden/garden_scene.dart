@@ -126,6 +126,8 @@ class _GardenSceneState extends State<GardenScene>
   double _vWait = 0;
   bool _vLeft = false; // 왼쪽을 보는지
   bool _vWalking = false;
+  double _vAge = 0; // 들어온 뒤 지난 초
+  String _vPose = 'idle';
   final _vRng = Random();
 
   Offset _visitorSpot() {
@@ -142,7 +144,10 @@ class _GardenSceneState extends State<GardenScene>
       return;
     }
     final w = Garden.areaAt(widget.area).walk.first;
+    _vAge += dt;
     if (_vPos == null) {
+      _vAge = 0;
+      _vPose = 'wave';
       _vPos = Offset(1.12, w.y0 + (w.y1 - w.y0) * 0.6);
       _vTarget = _visitorSpot();
       _vWait = 0;
@@ -156,6 +161,10 @@ class _GardenSceneState extends State<GardenScene>
       if (_vWait <= 0 && left >= 5) {
         _vTarget = _visitorSpot();
         _vWait = 1.5 + 2.5 * _vRng.nextDouble(); // 멈춰서 두리번 1.5~4초
+        // 멈출 때 자세: 처음 들어와서는 인사, 그 뒤로는 가끔 기쁨
+        _vPose = _vAge < 12
+            ? 'wave'
+            : (_vRng.nextDouble() < 0.25 ? 'happy' : 'idle');
       }
       return;
     }
@@ -843,7 +852,10 @@ class _GardenSceneState extends State<GardenScene>
                 ArtImage(Art.gift, size: sz * 0.55),
                 Transform.flip(
                   flipX: !_vLeft,
-                  child: ArtImage(Art.visitor(), size: sz),
+                  child: ArtImage(
+                    Art.visitor(_vWalking ? 'walk' : _vPose),
+                    size: sz,
+                  ),
                 ),
               ],
             ),

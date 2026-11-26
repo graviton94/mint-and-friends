@@ -1495,7 +1495,7 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                ArtImage(Art.visitor(), size: 92),
+                ArtImage(Art.visitor('wave'), size: 92),
                 ArtImage(Art.gift, size: 56),
               ],
             ),

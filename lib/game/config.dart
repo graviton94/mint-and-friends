@@ -250,6 +250,45 @@ class OrderQuota {
   static const int passEnergyCap = 50;
 }
 
+/// 정원 패스 가치표 (D-081): 광고 없이 바로 받는 보상을 게임 안 다이아 값으로 바꿔 30일을 더한다.
+/// 에너지는 다이아 충전(100개 = Tuning.refillBase), 부스트는 다이아로 사는 코인 2배 값, 다이아 광고는 그대로.
+class PassValue {
+  static const int days = 30;
+
+  /// 하루 최대 (광고 종류 · 횟수 · 다이아 값).
+  static List<(AdKind, int, int)> perDay() {
+    final energyAds = GameConfig.adDailyCap[AdKind.energy] ?? 0;
+    final boostAds = GameConfig.adDailyCap[AdKind.boost] ?? 0;
+    final gemAds = GameConfig.adDailyCap[AdKind.gems] ?? 0;
+    final energyGems =
+        (energyAds *
+                Tuning.energyAdAmount *
+                Tuning.refillBase /
+                Gems.refillEnergy)
+            .round();
+    final boostOne =
+        Boosts.gemCost[BoostKind.coins]! *
+        Boosts.perAd[BoostKind.coins]!.inMinutes /
+        Boosts.perGems[BoostKind.coins]!.inMinutes;
+    return [
+      (AdKind.energy, energyAds, energyGems),
+      (AdKind.boost, boostAds, (boostAds * boostOne).round()),
+      (AdKind.gems, gemAds, gemAds * GameConfig.adGems),
+    ];
+  }
+
+  static int get dailyGems => OrderQuota.passDailyGems;
+  static int get perDayTotal =>
+      perDay().fold<int>(0, (a, e) => a + e.$3) + dailyGems;
+  static int get monthTotal => perDayTotal * days;
+
+  /// 같은 값(₩5,900)의 다이아 팩 대비 배율 (내림).
+  static int get timesPack {
+    final pack = Gems.packs.firstWhere((p) => p.id == 'gems_430');
+    return monthTotal ~/ pack.gems;
+  }
+}
+
 // ------------------------------------------------------------------ 레벨, 해금
 
 /// 플레이어 레벨에 따라 열리는 기능.

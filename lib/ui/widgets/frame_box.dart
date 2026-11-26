@@ -134,12 +134,13 @@ class GameDialog extends StatelessWidget {
             children: [
               panel,
               Positioned(
-                right: -8,
-                top: hasRibbon ? 4 : -8,
+                // 테두리 안쪽 오른쪽 위 (밖으로 튀어나가지 않게)
+                right: 10,
+                top: hasRibbon ? 34 : 10,
                 child: GestureDetector(
                   onTap: onClose,
                   child: Art.icon('close').available
-                      ? ArtImage(Art.icon('close'), size: 42)
+                      ? ArtImage(Art.icon('close'), size: 36)
                       : Container(
                           width: 40,
                           height: 40,

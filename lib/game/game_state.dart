@@ -307,6 +307,9 @@ class GameState extends ChangeNotifier {
   final _events = StreamController<GameEvent>.broadcast();
   Stream<GameEvent> get events => _events.stream;
 
+  /// 미리보기 · 테스트용: 바구니가 늘 행운(+1단계)으로 나온다.
+  static bool debugAlwaysLucky = false;
+
   /// 미리보기 · 테스트용: 이벤트를 직접 흘려보낸다.
   void debugEmit(GameEvent e) => _events.add(e);
 
@@ -1597,7 +1600,7 @@ class GameState extends ChangeNotifier {
     ];
     final chain = chains[_rng.nextInt(chains.length)];
     var lvl = spawnLevelOf(chain);
-    final lucky = _rng.nextDouble() < luckyChance;
+    final lucky = debugAlwaysLucky || _rng.nextDouble() < luckyChance;
     if (lucky) lvl += 1;
     lvl = min(lvl, Chains.maxLevel(chain));
     board[cell] = Item(_nextId++, chain, lvl);

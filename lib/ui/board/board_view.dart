@@ -7,6 +7,7 @@ import '../../art/art.dart';
 import '../../game/config.dart';
 import '../../game/format.dart';
 import '../../game/game_state.dart';
+import '../../i18n/l10n.dart';
 import '../theme.dart';
 
 /// 머지 보드.
@@ -510,26 +511,15 @@ class ItemTile extends StatelessWidget {
       ],
     );
     if (popKey == null) return tile;
-    // 말랑한 탄성 (D-080): 납작하게 눌렸다가 위로 늘어나며 통 튀고 제자리
+    // 또이잉 (D-081): 바닥에 붙은 채 납작 → 길쭉 → 납작… 젤리처럼 몇 번 출렁이다 멈춘다.
     return TweenAnimationBuilder<double>(
       key: ValueKey(popKey),
       tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 420),
+      duration: const Duration(milliseconds: 700),
       builder: (_, t, child) {
-        double sx, sy;
-        if (t < 0.18) {
-          final k = t / 0.18; // 0.55 → 1.25 x 0.8 (눌림)
-          sx = 0.55 + 0.7 * k;
-          sy = 0.55 + 0.25 * k;
-        } else if (t < 0.45) {
-          final k = (t - 0.18) / 0.27; // 1.25x0.8 → 0.9x1.15 (늘어남)
-          sx = 1.25 - 0.35 * k;
-          sy = 0.8 + 0.35 * k;
-        } else {
-          final k = Curves.elasticOut.transform((t - 0.45) / 0.55);
-          sx = 0.9 + 0.1 * k;
-          sy = 1.15 - 0.15 * k;
-        }
+        final d = exp(-4.2 * t) * cos(2 * pi * 2.6 * t);
+        final sy = 1 - 0.34 * d;
+        final sx = 1 + 0.26 * d;
         return Transform(
           alignment: Alignment.bottomCenter,
           transform: Matrix4.diagonal3Values(sx, sy, 1),
@@ -541,7 +531,7 @@ class ItemTile extends StatelessWidget {
   }
 }
 
-/// 합치기 이펙트 (D-080): 동그란 물결 + 별 조각이 사방으로 튀어 나간다.
+/// 합치기 이펙트 (D-081): 별 조각이 사방으로 살짝 튄다 (물결은 빼고 탄력은 타일이 맡는다).
 /// 결과 단계가 높을수록 조금 더 크고 많이 (5단계마다 한 계층, 소리와 같은 기준).
 class _BurstFx extends StatelessWidget {
   const _BurstFx({super.key, required this.size, required this.level});
@@ -561,21 +551,6 @@ class _BurstFx extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          // 물결
-          Opacity(
-            opacity: (1 - v) * 0.8,
-            child: Container(
-              width: size * (0.5 + v * (0.9 + 0.08 * tier)),
-              height: size * (0.5 + v * (0.9 + 0.08 * tier)),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: const Color(0xFFFFF1B0),
-                  width: 4 * (1 - v) + 1,
-                ),
-              ),
-            ),
-          ),
           // 별 조각
           for (var i = 0; i < n; i++)
             Transform.translate(
@@ -608,18 +583,27 @@ class _LuckyFx extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
+          // 금빛 별 조각이 빙 둘러 튄다
+          for (var i = 0; i < 8; i++)
+            Transform.translate(
+              offset: Offset.fromDirection(
+                -pi / 2 + 2 * pi * i / 8,
+                size * (0.3 + 0.45 * Curves.easeOutCubic.transform(v)),
+              ),
+              child: Opacity(
+                opacity: (1 - v).clamp(0.0, 1.0),
+                child: ArtImage(Art.icon('sparkle'), size: size * 0.22),
+              ),
+            ),
           Opacity(
-            opacity: (1 - v) * 0.9,
+            opacity: (1 - v * v).clamp(0.0, 1.0),
             child: Container(
-              width: size * (0.7 + 0.5 * v),
-              height: size * (0.7 + 0.5 * v),
+              width: size * (1.0 + 0.6 * v),
+              height: size * (1.0 + 0.6 * v),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [
-                    const Color(0xFFFFE27A).withValues(alpha: 0.9),
-                    const Color(0x00FFE27A),
-                  ],
+                  colors: [const Color(0xFFFFD34D), const Color(0x00FFE27A)],
                 ),
               ),
             ),
@@ -629,9 +613,11 @@ class _LuckyFx extends StatelessWidget {
             child: Opacity(
               opacity: v < 0.7 ? 1 : (1 - v) / 0.3,
               child: Text(
-                '+1',
+                tr('board.lucky'),
+                softWrap: false,
+                overflow: TextOverflow.visible,
                 style: TextStyle(
-                  fontSize: size * 0.32,
+                  fontSize: size * 0.24,
                   color: Colors.white,
                   shadows: const [
                     Shadow(color: Color(0xFFB8860B), offset: Offset(1.5, 0)),

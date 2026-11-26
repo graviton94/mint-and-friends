@@ -123,10 +123,19 @@ class Art {
     return r.available ? r : null;
   }
 
-  static ArtRef visitor() => const ArtRef(
-    'assets/art/friends/visitor_idle.webp',
-    Friends.visitorEmoji,
-  );
+  /// 고슴도치 손님. pose = idle · walk · happy · wave (D-081). 그 자세 그림이 아직 없으면 기본.
+  static ArtRef visitor([String pose = 'idle']) {
+    const base = ArtRef(
+      'assets/art/friends/visitor_idle.webp',
+      Friends.visitorEmoji,
+    );
+    if (pose == 'idle') return base;
+    final r = ArtRef(
+      'assets/art/friends/visitor_$pose.webp',
+      Friends.visitorEmoji,
+    );
+    return r.available ? r : base;
+  }
 
   /// 장식 그림. style 1 = 고급(_b), 2 = 특별(_c). 그 그림이 아직 없으면 기본 그림.
   static ArtRef decor(DecorDef d, {int style = 0}) {

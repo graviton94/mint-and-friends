@@ -1399,7 +1399,7 @@ Future<void> showCollectionSheet(
                   for (final st in Garden.seasonOrder)
                     Expanded(
                       child: GestureDetector(
-                        onTap: () => _seasonInfo(context, game, a, st),
+                        onTap: () => showSeasonInfo(context, game, a, st),
                         child: Container(
                           margin: const EdgeInsets.symmetric(horizontal: 2),
                           padding: const EdgeInsets.symmetric(vertical: 6),
@@ -1573,7 +1573,7 @@ class _ItemChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => _itemInfo(context, chain, level, found),
+      onTap: () => showItemInfo(context, chain, level, found),
       child: Container(
         width: 46,
         height: 46,
@@ -1594,7 +1594,7 @@ class _ItemChip extends StatelessWidget {
 }
 
 /// 계절 컬렉션 한 칸을 누르면: 이 구역의 그 계절 장식 8종 (가진 것만 보이고 나머지는 실루엣).
-Future<void> _seasonInfo(
+Future<void> showSeasonInfo(
   BuildContext context,
   GameState game,
   int area,
@@ -1654,7 +1654,7 @@ Future<void> _seasonInfo(
 );
 
 /// 도감 아이템 한 칸을 누르면: 그림 · 이름 · 단계 · 시간당 수입 · 어디서 나오는지 (D-080).
-Future<void> _itemInfo(
+Future<void> showItemInfo(
   BuildContext context,
   Chain chain,
   int level,
@@ -1693,11 +1693,17 @@ Future<void> _itemInfo(
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 15, color: Color(0xFF5E4B36)),
         ),
-        if (found && level < Chains.maxLevel(chain)) ...[
-          const SizedBox(height: 6),
+        // 찾은 아이템: 정원 이야기 한 줄 (D-081)
+        if (found) ...[
+          const SizedBox(height: 10),
           IconText(
-            tr('book.itemNext'),
-            style: const TextStyle(fontSize: 13, color: Colors.black45),
+            '“${tr('lore.${chain.name}.$level')}”',
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 14,
+              fontStyle: FontStyle.italic,
+              color: Color(0xFF8A6E4E),
+            ),
           ),
         ],
       ],
@@ -2063,7 +2069,7 @@ Future<void> _shopSheet(
           _ShopRow(
             icon: Art.icon('garden_pass'),
             title: tr('shop.adFree'),
-            tag: tr('shop.passTag'),
+            tag: tr('shop.passTag', {'x': PassValue.timesPack}),
             note: tr('shop.body', {
               'gems': OrderQuota.passDailyGems,
               'energy': OrderQuota.passEnergyCap,
@@ -2075,6 +2081,18 @@ Future<void> _shopSheet(
                 : tr('shop.subscribe', {'price': billing.product!.price}),
             enabled: billing.product != null && !billing.purchasing,
             onTap: billing.buyRemoveAds,
+          ),
+        if (!billing.adFree)
+          TextButton(
+            onPressed: () => showDialog<void>(
+              context: context,
+              builder: (ctx) => GameDialog(
+                title: IconText(tr('pass.value'), textAlign: TextAlign.center),
+                onClose: () => Navigator.pop(ctx),
+                content: const PassValueTable(),
+              ),
+            ),
+            child: IconText(tr('shop.valueInfo')),
           ),
         TextButton(
           onPressed: billing.restore,
@@ -3559,6 +3577,10 @@ Future<void> showPassSheet(
           }),
         ),
         const SizedBox(height: 10),
+        IconText(tr('pass.value'), style: const TextStyle(fontSize: 17)),
+        const SizedBox(height: 6),
+        const PassValueTable(),
+        const SizedBox(height: 10),
         IconText(tr('pass.total'), style: const TextStyle(fontSize: 17)),
         const SizedBox(height: 4),
         IconText(
@@ -3572,3 +3594,90 @@ Future<void> showPassSheet(
     ),
   );
 });
+
+/// 정원 패스 가치표 (D-081): 광고 없이 바로 받는 보상 · 매일 다이아를 다이아 값으로 30일 합산.
+class PassValueTable extends StatelessWidget {
+  const PassValueTable({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    const ink = Color(0xFF5E4B36);
+    Widget line(String icon, String label, int g, {bool bold = false}) =>
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              ArtImage(IconText.resolve(icon), size: 26),
+              const SizedBox(width: 8),
+              Expanded(
+                child: IconText(
+                  label,
+                  style: const TextStyle(fontSize: 15, color: ink),
+                ),
+              ),
+              IconText(
+                tr('pass.value.perDay', {'g': g}),
+                style: const TextStyle(fontSize: 15, color: ink),
+              ),
+            ],
+          ),
+        );
+    final rows = PassValue.perDay();
+    final pack = Gems.packs.firstWhere((p) => p.id == 'gems_430');
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2D3B5), width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final (k, n, g) in rows)
+            line(
+              switch (k) {
+                AdKind.energy => 'energy',
+                AdKind.boost => 'boost',
+                _ => 'diamond',
+              },
+              tr(
+                switch (k) {
+                  AdKind.energy => 'pass.value.energy',
+                  AdKind.boost => 'pass.value.boost',
+                  _ => 'pass.value.gems',
+                },
+                {'n': n},
+              ),
+              g,
+            ),
+          line('diamond', tr('pass.value.daily'), PassValue.dailyGems),
+          const Divider(height: 14, color: Color(0xFFE2D3B5)),
+          IconText(
+            tr('pass.value.sum', {
+              'day': PassValue.perDayTotal,
+              'month': PassValue.monthTotal.toString().replaceAllMapped(
+                RegExp(r'\B(?=(\d{3})+(?!\d))'),
+                (_) => ',',
+              ),
+            }),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 16, color: Palette.primary),
+          ),
+          const SizedBox(height: 2),
+          IconText(
+            tr('pass.value.cmp', {'pack': pack.gems, 'x': PassValue.timesPack}),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 15, color: ink),
+          ),
+          const SizedBox(height: 6),
+          IconText(
+            tr('pass.value.note'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12.5, color: Color(0xFF8A7A63)),
+          ),
+        ],
+      ),
+    );
+  }
+}
