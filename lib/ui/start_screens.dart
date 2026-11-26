@@ -275,8 +275,8 @@ class _TitleViewState extends State<TitleView> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    const bg = ArtRef('assets/art/title/bg.webp', '');
-    const fg = ArtRef('assets/art/title/fg.webp', '');
+    final bg = Art.titleBg();
+    final fg = Art.titleFg();
     return Scaffold(
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,

@@ -78,8 +78,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const bg = ArtRef('assets/art/title/bg.webp', '');
-    const fg = ArtRef('assets/art/title/fg.webp', '');
+    final bg = Art.titleBg();
+    final fg = Art.titleFg();
     return Scaffold(
       body: ListenableBuilder(
         listenable: Listenable.merge([auth, L10n.instance]),
