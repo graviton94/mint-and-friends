@@ -583,18 +583,6 @@ class _LuckyFx extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          // 금빛 별 조각이 빙 둘러 튄다
-          for (var i = 0; i < 8; i++)
-            Transform.translate(
-              offset: Offset.fromDirection(
-                -pi / 2 + 2 * pi * i / 8,
-                size * (0.3 + 0.45 * Curves.easeOutCubic.transform(v)),
-              ),
-              child: Opacity(
-                opacity: (1 - v).clamp(0.0, 1.0),
-                child: ArtImage(Art.icon('sparkle'), size: size * 0.22),
-              ),
-            ),
           Opacity(
             opacity: (1 - v * v).clamp(0.0, 1.0),
             child: Container(

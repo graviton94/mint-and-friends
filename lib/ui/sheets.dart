@@ -3583,101 +3583,202 @@ Future<void> showPassSheet(
         const SizedBox(height: 10),
         IconText(tr('pass.total'), style: const TextStyle(fontSize: 17)),
         const SizedBox(height: 4),
-        IconText(
-          tr('pass.totalBody', {
-            'ads': game.passAdsSkipped,
-            'gems': game.passGemsGiven,
-          }),
-          style: const TextStyle(fontSize: 15, color: Color(0xFF6B5A44)),
-        ),
+        const SizedBox(height: 2),
+        PassTotals(game: game),
       ],
     ),
   );
 });
 
-/// 정원 패스 가치표 (D-081): 광고 없이 바로 받는 보상 · 매일 다이아를 다이아 값으로 30일 합산.
+/// 정원 패스 가치표 (D-081): 광고처럼 한눈에. 큰 배율 + 작은 칸 4개 + 한 줄 각주.
 class PassValueTable extends StatelessWidget {
   const PassValueTable({super.key});
 
+  static String _comma(int n) => n.toString().replaceAllMapped(
+    RegExp(r'\B(?=(\d{3})+(?!\d))'),
+    (_) => ',',
+  );
+
   @override
   Widget build(BuildContext context) {
-    const ink = Color(0xFF5E4B36);
-    Widget line(String icon, String label, int g, {bool bold = false}) =>
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              ArtImage(IconText.resolve(icon), size: 26),
-              const SizedBox(width: 8),
-              Expanded(
-                child: IconText(
-                  label,
-                  style: const TextStyle(fontSize: 15, color: ink),
-                ),
-              ),
-              IconText(
-                tr('pass.value.perDay', {'g': g}),
-                style: const TextStyle(fontSize: 15, color: ink),
-              ),
-            ],
+    const brown = Color(0xFF7A5230);
+    const outline = [
+      Shadow(color: brown, offset: Offset(2, 0)),
+      Shadow(color: brown, offset: Offset(-2, 0)),
+      Shadow(color: brown, offset: Offset(0, 2)),
+      Shadow(color: brown, offset: Offset(0, -2)),
+    ];
+    final tiles = [
+      for (final (k, n, g) in PassValue.perDay())
+        (
+          switch (k) {
+            AdKind.energy => 'energy',
+            AdKind.boost => 'boost',
+            _ => 'diamond',
+          },
+          tr(
+            switch (k) {
+              AdKind.energy => 'pass.value.energy',
+              AdKind.boost => 'pass.value.boost',
+              _ => 'pass.value.gems',
+            },
+            {'n': n},
           ),
-        );
-    final rows = PassValue.perDay();
-    final pack = Gems.packs.firstWhere((p) => p.id == 'gems_430');
-    return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2D3B5), width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (final (k, n, g) in rows)
-            line(
-              switch (k) {
-                AdKind.energy => 'energy',
-                AdKind.boost => 'boost',
-                _ => 'diamond',
-              },
-              tr(
-                switch (k) {
-                  AdKind.energy => 'pass.value.energy',
-                  AdKind.boost => 'pass.value.boost',
-                  _ => 'pass.value.gems',
-                },
-                {'n': n},
+          g,
+        ),
+      ('diamond', tr('pass.value.daily'), PassValue.dailyGems),
+    ];
+    Widget tile((String, String, int) t) => Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 3),
+        padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2D3B5), width: 1.5),
+        ),
+        child: Column(
+          children: [
+            ArtImage(IconText.resolve(t.$1), size: 30),
+            const SizedBox(height: 2),
+            IconText(
+              t.$2,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              style: const TextStyle(
+                fontSize: 11.5,
+                height: 1.15,
+                color: Color(0xFF6B5A44),
               ),
-              g,
             ),
-          line('diamond', tr('pass.value.daily'), PassValue.dailyGems),
-          const Divider(height: 14, color: Color(0xFFE2D3B5)),
-          IconText(
-            tr('pass.value.sum', {
-              'day': PassValue.perDayTotal,
-              'month': PassValue.monthTotal.toString().replaceAllMapped(
-                RegExp(r'\B(?=(\d{3})+(?!\d))'),
-                (_) => ',',
-              ),
-            }),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, color: Palette.primary),
-          ),
-          const SizedBox(height: 2),
-          IconText(
-            tr('pass.value.cmp', {'pack': pack.gems, 'x': PassValue.timesPack}),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 15, color: ink),
-          ),
-          const SizedBox(height: 6),
-          IconText(
-            tr('pass.value.note'),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12.5, color: Color(0xFF8A7A63)),
-          ),
-        ],
+            const SizedBox(height: 2),
+            IconText(
+              '[[diamond]]${t.$3}',
+              style: const TextStyle(fontSize: 15, color: Palette.primary),
+            ),
+          ],
+        ),
       ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 큰 배율 배너
+        Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFFFE58A), Color(0xFFFFC94A)],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: brown, width: 2),
+          ),
+          child: Shine(
+            child: Column(
+              children: [
+                IconText(
+                  tr('pass.value.hero1'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 14, color: brown),
+                ),
+                Text(
+                  tr('pass.value.hero2', {'x': PassValue.timesPack}),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 34,
+                    height: 1.15,
+                    color: Colors.white,
+                    shadows: outline,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBF0),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: brown, width: 1.5),
+                  ),
+                  child: IconText(
+                    tr('pass.value.month', {
+                      'month': _comma(PassValue.monthTotal),
+                    }),
+                    style: const TextStyle(fontSize: 15, color: brown),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [for (final t in tiles) tile(t)],
+        ),
+        const SizedBox(height: 4),
+        IconText(
+          tr('pass.value.note'),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 11, color: Color(0xFF9A8A73)),
+        ),
+      ],
+    );
+  }
+}
+
+/// 정원 패스: 지금까지 받은 혜택 (D-081). 숫자 칸 3개.
+class PassTotals extends StatelessWidget {
+  const PassTotals({super.key, required this.game});
+  final GameState game;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget tile(String icon, String label, String value) => Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 3),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2D3B5), width: 1.5),
+        ),
+        child: Column(
+          children: [
+            ArtImage(IconText.resolve(icon), size: 30),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 20, color: Palette.primary),
+            ),
+            IconText(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, color: Color(0xFF6B5A44)),
+            ),
+          ],
+        ),
+      ),
+    );
+    final ads = game.passAdsSkipped;
+    return Row(
+      children: [
+        tile('ad', tr('pass.total.ads'), tr('pass.total.n', {'n': ads})),
+        tile(
+          'diamond',
+          tr('pass.total.gems'),
+          PassValueTable._comma(game.passGemsGiven),
+        ),
+        tile(
+          'timer',
+          tr('pass.total.time'),
+          tr('pass.total.min', {'n': (ads * 30 / 60).round()}),
+        ),
+      ],
     );
   }
 }

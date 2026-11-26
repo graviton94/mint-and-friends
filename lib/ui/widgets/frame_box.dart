@@ -95,7 +95,13 @@ class GameDialog extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
       ),
       corner: 30,
-      padding: EdgeInsets.fromLTRB(24, hasRibbon ? 40 : 22, 24, 20),
+      // X 버튼 자리만큼 위를 띄운다 (첫 줄과 겹치지 않게)
+      padding: EdgeInsets.fromLTRB(
+        24,
+        (hasRibbon ? 40 : 22) + (onClose != null ? 26 : 0),
+        24,
+        20,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -136,7 +142,7 @@ class GameDialog extends StatelessWidget {
               Positioned(
                 // 테두리 안쪽 오른쪽 위 (밖으로 튀어나가지 않게)
                 right: 10,
-                top: hasRibbon ? 34 : 10,
+                top: hasRibbon ? 30 : 10,
                 child: GestureDetector(
                   onTap: onClose,
                   child: Art.icon('close').available
