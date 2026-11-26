@@ -475,21 +475,8 @@ class _SeasonBadge extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // 말머리: 크림색 동그라미 안에 계절 그림 (알약 색에 묻히지 않게)
-            Container(
-              width: 30,
-              height: 30,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFF8EA),
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF5A3A1E), width: 2),
-              ),
-              child: ArtImage(
-                ArtRef('assets/art/fx/${fx}_badge.webp', ''),
-                size: 22,
-              ),
-            ),
+            // 말머리: 동그라미 계절 아이콘 (발주 그림, 크림 바탕 · 갈색 테두리 포함)
+            ArtImage(ArtRef('assets/art/fx/${fx}_badge.webp', ''), size: 32),
             const SizedBox(width: 8),
             Text(
               tr('title.season.$season'),
