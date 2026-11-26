@@ -1266,6 +1266,11 @@
   "share.linkOnly": "文とリンクだけ送る",
   "area.newTitle": "新しいエリア！",
   "area.newNote": "新しい飾り{n}種類が待ってるよ",
-  "area.newFriends": "新しい友だちも遊びに来るよ：{names}",
-  "area.newGo": "飾りに行こう"
+  "area.newGo": "飾りに行こう",
+  "area.next": "つぎへ",
+  "area.friendsTitle": "新しい友だちが遊びに来るよ",
+  "area.friendsNote": "このエリアに飾りを置くと来てくれるよ",
+  "basket.newTitle": "新しいバスケット！",
+  "basket.newName": "{name} 登場！",
+  "basket.newNote": "{chain}のアイテムが出るようになったよ。\nボード下のバスケットを横にスワイプして切りかえてね。"
 }

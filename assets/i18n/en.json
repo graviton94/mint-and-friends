@@ -1266,6 +1266,11 @@
   "share.linkOnly": "Send text and link only",
   "area.newTitle": "New area!",
   "area.newNote": "{n} new decorations are waiting",
-  "area.newFriends": "New friends will visit too: {names}",
-  "area.newGo": "Let's decorate"
+  "area.newGo": "Let's decorate",
+  "area.next": "Next",
+  "area.friendsTitle": "New friends are coming",
+  "area.friendsNote": "Place decor in this area and they'll visit",
+  "basket.newTitle": "New basket!",
+  "basket.newName": "{name} unlocked!",
+  "basket.newNote": "{chain} items now appear.\nSwipe the basket below the board to switch."
 }

@@ -762,6 +762,20 @@ class GameState extends ChangeNotifier {
           level >= Leveling.areaLevel(Chains.basketArea[b]) &&
           Chains.baskets[b].every(Chains.ready));
 
+  /// 이미 '새 바구니!' 를 알려 준 바구니 (D-085). 예전 저장은 처음 볼 때 지금 열린 것으로.
+  Set<int>? _basketsSeen;
+  Set<int> get basketsSeen => _basketsSeen ??= openBaskets.toSet();
+
+  /// 새로 열렸는데 아직 안 알려 준 바구니를 돌려주고 알린 것으로 표시.
+  List<int> takeNewBaskets() {
+    final fresh = [
+      for (final b in openBaskets)
+        if (!basketsSeen.contains(b)) b,
+    ];
+    basketsSeen.addAll(fresh);
+    return fresh;
+  }
+
   List<int> get openBaskets => [
     for (var b = 0; b < Chains.baskets.length; b++)
       if (basketOpen(b)) b,
@@ -3343,6 +3357,7 @@ class GameState extends ChangeNotifier {
       'ads': {for (final e in adsToday.entries) e.key.name: e.value},
       'hi': {for (final e in highest.entries) e.key.name: e.value},
       'area': currentArea,
+      'bSeen': basketsSeen.toList(),
       'placed': placed.toList(),
       'basket': basket,
       if (decorStyle.isNotEmpty) 'styles': decorStyle,
@@ -3579,6 +3594,9 @@ class GameState extends ChangeNotifier {
       highest[c] = (hi[c.name] as num?)?.toInt() ?? 1;
     }
     currentArea = (j['area'] as num?)?.toInt() ?? 0;
+    _basketsSeen = j['bSeen'] == null
+        ? null
+        : {for (final b in j['bSeen'] as List) (b as num).toInt()};
     placed = {for (final s in (j['placed'] as List? ?? [])) (s as num).toInt()};
     basket = (j['basket'] as num?)?.toInt() ?? 0;
     outfits = ((j['outfits'] as Map?) ?? {}).map(

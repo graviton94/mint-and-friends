@@ -1267,6 +1267,11 @@
   "share.linkOnly": "글과 링크로 보내기",
   "area.newTitle": "새 구역!",
   "area.newNote": "새 장식 {n}종이 기다리고 있어요",
-  "area.newFriends": "새 친구도 놀러 올 거예요: {names}",
-  "area.newGo": "꾸미러 가기"
+  "area.newGo": "꾸미러 가기",
+  "area.next": "다음",
+  "area.friendsTitle": "새 친구가 놀러 와요",
+  "area.friendsNote": "이 구역에 장식을 놓으면 친구가 찾아와요",
+  "basket.newTitle": "새 바구니!",
+  "basket.newName": "{name} 등장!",
+  "basket.newNote": "이제 {chain} 아이템이 나와요.\n판 아래 바구니를 옆으로 넘겨 바꿔요."
 }

@@ -233,6 +233,7 @@ class _HomeScreenState extends State<HomeScreen> {
           if (mounted) _seasonSetDialog(area, style);
         });
       case AreaCompletedEvent(:final area):
+        _areaFlow = true;
         _toast(tr('toast.areaDone', {'name': areaName(Garden.areaAt(area))}));
         // 완성한 구역 자랑 카드 (장식 · 친구가 모두 있는 정원) → 첫 구역이면 새싹 정원 패키지 (한 번만)
         Future.delayed(const Duration(milliseconds: 1500), () async {
@@ -245,6 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
             await showNewAreaDialog(context, game, game.currentArea);
             if (!mounted) return;
           }
+          _areaFlow = false;
           if (area == 0 && game.showStarterOffer()) {
             await Future.delayed(const Duration(milliseconds: 600));
             if (mounted) showStarterSheet(context, widget.billing, game);
@@ -311,6 +313,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  /// 구역 완성 → 자랑 → 새 구역 창이 진행 중 (바구니 알림은 새 구역 창이 맡는다).
+  bool _areaFlow = false;
+
   Future<void> _showLevelUps() async {
     if (_levelDialogOpen || _levelUps.isEmpty || !mounted) return;
     _levelDialogOpen = true;
@@ -354,6 +359,11 @@ class _HomeScreenState extends State<HomeScreen> {
     for (final f in e.unlocked.where((f) => f != Feature.storage)) {
       if (!mounted) break;
       await _showUnlock(f);
+    }
+    // 레벨로 바구니가 새로 열렸으면 (구역 완성 흐름 중이면 그쪽 새 구역 창이 보여 준다, D-085)
+    if (mounted && !_areaFlow) {
+      final fresh = game.takeNewBaskets();
+      if (fresh.isNotEmpty) await showNewBasketDialog(context, fresh);
     }
     _levelDialogOpen = false;
     _startOnboarding(e.unlocked);
@@ -3270,97 +3280,95 @@ class _ToastView extends StatelessWidget {
   }
 }
 
-/// 새 구역이 열렸을 때: 새 배경을 크게 + 기다리는 장식 · 친구 (D-083).
+/// 새 구역이 열렸을 때 (D-085): 여러 장으로. ① 구역 · 장식 ② 새 친구 ③ 새 바구니 (있을 때만).
 Future<void> showNewAreaDialog(BuildContext context, GameState game, int area) {
-  final def = Garden.areaAt(area);
   sfx(Sfx.levelup);
+  final def = Garden.areaAt(area);
   final newFriends = [
     for (final d in def.decor)
       if (d.bringsFriend != null && !game.friends.contains(d.bringsFriend))
         d.bringsFriend!,
   ];
-  return showDialog<void>(
-    context: context,
-    builder: (ctx) => GameDialog(
+  final baskets = game.takeNewBaskets();
+  return _showPages(context, tr('area.newTitle'), [
+    _areaPage(def),
+    if (newFriends.isNotEmpty) _friendsPage(newFriends),
+    for (final b in baskets) _basketPage(b),
+  ]);
+}
+
+/// 레벨이 올라 바구니만 새로 열렸을 때 (구역은 이미 열려 있던 경우).
+Future<void> showNewBasketDialog(BuildContext context, List<int> baskets) {
+  sfx(Sfx.levelup);
+  return _showPages(context, tr('basket.newTitle'), [
+    for (final b in baskets) _basketPage(b),
+  ]);
+}
+
+Future<void> _showPages(
+  BuildContext context,
+  String title,
+  List<Widget> pages,
+) => showDialog<void>(
+  context: context,
+  builder: (ctx) => _PagedDialog(title: title, pages: pages),
+);
+
+class _PagedDialog extends StatefulWidget {
+  const _PagedDialog({required this.title, required this.pages});
+  final String title;
+  final List<Widget> pages;
+
+  @override
+  State<_PagedDialog> createState() => _PagedDialogState();
+}
+
+class _PagedDialogState extends State<_PagedDialog> {
+  int _i = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final last = _i == widget.pages.length - 1;
+    return GameDialog(
       banner: 'gold',
-      title: IconText(tr('area.newTitle'), textAlign: TextAlign.center),
-      onClose: () => Navigator.pop(ctx),
+      title: IconText(widget.title, textAlign: TextAlign.center),
+      onClose: () => Navigator.pop(context),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 새 구역 배경: 반짝이며 커지는 사진 카드
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 700),
-            curve: Curves.elasticOut,
-            builder: (_, v, child) =>
-                Transform.scale(scale: 0.6 + 0.4 * v, child: child),
-            child: Container(
-              height: 150,
-              // 테두리는 그림 위에 (foregroundDecoration)
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-              ),
-              foregroundDecoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFF7A5230), width: 3),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(Art.areaBackground(def).path, fit: BoxFit.cover),
-                  Align(
-                    alignment: const Alignment(-0.88, -0.78),
-                    child: ArtImage(Art.areaIcon(def), size: 44),
-                  ),
-                ],
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 260),
+            transitionBuilder: (child, a) => FadeTransition(
+              opacity: a,
+              child: SlideTransition(
+                position: Tween(
+                  begin: const Offset(0.15, 0),
+                  end: Offset.zero,
+                ).animate(a),
+                child: child,
               ),
             ),
+            child: KeyedSubtree(key: ValueKey(_i), child: widget.pages[_i]),
           ),
-          const SizedBox(height: 10),
-          IconText(
-            areaName(def),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 24, color: Color(0xFF5C402C)),
-          ),
-          const SizedBox(height: 8),
-          // 기다리는 장식 8종 미리보기
-          for (var row = 0; row < def.decor.length; row += 4)
+          if (widget.pages.length > 1) ...[
+            const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                for (final d in def.decor.skip(row).take(4))
-                  Padding(
-                    padding: const EdgeInsets.all(3),
-                    child: ArtImage(Art.decor(d), size: 46),
+                for (var k = 0; k < widget.pages.length; k++)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    width: k == _i ? 18 : 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: k == _i
+                          ? Palette.primary
+                          : const Color(0xFFD9CBB0),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
               ],
-            ),
-          const SizedBox(height: 8),
-          IconText(
-            tr('area.newNote', {'n': def.decor.length}),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 15, color: Color(0xFF5E4B36)),
-          ),
-          if (newFriends.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (final f in newFriends)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: ArtImage(Art.friend(Friends.byId(f)), size: 54),
-                  ),
-              ],
-            ),
-            IconText(
-              tr('area.newFriends', {
-                'names': newFriends.map(friendName).join(', '),
-              }),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15, color: Palette.primary),
             ),
           ],
         ],
@@ -3371,15 +3379,159 @@ Future<void> showNewAreaDialog(BuildContext context, GameState game, int area) {
             FilledButton.styleFrom(
               minimumSize: const Size(double.infinity, 56),
             ),
-            'button_gold',
+            last ? 'button_gold' : 'button_green',
           ),
-          onPressed: () => Navigator.pop(ctx),
+          onPressed: () {
+            sfx(Sfx.tap);
+            if (last) {
+              Navigator.pop(context);
+            } else {
+              setState(() => _i++);
+            }
+          },
           child: IconText(
-            tr('area.newGo'),
+            tr(last ? 'area.newGo' : 'area.next'),
             style: const TextStyle(fontSize: 18),
           ),
         ),
       ],
-    ),
-  );
+    );
+  }
 }
+
+const _ink = Color(0xFF5E4B36);
+
+Widget _pageTitle(String s) => Padding(
+  padding: const EdgeInsets.only(top: 10, bottom: 8),
+  child: IconText(
+    s,
+    textAlign: TextAlign.center,
+    style: const TextStyle(fontSize: 24, color: Color(0xFF5C402C)),
+  ),
+);
+
+/// ① 새 구역 배경 + 장식 8종.
+Widget _areaPage(AreaDef def) => Column(
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.elasticOut,
+      builder: (_, v, child) =>
+          Transform.scale(scale: 0.6 + 0.4 * v, child: child),
+      child: Container(
+        height: 150,
+        // 테두리는 그림 위에 (foregroundDecoration)
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(18)),
+        foregroundDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFF7A5230), width: 3),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset(Art.areaBackground(def).path, fit: BoxFit.cover),
+            Align(
+              alignment: const Alignment(-0.88, -0.78),
+              child: ArtImage(Art.areaIcon(def), size: 44),
+            ),
+          ],
+        ),
+      ),
+    ),
+    _pageTitle(areaName(def)),
+    for (var row = 0; row < def.decor.length; row += 4)
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (final d in def.decor.skip(row).take(4))
+            Padding(
+              padding: const EdgeInsets.all(3),
+              child: ArtImage(Art.decor(d), size: 46),
+            ),
+        ],
+      ),
+    const SizedBox(height: 8),
+    IconText(
+      tr('area.newNote', {'n': def.decor.length}),
+      textAlign: TextAlign.center,
+      style: const TextStyle(fontSize: 15, color: _ink),
+    ),
+  ],
+);
+
+/// ② 새로 올 친구들.
+Widget _friendsPage(List<String> ids) => Column(
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    const SizedBox(height: 6),
+    Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (final f in ids)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: GlowHalo(
+              size: 130,
+              child: ArtImage(
+                Art.friend(Friends.byId(f), happy: true),
+                size: 96,
+              ),
+            ),
+          ),
+      ],
+    ),
+    _pageTitle(tr('area.friendsTitle')),
+    IconText(
+      ids.map(friendName).join(', '),
+      textAlign: TextAlign.center,
+      style: const TextStyle(fontSize: 18, color: Palette.primary),
+    ),
+    const SizedBox(height: 6),
+    IconText(
+      tr('area.friendsNote'),
+      textAlign: TextAlign.center,
+      style: const TextStyle(fontSize: 15, color: _ink),
+    ),
+  ],
+);
+
+/// ③ 새 바구니: 바구니 그림 + 나오는 아이템 1~4단계.
+Widget _basketPage(int b) => Column(
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    GlowHalo(
+      size: 150,
+      child: ArtImage(Art.icon(Chains.basketIcon[b]), size: 100),
+    ),
+    _pageTitle(tr('basket.newName', {'name': tr('basket.$b')})),
+    Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (final c in Chains.baskets[b])
+          for (var lv = 1; lv <= 4; lv++) ...[
+            ArtImage(Art.item(c, lv), size: 40),
+            if (lv < 4)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 1),
+                child: Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: Color(0xFFB89A6E),
+                ),
+              ),
+          ],
+      ],
+    ),
+    const SizedBox(height: 8),
+    IconText(
+      tr('basket.newNote', {
+        'chain': Chains.baskets[b].map(chainName).join(' · '),
+      }),
+      textAlign: TextAlign.center,
+      style: const TextStyle(fontSize: 15, color: _ink),
+    ),
+  ],
+);

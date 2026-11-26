@@ -1266,6 +1266,11 @@
   "share.linkOnly": "Enviar solo texto y enlace",
   "area.newTitle": "¡Nueva zona!",
   "area.newNote": "Te esperan {n} decoraciones nuevas",
-  "area.newFriends": "También vendrán amigos nuevos: {names}",
-  "area.newGo": "A decorar"
+  "area.newGo": "A decorar",
+  "area.next": "Siguiente",
+  "area.friendsTitle": "Vienen amigos nuevos",
+  "area.friendsNote": "Coloca decoración en esta zona y vendrán",
+  "basket.newTitle": "¡Cesta nueva!",
+  "basket.newName": "¡{name} desbloqueada!",
+  "basket.newNote": "Ahora salen objetos de {chain}.\nDesliza la cesta bajo el tablero para cambiarla."
 }
