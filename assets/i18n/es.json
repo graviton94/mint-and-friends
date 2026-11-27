@@ -1273,7 +1273,7 @@
   "basket.newName": "¡{name} desbloqueada!",
   "basket.newNote": "Ahora salen objetos de {chain}.\nDesliza la cesta bajo el tablero para cambiarla.",
   "share.lv": "Nv.{n}",
-  "patch.1.0.18": "• Nuevas tarjetas para presumir con una gran foto de tu jardín\n• Al compartir se copian el texto de invitación y el enlace\n  También puedes enviar solo el texto y el enlace\n• Al abrir una zona nueva hay celebración\n  con nueva decoración, amigos y cestas\n• Las flechas de zona en la vista del jardín siempre están en su sitio\n• El Invernadero Fragante ahora es el Huerto Soleado\n\n¡Te enviamos energía como regalo!",
+  "patch.1.0.18": "• Botones, ventanas, cintas y bocadillos más nítidos y limpios\n• El texto de los botones ahora usa la misma letra que el juego\n• Nuevas tarjetas para presumir con una gran foto de tu jardín\n• Al compartir se copian el texto de invitación y el enlace\n• Al abrir una zona nueva se presentan su decoración, amigos y cestas\n• Ve de un vistazo los beneficios y el valor del Pase del Jardín en la tienda\n• Los pedidos muestran una pequeña historia del objeto\n• El aviso al gastar es más ligero y bonito\n• El Invernadero Fragante ahora es el Huerto Soleado\n\n¡Te enviamos energía como regalo!",
   "pass.card.hook": "¡Premios sin anuncios y gemas diarias!",
   "pass.card.noAds": "Sin anuncios",
   "pass.card.gems": "{n} diarias",
