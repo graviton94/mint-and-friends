@@ -129,9 +129,40 @@ def feature(season, apply=False):
         print('dry run: nothing changed')
 
 
+def listing(apply=False):
+    """docs/store/store.json 의 제목 · 짧은 설명 · 자세한 설명을 스토어 등록정보에 맞춘다 (--apply 없으면 확인만)."""
+    store = json.load(open('docs/store/store.json'))
+    e = ok(s.post(f'{API}/edits'))['id']
+    cur = {l['language']: l for l in ok(s.get(f'{API}/edits/{e}/listings')).get('listings', [])}
+    print('listings:', sorted(cur))
+    changed = 0
+    for L in store['langs']:
+        base = L['code'].split('-')[0]
+        codes = [c for c in FEATURE_LANG.get(base, [L['code']]) if c in cur] or [L['code']]
+        want = {'title': L['title'], 'shortDescription': L['short'], 'fullDescription': L['full']}
+        for code in codes:
+            have = cur.get(code, {})
+            diff = [k for k, v in want.items() if have.get(k) != v]
+            if not diff:
+                print(f'{code}: same')
+                continue
+            changed += 1
+            print(f'{code}: {"update" if apply else "would update"} {diff}')
+            if apply:
+                ok(s.patch(f'{API}/edits/{e}/listings/{code}', json=want))
+    if apply and changed:
+        ok(s.post(f'{API}/edits/{e}:commit'))
+        print(f'committed {changed} listings')
+    else:
+        s.delete(f'{API}/edits/{e}')
+        print('nothing committed' if apply else 'dry run: nothing changed')
+
+
 if __name__ == '__main__':
     if sys.argv[1] == 'check':
         check()
+    elif sys.argv[1] == 'listing':
+        listing('--apply' in sys.argv)
     elif sys.argv[1] == 'feature':
         feature(sys.argv[2], '--apply' in sys.argv)
     else:

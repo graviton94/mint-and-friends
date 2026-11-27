@@ -1,0 +1,26 @@
+name: Store listing
+
+# docs/store/store.json 의 제목 · 짧은 설명 · 자세한 설명을 Play 스토어 등록정보에 올린다.
+# 수동: Actions → Store listing (apply=false 면 무엇이 바뀌는지 확인만).
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "true 면 실제로 올린다 (false = 확인만)"
+        required: true
+        default: "false"
+
+permissions:
+  contents: read
+
+jobs:
+  listing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - run: pip install -q google-auth requests
+      - run: python3 tool/play_api.py listing $([ "${{ inputs.apply }}" = "true" ] && echo --apply)
