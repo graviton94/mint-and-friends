@@ -510,6 +510,62 @@ class _Ribbon extends StatelessWidget {
       textAlign: TextAlign.center,
       child: child,
     );
+    // 새 리본 (D-092): 꼬리 + 가운데 띠(글자 길이만큼 늘어남) + 뒤집은 꼬리
+    final color = gold ? 'gold' : 'green';
+    final mid = Art.frame('ribbon_mid_$color');
+    final tail = Art.frame('ribbon_tail_$color');
+    if (mid.available && tail.available) {
+      const band = 44.0;
+      const tailSize = band / 0.7; // 꼬리 그림에서 띠는 위쪽 70%
+      Widget tailImg({bool flip = false}) => Transform.flip(
+        flipX: flip,
+        child: Image.asset(
+          tail.path,
+          width: tailSize,
+          height: tailSize,
+          fit: BoxFit.fill,
+          filterQuality: FilterQuality.medium,
+        ),
+      );
+      return SizedBox(
+        height: tailSize,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            tailImg(),
+            Transform.translate(
+              offset: const Offset(-0.5, 0),
+              child: Container(
+                height: band,
+                constraints: const BoxConstraints(minWidth: 80, maxWidth: 220),
+                padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage(mid.path),
+                    fit: BoxFit.fill,
+                    filterQuality: FilterQuality.medium,
+                  ),
+                ),
+                // 글자 폭만큼만 (Container 에 alignment 를 주면 최대 폭까지 늘어난다)
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: FittedBox(fit: BoxFit.scaleDown, child: text),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Transform.translate(
+              offset: const Offset(-1, 0),
+              child: tailImg(flip: true),
+            ),
+          ],
+        ),
+      );
+    }
     if (art.available) {
       final sz =
           Art.frameSize(art.path.split('/').last.split('.').first) ??

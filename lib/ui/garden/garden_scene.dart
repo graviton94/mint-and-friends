@@ -1294,7 +1294,18 @@ class _Bubble extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [_box(), if (Art.frame('speech_tail').available) _tail()],
+  );
+
+  // 말풍선 꼬리: 몸통 아래 가운데에 따로 붙인다 (몸통은 9조각으로 늘리고 꼬리는 그대로, D-092)
+  Widget _tail() => Transform.translate(
+    offset: const Offset(0, -3.5),
+    child: ArtImage(Art.frame('speech_tail'), size: 18),
+  );
+
+  Widget _box() => Container(
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
     decoration: FrameBox.decorationFor(
       'speech',
