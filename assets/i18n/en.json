@@ -630,7 +630,7 @@
   "boost.coins": "Coin bundle",
   "boost.coins.note": "Double all coins you earn!",
   "boost.energy": "Energy saver",
-  "boost.energy.note": "{n}% chance a tap costs no [[energy]]!",
+  "boost.energy.note": "{n}% chance a tap uses no [[energy]] energy!",
   "boost.lucky": "Lucky basket",
   "boost.lucky.note": "Higher chance of a tier-up item!",
   "boost.minutes": "{n} min",

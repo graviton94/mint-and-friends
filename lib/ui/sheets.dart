@@ -672,7 +672,15 @@ class _DecorRow extends StatelessWidget {
           Art.decor(d, style: game.styleOf(game.currentArea, slot)),
           size: 40,
         ),
-        title: Text(decorName(d), style: const TextStyle(fontSize: 17)),
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            decorName(d),
+            maxLines: 1,
+            style: const TextStyle(fontSize: 17),
+          ),
+        ),
         subtitle: newFriend
             ? IconText(
                 tr('decor.bringsFriend', {
@@ -1270,9 +1278,14 @@ class _OutfitCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(
-            id == null ? tr('outfit.basic') : tr(outfit!.key),
-            style: const TextStyle(fontSize: 14, color: Color(0xFF6B5638)),
+          // 의상 이름은 한 줄 (좁은 칸: 길면 줄여서, D-106)
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              id == null ? tr('outfit.basic') : tr(outfit!.key),
+              maxLines: 1,
+              style: const TextStyle(fontSize: 14, color: Color(0xFF6B5638)),
+            ),
           ),
           const SizedBox(height: 4),
           ArtImage(Art.friend(def, outfit: id), size: 84),
@@ -2561,11 +2574,17 @@ class StarterCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            IconText(
-                              tr('starter.title'),
-                              style: const TextStyle(
-                                fontSize: 22,
-                                color: Color(0xFF6B3A10),
+                            // 제목은 한 줄 (긴 언어는 글자를 줄여서, 낱말 중간에서 줄이 바뀌지 않게)
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: IconText(
+                                tr('starter.title'),
+                                maxLines: 1,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  color: Color(0xFF6B3A10),
+                                ),
                               ),
                             ),
                             IconText(
@@ -2810,11 +2829,16 @@ class PassCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            IconText(
-                              IconText.plain(tr('shop.adFree')),
-                              style: const TextStyle(
-                                fontSize: 22,
-                                color: Color(0xFF2F5E1E),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerLeft,
+                              child: IconText(
+                                IconText.plain(tr('shop.adFree')),
+                                maxLines: 1,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  color: Color(0xFF2F5E1E),
+                                ),
                               ),
                             ),
                             IconText(
@@ -3479,15 +3503,32 @@ Future<void> showSettingsSheet(
         const SizedBox(height: 10),
         IconText(tr('settings.language'), style: const TextStyle(fontSize: 18)),
         const SizedBox(height: 6),
-        Wrap(
-          spacing: 8,
+        // 언어 4개는 늘 한 줄로 같은 폭 (D-106: 일본어 글꼴에서 두 줄로 넘어갔다)
+        Row(
           children: [
-            for (final e in L10n.supported.entries)
-              ChoiceChip(
-                label: Text(e.value, style: const TextStyle(fontSize: 16)),
-                selected: L10n.instance.lang == e.key,
-                onSelected: (_) => L10n.instance.setLanguage(e.key),
+            for (final (i, e) in L10n.supported.entries.indexed) ...[
+              if (i > 0) const SizedBox(width: 6),
+              Expanded(
+                child: ChoiceChip(
+                  showCheckmark: false,
+                  labelPadding: EdgeInsets.zero,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  label: SizedBox(
+                    width: double.infinity,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        e.value,
+                        maxLines: 1,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                  selected: L10n.instance.lang == e.key,
+                  onSelected: (_) => L10n.instance.setLanguage(e.key),
+                ),
               ),
+            ],
           ],
         ),
         const SizedBox(height: 18),

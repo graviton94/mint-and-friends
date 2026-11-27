@@ -69,6 +69,23 @@ class IconText extends StatelessWidget {
         b.write('\u00A0');
         continue;
       }
+      // 짧은 꼬리(×5 · 3–5 · 10%)가 혼자 다음 줄로 넘어가지 않게 앞 낱말에 붙인다 (D-106)
+      if (c == 0x20) {
+        var j = i + 1;
+        while (j < runes.length && runes[j] != 0x20 && runes[j] != 0x0A) {
+          j++;
+        }
+        final tail = String.fromCharCodes(runes.sublist(i + 1, j));
+        if (tail.isNotEmpty &&
+            tail.runes.length <= 3 &&
+            RegExp(r'^[×x+\-–~#%\d.,!?！？]+[%!?！？]?$').hasMatch(tail)) {
+          // 꼬리 안('×'·'5', '3'·'–'·'5')에서도 줄이 바뀌지 않게
+          b.write('\u00A0');
+          b.write(tail.split('').join('\u2060'));
+          i = j - 1;
+          continue;
+        }
+      }
       b.writeCharCode(c);
       if (i + 1 < runes.length) {
         final n = runes[i + 1];
@@ -89,8 +106,16 @@ class IconText extends StatelessWidget {
     final spans = <InlineSpan>[];
     var last = 0;
     for (final m in _token.allMatches(text)) {
-      if (m.start > last)
-        spans.add(TextSpan(text: keepWords(text.substring(last, m.start))));
+      if (m.start > last) {
+        var before = keepWords(text.substring(last, m.start));
+        // 아이콘이 문장 끝('no [[energy]]!')이면 앞 낱말과 붙여 아이콘만 다음 줄로 가지 않게
+        final after = m.end < text.length ? text[m.end] : '';
+        if (before.endsWith(' ') &&
+            (after.isEmpty || '!?！？.,。、'.contains(after))) {
+          before = '${before.substring(0, before.length - 1)}\u00A0\u2060';
+        }
+        spans.add(TextSpan(text: before));
+      }
       spans.add(
         WidgetSpan(
           alignment: PlaceholderAlignment.middle,
@@ -103,7 +128,12 @@ class IconText extends StatelessWidget {
       last = m.end;
     }
     if (last < text.length) {
-      spans.add(TextSpan(text: keepWords(text.substring(last))));
+      var rest = keepWords(text.substring(last));
+      // 아이콘 바로 뒤 문장부호('￼!')가 혼자 다음 줄로 가지 않게
+      if (last > 0 && rest.isNotEmpty && '!?！？.,。、)）'.contains(rest[0])) {
+        rest = '\u2060$rest';
+      }
+      spans.add(TextSpan(text: rest));
     }
     return Text.rich(
       TextSpan(children: spans),

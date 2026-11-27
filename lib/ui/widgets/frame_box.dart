@@ -241,8 +241,10 @@ class GameDialog extends StatelessWidget {
 
 /// 버튼 테마에 꽂는 프레임 배경. 프레임이 없으면 원래 색 배경을 그대로 쓴다.
 /// 버튼 기본 글자 (테마와 같은 값).
-// 굵게(fontWeight) 없이: Jua · Mochiy Pop 은 굵은 글꼴이 없어 억지로 두껍게 그려 다른 글씨체처럼 보였다 (D-088)
-const buttonTextStyle = TextStyle(fontSize: 16);
+// 굵게(fontWeight) 없이: Jua · Mochiy Pop 은 굵은 글꼴이 없어 억지로 두껍게 그려 다른 글씨체처럼 보였다 (D-088).
+// 글꼴 이름을 꼭 넣는다: 버튼 글자 모양(textStyle)은 화면의 기본 글꼴을 물려받지 않아,
+// 빠지면 폰에서는 시스템 글꼴로 나왔다 (웹 미리보기엔 시스템 한글 글꼴이 없어 몰랐다, D-105)
+TextStyle get buttonTextStyle => appFontStyle(const TextStyle(fontSize: 16));
 
 /// 연두 · 보라 버튼의 흰 글자 테두리 (밝은 바탕에서 글자가 묻히지 않게).
 List<Shadow> buttonTextOutline(String frame) {
@@ -275,7 +277,7 @@ ButtonStyle framedButton(ButtonStyle base, String frame) {
   final ts = base.textStyle;
   base = base.copyWith(
     textStyle: WidgetStateProperty.resolveWith(
-      (states) => (ts?.resolve(states) ?? buttonTextStyle).copyWith(
+      (states) => appFontStyle(ts?.resolve(states) ?? buttonTextStyle).copyWith(
         // 비활성(반투명)일 때는 테두리를 빼야 글자가 뭉개지지 않는다
         shadows: states.contains(WidgetState.disabled) ? const [] : outline,
       ),

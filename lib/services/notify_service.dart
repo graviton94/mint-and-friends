@@ -240,16 +240,16 @@ class NotifyService extends ChangeNotifier {
           );
       events.add((
         now.add(left),
-        tr('notify.energy.title'),
-        tr('notify.energy.body', {'n': g.energyCap}),
+        trPlain('notify.energy.title'),
+        trPlain('notify.energy.body', {'n': g.energyCap}),
       ));
     }
     // 2) 정원 수입 주머니 가득 (오프라인 한도)
     if (g.baseIncomePerSec > 0) {
       events.add((
         now.add(g.offlineCap),
-        tr('notify.offline.title'),
-        tr('notify.offline.body'),
+        trPlain('notify.offline.title'),
+        trPlain('notify.offline.body'),
       ));
     }
     // 3) 친구 선물
@@ -257,8 +257,8 @@ class NotifyService extends ChangeNotifier {
     if (gift != null && g.friends.length >= 2 && gift.isAfter(now)) {
       events.add((
         gift,
-        tr('notify.gift.title'),
-        tr('notify.gift.body', {'name': friend()}),
+        trPlain('notify.gift.title'),
+        trPlain('notify.gift.body', {'name': friend()}),
       ));
     }
     // 4) 안 읽은 편지 (3시간 뒤): 친구 편지면 그 친구 이름으로, 여럿이면 개수로
@@ -271,24 +271,26 @@ class NotifyService extends ChangeNotifier {
       events.add((
         now.add(const Duration(hours: 3)),
         unread.length > 1
-            ? tr('notify.mailMany.title', {'n': unread.length})
+            ? trPlain('notify.mailMany.title', {'n': unread.length})
             : fromFriend != null
-            ? tr('notify.mailFrom.title', {'name': friendName(fromFriend.from)})
-            : tr('notify.mail.title'),
-        tr('notify.mail.body.$v'),
+            ? trPlain('notify.mailFrom.title', {
+                'name': friendName(fromFriend.from),
+              })
+            : trPlain('notify.mail.title'),
+        trPlain('notify.mail.body.$v'),
       ));
     }
     // 아침 알림: 첫날은 출석 선물(Lv3+) 또는 아침 인사, 이튿날은 친구가 보고 싶대요, 사흗날은 친구들이 기다려요
     final n1 = friend();
     final morning = <(String, String)>[
       g.level >= 3
-          ? (tr('notify.checkIn.title'), tr('notify.checkIn.body'))
-          : (tr('notify.morning.title'), tr('notify.morning.body')),
+          ? (trPlain('notify.checkIn.title'), trPlain('notify.checkIn.body'))
+          : (trPlain('notify.morning.title'), trPlain('notify.morning.body')),
       (
-        tr('notify.miss.title', {'name': n1}),
-        tr('notify.miss.body', {'name': n1}),
+        trPlain('notify.miss.title', {'name': n1}),
+        trPlain('notify.miss.body', {'name': n1}),
       ),
-      (tr('notify.miss3.title'), tr('notify.miss3.body')),
+      (trPlain('notify.miss3.title'), trPlain('notify.miss3.body')),
     ].take(morningDays).toList();
 
     final kept = arrange(now, events, morning, rng);

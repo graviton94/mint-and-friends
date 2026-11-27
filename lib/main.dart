@@ -732,24 +732,27 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
         builder: (context, child) => MediaQuery.withClampedTextScaling(
           // 휴대폰 글자 크기를 아주 크게 해도 게임 화면이 겹치지 않게 1.15배까지만 (D-077)
           maxScaleFactor: 1.15,
-          child: Stack(
-            children: [
-              if (child != null)
-                Listener(
-                  behavior: HitTestBehavior.translucent,
-                  onPointerDown: (d) {
-                    game.noteInput();
-                    SpendFloat.lastTap = d.position;
+          // 일본어 글꼴(Mochiy Pop)은 글자 폭이 넓어 같은 칸에서 줄이 더 자주 바뀐다: 조금 작게 (D-105)
+          child: _JaTextScale(
+            child: Stack(
+              children: [
+                if (child != null)
+                  Listener(
+                    behavior: HitTestBehavior.translucent,
+                    onPointerDown: (d) {
+                      game.noteInput();
+                      SpendFloat.lastTap = d.position;
+                    },
+                    child: child,
+                  ),
+                UpdatePill(
+                  onReadyTap: () {
+                    final ctx = _navKey.currentContext;
+                    if (ctx != null) showUpdateReady(ctx);
                   },
-                  child: child,
                 ),
-              UpdatePill(
-                onReadyTap: () {
-                  final ctx = _navKey.currentContext;
-                  if (ctx != null) showUpdateReady(ctx);
-                },
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         home: !auth.ready
@@ -769,6 +772,24 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
                 socialBadge: () => social?.badge ?? false,
               ),
       ),
+    );
+  }
+}
+
+/// 일본어일 때 글자 크기를 8% 줄인다 (D-105). 휴대폰 글자 크기 설정은 그대로 곱해진다.
+class _JaTextScale extends StatelessWidget {
+  const _JaTextScale({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (L10n.instance.lang != 'ja') return child;
+    final base = MediaQuery.textScalerOf(context);
+    return MediaQuery(
+      data: MediaQuery.of(
+        context,
+      ).copyWith(textScaler: TextScaler.linear(base.scale(100) / 100 * 0.92)),
+      child: child,
     );
   }
 }

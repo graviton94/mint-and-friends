@@ -18,6 +18,16 @@ class Palette {
   static const coin = Color(0xFFE0A100);
 }
 
+/// 앱 글꼴을 붙인다 (언어별: 일본어 Mochiy Pop, 그 밖 Jua). 이미 정해져 있으면 그대로.
+TextStyle appFontStyle(TextStyle s) {
+  if (s.fontFamily != null) return s;
+  final ja = L10n.instance.lang == 'ja';
+  return s.copyWith(
+    fontFamily: ja ? 'MochiyPop' : 'Jua',
+    fontFamilyFallback: ja ? const ['Jua'] : const ['MochiyPop'],
+  );
+}
+
 ThemeData buildTheme() {
   // 일본어는 Mochiy Pop One 이 기본, 다른 언어는 Jua (서로 없는 글자는 상대 글꼴로)
   final ja = L10n.instance.lang == 'ja';

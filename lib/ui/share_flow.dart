@@ -116,7 +116,7 @@ Future<void> _share(
 ) async {
   sfx(Sfx.tap);
   final code = ShareInfo.code();
-  final text = tr(
+  final text = trPlain(
     code == null || code.isEmpty ? 'share.textNoCode' : 'share.text',
     {'code': code ?? '', 'link': Invite.link(code)},
   );
@@ -250,7 +250,7 @@ Future<void> _shareText(
 ) async {
   sfx(Sfx.tap);
   final code = ShareInfo.code();
-  final text = tr(
+  final text = trPlain(
     code == null || code.isEmpty ? 'share.textNoCode' : 'share.text',
     {'code': code ?? '', 'link': Invite.link(code)},
   );

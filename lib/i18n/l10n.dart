@@ -98,7 +98,8 @@ class L10n extends ChangeNotifier {
     if (params.isNotEmpty) {
       params.forEach((k, v) => s = s.replaceAll('{$k}', '$v'));
     }
-    return s.contains('(') ? josa(s) : s;
+    s = s.contains('(') ? josa(s) : s;
+    return _lang == 'ja' ? jaPhrases(s) : s;
   }
 
   bool has(String key) => _table.containsKey(key) || _fallback.containsKey(key);
@@ -132,3 +133,70 @@ String josa(String s) {
   }
   return s;
 }
+
+/// 일본어 줄바꿈을 말 덩어리(문절) 사이에서만 (D-105).
+/// 일본어는 띄어쓰기가 없어 글자 사이 어디서나 줄이 바뀌어 'アカウ/ント' 처럼 낱말이 잘렸다.
+/// 덩어리 안 글자 사이에 '줄 바꾸지 않음'(U+2060)을 넣는다. 덩어리 경계(줄을 바꿔도 되는 곳):
+/// 히라가나(조사 · 어미) 다음에 한자 · 가타카나 · 숫자가 시작할 때, 문장부호 · 빈칸 뒤, 여는 괄호 앞.
+/// [[아이콘]] · 줄바꿈은 건드리지 않는다. 한 덩어리가 줄보다 길면 Flutter 가 그래도 잘라 준다.
+String jaPhrases(String s) {
+  const wj = '⁠';
+  int kind(int c) {
+    if (c >= 0x3041 && c <= 0x309F) return 1; // 히라가나
+    if ((c >= 0x30A0 && c <= 0x30FF) || c == 0x30FC) return 2; // 가타카나
+    if (c >= 0x4E00 && c <= 0x9FFF) return 3; // 한자
+    if ((c >= 0x30 && c <= 0x39) || (c >= 0xFF10 && c <= 0xFF19))
+      return 4; // 숫자
+    return 0;
+  }
+
+  const breakAfter = '、。！？!?・」』）)〕】…♪ ,';
+  const breakBefore = '「『（(〔【';
+  final out = StringBuffer();
+  var prev = -1; // 앞 글자 (code point), -1 = 경계
+  var i = 0;
+  while (i < s.length) {
+    // [[토큰]] 은 통째로, 앞뒤는 경계
+    if (s.startsWith('[[', i)) {
+      final j = s.indexOf(']]', i);
+      if (j > 0) {
+        out.write(s.substring(i, j + 2));
+        i = j + 2;
+        prev = -1;
+        continue;
+      }
+    }
+    final c = s.codeUnitAt(i);
+    final ch = s[i];
+    if (ch == '\n' || ch == ' ') {
+      out.write(ch);
+      prev = -1;
+      i++;
+      continue;
+    }
+    // 영문 · 숫자끼리(링크 · 시각 등)는 원래 규칙대로. 숫자와 일본어 사이('1回')는 붙여 둔다
+    if (prev >= 0 && prev < 0x80 && c < 0x80) prev = -1;
+    if (prev >= 0) {
+      final pk = kind(prev), ck = kind(c);
+      final boundary =
+          breakAfter.contains(String.fromCharCode(prev)) ||
+          breakBefore.contains(ch) ||
+          (pk == 1 && ck >= 2) || // 조사 · 어미 뒤에 새 낱말
+          (pk == 2 && ck == 3) || // 가타카나 낱말 다음 한자 낱말 (オフライン|収益)
+          (pk == 3 && ck == 2) ||
+          (pk == 0 &&
+              ck != 0 &&
+              prev > 0x7F &&
+              !'ー〜~'.contains(String.fromCharCode(prev)));
+      if (!boundary) out.write(wj);
+    }
+    out.write(ch);
+    prev = c;
+    i++;
+  }
+  return out.toString();
+}
+
+/// 화면 밖으로 나가는 글(공유 · 알림)용: 일본어 줄바꿈 기호를 뺀 문구.
+String trPlain(String key, [Map<String, Object?> params = const {}]) =>
+    tr(key, params).replaceAll('\u2060', '');
