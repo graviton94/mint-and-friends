@@ -10,7 +10,11 @@
   "spring": "#EE86AE",
   "summer": "#6CC2EA",
   "autumn": "#F09550",
-  "winter": "#7FAAE6"
+  "winter": "#7FAAE6",
+  "cellA": "#F2E9D4",
+  "cellB": "#EBE0C7",
+  "vault": "#E9E3F7",
+  "locked": "#DCD2BC"
  },
  "outputs": [
   {
@@ -106,12 +110,6 @@
    "flat": 0.86
   },
   {
-   "name": "cell",
-   "src": "ui_slot_base",
-   "color": "paper",
-   "width": 384
-  },
-  {
    "name": "ribbon_mid_green",
    "src": "ui_ribbon_tail",
    "color": "green",
@@ -162,6 +160,34 @@
     0,
     0.985
    ]
+  },
+  {
+   "name": "cell",
+   "src": "ui_slot_base",
+   "color": "cellA",
+   "line": "#CDBB98",
+   "width": 192
+  },
+  {
+   "name": "cell_alt",
+   "src": "ui_slot_base",
+   "color": "cellB",
+   "line": "#C8B590",
+   "width": 192
+  },
+  {
+   "name": "cell_vault",
+   "src": "ui_slot_base",
+   "color": "vault",
+   "line": "#B9ACD6",
+   "width": 192
+  },
+  {
+   "name": "cell_locked",
+   "src": "ui_slot_base",
+   "color": "locked",
+   "line": "#B9AA8A",
+   "width": 192
   }
  ]
 }

@@ -627,4 +627,31 @@ void main() {
     final g2 = make()..loadJson(j);
     expect(g2.takeNewBaskets(), isEmpty);
   });
+
+  test('자동 합치기 대상: 손으로 그 쌍을 합치면 바로 다음 쌍으로 넘어간다 (D-094)', () {
+    final g = make();
+    g.board.fillRange(0, g.board.length, null);
+    g.highest[Chain.flower] = 10;
+    final c = open;
+    g.board[c[0]] = flower(1, 2);
+    g.board[c[1]] = flower(2, 2);
+    g.board[c[2]] = flower(3, 3);
+    g.board[c[3]] = flower(4, 3);
+    expect(g.nextAutoMergePair, (c[0], c[1]));
+    g.move(c[1], c[0]); // 손으로 합침 → 3단계 셋
+    final p = g.nextAutoMergePair!;
+    expect({p.$1, p.$2}.difference({c[0], c[2], c[3]}), isEmpty);
+  });
+
+  test('강화 빨간 점: 살 수 있으면 켜지고, 본 뒤엔 꺼졌다가 다음 단계를 살 수 있으면 다시 (D-098)', () {
+    final g = make();
+    g.level = 20;
+    g.coins = 1e12;
+    expect(g.upgradeDot, isTrue);
+    g.markUpgradesSeen();
+    expect(g.upgradeDot, isFalse);
+    final t = UpgradeType.values.firstWhere(g.canBuyUpgrade);
+    g.buyUpgrade(t);
+    expect(g.upgradeDot, g.canBuyUpgrade(t));
+  });
 }

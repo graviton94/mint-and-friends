@@ -9,6 +9,7 @@ import '../../game/format.dart';
 import '../../game/game_state.dart';
 import '../../i18n/l10n.dart';
 import '../theme.dart';
+import '../widgets/frame_box.dart';
 
 /// 머지 보드.
 ///
@@ -338,18 +339,35 @@ class _BoardViewState extends State<BoardView> {
         : (i ~/ GameConfig.cols + i % GameConfig.cols).isEven
         ? Palette.cell
         : Palette.cellAlt;
+    // 판 칸 그림 (오목한 칸, D-098): 평소 칸은 그림, 끌어다 맞출 때 반짝 강조는 단색
+    final kit = !open
+        ? 'cell_locked'
+        : vault
+        ? 'cell_vault'
+        : (i ~/ GameConfig.cols + i % GameConfig.cols).isEven
+        ? 'cell'
+        : 'cell_alt';
+    final useKit = !highlight && Art.frame(kit).available;
     return Padding(
       padding: const EdgeInsets.all(2.5),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        decoration: BoxDecoration(
-          color: !open
-              ? (vault ? const Color(0xFFD6CFE6) : const Color(0xFFD9CFB8))
-              : highlight
-              ? Palette.accent.withValues(alpha: hover == i ? 0.75 : 0.35)
-              : base,
-          borderRadius: BorderRadius.circular(cell * 0.2),
-        ),
+        duration: Duration(milliseconds: useKit ? 0 : 120),
+        decoration: useKit
+            ? FrameBox.decorationFor(
+                kit,
+                BoxDecoration(color: base),
+                corner: cell * 0.2,
+              )
+            : BoxDecoration(
+                color: !open
+                    ? (vault
+                          ? const Color(0xFFD6CFE6)
+                          : const Color(0xFFD9CFB8))
+                    : highlight
+                    ? Palette.accent.withValues(alpha: hover == i ? 0.75 : 0.35)
+                    : base,
+                borderRadius: BorderRadius.circular(cell * 0.2),
+              ),
         child: open || target != null
             ? null
             : Center(

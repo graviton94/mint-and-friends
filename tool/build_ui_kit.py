@@ -123,6 +123,11 @@ def build(conf):
         a = a.copy()
         if out.get('fill'):
             rgb, a = fill_inside(rgb, a, pal[out['fill']])
+        if out.get('line'):
+            # 외곽선 색 바꾸기 (판 칸처럼 테두리가 은은해야 하는 곳): 진하고 색 있는 픽셀만
+            mx, mn = rgb.max(-1), rgb.min(-1)
+            dark = np.clip((150 - rgb.mean(-1)) / 50, 0, 1) * np.clip(((mx - mn) / 255.0 - 0.08) / 0.08, 0, 1)
+            rgb = rgb * (1 - dark[..., None]) + hex_rgb(out['line']) * dark[..., None]
         if out.get('flat') is not None:
             # 무채색 부분을 한 가지 색으로 (말풍선 꼬리: 몸통 아래 그늘 띠와 같은 색이 되게)
             mx, mn = rgb.max(-1), rgb.min(-1)

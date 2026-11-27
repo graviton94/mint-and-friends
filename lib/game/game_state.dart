@@ -1085,16 +1085,23 @@ class GameState extends ChangeNotifier {
 
   /// 강화 빨간 점 (D-068): 방치 게임은 늘 살 게 있어 점이 꺼지지 않으므로, 살 수 있는 강화가 있어도
   /// 그날 강화 화면을 한 번 열면 꺼진다. 재단장 추천은 늘.
+  /// 강화 빨간 점 (D-098): 살 수 있는 강화가 있으면 켜진다.
+  /// 강화 창을 열어 본 뒤에는 그때 살 수 있던 단계는 끄고, 새 강화 · 다음 단계를 살 수 있게 되면 다시 켠다.
   bool get upgradeDot =>
       renewRecommended ||
-      (_upgradeSeenDay != _dayKey(now) &&
-          Upgrades.all.any((u) => canBuyUpgrade(u.type)));
-  String _upgradeSeenDay = '';
+      Upgrades.all.any(
+        (u) => canBuyUpgrade(u.type) && _upgradeSeenLv[u.type] != lv(u.type),
+      );
+  final Map<UpgradeType, int> _upgradeSeenLv = {};
   void markUpgradesSeen() {
-    final k = _dayKey(now);
-    if (_upgradeSeenDay == k) return;
-    _upgradeSeenDay = k;
-    notifyListeners();
+    var changed = false;
+    for (final u in Upgrades.all) {
+      if (canBuyUpgrade(u.type) && _upgradeSeenLv[u.type] != lv(u.type)) {
+        _upgradeSeenLv[u.type] = lv(u.type);
+        changed = true;
+      }
+    }
+    if (changed) notifyListeners();
   }
 
   String _designSeenDay = '';
@@ -3368,7 +3375,9 @@ class GameState extends ChangeNotifier {
       'offersDay': _offersDay,
       'shopSeen': _shopSeenDay,
       'designSeen': _designSeenDay,
-      'upgSeen': _upgradeSeenDay,
+      'upgSeenLv': {
+        for (final e in _upgradeSeenLv.entries) e.key.name: e.value,
+      },
       if (revokedOrders.isNotEmpty) 'revoked': revokedOrders.toList(),
       'gemRefills': _gemRefillsToday,
       'econ': econVersion,
@@ -3546,7 +3555,14 @@ class GameState extends ChangeNotifier {
     _offersDay = j['offersDay'] as String? ?? '';
     _shopSeenDay = j['shopSeen'] as String? ?? '';
     _designSeenDay = j['designSeen'] as String? ?? '';
-    _upgradeSeenDay = j['upgSeen'] as String? ?? '';
+    _upgradeSeenLv
+      ..clear()
+      ..addAll({
+        for (final e in ((j['upgSeenLv'] as Map?) ?? {}).entries)
+          if (UpgradeType.values.any((t) => t.name == e.key))
+            UpgradeType.values.byName(e.key as String): (e.value as num)
+                .toInt(),
+      });
     revokedOrders
       ..clear()
       ..addAll([for (final x in (j['revoked'] as List?) ?? const []) '$x']);
