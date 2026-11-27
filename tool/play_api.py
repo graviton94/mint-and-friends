@@ -148,6 +148,15 @@ def listing(apply=False):
                 continue
             changed += 1
             print(f'{code}: {"update" if apply else "would update"} {diff}')
+            for k in diff:
+                old, new = have.get(k) or '', want[k]
+                if k != 'fullDescription':
+                    print(f'   {k}: {old!r} -> {new!r}')
+                else:
+                    import difflib
+                    for d in difflib.unified_diff(old.splitlines(), new.splitlines(), lineterm='', n=0):
+                        if d.startswith(('+', '-')) and not d.startswith(('+++', '---')):
+                            print('   ' + d[:200])
             if apply:
                 ok(s.patch(f'{API}/edits/{e}/listings/{code}', json=want))
     if apply and changed:
