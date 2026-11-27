@@ -1,14 +1,12 @@
 name: Store season
 
 # 시즌 그래픽 이미지와 휴대전화 스크린샷([시즌 표지] + 기존 1~7)을 Play 스토어 등록정보에 올린다.
-# 자동: 시즌 시작 사흘 전 (2/26 · 5/29 · 8/29 · 11/28, 한국 오전 10시). 자동 실행은 docs/store/season/AUTO 파일이 있을 때만
-# 실제로 바꾸고(정식 출시 때 만든다), 없으면 확인만 한다. 수동: Actions → Store season (season · apply).
+# 자동: 게임 안 계절이 바뀌는 날(3/1 · 6/1 · 9/1 · 12/1) 한국 0시 10분에 맞춰 바꾼다 (D-102, 게임 · 스토어 · 아이콘 같은 날).
+# 매달 마지막 며칠 15:10 UTC(= 다음 날 한국 0:10)에 돌고, 한국 날짜가 계절 첫날일 때만 진행한다.
+# 자동 실행은 docs/store/season/AUTO 파일이 있을 때만 실제로 바꾸고, 없으면 확인만 한다. 수동: Actions → Store season.
 on:
   schedule:
-    - cron: "0 1 26 2 *"
-    - cron: "0 1 29 5 *"
-    - cron: "0 1 29 8 *"
-    - cron: "0 1 28 11 *"
+    - cron: "10 15 28-31 2,5,8,11 *"
   workflow_dispatch:
     inputs:
       season:
@@ -32,7 +30,8 @@ jobs:
       - name: Which season
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            M=$(date -u -d '+3 days' +%m)
+            if [ "$(TZ=Asia/Seoul date +%d)" != "01" ]; then echo "not a season start (KST $(TZ=Asia/Seoul date +%F))"; echo "SKIP=1" >> "$GITHUB_ENV"; exit 0; fi
+            M=$(TZ=Asia/Seoul date +%m)
             case "$M" in 03) S=spring;; 06) S=summer;; 09) S=autumn;; *) S=winter;; esac
             if [ -f docs/store/season/AUTO ]; then A=--apply; else A=; echo "::notice::AUTO 파일이 없어 확인만 합니다"; fi
           else
@@ -40,8 +39,11 @@ jobs:
           fi
           echo "SEASON=$S" >> "$GITHUB_ENV"; echo "APPLY=$A" >> "$GITHUB_ENV"
           echo "season=$S apply=${A:-no}"
-      - uses: google-github-actions/auth@v2
+      - if: env.SKIP != '1'
+        uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-      - run: pip install -q google-auth requests
-      - run: python3 tool/play_api.py feature "$SEASON" $APPLY
+      - if: env.SKIP != '1'
+        run: pip install -q google-auth requests
+      - if: env.SKIP != '1'
+        run: python3 tool/play_api.py feature "$SEASON" $APPLY
