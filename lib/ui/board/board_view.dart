@@ -401,21 +401,19 @@ class _BoardViewState extends State<BoardView> {
           top: o.dy,
           width: cell,
           height: cell,
-          child: _Wiggle(
-            amount: pair != null && (pair.$1 == i || pair.$2 == i)
+          child: ItemTile(
+            wiggle: pair != null && (pair.$1 == i || pair.$2 == i)
                 ? game.autoMergeFrac
                 : 0,
-            child: ItemTile(
-              item: it,
-              size: cell,
-              popKey: '${it.id}-${it.level}-${it.isBubble}',
-              selected: widget.selected == i,
-              wanted:
-                  !it.isBubble &&
-                  wanted.contains('${it.chain.index}-${it.level}'),
-              now: game.now,
-              perHour: game.itemIncomePerHour(it),
-            ),
+            item: it,
+            size: cell,
+            popKey: '${it.id}-${it.level}-${it.isBubble}',
+            selected: widget.selected == i,
+            wanted:
+                !it.isBubble &&
+                wanted.contains('${it.chain.index}-${it.level}'),
+            now: game.now,
+            perHour: game.itemIncomePerHour(it),
           ),
         ),
       );
@@ -460,7 +458,11 @@ class ItemTile extends StatelessWidget {
     this.selected = false,
     this.now,
     this.perHour,
+    this.wiggle = 0,
   });
+
+  /// 자동 합치기 차오름 (0~1): 아이템 그림만 흔들흔들 (레벨 · 수익 꼬리표는 그대로, D-099).
+  final double wiggle;
 
   /// 이 아이템의 시간당 방치 수익 (오른쪽 아래에 작게). null 이면 표시 안 함.
   final double? perHour;
@@ -500,9 +502,15 @@ class ItemTile extends StatelessWidget {
               ],
             ),
           ),
-        Opacity(
-          opacity: bubble ? 0.75 : 1,
-          child: ArtImage(Art.item(item.chain, item.level), size: size * 0.66),
+        _Wiggle(
+          amount: wiggle,
+          child: Opacity(
+            opacity: bubble ? 0.75 : 1,
+            child: ArtImage(
+              Art.item(item.chain, item.level),
+              size: size * 0.66,
+            ),
+          ),
         ),
         if (bubble)
           Art.bubble.available
