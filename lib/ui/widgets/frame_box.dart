@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../../art/art.dart';
 import '../theme.dart';
+import 'confetti.dart';
 import 'icon_text.dart';
 
 /// 프레임 그림(9-slice)이 있으면 그 그림을 배경으로, 없으면 [fallback] 장식으로 그린다.
@@ -190,17 +191,14 @@ class GameDialog extends StatelessWidget {
               children: [
                 closable,
                 // 축하 꽃가루 + 레벨업 별: 팝업 위에만 (본문을 가리지 않게), 톡 튀어나온다
-                if (banner == 'gold' && Art.frame('confetti').available)
+                if (banner == 'gold')
                   Positioned(
                     top: -150,
                     child: IgnorePointer(
                       child: _Pop(
                         delay: 0.15,
-                        child: Image.asset(
-                          Art.frame('confetti').path,
-                          width: 230,
-                          filterQuality: FilterQuality.medium,
-                        ),
+                        // 코드로 그린 꽃가루 (그림 확대 시 가장자리 노이즈 없음, D-097)
+                        child: const ConfettiBurst(width: 230),
                       ),
                     ),
                   ),

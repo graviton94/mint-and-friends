@@ -1349,17 +1349,43 @@ class _OutfitCard extends StatelessWidget {
 
 // ---------------------------------------------------------------- 도감
 
+/// [seenBefore]: 도감을 열기 전에 본 최고 단계 (그보다 높은 단계 = 이번에 새로 발견, D-095).
 Future<void> showCollectionSheet(
   BuildContext context,
-  GameState game,
-) => showGameSheet(
-  context,
-  game,
-  () => SheetFrame(
+  GameState game, {
+  Map<Chain, int>? seenBefore,
+}) => showGameSheet(context, game, () {
+  bool isNew(Chain c, int lv) =>
+      seenBefore != null &&
+      lv > (seenBefore[c] ?? 1) &&
+      lv <= (game.highest[c] ?? 1);
+  final fresh = [
+    for (final c in Chain.values.where(Chains.ready))
+      for (var lv = 1; lv <= Chains.maxLevel(c); lv++)
+        if (isNew(c, lv)) (c, lv),
+  ];
+  return SheetFrame(
     title: tr('book.title'),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // 새로 발견: 빨간 점이 무엇 때문이었는지 맨 위에 모아서
+        if (fresh.isNotEmpty) ...[
+          IconText(
+            tr('book.new', {'n': fresh.length}),
+            style: const TextStyle(fontSize: 18, color: Color(0xFFD8392A)),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final (c, lv) in fresh)
+                _ItemChip(chain: c, level: lv, found: true, isNew: true),
+            ],
+          ),
+          const SizedBox(height: 14),
+        ],
         IconText(tr('book.friends'), style: const TextStyle(fontSize: 18)),
         const SizedBox(height: 6),
         GridView.count(
@@ -1448,6 +1474,7 @@ Future<void> showCollectionSheet(
                   found: game.isUnlocked(Feature.snack) || chain == Chain.flower
                       ? lv <= (game.highest[chain] ?? 0)
                       : false,
+                  isNew: isNew(chain, lv),
                 ),
             ],
           ),
@@ -1455,8 +1482,8 @@ Future<void> showCollectionSheet(
         ],
       ],
     ),
-  ),
-);
+  );
+});
 
 class _FriendCard extends StatelessWidget {
   const _FriendCard({required this.game, required this.def});
@@ -1565,14 +1592,16 @@ class _ItemChip extends StatelessWidget {
     required this.chain,
     required this.level,
     required this.found,
+    this.isNew = false,
   });
   final Chain chain;
   final int level;
   final bool found;
+  final bool isNew;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    final chip = GestureDetector(
       onTap: () => showItemInfo(context, chain, level, found),
       child: Container(
         width: 46,
@@ -1589,6 +1618,34 @@ class _ItemChip extends StatelessWidget {
                 child: ArtImage(Art.icon('unknown'), size: 24),
               ),
       ),
+    );
+    if (!isNew) return chip;
+    // 새로 발견: 빨간 'N' 딱지 (빨간 점과 같은 박자로 콩닥)
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        chip,
+        Positioned(
+          right: -4,
+          top: -4,
+          child: Shine(
+            child: Container(
+              height: 16,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE84A3C),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white, width: 1.5),
+              ),
+              child: const Text(
+                'NEW',
+                style: TextStyle(fontSize: 8.5, height: 1, color: Colors.white),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

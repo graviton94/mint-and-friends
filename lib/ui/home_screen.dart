@@ -2443,8 +2443,10 @@ class _HomeScreenState extends State<HomeScreen> {
             () => showWardrobePicker(context, game),
           ),
         MenuEntry('book', tr('menu.book'), () {
+          // 열기 전에 본 단계를 기억해 두고 '새로 발견'을 보여 준다 (D-095)
+          final before = Map<Chain, int>.of(game.seenHighest);
           game.markBookSeen();
-          showCollectionSheet(context, game);
+          showCollectionSheet(context, game, seenBefore: before);
         }, badge: game.hasNewDiscovery ? -1 : 0),
         if (widget.openFriends != null)
           MenuEntry(

@@ -2533,16 +2533,22 @@ class GameState extends ChangeNotifier {
       Achievements.all.where(achievementClaimable).length;
 
   /// 업적 보상: 정해진 보상 + 뒤 단계는 지금 수입 몇 분치 코인 (인플레이션을 따라간다, D-064).
+  /// 업적 보상 (D-096): 지금 진행도에 맞춰 커진다.
+  /// 코인 = 지금 수입의 (4 + 2×단계)분치, 최대 25분치 (고정값보다 작아지지 않음).
+  /// 별 = 지금 구역 가장 싼 장식 값의 (5 + 1×단계)%, 최대 15% (별 보상이 있는 단계만).
+  /// 에너지 · 다이아는 그대로 (다이아는 유료 재화라 늘리지 않는다).
   Reward achievementReward(AchievementDef d, int tier) {
     final r = d.rewardFor(tier);
-    final live = tier < 6
-        ? 0.0
-        : hourlyIncome * (0.03 + 0.0015 * min(tier, 40)); // 6단계부터 수입 약 2~5분치
-    final c = max(r.coins.toDouble(), live);
+    final minutes = min(25, 4 + 2 * tier);
+    final c = max(r.coins.toDouble(), hourlyIncome * minutes / 60);
+    final decor = Garden.decorCost(currentArea, 0).toDouble();
+    final st = r.stars <= 0
+        ? 0
+        : max(r.stars, (decor * min(0.15, 0.05 + 0.01 * tier)).round());
     return Reward(
       coins: min(c, 9e18).round(),
       energy: r.energy,
-      stars: r.stars,
+      stars: st,
       gems: r.gems,
     );
   }
@@ -2574,7 +2580,8 @@ class GameState extends ChangeNotifier {
 
   void _applyReward(Reward r) {
     _trace('reward', '${r.coins},${r.energy},${r.stars},${r.gems}');
-    if (r.coins > 0) _earn(r.coins.toDouble());
+    // 보상 코인은 지금 수입(earnRate) 계산에 넣지 않는다: 수입에 비례한 보상이 다시 수입을 키우는 고리 방지 (D-096)
+    if (r.coins > 0) _earn(r.coins.toDouble(), live: false);
     energy += r.energy; // 상한을 넘어도 된다
     stars += r.stars;
     gems += r.gems;

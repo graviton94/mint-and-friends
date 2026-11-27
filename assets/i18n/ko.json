@@ -1282,5 +1282,6 @@
   "pass.card.vault": "보관 {n}칸",
   "pass.card.instant": "바로 보상",
   "pass.card.badgeTop": "최대",
-  "pass.card.badgeBig": "{x}배"
+  "pass.card.badgeBig": "{x}배",
+  "book.new": "새로 발견했어요! ({n})"
 }

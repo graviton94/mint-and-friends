@@ -1281,5 +1281,6 @@
   "pass.card.vault": "保管{n}マス",
   "pass.card.instant": "すぐもらえる",
   "pass.card.badgeTop": "最大",
-  "pass.card.badgeBig": "{x}倍"
+  "pass.card.badgeBig": "{x}倍",
+  "book.new": "新しく発見！({n})"
 }

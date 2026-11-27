@@ -1281,5 +1281,6 @@
   "pass.card.vault": "{n} casillas",
   "pass.card.instant": "Premio al instante",
   "pass.card.badgeTop": "Hasta",
-  "pass.card.badgeBig": "{x}x"
+  "pass.card.badgeBig": "{x}x",
+  "book.new": "¡Recién descubierto! ({n})"
 }
