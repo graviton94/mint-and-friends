@@ -77,7 +77,8 @@ class Sim {
 
   Sim(this.p) {
     now = start.add(Duration(hours: p.sessionHours.first.floor()));
-    g = GameState(random: Random(p.seed), clock: () => now);
+    g = GameState(random: Random(p.seed), clock: () => now)
+      ..tutorial = 99; // 튜토리얼 끝난 플레이어 (튜토리얼 중엔 행운 없음, D-101)
     if (p.starterGems > 0) g.grantGems(p.starterGems);
   }
 

@@ -1624,7 +1624,10 @@ class GameState extends ChangeNotifier {
     ];
     final chain = chains[_rng.nextInt(chains.length)];
     var lvl = spawnLevelOf(chain);
-    final lucky = debugAlwaysLucky || _rng.nextDouble() < luckyChance;
+    // 튜토리얼 중에는 행운 없음: 한 단계 높게 나오면 합칠 짝이 안 생겨 첫 합치기에서 갇힐 수 있었다 (D-101)
+    final inTutorial = tutorial >= 0 && tutorial < 99;
+    final lucky =
+        debugAlwaysLucky || (!inTutorial && _rng.nextDouble() < luckyChance);
     if (lucky) lvl += 1;
     lvl = min(lvl, Chains.maxLevel(chain));
     board[cell] = Item(_nextId++, chain, lvl);

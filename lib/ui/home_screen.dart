@@ -1794,10 +1794,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget? get _tutorial {
     if (_tut == _tutDone) return null;
-    // 1단계: 판에 아이템이 3개 이상이면 다음으로
-    if (_tut == 1 && game.board.whereType<Item>().length >= 3) {
+    // 1단계: 판에 아이템이 3개 이상이고 합칠 짝이 있으면 다음으로
+    // 2단계인데 합칠 짝이 없으면 (팔았거나 예전 저장) 바구니 단계로 돌아가 하나 더 꺼내게 (D-101)
+    final hasPair = _mergePair() != null;
+    if (_tut == 1 && game.board.whereType<Item>().length >= 3 && hasPair) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _tut == 1) _setTutorial(2);
+      });
+    }
+    if (_tut == 2 && !hasPair) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _tut == 2 && _mergePair() == null) _setTutorial(1);
       });
     }
     void next() {

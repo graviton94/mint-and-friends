@@ -10,6 +10,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart' as kakao;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'analytics_service.dart';
+
 import 'app_config.dart';
 
 enum LoginProvider { guest, google, kakao }
@@ -214,6 +216,12 @@ class AuthService extends ChangeNotifier {
     await _setParked(false);
     try {
       if (_localGuest) return;
+      // Play 출시 전 보고서 · Test Lab 로봇은 기기 전용 게스트로: 계정 · 클라우드 저장을 만들지 않아
+      // 테스터 숫자에 섞이지 않게 (D-101)
+      if (Analytics.instance.isTestDevice) {
+        _localGuest = true;
+        return;
+      }
       if (firebaseEnabled && Firebase.apps.isNotEmpty) {
         if (FirebaseAuth.instance.currentUser != null) return;
         try {

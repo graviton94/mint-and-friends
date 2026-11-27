@@ -19,6 +19,7 @@ class Analytics {
 
   /// Play 출시 전 보고서 · Test Lab 기기 (지표에서 뺀다, D-068).
   bool _testDevice = false;
+  bool get isTestDevice => _testDevice;
   static const _device = MethodChannel('mint/device');
 
   /// 앱 시작 때 한 번: 테스트 기기면 수집을 끈다 (진짜 사람 숫자만 남게).
