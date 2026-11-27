@@ -1254,12 +1254,27 @@ class GameState extends ChangeNotifier {
     return true;
   }
 
+  /// 직접 놓을 빈 칸. 자동 놓기가 다음에 채울 칸은 마지막에 쓴다 (D-107: 차오르던 칸을 가로채지 않게).
   int? get _emptyCell {
+    final auto = autoSpawnInterval != null && autoSpawnOn ? _autoCell : null;
     for (var i = 0; i < board.length; i++) {
-      if (board[i] == null && isCellOpen(i)) return i;
+      if (i != auto && board[i] == null && isCellOpen(i)) return i;
+    }
+    return auto;
+  }
+
+  /// 자동 놓기가 채울 칸: 첫 일반 빈 칸 (보관 칸은 자동으로 채우지 않는다, D-071).
+  int? get _autoCell {
+    for (var i = 0; i < board.length; i++) {
+      if (board[i] == null && isCellOpen(i) && !GameConfig.isVault(i)) {
+        return i;
+      }
     }
     return null;
   }
+
+  /// 손으로 끌고 있는 칸: 자동 합치기가 이 칸을 쓸 차례면 놓을 때까지 가득 찬 채 기다린다 (D-107).
+  int? holdCell;
 
   bool get boardFull => _emptyCell == null;
 
@@ -1460,8 +1475,13 @@ class GameState extends ChangeNotifier {
     if (ami != null) {
       autoMergeProgress += dt;
       if (autoMergeProgress >= ami) {
-        autoMergeProgress = 0;
-        autoMergeOnce();
+        final p = nextAutoMergePair;
+        if (p != null && (p.$1 == holdCell || p.$2 == holdCell)) {
+          autoMergeProgress = ami; // 손에 든 아이템은 놓을 때까지 기다린다
+        } else {
+          autoMergeProgress = 0;
+          autoMergeOnce();
+        }
       }
     }
     final asi = autoSpawnInterval;
@@ -1542,7 +1562,7 @@ class GameState extends ChangeNotifier {
       : Duration(seconds: (energyRegenSeconds - energyProgress).ceil());
 
   /// 바구니 탭: 에너지 1로 즉시 하나 생성. 결과를 돌려준다.
-  TapResult tapSpawner() {
+  TapResult tapSpawner({int? at}) {
     if (boardFull) return TapResult.boardFull;
     if (!basketOpen(basket)) basket = 0;
     if (!basketReady(basket)) return TapResult.basketEmpty;
@@ -1565,7 +1585,7 @@ class GameState extends ChangeNotifier {
       _bump(Stat.energySpent, GameConfig.energyPerTap);
     }
     if (Chains.basketCharges[basket] > 0) basketCharge[basket] -= 1;
-    _spawnOne();
+    _spawnOne(at: at);
     notifyListeners();
     return TapResult.spawned;
   }
@@ -1614,8 +1634,8 @@ class GameState extends ChangeNotifier {
     notifyListeners();
   }
 
-  int? _spawnOne() {
-    final cell = _emptyCell;
+  int? _spawnOne({int? at}) {
+    final cell = at ?? _emptyCell;
     if (cell == null) return null;
     if (!basketOpen(basket)) basket = 0;
     final chains = [
@@ -1737,12 +1757,12 @@ class GameState extends ChangeNotifier {
   bool autoSpawnOnce() {
     // 빈 칸이 하나뿐이어도 채운다 (D-104, 예전엔 하나를 남겨 합치기 자리와 겹쳐 보였다).
     // 보관 칸은 자동으로 채우지 않는다 (D-071): 첫 빈 칸이 보관 칸이면 일반 빈 칸이 없는 것
-    final cell = _emptyCell;
-    if (cell == null || GameConfig.isVault(cell)) return false;
+    final cell = _autoCell;
+    if (cell == null) return false;
     if (energy < GameConfig.energyPerTap) return false;
     if (!basketOpen(basket)) basket = 0;
     if (!basketReady(basket)) return false;
-    final r = tapSpawner();
+    final r = tapSpawner(at: cell);
     if (r == TapResult.spawned) _bump(Stat.autoSpawns);
     return r == TapResult.spawned;
   }
@@ -1804,8 +1824,8 @@ class GameState extends ChangeNotifier {
   /// 다음 자동 놓기가 아이템을 놓을 칸 (놓을 수 없으면 null).
   int? get nextAutoSpawnCell {
     if (autoSpawnInterval == null || !autoSpawnOn) return null;
-    final cell = _emptyCell;
-    if (cell == null || GameConfig.isVault(cell)) return null;
+    final cell = _autoCell;
+    if (cell == null) return null;
     if (energy < GameConfig.energyPerTap) return null;
     if (!basketReady(basketOpen(basket) ? basket : 0)) return null;
     return cell;

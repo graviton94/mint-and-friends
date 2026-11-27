@@ -228,6 +228,7 @@ class _BoardViewState extends State<BoardView> {
               if (it == null || it.isBubble) return;
               // 끌기 시작하면 정보 카드는 닫는다 (카드는 아이템을 '눌렀을' 때만)
               widget.onSelect(null);
+              game.holdCell = i;
               setState(() {
                 _dragFrom = i;
                 _dragPortal.show();
@@ -274,9 +275,8 @@ class _BoardViewState extends State<BoardView> {
                     child: IgnorePointer(
                       child: Stack(
                         clipBehavior: Clip.none,
-                        children: _dragFrom == null
-                            ? _autoFx(cell, at)
-                            : const [],
+                        // 끄는 동안에도 차오름은 그대로 (D-107)
+                        children: _autoFx(cell, at),
                       ),
                     ),
                   ),
@@ -459,6 +459,7 @@ class _BoardViewState extends State<BoardView> {
   void _drop(int? target) {
     final from = _dragFrom;
     _dragPortal.hide();
+    game.holdCell = null;
     setState(() => _dragFrom = null);
     if (from == null || target == null) return;
     final r = game.move(from, target);
