@@ -60,7 +60,10 @@ class _BoardViewState extends State<BoardView> {
   /// 자동 진행 표시 방식 (미리보기에서 바꿔 본다): 'fill' 칸 배경 차오름, 'bar' 칸 아래 막대.
   static String autoFxStyle = 'fill';
 
-  List<Widget> _autoFx(double cell, Widget Function(int, Widget) at) {
+  List<Widget> _autoFx(
+    double cell,
+    Widget Function(int, Widget, {Key? key}) at,
+  ) {
     final out = <Widget>[];
     final pair = game.autoMergeInterval == null ? null : game.nextAutoMergePair;
     if (pair != null) {
@@ -68,6 +71,7 @@ class _BoardViewState extends State<BoardView> {
         out.add(
           at(
             c,
+            key: ValueKey('m$c'),
             _AutoFill(
               frac: game.autoMergeFrac,
               size: cell,
@@ -83,6 +87,7 @@ class _BoardViewState extends State<BoardView> {
       out.add(
         at(
           sc,
+          key: ValueKey('s$sc'),
           _AutoFill(
             frac: game.autoSpawnFrac,
             size: cell,
@@ -198,9 +203,10 @@ class _BoardViewState extends State<BoardView> {
             return row * GameConfig.cols + col;
           }
 
-          Positioned at(int i, Widget child) {
+          Positioned at(int i, Widget child, {Key? key}) {
             final o = origin(i);
             return Positioned(
+              key: key,
               left: o.dx,
               top: o.dy,
               width: cell,
@@ -285,10 +291,14 @@ class _BoardViewState extends State<BoardView> {
                   ),
                   // L3 정보 카드
                   if (widget.floating != null)
-                    _floatingAt(widget.floating!, cell, pad),
+                    KeyedSubtree(
+                      key: const ValueKey('floating'),
+                      child: _floatingAt(widget.floating!, cell, pad),
+                    ),
                   // L2 이펙트
                   for (final b in _bursts)
                     at(
+                      key: ValueKey('fx${b.key}'),
                       b.cell,
                       IgnorePointer(
                         child: b.level == 0
@@ -401,13 +411,16 @@ class _BoardViewState extends State<BoardView> {
     // 곧 자동으로 합쳐질 두 칸: 차오를수록 흔들흔들 (D-099)
     final pair = game.autoMergeInterval == null ? null : game.nextAutoMergePair;
     final out = <Widget>[];
+    final ids = <int>{};
     for (var i = 0; i < GameConfig.cellCount; i++) {
       final it = game.board[i];
       if (it == null || i == _dragFrom) continue;
+      // 번호가 겹치면 (있어서는 안 되지만) 칸 번호로: 겹친 key 는 아이템끼리 자리를 바꿔 그린다
+      final key = ids.add(it.id) ? ValueKey(it.id) : ValueKey('c$i');
       final o = origin(i);
       out.add(
         AnimatedPositioned(
-          key: ValueKey(it.id),
+          key: key,
           duration: const Duration(milliseconds: 160),
           curve: Curves.easeOut,
           left: o.dx,

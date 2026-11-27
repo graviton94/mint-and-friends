@@ -20,6 +20,9 @@ class Item {
 
   Item(this.id, this.chain, this.level, {this.bubbleUntil});
 
+  /// 같은 아이템을 새 번호로 (번호가 겹칠 때만, D-100).
+  Item withId(int newId) => Item(newId, chain, level, bubbleUntil: bubbleUntil);
+
   bool get isBubble => bubbleUntil != null;
   ItemDef get def => Chains.item(chain, level);
 
@@ -3522,6 +3525,27 @@ class GameState extends ChangeNotifier {
     return j;
   }
 
+  /// 아이템 번호가 겹치지 않게 (D-100): 저장의 다음 번호가 없거나 낮으면(예전 저장 · 복구)
+  /// 새 아이템이 이미 있는 번호를 받아 판이 아이템을 서로 바꿔 그렸다. 겹치는 것은 새 번호로.
+  void _fixItemIds() {
+    var maxId = 0;
+    for (final it in [...board, ...storage]) {
+      if (it != null && it.id > maxId) maxId = it.id;
+    }
+    if (_nextId <= maxId) _nextId = maxId + 1;
+    final seen = <int>{};
+    for (final list in [board, storage]) {
+      for (var i = 0; i < list.length; i++) {
+        final it = list[i];
+        if (it == null) continue;
+        if (!seen.add(it.id)) {
+          list[i] = it.withId(_nextId++);
+          seen.add(list[i]!.id);
+        }
+      }
+    }
+  }
+
   bool loadJson(Map<String, dynamic> j) {
     final backup = toJson();
     try {
@@ -3624,6 +3648,7 @@ class GameState extends ChangeNotifier {
       }
     }
     _nextId = (j['nextId'] as num?)?.toInt() ?? 1;
+    _fixItemIds();
     final up = (j['up'] as Map?)?.cast<String, dynamic>() ?? {};
     for (final t in UpgradeType.values) {
       // 예전 저장의 바구니 속도(spawnSpeed) 단계는 에너지 회복 속도로 옮긴다.
