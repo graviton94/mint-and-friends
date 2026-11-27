@@ -134,3 +134,12 @@ python3 tool/slice_sheet.py yard.png 1 1 assets/art/areas/yard_bg.webp --keep-bg
 - 정원: L0 배경 → L1 월드(장식·친구·손님, **바닥 닿는 높이**로 앞뒤 정렬) → L2 빈 자리 표시(탭 대상) → L3 이펙트(말풍선·떠오르는 숫자, 터치 없음) → L4 UI(구역 이름·메뉴·알림)
 - 보드: L0 칸 → L1 아이템(선택 테두리 < 그림 < 비눗방울 < 레벨 배지 < 편지 표시) → L2 합치기 반짝임 → L3 드래그 중인 아이템은 **화면 최상단 Overlay** (부탁 카드·정보 줄·버튼보다 위)
 - 대화상자·시트는 Navigator Overlay 로 항상 게임 화면 위
+
+## UI 부품 (D-091): 회색 몸통 + 코드에서 색 입히기
+
+- 발주: 평평한 벡터 UI 부품, 배경 마젠타 `#FF00FF` 또는 투명 PNG, 가로 1024px 이상.
+- 몸통은 무채색만: 기본 `#C8C8C8` · 위 광택 `#FFFFFF` · 아래 그늘 `#9E9E9E`. 외곽선 `#5A3A22` 고정 (두께 일정).
+- 코드에서 몸통 회색의 밝기를 기준 색 계단으로 바꿔(그라디언트 맵) 색을 입힌다. 채도가 있는 픽셀(외곽선 · 잎사귀)은 그대로.
+- 기준 색: 초록 `#8CCB3A` · 금색 `#FFC83D` · 보라 `#B48CF0` · 크림 `#FFF6E3` · 빨강 `#F0604A` · 하늘 `#6CB8F0`.
+- 늘림: 버튼 · 알약은 3조각(둥근 끝 + 곧은 가운데), 패널 · 카드 · 말풍선 몸통 · 칸은 9조각(장식은 모서리 20% 안쪽), 리본은 가운데 띠(가로 반복) + 꼬리(좌우 뒤집기), 말풍선 꼬리는 따로 붙인다.
+- 부품 10종: ui_button_base · ui_capsule_base · ui_panel_base · ui_ribbon_center · ui_ribbon_tail · ui_speech_body · ui_speech_tail · ui_card_base · ui_slot_base · ui_glow_ring.
