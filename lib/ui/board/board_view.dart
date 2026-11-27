@@ -864,20 +864,21 @@ class _WiggleState extends State<_Wiggle> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // 흔들기 시작 · 끝에 위젯 구조가 바뀌면 아이템의 '뿅'(놓일 때 탄력)이 다시 재생된다:
+    // 늘 같은 구조(AnimatedBuilder + Transform)로 그리고, 멈춰 있을 땐 움직이지 않는 애니메이션을 준다
     final c = _c;
-    if (c == null) return widget.child;
     return AnimatedBuilder(
-      animation: c,
+      animation: c ?? kAlwaysDismissedAnimation,
       builder: (_, child) {
         final a = _a;
-        final t = (c.lastElapsedDuration?.inMicroseconds ?? 0) / 1e6;
-        // 진할수록 빠르게 (초당 2 → 5번)
-        final w = sin(t * pi * 2 * (2 + 3 * a));
+        final t = (c?.lastElapsedDuration?.inMicroseconds ?? 0) / 1e6;
+        // 살랑살랑: 진할수록 조금 빠르게 (초당 1.2 → 2.2번)
+        final w = c == null ? 0.0 : sin(t * pi * 2 * (1.2 + 1.0 * a));
         return Transform(
           alignment: Alignment.bottomCenter,
           transform: Matrix4.identity()
-            ..rotateZ(w * 0.11 * a)
-            ..scaleByDouble(1 + 0.05 * a, 1 + 0.05 * a, 1, 1),
+            ..rotateZ(w * 0.05 * a) // 최대 약 3°
+            ..scaleByDouble(1 + 0.02 * a, 1 + 0.02 * a, 1, 1),
           child: child,
         );
       },
