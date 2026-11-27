@@ -39,6 +39,8 @@ class FrameBox extends StatelessWidget {
       center,
       corner / Art.frameInset(frame),
       pill: frame.startsWith('button_') || frame.startsWith('capsule'),
+      // 버튼은 둥근 끝 + 왼쪽 반짝이까지 끝 조각에 넣는다 (가운데 늘림에 반짝이가 뭉개지지 않게, D-093)
+      capK: frame.startsWith('button_') ? 0.85 : 0.5,
     );
   }
 
@@ -337,12 +339,16 @@ class NineSliceDecoration extends Decoration {
     this.center,
     this.k, {
     this.pill = false,
+    this.capK = 0.5,
   });
   final String path;
 
   /// 알약 모양 버튼: 높이에 맞춰 그림을 통째로 줄이고 가로 가운데만 늘린다
   /// (둥근 끝이 잘려 늘어나지 않게, 9조각 대신 3조각).
   final bool pill;
+
+  /// 알약 끝 조각 폭 = 높이 × capK.
+  final double capK;
   final Rect center; // 원본 픽셀 기준 가운데(늘어나는) 영역
   final double k; // 원본 픽셀 → 화면 논리 px 배율 (모서리 크기 결정)
 
@@ -356,10 +362,11 @@ class NineSliceDecoration extends Decoration {
       other.path == path &&
       other.center == center &&
       other.k == k &&
-      other.pill == pill;
+      other.pill == pill &&
+      other.capK == capK;
 
   @override
-  int get hashCode => Object.hash(path, center, k, pill);
+  int get hashCode => Object.hash(path, center, k, pill, capK);
 }
 
 class _NineSlicePainter extends BoxPainter {
@@ -397,8 +404,8 @@ class _NineSlicePainter extends BoxPainter {
     final paint0 = Paint()..filterQuality = FilterQuality.medium;
     if (d.pill) {
       // 둥근 끝 = 원본 높이의 절반. 화면에서는 버튼 높이의 절반 (폭이 모자라면 폭의 절반)
-      final cap = h / 2;
-      final capDst = (size.height / 2).clamp(0.0, size.width / 2);
+      final cap = h * d.capK;
+      final capDst = (size.height * d.capK).clamp(0.0, size.width / 2);
       final sx = [0.0, cap, w - cap, w];
       final dx = [
         offset.dx,
@@ -516,12 +523,13 @@ class _Ribbon extends StatelessWidget {
     final tail = Art.frame('ribbon_tail_$color');
     if (mid.available && tail.available) {
       const band = 44.0;
-      const tailSize = band / 0.7; // 꼬리 그림에서 띠는 위쪽 70%
+      const tailSize =
+          band / 0.7067; // 꼬리 그림에서 띠는 위쪽 70.7% (가운데 띠는 그 부분을 떠 온 것)
       Widget tailImg({bool flip = false}) => Transform.flip(
         flipX: flip,
         child: Image.asset(
           tail.path,
-          width: tailSize,
+          width: tailSize * 295 / 300, // 꼬리 그림 비율 (잘린 끝 1.5% 제외)
           height: tailSize,
           fit: BoxFit.fill,
           filterQuality: FilterQuality.medium,
@@ -535,7 +543,7 @@ class _Ribbon extends StatelessWidget {
           children: [
             tailImg(),
             Transform.translate(
-              offset: const Offset(-0.5, 0),
+              offset: const Offset(-1.5, 0),
               child: Container(
                 height: band,
                 constraints: const BoxConstraints(minWidth: 80, maxWidth: 220),
@@ -559,7 +567,7 @@ class _Ribbon extends StatelessWidget {
               ),
             ),
             Transform.translate(
-              offset: const Offset(-1, 0),
+              offset: const Offset(-2.5, 0), // 이음매에 실선이 비치지 않게 겹쳐 붙인다
               child: tailImg(flip: true),
             ),
           ],

@@ -1301,7 +1301,8 @@ class _Bubble extends StatelessWidget {
 
   // 말풍선 꼬리: 몸통 아래 가운데에 따로 붙인다 (몸통은 9조각으로 늘리고 꼬리는 그대로, D-092)
   Widget _tail() => Transform.translate(
-    offset: const Offset(0, -3.5),
+    // 몸통 아래 외곽선 · 그늘 띠를 덮도록 위로 올린다 (꼬리 색 = 그늘 띠 색)
+    offset: const Offset(0, -5),
     child: ArtImage(Art.frame('speech_tail'), size: 18),
   );
 

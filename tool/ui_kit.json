@@ -1,29 +1,167 @@
 {
  "palette": {
-  "green": "#8CCB3A", "gold": "#FFC83D", "purple": "#B48CF0", "cream": "#FFF3DC",
-  "paper": "#FFF6E6", "white": "#FFFDF8", "ready": "#FFE6A0",
-  "spring": "#EE86AE", "summer": "#6CC2EA", "autumn": "#F09550", "winter": "#7FAAE6"
+  "green": "#8CCB3A",
+  "gold": "#FFC83D",
+  "purple": "#B48CF0",
+  "cream": "#FFF3DC",
+  "paper": "#FFF6E6",
+  "white": "#FFFDF8",
+  "ready": "#FFE6A0",
+  "spring": "#EE86AE",
+  "summer": "#6CC2EA",
+  "autumn": "#F09550",
+  "winter": "#7FAAE6"
  },
  "outputs": [
-  {"name": "button_green",  "src": "ui_button_base",  "color": "green",  "height": 192},
-  {"name": "button_gold",   "src": "ui_button_base",  "color": "gold",   "height": 192},
-  {"name": "button_purple", "src": "ui_button_base",  "color": "purple", "height": 192},
-  {"name": "button_white",  "src": "ui_button_base",  "color": "cream",  "height": 192},
-  {"name": "capsule",        "src": "ui_capsule_base", "color": "cream",  "height": 160},
-  {"name": "capsule_spring", "src": "ui_capsule_base", "color": "spring", "height": 160},
-  {"name": "capsule_summer", "src": "ui_capsule_base", "color": "summer", "height": 160},
-  {"name": "capsule_autumn", "src": "ui_capsule_base", "color": "autumn", "height": 160},
-  {"name": "capsule_winter", "src": "ui_capsule_base", "color": "winter", "height": 160},
-  {"name": "panel",      "src": "ui_panel_frame", "color": "paper", "fill": "paper", "width": 640},
-  {"name": "card",       "src": "ui_card_base",   "color": "white", "width": 384},
-  {"name": "card_ready", "src": "ui_card_base",   "color": "ready", "width": 384},
-  {"name": "tile",       "src": "ui_card_base",   "color": "paper", "width": 384},
-  {"name": "speech",     "src": "ui_speech_body", "color": "white", "width": 384},
-  {"name": "speech_tail","src": "ui_speech_tail", "color": "white", "height": 96},
-  {"name": "cell",       "src": "ui_slot_base",   "color": "paper", "width": 384},
-  {"name": "ribbon_mid_green",  "src": "ui_ribbon_center", "color": "green", "height": 210, "crop_x": [0.3, 0.7]},
-  {"name": "ribbon_tail_green", "src": "ui_ribbon_tail",   "color": "green", "height": 300},
-  {"name": "ribbon_mid_gold",   "src": "ui_ribbon_center", "color": "gold",  "height": 210, "crop_x": [0.3, 0.7]},
-  {"name": "ribbon_tail_gold",  "src": "ui_ribbon_tail",   "color": "gold",  "height": 300}
+  {
+   "name": "button_green",
+   "src": "ui_button_base",
+   "color": "green",
+   "height": 192
+  },
+  {
+   "name": "button_gold",
+   "src": "ui_button_base",
+   "color": "gold",
+   "height": 192
+  },
+  {
+   "name": "button_purple",
+   "src": "ui_button_base",
+   "color": "purple",
+   "height": 192
+  },
+  {
+   "name": "button_white",
+   "src": "ui_button_base",
+   "color": "cream",
+   "height": 192
+  },
+  {
+   "name": "capsule",
+   "src": "ui_capsule_base",
+   "color": "cream",
+   "height": 160
+  },
+  {
+   "name": "capsule_spring",
+   "src": "ui_capsule_base",
+   "color": "spring",
+   "height": 160
+  },
+  {
+   "name": "capsule_summer",
+   "src": "ui_capsule_base",
+   "color": "summer",
+   "height": 160
+  },
+  {
+   "name": "capsule_autumn",
+   "src": "ui_capsule_base",
+   "color": "autumn",
+   "height": 160
+  },
+  {
+   "name": "capsule_winter",
+   "src": "ui_capsule_base",
+   "color": "winter",
+   "height": 160
+  },
+  {
+   "name": "panel",
+   "src": "ui_panel_frame",
+   "color": "paper",
+   "fill": "paper",
+   "width": 640
+  },
+  {
+   "name": "card",
+   "src": "ui_card_base",
+   "color": "white",
+   "width": 384
+  },
+  {
+   "name": "card_ready",
+   "src": "ui_card_base",
+   "color": "ready",
+   "width": 384
+  },
+  {
+   "name": "tile",
+   "src": "ui_card_base",
+   "color": "paper",
+   "width": 384
+  },
+  {
+   "name": "speech",
+   "src": "ui_speech_body",
+   "color": "white",
+   "width": 384
+  },
+  {
+   "name": "speech_tail",
+   "src": "ui_speech_tail",
+   "color": "white",
+   "height": 96,
+   "flat": 0.86
+  },
+  {
+   "name": "cell",
+   "src": "ui_slot_base",
+   "color": "paper",
+   "width": 384
+  },
+  {
+   "name": "ribbon_mid_green",
+   "src": "ui_ribbon_tail",
+   "color": "green",
+   "height": 212,
+   "strip": {
+    "rows": [
+     0,
+     0.707
+    ],
+    "cols": [
+     0.92,
+     0.975
+    ]
+   }
+  },
+  {
+   "name": "ribbon_tail_green",
+   "src": "ui_ribbon_tail",
+   "color": "green",
+   "height": 300,
+   "crop_x": [
+    0,
+    0.985
+   ]
+  },
+  {
+   "name": "ribbon_mid_gold",
+   "src": "ui_ribbon_tail",
+   "color": "gold",
+   "height": 212,
+   "strip": {
+    "rows": [
+     0,
+     0.707
+    ],
+    "cols": [
+     0.92,
+     0.975
+    ]
+   }
+  },
+  {
+   "name": "ribbon_tail_gold",
+   "src": "ui_ribbon_tail",
+   "color": "gold",
+   "height": 300,
+   "crop_x": [
+    0,
+    0.985
+   ]
+  }
  ]
 }

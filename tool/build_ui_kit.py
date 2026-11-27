@@ -123,6 +123,17 @@ def build(conf):
         a = a.copy()
         if out.get('fill'):
             rgb, a = fill_inside(rgb, a, pal[out['fill']])
+        if out.get('flat') is not None:
+            # 무채색 부분을 한 가지 색으로 (말풍선 꼬리: 몸통 아래 그늘 띠와 같은 색이 되게)
+            mx, mn = rgb.max(-1), rgb.min(-1)
+            w = np.clip((0.16 - (mx - mn) / 255.0) / 0.08, 0, 1) * np.clip((rgb.mean(-1) - 90) / 40, 0, 1)
+            col = pal[out['color']] * out['flat']
+            rgb = rgb * (1 - w[..., None]) + col * w[..., None]
+        if out.get('strip'):
+            # 리본 가운데 띠를 꼬리 그림의 오른쪽 끝 몇 줄에서 떠 온다 (이음매가 생기지 않게)
+            (y0, y1), (x0, x1) = out['strip']['rows'], out['strip']['cols']
+            h, w = a.shape
+            rgb, a = rgb[int(h * y0):int(h * y1), int(w * x0):int(w * x1)], a[int(h * y0):int(h * y1), int(w * x0):int(w * x1)]
         if out.get('crop_x'):  # 리본 가운데 띠: 양 끝 둥근 광택을 빼고 가운데만
             x0, x1 = out['crop_x']
             w = a.shape[1]
