@@ -119,7 +119,14 @@ def build(conf):
         if src not in cache:
             cache[src] = trim(*key_magenta(os.path.join(RAW, src + '.png')))
         rgb, a = cache[src]
-        rgb = tint(rgb.copy(), pal.get(out.get('color')))
+        rgb = rgb.copy()
+        if out.get('contrast') is not None:
+            # 무채색 몸통의 명암 대비만 줄인다 (판 칸 그림자가 너무 진할 때): 밝기를 기본 회색 200 쪽으로
+            k = out['contrast']
+            mx, mn = rgb.max(-1), rgb.min(-1)
+            g = (np.clip((0.16 - (mx - mn) / 255.0) / 0.08, 0, 1) * np.clip((rgb.mean(-1) - 90) / 40, 0, 1))[..., None]
+            rgb = rgb * (1 - g) + (200 + (rgb - 200) * k) * g
+        rgb = tint(rgb, pal.get(out.get('color')))
         a = a.copy()
         if out.get('fill'):
             rgb, a = fill_inside(rgb, a, pal[out['fill']])

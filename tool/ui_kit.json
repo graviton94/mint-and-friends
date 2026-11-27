@@ -166,28 +166,32 @@
    "src": "ui_slot_base",
    "color": "cellA",
    "line": "#CDBB98",
-   "width": 192
+   "width": 192,
+   "contrast": 0.45
   },
   {
    "name": "cell_alt",
    "src": "ui_slot_base",
    "color": "cellB",
    "line": "#C8B590",
-   "width": 192
+   "width": 192,
+   "contrast": 0.45
   },
   {
    "name": "cell_vault",
    "src": "ui_slot_base",
    "color": "vault",
    "line": "#B9ACD6",
-   "width": 192
+   "width": 192,
+   "contrast": 0.45
   },
   {
    "name": "cell_locked",
    "src": "ui_slot_base",
    "color": "locked",
    "line": "#B9AA8A",
-   "width": 192
+   "width": 192,
+   "contrast": 0.45
   }
  ]
 }

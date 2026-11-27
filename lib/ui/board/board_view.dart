@@ -385,6 +385,8 @@ class _BoardViewState extends State<BoardView> {
 
   List<Widget> _itemLayer(double cell, Offset Function(int) origin) {
     final wanted = {for (final o in game.orders) '${o.chain.index}-${o.level}'};
+    // 곧 자동으로 합쳐질 두 칸: 차오를수록 흔들흔들 (D-099)
+    final pair = game.autoMergeInterval == null ? null : game.nextAutoMergePair;
     final out = <Widget>[];
     for (var i = 0; i < GameConfig.cellCount; i++) {
       final it = game.board[i];
@@ -399,16 +401,21 @@ class _BoardViewState extends State<BoardView> {
           top: o.dy,
           width: cell,
           height: cell,
-          child: ItemTile(
-            item: it,
-            size: cell,
-            popKey: '${it.id}-${it.level}-${it.isBubble}',
-            selected: widget.selected == i,
-            wanted:
-                !it.isBubble &&
-                wanted.contains('${it.chain.index}-${it.level}'),
-            now: game.now,
-            perHour: game.itemIncomePerHour(it),
+          child: _Wiggle(
+            amount: pair != null && (pair.$1 == i || pair.$2 == i)
+                ? game.autoMergeFrac
+                : 0,
+            child: ItemTile(
+              item: it,
+              size: cell,
+              popKey: '${it.id}-${it.level}-${it.isBubble}',
+              selected: widget.selected == i,
+              wanted:
+                  !it.isBubble &&
+                  wanted.contains('${it.chain.index}-${it.level}'),
+              now: game.now,
+              perHour: game.itemIncomePerHour(it),
+            ),
           ),
         ),
       );
@@ -732,9 +739,12 @@ class _AutoFill extends StatelessWidget {
             children: [
               if (basket != null)
                 Center(
-                  child: Opacity(
-                    opacity: 0.18 + 0.3 * v,
-                    child: ArtImage(Art.icon(basket!), size: size * 0.5),
+                  child: _Wiggle(
+                    amount: v,
+                    child: Opacity(
+                      opacity: 0.18 + 0.3 * v,
+                      child: ArtImage(Art.icon(basket!), size: size * 0.5),
+                    ),
                   ),
                 ),
               if (!bar)
@@ -794,6 +804,76 @@ class _AutoFill extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 흔들흔들 (D-099): amount(0~1, 자동 진행 차오름)가 커질수록 빨리 · 크게 흔들린다.
+/// 끝나면 합치기 · 놓기가 일어나며 '뿅'(통 튀는 탄력)으로 이어진다. 거의 0 이면 그대로 그린다.
+class _Wiggle extends StatefulWidget {
+  const _Wiggle({required this.amount, required this.child});
+  final double amount;
+  final Widget child;
+
+  @override
+  State<_Wiggle> createState() => _WiggleState();
+}
+
+class _WiggleState extends State<_Wiggle> with SingleTickerProviderStateMixin {
+  AnimationController? _c;
+
+  double get _a => ((widget.amount - 0.3) / 0.7).clamp(0.0, 1.0);
+
+  void _sync() {
+    if (_a > 0 && _c == null) {
+      _c = AnimationController(
+        vsync: this,
+        duration: const Duration(seconds: 1),
+      )..repeat();
+    } else if (_a <= 0 && _c != null) {
+      _c!.dispose();
+      _c = null;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(_Wiggle old) {
+    super.didUpdateWidget(old);
+    _sync();
+  }
+
+  @override
+  void dispose() {
+    _c?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = _c;
+    if (c == null) return widget.child;
+    return AnimatedBuilder(
+      animation: c,
+      builder: (_, child) {
+        final a = _a;
+        final t = (c.lastElapsedDuration?.inMicroseconds ?? 0) / 1e6;
+        // 진할수록 빠르게 (초당 2 → 5번)
+        final w = sin(t * pi * 2 * (2 + 3 * a));
+        return Transform(
+          alignment: Alignment.bottomCenter,
+          transform: Matrix4.identity()
+            ..rotateZ(w * 0.11 * a)
+            ..scaleByDouble(1 + 0.05 * a, 1 + 0.05 * a, 1, 1),
+          child: child,
+        );
+      },
+      child: widget.child,
     );
   }
 }
