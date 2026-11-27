@@ -1244,7 +1244,7 @@ class _OutfitCard extends StatelessWidget {
         ? (current ? tr('outfit.using') : tr('outfit.wear'))
         : outfit!.limited
         ? tr('outfit.limited')
-        : !outfit!.onSaleIn(game.now.month)
+        : !outfit!.onSaleIn(Season.month)
         ? tr('outfit.offSeason', {
             'from': outfit!.months!.first,
             'to': outfit!.months!.last,
@@ -1256,7 +1256,7 @@ class _OutfitCard extends StatelessWidget {
         outfit != null &&
         !outfit!.limited &&
         outfit!.months != null &&
-        outfit!.onSaleIn(game.now.month);
+        outfit!.onSaleIn(Season.month);
     final card = Container(
       margin: const EdgeInsets.symmetric(horizontal: 4),
       padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
@@ -1290,7 +1290,7 @@ class _OutfitCard extends StatelessWidget {
                 current ||
                     (!owned &&
                         (outfit!.limited ||
-                            !outfit!.onSaleIn(game.now.month) ||
+                            !outfit!.onSaleIn(Season.month) ||
                             game.gems < outfit!.gems))
                 ? null
                 : () async {

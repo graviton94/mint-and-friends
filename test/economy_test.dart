@@ -9,7 +9,11 @@ import 'package:mint_and_friends/game/tuning.dart';
 void main() {
   late DateTime now;
   GameState make() => GameState(random: Random(5), clock: () => now);
-  setUp(() => now = DateTime(2026, 1, 1, 12));
+  setUp(() {
+    now = DateTime(2026, 1, 1, 12);
+    Season.debug = 'winter'; // 계절은 앱에 실린 키를 따른다 (D-103): 1월 = 겨울
+  });
+  tearDown(() => Season.debug = null);
 
   test('부탁 별은 에너지에 비례하고, 높은 단계일수록 에너지당 별이 같거나 조금 더 많다', () {
     double perStar(int l) => pow(2, l - 1) / Garden.orderStars(l);
@@ -424,6 +428,7 @@ void main() {
     expect(g.outfitOf(Friends.starter), 'winter');
     expect(g.wearOutfit(Friends.starter, null), StyleResult.ok);
     now = DateTime(2026, 7, 1);
+    Season.debug = 'summer';
     expect(
       g.wearOutfit(Friends.starter, 'winter'),
       StyleResult.ok,
@@ -790,6 +795,7 @@ void main() {
     expect(g.styleOf(0, 1), 3);
     expect(g.ownsSeasonSet(0, slots), isTrue);
     now = DateTime(2026, 4, 1);
+    Season.debug = 'spring';
     expect(g.setStyle(0, 0, 0), StyleResult.ok);
     expect(g.setStyle(0, 0, 3), StyleResult.ok); // 지난 시즌 것도 산 것은 무료로
   });

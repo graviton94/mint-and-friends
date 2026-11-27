@@ -21,6 +21,10 @@ on:
         description: "출시 뒤 원격 설정 min_version_code 도 이 버전으로 (강제 업데이트) true/false"
         required: false
         default: "false"
+      store_season:
+        description: "출시 뒤 스토어 그래픽 · 스크린샷 · 아이콘도 이 계절로 (spring/summer/autumn/winter, 비우면 그대로)"
+        required: false
+        default: ""
 
 concurrency:
   group: aab
@@ -144,6 +148,10 @@ jobs:
           else
             python3 tool/play_api.py upload out/*.aab "${{ inputs.track }}" "${{ inputs.version }}"
           fi
+      # 계절 배포 (D-103): 앱(계절 키 · 홈 아이콘)과 스토어 그래픽을 같은 때 바꾼다
+      - name: Store season graphics
+        if: inputs.track != 'none' && inputs.store_season != ''
+        run: python3 tool/play_api.py feature "${{ inputs.store_season }}" --apply
       - name: Remote Config latest version
         if: inputs.track != 'none'
         run: |

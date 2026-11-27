@@ -321,14 +321,8 @@ class Art {
   /// 시작 · 로그인 화면 배경과 덤불 (계절마다, D-078). 계절 = 게임 계절 장식과 같은 달 기준.
   /// 미리보기용: 계절을 정해 보여 준다.
   static String? debugTitleSeason;
-  static String _titleSeason([DateTime? t]) =>
-      debugTitleSeason ??
-      switch (Garden.seasonStyleFor((t ?? DateTime.now()).month)) {
-        3 => 'winter',
-        4 => 'spring',
-        5 => 'summer',
-        _ => 'autumn',
-      };
+  // 앱에 실린 계절 키 (D-103, 기기 날짜와 무관)
+  static String _titleSeason([DateTime? t]) => debugTitleSeason ?? Season.key;
   static ArtRef titleBg([DateTime? t]) {
     final r = ArtRef('assets/art/title/bg_${_titleSeason(t)}.webp', '');
     return r.available ? r : const ArtRef('assets/art/title/bg.webp', '');

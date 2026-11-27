@@ -1,0 +1,70 @@
+name: Season release
+
+# 계절 첫날 자동 배포 (D-103): 3/1 · 6/1 · 9/1 · 12/1 한국 0시 10분.
+# 1) 앱의 계절 키 · 홈 화면 아이콘을 새 계절로 바꾸고 패치노트를 넣어 커밋
+# 2) Store AAB 를 다음 버전으로 비공개 테스트(alpha)에 출시 + 같은 실행에서 스토어 그래픽도 새 계절로
+# 그래서 배포가 나가는 때 앱 · 스토어 · 아이콘의 계절이 함께 바뀐다.
+# docs/store/season/AUTO 가 있어야 실제로 하고, 없으면 확인만. 수동 실행은 season 을 직접 고른다.
+on:
+  schedule:
+    - cron: "10 15 28-31 2,5,8,11 *"
+  workflow_dispatch:
+    inputs:
+      season:
+        description: "spring / summer / autumn / winter"
+        required: true
+        default: "winter"
+      dry_run:
+        description: "true 면 무엇을 할지 보여 주기만"
+        required: true
+        default: "true"
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Which season
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "$(TZ=Asia/Seoul date +%d)" != "01" ]; then echo "not a season start (KST $(TZ=Asia/Seoul date +%F))"; echo "SKIP=1" >> "$GITHUB_ENV"; exit 0; fi
+            case "$(TZ=Asia/Seoul date +%m)" in 03) S=spring;; 06) S=summer;; 09) S=autumn;; *) S=winter;; esac
+            if [ -f docs/store/season/AUTO ]; then D=false; else D=true; echo "::notice::AUTO 파일이 없어 확인만 합니다"; fi
+          else
+            S="${{ inputs.season }}"; D="${{ inputs.dry_run }}"
+          fi
+          echo "SEASON=$S" >> "$GITHUB_ENV"; echo "DRY=$D" >> "$GITHUB_ENV"
+      - name: Next version
+        if: env.SKIP != '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # 가장 최근 출시 태그(store-<버전>-<코드>)의 버전에서 끝자리 +1
+          LAST=$(gh release list --limit 30 --json tagName --jq '.[].tagName' | grep '^store-' | head -1 | sed -E 's/^store-([0-9.]+)-.*/\1/')
+          NEXT=$(echo "$LAST" | awk -F. '{printf "%d.%d.%d", $1, $2, $3+1}')
+          echo "last=$LAST next=$NEXT season=$SEASON dry=$DRY"
+          echo "NEXT=$NEXT" >> "$GITHUB_ENV"
+      - name: Season key, launcher icon, patch notes
+        if: env.SKIP != '1'
+        run: |
+          pip install -q pillow
+          python3 tool/launcher_icon.py "$SEASON"
+          python3 tool/season_notes.py "$NEXT" "$SEASON"
+          git status --short
+      - name: Commit and release
+        if: env.SKIP != '1' && env.DRY != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "season-release"
+          git config user.email "season-release@users.noreply.github.com"
+          git add -A
+          git commit -m "Season release $NEXT: $SEASON (key, launcher icon, patch notes) [skip ci]" || true
+          git push origin HEAD:${GITHUB_REF_NAME}
+          gh workflow run aab.yml --ref "${GITHUB_REF_NAME}" -f version="$NEXT" -f track=alpha -f min_version=false -f store_season="$SEASON"
+          echo "dispatched Store AAB $NEXT with store_season=$SEASON"

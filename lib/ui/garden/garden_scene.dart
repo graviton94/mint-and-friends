@@ -623,7 +623,7 @@ class _GardenSceneState extends State<GardenScene>
                               null => _SeasonPainter(
                                 t: _t,
                                 season: _SeasonPainter.seasonOfMonth(
-                                  game.now.month,
+                                  Season.month,
                                 ),
                               ),
                             },

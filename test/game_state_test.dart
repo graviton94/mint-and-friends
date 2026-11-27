@@ -244,7 +244,7 @@ void main() {
     expect(Upgrades.autoMergeInterval(m - 1)!, greaterThan(8));
   });
 
-  test('자동 놓기: 에너지를 쓰고, 빈칸 1칸은 남기고, 끌 수 있다', () {
+  test('자동 놓기: 에너지를 쓰고, 마지막 빈 칸까지 채우되 보관 칸은 안 채우고, 끌 수 있다 (D-104)', () {
     final g = make();
     g.level = 20;
     g.upgrades[UpgradeType.autoSpawn] = 1;
@@ -255,11 +255,17 @@ void main() {
     while (g.autoSpawnOnce()) {}
     final empty = [
       for (var i = 0; i < g.board.length; i++)
-        if (g.board[i] == null && g.isCellOpen(i)) i,
+        if (g.board[i] == null && g.isCellOpen(i) && !GameConfig.isVault(i)) i,
     ];
-    expect(empty.length, 1);
+    expect(empty, isEmpty);
+    expect(g.nextAutoSpawnCell, isNull);
+    final open = [
+      for (var i = 0; i < g.board.length; i++)
+        if (g.isCellOpen(i) && !GameConfig.isVault(i)) i,
+    ];
+    g.board[open.last] = null; // 빈 칸 하나
+    expect(g.nextAutoSpawnCell, open.last);
     g.energy = 0;
-    g.board[empty.first] = null;
     expect(g.autoSpawnOnce(), isFalse);
     g.setAutoSpawn(false);
     expect(g.autoSpawnOn, isFalse);

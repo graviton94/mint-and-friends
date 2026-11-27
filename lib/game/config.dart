@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'meta.dart' show Reward;
+import 'season_key.dart';
 import 'tuning.dart';
 
 /// 밸런스와 콘텐츠 상수. 숫자 튜닝은 대부분 이 파일에서 한다.
@@ -1157,6 +1158,14 @@ class Garden {
       seasonSetBonus - 8 * seasonPieceBonus;
 
   /// 지금 달의 시즌 디자인 (그 시즌에만 살 수 있고, 산 것은 계속 쓴다).
+  /// 앱에 실린 계절 키 기준 지금 계절 장식 번호 (D-103: 기기 날짜가 아니라 배포된 버전의 계절).
+  static int get seasonStyleNow => switch (Season.key) {
+    'winter' => 3,
+    'spring' => 4,
+    'summer' => 5,
+    _ => 6,
+  };
+
   static int seasonStyleFor(int month) => switch (month) {
     12 || 1 || 2 => 3,
     3 || 4 || 5 => 4,
@@ -1424,4 +1433,20 @@ class Starter {
   /// 처음 보여 준 뒤 7일 동안만 판다 (타이머가 끝나면 상점에서도 사라진다).
   static const Duration offerWindow = Duration(days: 7);
   static const int worthKrw = 20000;
+}
+
+/// 계절 (D-103): 앱 버전에 실린 키(kSeasonKey)를 따른다. 기기 날짜로 바꾸지 않는다
+/// (스토어 그래픽 · 홈 아이콘이 바뀌는 배포 시점과 정확히 맞추려고).
+class Season {
+  /// 미리보기 · 테스트용 덮어쓰기.
+  static String? debug;
+  static String get key => debug ?? kSeasonKey;
+
+  /// 이 계절의 대표 달 (월별로 정해진 판매 기간 · 풍경 효과에 쓴다).
+  static int get month => switch (key) {
+    'spring' => 4,
+    'summer' => 7,
+    'winter' => 1,
+    _ => 10,
+  };
 }

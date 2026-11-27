@@ -1735,12 +1735,10 @@ class GameState extends ChangeNotifier {
   /// 자동 놓기 한 번: 빈칸이 2칸 이상(직접 움직일 자리 1칸은 남긴다) · 에너지 · 바구니가 있을 때만.
   /// 에너지가 없으면 조용히 쉰다 (에너지 없음 창을 띄우지 않는다).
   bool autoSpawnOnce() {
-    var empty = 0;
-    // 보관 칸은 세지 않는다 (자동으로 보관 칸을 채우지 않게, D-071)
-    for (var i = 0; i < board.length && empty < 2; i++) {
-      if (board[i] == null && isCellOpen(i) && !GameConfig.isVault(i)) empty++;
-    }
-    if (empty < 2) return false;
+    // 빈 칸이 하나뿐이어도 채운다 (D-104, 예전엔 하나를 남겨 합치기 자리와 겹쳐 보였다).
+    // 보관 칸은 자동으로 채우지 않는다 (D-071): 첫 빈 칸이 보관 칸이면 일반 빈 칸이 없는 것
+    final cell = _emptyCell;
+    if (cell == null || GameConfig.isVault(cell)) return false;
     if (energy < GameConfig.energyPerTap) return false;
     if (!basketOpen(basket)) basket = 0;
     if (!basketReady(basket)) return false;
@@ -1806,13 +1804,11 @@ class GameState extends ChangeNotifier {
   /// 다음 자동 놓기가 아이템을 놓을 칸 (놓을 수 없으면 null).
   int? get nextAutoSpawnCell {
     if (autoSpawnInterval == null || !autoSpawnOn) return null;
-    var empty = 0;
-    for (var i = 0; i < board.length && empty < 2; i++) {
-      if (board[i] == null && isCellOpen(i) && !GameConfig.isVault(i)) empty++;
-    }
-    if (empty < 2 || energy < GameConfig.energyPerTap) return null;
+    final cell = _emptyCell;
+    if (cell == null || GameConfig.isVault(cell)) return null;
+    if (energy < GameConfig.energyPerTap) return null;
     if (!basketReady(basketOpen(basket) ? basket : 0)) return null;
-    return _emptyCell;
+    return cell;
   }
 
   // ---------------------------------------------------------------- 낮은 단계 정리 (D-054)
@@ -2386,7 +2382,7 @@ class GameState extends ChangeNotifier {
     return StyleResult.ok;
   }
 
-  int get seasonStyleNow => Garden.seasonStyleFor(now.month);
+  int get seasonStyleNow => Garden.seasonStyleNow;
 
   /// 이 구역 시즌 세트를 다 가졌는지 ([slots] = 그림이 있는 자리들).
   bool ownsSeasonSet(int area, Iterable<int> slots) =>
@@ -2423,7 +2419,7 @@ class GameState extends ChangeNotifier {
       if (o == null) return StyleResult.notPlaced;
       if (!ownsOutfit(friendId, outfit)) {
         if (o.limited) return StyleResult.notPlaced; // 한정 의상은 패키지로만
-        if (!o.onSaleIn(now.month))
+        if (!o.onSaleIn(Season.month))
           return StyleResult.notPlaced; // 계절 의상은 그 계절에만
         if (!_spendGems(o.gems, 'outfit')) return StyleResult.noGems;
         ownedOutfits.add('$friendId:$outfit');
