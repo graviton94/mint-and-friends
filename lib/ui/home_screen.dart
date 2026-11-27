@@ -63,7 +63,12 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+/// 점검용 (D-108): 홈 화면의 창을 이름으로 열어 본다 (줄바꿈 · 작은 화면 테스트).
+abstract interface class HomeDebug {
+  Map<String, VoidCallback> debugDialogs();
+}
+
+class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
   StreamSubscription<GameEvent>? _sub;
   final List<_Toast> _toasts = [];
   int _toastId = 0;
@@ -73,6 +78,39 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _levelDialogOpen = false;
 
   GameState get game => widget.game;
+
+  @override
+  Map<String, VoidCallback> debugDialogs() {
+    final itemCell = game.board.indexWhere((it) => it != null && !it.isBubble);
+    return {
+      'levelUp': () {
+        _levelUps.add(
+          LevelUpEvent(game.level, [Feature.values.last], 123456, 12, 30),
+        );
+        _showLevelUps();
+      },
+      'unlock': () => _showUnlock(Feature.values.last),
+      'energy': _energyDialog,
+      'gift': () => _giftDialog(itemCell),
+      'xp': _xpInfo,
+      'income': _incomeInfo,
+      'seasonSet': () => _seasonSetDialog(2, 0),
+      'quota': () => _quotaDialog(game.friends.first),
+      'allDone': _allDoneDialog,
+      'vault': () => _vaultDialog(GameConfig.coinCells),
+      'bubble': () => _bubbleFlow(itemCell, 50, () {}),
+      'visitor': _visitorFlow,
+      'order': () => _orderInfo(0),
+      'newArea': () => showNewAreaDialog(context, game, game.currentArea),
+      'newBasket': () => showNewBasketDialog(context, [1]),
+      'renewConfirm': () => showRenewConfirm(context, game, adFree: false),
+      'renewDone': () => showRenewDone(context, game, 3),
+      'seed': () => showSeedSheet(context, game),
+      'share': () => showShareDialog(context, game, ShareKind.garden),
+      for (final m in game.mail.take(3))
+        'mail:${m.id}': () => showMailDetail(context, game, m),
+    };
+  }
 
   /// 광고 없이 보상: 구독 또는 기간제 정원 패스 (새싹 정원 패키지).
   bool get adFree => widget.billing.adFree || game.passActive;

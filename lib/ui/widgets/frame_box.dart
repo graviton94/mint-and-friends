@@ -767,14 +767,23 @@ class DialogAdButton extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          IconText(
-            adFree ? label : '[[ad]] $label',
-            style: const TextStyle(fontSize: 19, color: Colors.white),
+          // 버튼 글자는 한 줄: 길면 줄이지 않고 살짝 작게 (D-108)
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: IconText(
+              adFree ? label : '[[ad]] $label',
+              maxLines: 1,
+              style: const TextStyle(fontSize: 19, color: Colors.white),
+            ),
           ),
           if (sub != null)
-            IconText(
-              sub!,
-              style: const TextStyle(fontSize: 13, color: Color(0xF2FFFFFF)),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: IconText(
+                sub!,
+                maxLines: 1,
+                style: const TextStyle(fontSize: 13, color: Color(0xF2FFFFFF)),
+              ),
             ),
         ],
       ),
@@ -804,7 +813,10 @@ class DialogPlainButton extends StatelessWidget {
       'button_white',
     ),
     onPressed: onTap,
-    child: IconText(label, style: const TextStyle(fontSize: 18)),
+    child: FittedBox(
+      fit: BoxFit.scaleDown,
+      child: IconText(label, maxLines: 1, style: const TextStyle(fontSize: 18)),
+    ),
   );
 }
 

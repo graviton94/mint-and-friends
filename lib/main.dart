@@ -64,17 +64,19 @@ Future<Widget> _boot(void Function(double) report) async {
   final auth = AuthService();
   await auth.init();
   report(0.35);
-  // 경제 변수 원격 조정 (오래 걸리면 기본값으로 시작)
-  await RemoteTuning.load().timeout(
-    const Duration(seconds: 3),
-    onTimeout: () {},
-  );
-  report(0.55);
-  await AudioService.instance.init();
-  await NotifyService.instance.init();
-  await Analytics.instance.checkTestDevice();
-  await DevLog.instance.init();
-  report(0.75);
+  // 서로 기다릴 필요 없는 준비는 한꺼번에 (D-108: 예전엔 하나씩 차례로 기다렸다).
+  // 경제 변수 원격 조정은 오래 걸리면 기본값으로 시작
+  var done = 0;
+  void step() => report(0.35 + 0.4 * (++done) / 5);
+  await Future.wait([
+    RemoteTuning.load()
+        .timeout(const Duration(seconds: 3), onTimeout: () {})
+        .whenComplete(step),
+    AudioService.instance.init().whenComplete(step),
+    NotifyService.instance.init().whenComplete(step),
+    Analytics.instance.checkTestDevice().whenComplete(step),
+    DevLog.instance.init().whenComplete(step),
+  ]);
 
   final save = SaveService(prefs);
   final game = GameState();

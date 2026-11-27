@@ -176,71 +176,94 @@ void main() {
     return out;
   }
 
+  // 흔한 폰 크기 (D-108): 360×640dp(작은 안드로이드) · 360×800 · 393×852(요즘 폰)
+  const sizes = {'360x640': Size(360, 640), '393x852': Size(393, 852)};
   for (final lang in ['ko', 'en', 'ja', 'es']) {
-    testWidgets('줄바꿈 점검: $lang', (tester) async {
-      SharedPreferences.setMockInitialValues({
-        'tutorial_v1': 99,
-        'feature_tips_seen': [
-          for (final f in Feature.values) f.name,
-          'gems',
-          'checkIn',
-          'market',
-          'basket',
-          'design',
-          'wardrobe',
-          'friends',
-        ],
-      });
-      await tester.runAsync(() async {
-        await loadFonts();
-        await L10n.instance.init();
-        await L10n.instance.setLanguage(lang);
-        await Art.init();
-      });
-      const size = Size(720, 1280);
-      tester.view.physicalSize = size;
-      tester.view.devicePixelRatio = 2;
-      addTearDown(tester.view.reset);
-      final g = richGame(DateTime(2026, 1, 1, 12));
-      final billing = BillingService();
-      final ads = AdsService(isAdFree: () => false);
-      late BuildContext ctx;
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: buildTheme(),
-          home: Builder(
-            builder: (c) {
-              ctx = c;
-              return HomeScreen(
-                game: g,
-                ads: ads,
-                billing: billing,
-                openSettings: (_) {},
-              );
-            },
+    for (final sz in sizes.entries) {
+      testWidgets('줄바꿈 점검: $lang ${sz.key}', (tester) async {
+        SharedPreferences.setMockInitialValues({
+          'tutorial_v1': 99,
+          'feature_tips_seen': [
+            for (final f in Feature.values) f.name,
+            'gems',
+            'checkIn',
+            'market',
+            'basket',
+            'design',
+            'wardrobe',
+            'friends',
+          ],
+        });
+        await tester.runAsync(() async {
+          await loadFonts();
+          await L10n.instance.init();
+          await L10n.instance.setLanguage(lang);
+          await Art.init();
+        });
+        tester.view.physicalSize = sz.value * 3;
+        tester.view.devicePixelRatio = 3;
+        addTearDown(tester.view.reset);
+        final g = richGame(DateTime(2026, 1, 1, 12));
+        final billing = BillingService();
+        final ads = AdsService(isAdFree: () => false);
+        late BuildContext ctx;
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: buildTheme(),
+            home: Builder(
+              builder: (c) {
+                ctx = c;
+                return HomeScreen(
+                  game: g,
+                  ads: ads,
+                  billing: billing,
+                  openSettings: (_) {},
+                );
+              },
+            ),
           ),
-        ),
-      );
-      for (var i = 0; i < 5; i++) {
-        await tester.pump(const Duration(milliseconds: 300));
-      }
-      final found = <String>{...badBreaks(tester).map((s) => 'home: $s')};
-      for (final e in screens.entries) {
-        final nav = Navigator.of(ctx);
-        while (nav.canPop()) {
-          nav.pop();
-          await tester.pump(const Duration(milliseconds: 400));
-        }
-        e.value(ctx, g, billing);
-        for (var i = 0; i < 4; i++) {
+        );
+        for (var i = 0; i < 5; i++) {
           await tester.pump(const Duration(milliseconds: 300));
         }
-        found.addAll(badBreaks(tester).map((s) => '${e.key}: $s'));
-      }
-      tester.takeException();
-      // ignore: avoid_print
-      print('== $lang: ${found.length}\n${found.join('\n')}');
-      expect(found, isEmpty, reason: '$lang 줄바꿈');
-    });
+        final found = <String>{...badBreaks(tester).map((s) => 'home: $s')};
+        final homeEx = tester.takeException();
+        if (homeEx != null) found.add('home: 넘침/오류 $homeEx'.split('\n').first);
+        for (final e in screens.entries) {
+          final nav = Navigator.of(ctx);
+          while (nav.canPop()) {
+            nav.pop();
+            await tester.pump(const Duration(milliseconds: 400));
+          }
+          e.value(ctx, g, billing);
+          for (var i = 0; i < 4; i++) {
+            await tester.pump(const Duration(milliseconds: 300));
+          }
+          found.addAll(badBreaks(tester).map((s) => '${e.key}: $s'));
+          final ex = tester.takeException();
+          if (ex != null) found.add('${e.key}: 넘침/오류 $ex'.split('\n').first);
+        }
+        // 홈 화면의 창들 (레벨업 · 부탁 · 수입 · 새 구역 · 보상 …)
+        final home = tester.state(find.byType(HomeScreen)) as HomeDebug;
+        for (final e in home.debugDialogs().entries) {
+          final nav = Navigator.of(ctx);
+          while (nav.canPop()) {
+            nav.pop();
+            await tester.pump(const Duration(milliseconds: 400));
+          }
+          e.value();
+          for (var i = 0; i < 4; i++) {
+            await tester.pump(const Duration(milliseconds: 300));
+          }
+          found.addAll(badBreaks(tester).map((s) => '${e.key}: $s'));
+          final ex = tester.takeException();
+          if (ex != null) found.add('${e.key}: 넘침/오류 $ex'.split('\n').first);
+        }
+        tester.takeException();
+        // ignore: avoid_print
+        print('== $lang ${sz.key}: ${found.length}\n${found.join('\n')}');
+        expect(found, isEmpty, reason: '$lang 줄바꿈');
+      });
+    }
   }
 }

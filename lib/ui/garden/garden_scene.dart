@@ -238,6 +238,18 @@ class _GardenSceneState extends State<GardenScene>
 
   int? _walkArea;
 
+  /// 같은 입력이면 지난 프레임의 위젯을 그대로 (D-108): 친구가 걷느라 매 프레임 다시 그려도
+  /// 배경 · 장식처럼 가만히 있는 것은 새로 만들지 않는다.
+  final Map<String, (Object?, Widget)> _memo = {};
+
+  Widget _cache(String key, Object? sig, Widget Function() make) {
+    final hit = _memo[key];
+    if (hit != null && hit.$1 == sig) return hit.$2;
+    final w = make();
+    _memo[key] = (sig, w);
+    return w;
+  }
+
   /// 지금 정원에 나와 있는 친구: 부탁을 든 친구 먼저, 나머지는 한 시간마다 바뀌는 순서로 [GardenScene.maxFriends] 까지.
   Set<String> _shownFriends() {
     final all = game.friends.toList()..sort();
@@ -565,9 +577,13 @@ class _GardenSceneState extends State<GardenScene>
                   children: [
                     Positioned.fill(
                       child: RepaintBoundary(
-                        child: _BackgroundLayer(
-                          area: area,
-                          t: _nightTwinkle(area),
+                        child: _cache(
+                          'bg',
+                          (area, _nightTwinkle(area)),
+                          () => _BackgroundLayer(
+                            area: area,
+                            t: _nightTwinkle(area),
+                          ),
                         ),
                       ),
                     ),
@@ -713,19 +729,21 @@ class _GardenSceneState extends State<GardenScene>
       final sz = unit * GardenScene.decorK;
       Widget child;
       if (game.isPlaced(widget.area, i)) {
-        child = TweenAnimationBuilder<double>(
-          key: ValueKey('decor-${widget.area}-$i'),
-          tween: Tween(begin: 0, end: 1),
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.elasticOut,
-          builder: (_, v, ch) => Transform.scale(
-            scale: v,
-            alignment: Alignment.bottomCenter,
-            child: ch,
-          ),
-          child: ArtImage(
-            Art.decor(d, style: game.styleOf(widget.area, i)),
-            size: sz,
+        final style = game.styleOf(widget.area, i);
+        child = _cache(
+          'decor-${widget.area}-$i',
+          (style, sz),
+          () => TweenAnimationBuilder<double>(
+            key: ValueKey('decor-${widget.area}-$i'),
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.elasticOut,
+            builder: (_, v, ch) => Transform.scale(
+              scale: v,
+              alignment: Alignment.bottomCenter,
+              child: ch,
+            ),
+            child: ArtImage(Art.decor(d, style: style), size: sz),
           ),
         );
       } else {

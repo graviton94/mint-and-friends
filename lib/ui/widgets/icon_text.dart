@@ -62,10 +62,9 @@ class IconText extends StatelessWidget {
     final runes = s.runes.toList();
     for (var i = 0; i < runes.length; i++) {
       final c = runes[i];
-      // " · " 로 묶인 말(레벨업 · 출석 · 업적)은 가운뎃점 앞뒤에서 줄을 바꾸지 않는다
-      if (c == 0x20 &&
-          ((i + 1 < runes.length && runes[i + 1] == 0xB7) ||
-              (i > 0 && runes[i - 1] == 0xB7))) {
+      // " · " 로 묶인 말(레벨업 · 출석 · 업적): 가운뎃점이 줄 맨 앞에 오지 않게 앞 낱말에 붙인다.
+      // 점 뒤에서는 줄을 바꿀 수 있다 (D-108: 양쪽을 다 묶으면 좁은 칸에서 낱말 중간이 잘렸다)
+      if (c == 0x20 && i + 1 < runes.length && runes[i + 1] == 0xB7) {
         b.write('\u00A0');
         continue;
       }
@@ -76,9 +75,12 @@ class IconText extends StatelessWidget {
           j++;
         }
         final tail = String.fromCharCodes(runes.sublist(i + 1, j));
+        final end = j >= runes.length || runes[j] == 0x0A;
         if (tail.isNotEmpty &&
             tail.runes.length <= 3 &&
-            RegExp(r'^[×x+\-–~#%\d.,!?！？]+[%!?！？]?$').hasMatch(tail)) {
+            (RegExp(r'^[×x+\-–~#%\d.,!?！？]+[%!?！？]?$').hasMatch(tail) ||
+                // 문장 끝 한 글자 낱말('번!', '것.')도 앞 낱말과 함께 (D-108)
+                (end && RegExp(r'^[가-힣][.!?！？]*$').hasMatch(tail)))) {
           // 꼬리 안('×'·'5', '3'·'–'·'5')에서도 줄이 바뀌지 않게
           b.write('\u00A0');
           b.write(tail.split('').join('\u2060'));

@@ -262,7 +262,7 @@ class _BoardViewState extends State<BoardView> {
                       child: Stack(
                         children: [
                           for (var i = 0; i < GameConfig.cellCount; i++)
-                            at(i, _cellTile(i, dragItem, hover, cell)),
+                            at(i, _cellCached(i, dragItem, hover, cell)),
                         ],
                       ),
                     ),
@@ -346,6 +346,30 @@ class _BoardViewState extends State<BoardView> {
     );
   }
 
+  final Map<int, (Object, Widget)> _cellsMemo = {};
+
+  /// 칸 그림도 모습이 같으면 지난 위젯 그대로 (D-108).
+  Widget _cellCached(int i, Item? dragItem, int? hover, double cell) {
+    final t = game.board[i];
+    final sig = (
+      game.isCellOpen(i),
+      t != null,
+      t?.chain,
+      t?.level,
+      t?.isBubble,
+      dragItem?.chain,
+      dragItem?.level,
+      i == _dragFrom,
+      hover == i,
+      cell,
+    );
+    final hit = _cellsMemo[i];
+    if (hit != null && hit.$1 == sig) return hit.$2;
+    final w = _cellTile(i, dragItem, hover, cell);
+    _cellsMemo[i] = (sig, w);
+    return w;
+  }
+
   Widget _cellTile(int i, Item? dragItem, int? hover, double cell) {
     final open = game.isCellOpen(i);
     final target = game.board[i];
@@ -406,6 +430,48 @@ class _BoardViewState extends State<BoardView> {
     );
   }
 
+  /// 같은 모습이면 지난번 위젯을 그대로 돌려준다 (D-108): 게임 시계가 0.1초마다 화면을 다시 그려도
+  /// 바뀐 아이템만 새로 만든다 (예전엔 매번 판의 모든 아이템을 다시 만들었다).
+  final Map<int, (Object, Widget)> _tiles = {};
+
+  Widget _tile(
+    Item it,
+    double cell, {
+    required double wiggle,
+    required bool selected,
+    required bool wanted,
+  }) {
+    final perHour = game.itemIncomePerHour(it);
+    final secs = it.isBubble
+        ? max(0, it.bubbleUntil!.difference(game.now).inSeconds)
+        : 0;
+    final sig = (
+      it.chain,
+      it.level,
+      it.isBubble,
+      cell,
+      wiggle,
+      selected,
+      wanted,
+      secs,
+      perHour,
+    );
+    final hit = _tiles[it.id];
+    if (hit != null && hit.$1 == sig) return hit.$2;
+    final w = ItemTile(
+      wiggle: wiggle,
+      item: it,
+      size: cell,
+      popKey: '${it.id}-${it.level}-${it.isBubble}',
+      selected: selected,
+      wanted: wanted,
+      now: game.now,
+      perHour: perHour,
+    );
+    _tiles[it.id] = (sig, w);
+    return w;
+  }
+
   List<Widget> _itemLayer(double cell, Offset Function(int) origin) {
     final wanted = {for (final o in game.orders) '${o.chain.index}-${o.level}'};
     // 곧 자동으로 합쳐질 두 칸: 차오를수록 흔들흔들 (D-099)
@@ -427,23 +493,21 @@ class _BoardViewState extends State<BoardView> {
           top: o.dy,
           width: cell,
           height: cell,
-          child: ItemTile(
+          child: _tile(
+            it,
+            cell,
             wiggle: pair != null && (pair.$1 == i || pair.$2 == i)
                 ? game.autoMergeFrac
                 : 0,
-            item: it,
-            size: cell,
-            popKey: '${it.id}-${it.level}-${it.isBubble}',
             selected: widget.selected == i,
             wanted:
                 !it.isBubble &&
                 wanted.contains('${it.chain.index}-${it.level}'),
-            now: game.now,
-            perHour: game.itemIncomePerHour(it),
           ),
         ),
       );
     }
+    _tiles.removeWhere((id, _) => !ids.contains(id));
     return out;
   }
 
