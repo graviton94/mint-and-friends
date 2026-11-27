@@ -261,9 +261,22 @@ class _BoardViewState extends State<BoardView> {
                     ),
                   ),
                   // L0.5 자동 합치기 · 자동 놓기 진행 (D-094): 다음에 움직일 칸이 차오른다
-                  if (_dragFrom == null) ..._autoFx(cell, at),
+                  // 늘 한 층으로 (표시 칸 수가 바뀌어도 아래 아이템 층의 자리가 밀리지 않게:
+                  // 밀리면 아이템 층이 통째로 새로 만들어져 모든 아이템이 '뿅' 했다, D-100)
+                  Positioned.fill(
+                    key: const ValueKey('autoFx'),
+                    child: IgnorePointer(
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: _dragFrom == null
+                            ? _autoFx(cell, at)
+                            : const [],
+                      ),
+                    ),
+                  ),
                   // L1 아이템
                   Positioned.fill(
+                    key: const ValueKey('items'),
                     child: RepaintBoundary(
                       child: IgnorePointer(
                         child: Stack(children: _itemLayer(cell, origin)),
@@ -827,7 +840,7 @@ class _Wiggle extends StatefulWidget {
   State<_Wiggle> createState() => _WiggleState();
 }
 
-class _WiggleState extends State<_Wiggle> with SingleTickerProviderStateMixin {
+class _WiggleState extends State<_Wiggle> with TickerProviderStateMixin {
   AnimationController? _c;
 
   double get _a => ((widget.amount - 0.3) / 0.7).clamp(0.0, 1.0);

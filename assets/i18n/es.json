@@ -1283,5 +1283,6 @@
   "pass.card.badgeTop": "Hasta",
   "pass.card.badgeBig": "{x}x",
   "book.new": "¡Recién descubierto! ({n})",
-  "patch.1.0.19": "• Fusión y colocación automáticas muestran las casillas que se llenan\n• Las casillas del tablero tienen un nuevo aspecto hundido\n• El confeti de celebración es más nítido y estalla\n• El álbum muestra arriba los objetos recién descubiertos\n• Las recompensas de logros crecen con tu progreso\n• Un punto rojo avisa cuando puedes comprar una mejora\n\n¡Te enviamos energía como regalo!"
+  "patch.1.0.19": "• Fusión y colocación automáticas muestran las casillas que se llenan\n• Las casillas del tablero tienen un nuevo aspecto hundido\n• El confeti de celebración es más nítido y estalla\n• El álbum muestra arriba los objetos recién descubiertos\n• Las recompensas de logros crecen con tu progreso\n• Un punto rojo avisa cuando puedes comprar una mejora\n\n¡Te enviamos energía como regalo!",
+  "patch.1.0.20": "• Arreglamos que los demás objetos del tablero saltaran al fusionar\n\n¡Te enviamos energía como regalo!"
 }

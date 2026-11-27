@@ -1283,5 +1283,6 @@
   "pass.card.badgeTop": "Up to",
   "pass.card.badgeBig": "{x}x",
   "book.new": "Newly discovered! ({n})",
-  "patch.1.0.19": "• Auto merge and auto place now show the next cells filling up\n• Board cells have a new inset look\n• Celebration confetti is sharper and pops out\n• The collection shows newly discovered items at the top\n• Achievement rewards now grow with your progress\n• A red dot tells you when an upgrade can be bought\n\nHere's some energy as an update gift!"
+  "patch.1.0.19": "• Auto merge and auto place now show the next cells filling up\n• Board cells have a new inset look\n• Celebration confetti is sharper and pops out\n• The collection shows newly discovered items at the top\n• Achievement rewards now grow with your progress\n• A red dot tells you when an upgrade can be bought\n\nHere's some energy as an update gift!",
+  "patch.1.0.20": "• Fixed other items on the board bouncing when you merge\n\nHere's some energy as an update gift!"
 }
