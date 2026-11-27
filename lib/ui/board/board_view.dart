@@ -21,6 +21,9 @@ import '../theme.dart';
 ///
 /// 입력: 드래그 = 이동/합치기/교환, 탭 = 선택(판매·정보), 잠긴 칸 탭 = 칸 열기, 비눗방울 탭 = 꺼내기.
 class BoardView extends StatefulWidget {
+  /// 미리보기: 자동 진행 표시 방식 ('fill' · 'bar').
+  static void debugAutoFx(String style) => _BoardViewState.autoFxStyle = style;
+
   const BoardView({
     super.key,
     required this.game,
@@ -53,6 +56,45 @@ class _Burst {
 }
 
 class _BoardViewState extends State<BoardView> {
+  /// 자동 진행 표시 방식 (미리보기에서 바꿔 본다): 'fill' 칸 배경 차오름, 'bar' 칸 아래 막대.
+  static String autoFxStyle = 'fill';
+
+  List<Widget> _autoFx(double cell, Widget Function(int, Widget) at) {
+    final out = <Widget>[];
+    final pair = game.autoMergeInterval == null ? null : game.nextAutoMergePair;
+    if (pair != null) {
+      for (final c in [pair.$1, pair.$2]) {
+        out.add(
+          at(
+            c,
+            _AutoFill(
+              frac: game.autoMergeFrac,
+              size: cell,
+              color: const Color(0xFF7CCB4E),
+              bar: autoFxStyle == 'bar',
+            ),
+          ),
+        );
+      }
+    }
+    final sc = game.nextAutoSpawnCell;
+    if (sc != null) {
+      out.add(
+        at(
+          sc,
+          _AutoFill(
+            frac: game.autoSpawnFrac,
+            size: cell,
+            color: const Color(0xFFF2B33D),
+            bar: autoFxStyle == 'bar',
+            basket: Chains.basketIcon[game.basket],
+          ),
+        ),
+      );
+    }
+    return out; // IgnorePointer 는 _AutoFill 안에서 (Positioned 는 Stack 바로 아래여야 한다)
+  }
+
   final _dragPortal = OverlayPortalController();
   double _cellSize = 0;
   int? _dragFrom;
@@ -217,6 +259,8 @@ class _BoardViewState extends State<BoardView> {
                       ),
                     ),
                   ),
+                  // L0.5 자동 합치기 · 자동 놓기 진행 (D-094): 다음에 움직일 칸이 차오른다
+                  if (_dragFrom == null) ..._autoFx(cell, at),
                   // L1 아이템
                   Positioned.fill(
                     child: RepaintBoundary(
@@ -634,6 +678,103 @@ class _LuckyFx extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// 자동 진행 칸 (D-094). fill: 칸 바닥부터 은은한 색이 차오르고 위쪽에 밝은 물결선.
+/// bar: 칸 아래쪽 안에 가는 막대가 왼쪽부터 찬다. 자동 놓기 칸에는 바구니 그림이 흐리게.
+class _AutoFill extends StatelessWidget {
+  const _AutoFill({
+    required this.frac,
+    required this.size,
+    required this.color,
+    this.bar = false,
+    this.basket,
+  });
+  final double frac;
+  final double size;
+  final Color color;
+  final bool bar;
+  final String? basket;
+
+  @override
+  Widget build(BuildContext context) {
+    final r = BorderRadius.circular(size * 0.2);
+    return IgnorePointer(
+      child: Padding(
+        padding: const EdgeInsets.all(2.5),
+        child: TweenAnimationBuilder<double>(
+          // 0.1초마다 오는 값을 부드럽게 잇는다 (0 으로 돌아갈 때는 바로)
+          tween: Tween(end: frac),
+          duration: Duration(milliseconds: frac < 0.05 ? 0 : 140),
+          builder: (_, v, _) => Stack(
+            fit: StackFit.expand,
+            children: [
+              if (basket != null)
+                Center(
+                  child: Opacity(
+                    opacity: 0.18 + 0.3 * v,
+                    child: ArtImage(Art.icon(basket!), size: size * 0.5),
+                  ),
+                ),
+              if (!bar)
+                ClipRRect(
+                  borderRadius: r,
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: FractionallySizedBox(
+                      heightFactor: v,
+                      widthFactor: 1,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              color.withValues(alpha: 0.55),
+                              color.withValues(alpha: 0.28),
+                            ],
+                            stops: const [0.0, 0.25],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              else
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      size * 0.14,
+                      0,
+                      size * 0.14,
+                      size * 0.07,
+                    ),
+                    child: Container(
+                      height: size * 0.07,
+                      decoration: BoxDecoration(
+                        color: const Color(0x33000000),
+                        borderRadius: BorderRadius.circular(size),
+                      ),
+                      alignment: Alignment.centerLeft,
+                      child: FractionallySizedBox(
+                        widthFactor: v,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(size),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

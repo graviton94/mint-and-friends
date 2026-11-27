@@ -1739,8 +1739,9 @@ class GameState extends ChangeNotifier {
   bool _isOrderTarget(Item it) =>
       orders.any((o) => o.chain == it.chain && o.level == it.level);
 
-  /// 가장 낮은 레벨의 같은 아이템 한 쌍을 합친다. 부탁에 필요한 아이템은 건드리지 않는다.
-  bool autoMergeOnce() {
+  /// 다음 자동 합치기가 합칠 한 쌍 (받는 칸, 사라지는 칸). 없으면 null.
+  /// 가장 낮은 레벨의 같은 아이템 한 쌍. 부탁에 필요한 아이템은 건드리지 않는다.
+  (int, int)? get nextAutoMergePair {
     final groups = <String, List<int>>{};
     for (var i = 0; i < board.length; i++) {
       final it = board[i];
@@ -1763,13 +1764,42 @@ class GameState extends ChangeNotifier {
     final keys = groups.keys.toList()..sort();
     for (final k in keys) {
       final cells = groups[k]!;
-      if (cells.length >= 2) {
-        _merge(cells[1], cells[0]);
-        notifyListeners();
-        return true;
-      }
+      if (cells.length >= 2) return (cells[0], cells[1]);
     }
-    return false;
+    return null;
+  }
+
+  bool autoMergeOnce() {
+    final p = nextAutoMergePair;
+    if (p == null) return false;
+    _merge(p.$2, p.$1);
+    notifyListeners();
+    return true;
+  }
+
+  /// 자동 합치기 · 자동 놓기 진행 (0~1, 판에 차오름으로 보여 준다, D-094).
+  double get autoMergeFrac {
+    final i = autoMergeInterval;
+    return i == null ? 0 : (autoMergeProgress / i).clamp(0.0, 1.0);
+  }
+
+  double get autoSpawnFrac {
+    final i = autoSpawnInterval;
+    return i == null || !autoSpawnOn
+        ? 0
+        : (autoSpawnProgress / i).clamp(0.0, 1.0);
+  }
+
+  /// 다음 자동 놓기가 아이템을 놓을 칸 (놓을 수 없으면 null).
+  int? get nextAutoSpawnCell {
+    if (autoSpawnInterval == null || !autoSpawnOn) return null;
+    var empty = 0;
+    for (var i = 0; i < board.length && empty < 2; i++) {
+      if (board[i] == null && isCellOpen(i) && !GameConfig.isVault(i)) empty++;
+    }
+    if (empty < 2 || energy < GameConfig.energyPerTap) return null;
+    if (!basketReady(basketOpen(basket) ? basket : 0)) return null;
+    return _emptyCell;
   }
 
   // ---------------------------------------------------------------- 낮은 단계 정리 (D-054)
