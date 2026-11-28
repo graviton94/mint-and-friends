@@ -3632,14 +3632,21 @@ class _ShopRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final row = _row(context);
-    if (!dot) return row;
+    if (!dot && tag == null) return row;
     return Stack(
       clipBehavior: Clip.none,
       // 점이 카드 크기를 바꾸지 않게 (Stack 이 받은 폭을 카드에 그대로 넘긴다, D-077)
       fit: StackFit.passthrough,
       children: [
         row,
-        const Positioned(right: -4, top: -4, child: RedDot()),
+        // 딱지는 카드 왼쪽 위 모서리에 걸쳐 (D-117, 상점 카드와 같은 자리)
+        if (tag != null)
+          Positioned(
+            left: 8,
+            top: -7,
+            child: TagRibbon(tag!, tone: tagTone(tag!), size: 11),
+          ),
+        if (dot) const Positioned(right: -4, top: -4, child: RedDot()),
       ],
     );
   }
@@ -3661,16 +3668,7 @@ class _ShopRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 제목과 보너스 표시는 자리가 모자라면 다음 줄로
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 2,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    IconText(title, style: const TextStyle(fontSize: 17)),
-                    if (tag != null) TagRibbon(tag!, tone: tagTone(tag!)),
-                  ],
-                ),
+                IconText(title, style: const TextStyle(fontSize: 17)),
                 if (note != null)
                   IconText(
                     note!,

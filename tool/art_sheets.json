@@ -1543,5 +1543,13 @@
   "files": [
    "assets/art/souvenirs/bloom.webp"
   ]
+ },
+ "souvenir_cocoa": {
+  "cols": 1,
+  "rows": 1,
+  "size": 384,
+  "files": [
+   "assets/art/souvenirs/cocoa.webp"
+  ]
  }
 }

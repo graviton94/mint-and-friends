@@ -1350,5 +1350,6 @@
   "event.passOutfit": "Traje",
   "event.passMore": "20 premios",
   "event.quest.visit": "Visita el jardín {n} veces (cada 2 h)",
-  "event.watch": "Ver"
+  "event.watch": "Ver",
+  "patch.1.0.23": "• Tienda renovada: pestañas rápidas, hucha de diamantes, packs de energía y de logro\n• Compra todos los diseños especiales de una zona o los trajes de temporada (25% menos)\n• Eventos mensuales desde enero: sube la escalera con misiones diarias y gana un traje exclusivo\n• Vibración suave al fusionar con el dedo (se puede quitar en Ajustes)\n• Arreglos de fuentes y textos en pantallas pequeñas\n\n¡Te enviamos energía como regalo de actualización!"
 }

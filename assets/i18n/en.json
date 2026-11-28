@@ -1350,5 +1350,6 @@
   "event.passOutfit": "Outfit",
   "event.passMore": "20 rewards",
   "event.quest.visit": "Visit the garden {n} times (2h apart)",
-  "event.watch": "Watch"
+  "event.watch": "Watch",
+  "patch.1.0.23": "• Shop refresh: quick tabs, Diamond Piggy Bank, Energy and Milestone bundles\n• Buy a whole area's special designs or a season's outfits at once (25% off)\n• Monthly events from January: climb the ladder with daily quests for an exclusive outfit\n• A light vibration when you merge by hand (can be turned off in Settings)\n• Fixed button fonts and text wrapping on small screens\n\nHere's some energy as an update gift!"
 }
