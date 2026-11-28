@@ -218,27 +218,23 @@ def products(apply=False):
                 for l, t in text.items()
             ],
             'purchaseOptions': [{
-                'purchaseOptionId': 'default',
-                'buyOption': {'legacyCompatible': True, 'multiQuantityEnabled': False},
+                'purchaseOptionId': 'buy',
+                'buyOption': {'legacyCompatible': True},
                 'regionalPricingAndAvailabilityConfigs': regions,
                 **({'newRegionsConfig': {
                     'usdPrice': other['usdPrice'], 'eurPrice': other['eurPrice'], 'availability': 'AVAILABLE',
                 }} if other.get('usdPrice') else {}),
             }],
         }
-        if have:
-            tax = next(iter(have.values())).get('taxAndComplianceSettings')
-            if tax:
-                body['taxAndComplianceSettings'] = tax
         r = s.patch(f'{API}/oneTimeProducts/{sku}', params={
             'allowMissing': 'true', 'regionsVersion.version': '2022/02',
-            'updateMask': 'listings,purchaseOptions,taxAndComplianceSettings',
+            'updateMask': 'listings,purchaseOptions',
         }, json=body)
         print('  patch', r.status_code, r.text[:500])
         if r.status_code >= 300:
             sys.exit(1)
         r = s.post(f'{API}/oneTimeProducts/{sku}/purchaseOptions:batchUpdateStates', json={'requests': [{
-            'activatePurchaseOptionRequest': {'packageName': PKG, 'productId': sku, 'purchaseOptionId': 'default'},
+            'activatePurchaseOptionRequest': {'packageName': PKG, 'productId': sku, 'purchaseOptionId': 'buy'},
         }]})
         print('  activate', r.status_code, r.text[:300])
         if r.status_code >= 300:
