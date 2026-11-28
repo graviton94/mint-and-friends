@@ -68,6 +68,47 @@ Play Console → 수익 창출 → 제품. 이름 55자 · 설명 200자 · 구�
 | 日本語 (ja-JP) | 新芽ガーデンパック | アカウントにつき1回：ガーデンパス7日間・ダイヤ100・エネルギー100・ブーストセット・季節のお庭エフェクト・ミントの限定衣装「星あかりの妖精」。 |
 | Español (es-419 · es-ES · es-US, 스페인어 등록정보를 열 때) | Paquete Jardín Brote | Uno por cuenta: Pase del Jardín por 7 días, 100 diamantes, 100 de energía, potenciadores, el efecto de temporada y el traje Hada Estelar de Menta. |
 
+## 결제 묶음 (D-110 · D-112, 관리형 제품 · 소모형)
+
+모두 Play Console → 수익 창출 → 제품 → 인앱 상품 → 만들기. 상품 ID · 가격 그대로, 상태는 활성.
+등록 전에는 앱에서 버튼이 회색으로 보이기만 하고 문제는 없다.
+
+### `piggy_5900` · ₩5,900
+
+| 언어 | 이름 | 설명 |
+|---|---|---|
+| English (en-US, 기본) | Diamond Piggy Bank | Break your piggy bank and get every diamond saved from your requests (up to 900). |
+| 한국어 (ko-KR) | 다이아 저금통 | 부탁을 끝낼 때마다 모인 다이아(최대 900개)를 한 번에 받아요. |
+| 日本語 (ja-JP) | ダイヤ貯金箱 | お願いを終えるたびに貯まったダイヤ（最大900個）をまとめて受け取れます。 |
+| Español (es-419 · es-ES · es-US) | Hucha de diamantes | Rompe la hucha y recibe todos los diamantes ahorrados con tus pedidos (hasta 900). |
+
+### `energy_3900` · ₩3,900
+
+| 언어 | 이름 | 설명 |
+|---|---|---|
+| English (en-US, 기본) | Energy Refill Bundle | 300 energy, 100 diamonds and a 60-minute energy saver boost. Once a day. |
+| 한국어 (ko-KR) | 에너지 충전 묶음 | 에너지 300 · 다이아 100 · 에너지 절약 부스트 60분. 하루 한 번. |
+| 日本語 (ja-JP) | エネルギー補給セット | エネルギー300・ダイヤ100・エネルギー節約ブースト60分。1日1回。 |
+| Español (es-419 · es-ES · es-US) | Pack de energía | 300 de energía, 100 diamantes y 60 minutos de ahorro de energía. Una vez al día. |
+
+### `milestone_4900` · ₩4,900
+
+| 언어 | 이름 | 설명 |
+|---|---|---|
+| English (en-US, 기본) | Milestone Bundle | 250 diamonds, 200 energy, 8 hours of coins and a 2-hour coin boost. For 24 hours after a new level or area. |
+| 한국어 (ko-KR) | 성장 기념 묶음 | 다이아 250 · 에너지 200 · 코인 8시간치 · 코인 2배 2시간. 레벨 달성 · 새 구역 뒤 24시간. |
+| 日本語 (ja-JP) | 成長記念セット | ダイヤ250・エネルギー200・コイン8時間分・コイン2倍2時間。レベル達成・新エリアから24時間。 |
+| Español (es-419 · es-ES · es-US) | Pack de logro | 250 diamantes, 200 de energía, 8 horas de monedas y 2 horas de monedas ×2. 24 horas tras un logro. |
+
+### `event_pass_5900` · ₩5,900
+
+| 언어 | 이름 | 설명 |
+|---|---|---|
+| English (en-US, 기본) | Monthly Event Pass | Unlocks this month's pass rewards: an exclusive friend outfit, 110 diamonds, energy and boosts. |
+| 한국어 (ko-KR) | 이달의 이벤트 패스 | 이달 이벤트의 패스 보상: 친구 한정 의상 · 다이아 110 · 에너지 · 부스트. |
+| 日本語 (ja-JP) | 今月のイベントパス | 今月のパス報酬：友だちの限定衣装・ダイヤ110・エネルギー・ブースト。 |
+| Español (es-419 · es-ES · es-US) | Pase del evento del mes | Premios del pase de este mes: traje exclusivo, 110 diamantes, energía y potenciadores. |
+
 ## 정기 결제
 ### `garden_pass_1m` · ₩5,900 / 월
 
