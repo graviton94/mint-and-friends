@@ -1401,5 +1401,6 @@
   "story.pposong.5": "Snow is cold, but they say snowmen are made with warm hearts.\nThis winter I want to build the biggest snowman with you!",
   "story.pposong.10": "Even when I miss home, I am okay now. This is my second home.\nCome to the snowy village anytime for a cup of cocoa!",
   "menu.diary": "Diary",
-  "diary.reward": "Reward"
+  "diary.reward": "Reward",
+  "patch.1.0.24": "• New story: find a page of the Gardener's Diary each time you complete an area (reread it from the menu)\n• Friends send you letters about themselves at friend level 3, 5 and 10\n• Monthly event quests: 'Visit the garden 3 times' + a quick watch-ad button\n• Polished shop tags and the piggy bank bar\n\nHere's some energy as an update gift!"
 }

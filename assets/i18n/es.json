@@ -1401,5 +1401,6 @@
   "story.pposong.5": "La nieve es fría, pero dicen que los muñecos se hacen con un corazón cálido.\n¡Este invierno quiero hacer contigo el muñeco más grande!",
   "story.pposong.10": "Aunque extrañe mi hogar, ya estoy bien. Este es mi segundo hogar.\n¡Ven a la aldea nevada cuando quieras a tomar cacao!",
   "menu.diary": "Diario",
-  "diary.reward": "Premio"
+  "diary.reward": "Premio",
+  "patch.1.0.24": "• Nueva historia: encuentra una página del Diario de la jardinera al completar cada zona (reléelo desde el menú)\n• Tus amigos te envían cartas sobre su vida en los niveles 3, 5 y 10\n• Misiones del evento mensual: 'Visita el jardín 3 veces' + botón para ver anuncio\n• Etiquetas de la tienda y barra de la hucha mejoradas\n\n¡Te enviamos energía como regalo de actualización!"
 }
