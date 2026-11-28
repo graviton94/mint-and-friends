@@ -10,6 +10,7 @@ import '../services/audio_service.dart';
 import 'sheets.dart';
 import 'widgets/frame_box.dart';
 import 'widgets/icon_text.dart';
+import 'widgets/prose_text.dart';
 
 /// 정원사의 일기 (D-119): 구역을 완성할 때마다 한 장씩 찾는 이야기.
 
@@ -44,7 +45,7 @@ class DiaryPaper extends StatelessWidget {
           style: const TextStyle(fontSize: 18, color: Color(0xFF5A3A22)),
         ),
         const SizedBox(height: 8),
-        IconText(
+        ProseText(
           tr('diary.p$page'),
           style: const TextStyle(
             fontSize: 15,
@@ -212,7 +213,7 @@ Future<void> showStoryScene(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: const Color(0xFFD9BE8F), width: 2),
           ),
-          child: IconText(
+          child: ProseText(
             text,
             textAlign: TextAlign.center,
             style: const TextStyle(

@@ -6,8 +6,9 @@ import 'package:mint_and_friends/game/game_state.dart';
 
 /// D-119: 정원사 일기(구역 완성마다 한 장) · 친구 사연 편지(레벨 3 · 5 · 10).
 void main() {
-  GameState make() =>
-      GameState(random: Random(1), clock: () => DateTime(2026, 11, 28, 12));
+  var now = DateTime(2026, 11, 28, 12);
+  setUp(() => now = DateTime(2026, 11, 28, 12));
+  GameState make() => GameState(random: Random(1), clock: () => now);
 
   test('구역을 완성하면 그 구역의 일기 한 장 + 다이아, 같은 장은 한 번만', () {
     final g = make()
@@ -42,9 +43,18 @@ void main() {
       n++;
       if (n > 20) break;
     }
-    final ids = g.mail.map((m) => m.id).toSet();
-    expect(ids, containsAll(['story-dubu-3', 'story-dubu-5', 'story-dubu-10']));
-    expect(ids.where((x) => x.startsWith('story-')).length, 3);
+    // 한꺼번에 올리면 첫 편지만 오고, 나머지는 4시간마다 한 통 (D-125)
+    var ids = g.mail.map((m) => m.id).toSet();
+    expect(ids, contains('story-dubu-3'));
+    expect(g.pendingLetters, ['dubu:5', 'dubu:10']);
+    now = now.add(GameState.letterGap);
+    g.tick(1);
+    ids = g.mail.map((m) => m.id).toSet();
+    expect(ids, contains('story-dubu-5'));
+    expect(ids, isNot(contains('story-dubu-10')));
+    now = now.add(GameState.letterGap);
+    g.tick(1);
+    expect(g.mail.map((m) => m.id), contains('story-dubu-10'));
   });
 
   test('에피소드: 같은 친구 부탁 3번이면 완성 + 에너지, 친구마다 한 번', () {

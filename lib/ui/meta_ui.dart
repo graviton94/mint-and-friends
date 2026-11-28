@@ -14,6 +14,7 @@ import 'sheets.dart';
 import 'theme.dart';
 import 'widgets/frame_box.dart';
 import 'widgets/icon_text.dart';
+import 'widgets/prose_text.dart';
 import 'widgets/sprout_scrollbar.dart';
 import 'widgets/top_toast.dart';
 
@@ -211,6 +212,20 @@ String mailFrom(Mail m) => Friends.all.any((f) => f.id == m.from)
     : m.from == 'gardener'
     ? tr('mail.from.gardener')
     : m.from;
+
+/// 쪽지가 온 때: 방금 · n분 전 · n시간 전 · 어제 · n일 전.
+String mailAgo(DateTime at, DateTime now) {
+  final d = now.difference(at);
+  if (d.inMinutes < 1) return tr('time.now');
+  if (d.inMinutes < 60) return tr('time.min', {'n': d.inMinutes});
+  final today = DateTime(now.year, now.month, now.day);
+  final day = DateTime(at.year, at.month, at.day);
+  final days = today.difference(day).inDays;
+  if (days == 0) return tr('time.hour', {'n': d.inHours});
+  if (days == 1) return tr('time.yesterday');
+  return tr('time.day', {'n': days});
+}
+
 String mailTitle(Mail m) =>
     m.text ?? tr(m.titleKey, {...m.args, 'name': mailFrom(m)});
 String? mailBody(Mail m) {
@@ -428,7 +443,8 @@ class _MailRow extends StatelessWidget {
                           ),
                         Flexible(
                           child: Text(
-                            mailFrom(mail),
+                            // 보낸 이 · 언제 왔는지 (D-125)
+                            '${mailFrom(mail)} · ${mailAgo(mail.at, game.now)}',
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontSize: 12,
@@ -631,7 +647,7 @@ class _LetterPaper extends StatelessWidget {
       builder: (c) => SingleChildScrollView(
         controller: c,
         padding: const EdgeInsets.only(right: 18),
-        child: IconText(
+        child: ProseText(
           body,
           style: const TextStyle(
             fontSize: 15,

@@ -1560,6 +1560,7 @@ class GameState extends ChangeNotifier {
     // 날이 바뀌어 한도가 다시 차거나 친구가 새로 오면 부탁을 채운다
     _fillOrders();
     _maybeFriendGift();
+    _deliverPendingLetter();
     _earn(incomePerSec * idleMult * dt);
     _sampleEarn(dt);
     _regenEnergy(dt);
@@ -2597,9 +2598,25 @@ class GameState extends ChangeNotifier {
   /// 친구 레벨 3 · 5 · 10 에 그 친구의 사연 편지 (에너지 20 · 30 · 50, D-120).
   static const Map<int, int> letterLevels = {3: 20, 5: 30, 10: 50};
 
+  /// 사연 편지 간격 (D-125): 여러 친구를 한꺼번에 올려도 편지가 몰려 오지 않게, 4시간에 한 통.
+  static const Duration letterGap = Duration(hours: 4);
+  final List<String> pendingLetters = []; // 'friend:lv'
+  DateTime? lastLetterAt;
+
   void _friendLetter(String id, int lv) {
-    final g = letterLevels[lv];
-    if (g == null) return;
+    if (!letterLevels.containsKey(lv)) return;
+    final last = lastLetterAt;
+    if (pendingLetters.isNotEmpty ||
+        (last != null && now.difference(last) < letterGap)) {
+      if (!pendingLetters.contains('$id:$lv')) pendingLetters.add('$id:$lv');
+      return;
+    }
+    _sendLetter(id, lv);
+  }
+
+  void _sendLetter(String id, int lv) {
+    final g = letterLevels[lv]!;
+    lastLetterAt = now;
     addMail(
       Mail(
         id: 'story-$id-$lv',
@@ -2612,6 +2629,15 @@ class GameState extends ChangeNotifier {
       ),
     );
     _trace('letter', '$id,$lv');
+  }
+
+  /// 틱마다: 기다리는 편지가 있고 간격이 지났으면 한 통.
+  void _deliverPendingLetter() {
+    if (pendingLetters.isEmpty) return;
+    final last = lastLetterAt;
+    if (last != null && now.difference(last) < letterGap) return;
+    final p = pendingLetters.removeAt(0).split(':');
+    _sendLetter(p[0], int.parse(p[1]));
   }
 
   // ---------------------------------------------------------------- 월간 이벤트 (D-112)
@@ -4051,6 +4077,8 @@ class GameState extends ChangeNotifier {
       if (badges.isNotEmpty) 'badges': badges.toList(),
       if (diaryFound.isNotEmpty) 'diary': diaryFound.toList()..sort(),
       if (storyIntroSeen) 'storyIntro': true,
+      if (pendingLetters.isNotEmpty) 'letterQ': pendingLetters,
+      'letterAt': lastLetterAt?.millisecondsSinceEpoch,
       if (episodeFriend != null) 'epF': episodeFriend,
       if (episodeStep > 0) 'epS': episodeStep,
       if (episodesDone.isNotEmpty) 'epDone': episodesDone.toList(),
@@ -4429,6 +4457,10 @@ class GameState extends ChangeNotifier {
       ..clear()
       ..addAll(evInts('diary'));
     storyIntroSeen = j['storyIntro'] as bool? ?? false;
+    pendingLetters
+      ..clear()
+      ..addAll(strs('letterQ'));
+    lastLetterAt = ts('letterAt');
     episodeFriend = j['epF'] as String?;
     episodeStep = (j['epS'] as num?)?.toInt() ?? 0;
     episodesDone

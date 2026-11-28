@@ -17,7 +17,11 @@ class IconText extends StatelessWidget {
     this.textAlign,
     this.maxLines,
     this.iconScale = 1.25,
+    this.glue = true,
   });
+
+  /// 한국어 낱말 묶기(줄바꿈 금지 문자). 줄을 미리 계산해 둔 글(ProseText)은 끈다.
+  final bool glue;
 
   final String text;
   final TextStyle? style;
@@ -109,7 +113,9 @@ class IconText extends StatelessWidget {
     var last = 0;
     for (final m in _token.allMatches(text)) {
       if (m.start > last) {
-        var before = keepWords(text.substring(last, m.start));
+        var before = glue
+            ? keepWords(text.substring(last, m.start))
+            : text.substring(last, m.start);
         // 아이콘이 문장 끝('no [[energy]]!')이면 앞 낱말과 붙여 아이콘만 다음 줄로 가지 않게
         final after = m.end < text.length ? text[m.end] : '';
         if (before.endsWith(' ') &&
@@ -130,7 +136,7 @@ class IconText extends StatelessWidget {
       last = m.end;
     }
     if (last < text.length) {
-      var rest = keepWords(text.substring(last));
+      var rest = glue ? keepWords(text.substring(last)) : text.substring(last);
       // 아이콘 바로 뒤 문장부호('￼!')가 혼자 다음 줄로 가지 않게
       if (last > 0 && rest.isNotEmpty && '!?！？.,。、)）'.contains(rest[0])) {
         rest = '\u2060$rest';
