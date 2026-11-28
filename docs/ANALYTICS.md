@@ -27,4 +27,4 @@ GA 속성 565225845 (Firebase `mintandfriends-3bb24`). 테스트 기기(Play 사
 ## GA 설정 상태 (11-28)
 - 맞춤 측정기준 38개 등록 완료 (이벤트 매개변수 31 + 사용자 속성 7). 새 매개변수를 쓰면 tool/ga_setup.py 목록에 넣고 Actions → Analytics setup.
 - 이벤트 데이터 보관 14개월 완료.
-- BigQuery 일일 내보내기: 서비스 계정에 클라우드 프로젝트 소유자 권한이 없어 API 로는 못 함 → GA 관리 → 제품 링크 → BigQuery 링크에서 직접 연결 (프로젝트 mintandfriends-3bb24, 서울, 매일).
+- BigQuery 일일 내보내기 연결 완료 (GA 화면에서 연결, 11-28). 데이터는 다음 날부터 analytics_565225845 데이터셋에 쌓인다.
