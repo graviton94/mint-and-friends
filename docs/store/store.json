@@ -128,43 +128,62 @@
   {
    "n": 3,
    "ko": [
-    "장식마다 3가지 디자인",
-    "기본, 고급, 특별"
+    "정원사의 일기를 찾아요",
+    "구역마다 숨겨진 이야기"
    ],
    "en": [
-    "Three designs for every decor",
-    "Basic, deluxe and special"
+    "Find the gardener's diary",
+    "A hidden story in every area"
    ],
    "ja": [
-    "飾りごとに3つのデザイン",
-    "ベーシック・デラックス・スペシャル"
+    "庭師の日記を探そう",
+    "エリアごとに秘密の物語"
    ],
    "es": [
-    "Tres diseños por adorno",
-    "Básico, de lujo y especial"
+    "Encuentra el diario perdido",
+    "Una historia en cada zona"
    ]
   },
   {
    "n": 4,
    "ko": [
-    "강화로 쑥쑥 자라요",
-    "바구니, 생산력, 수익"
+    "매달 새 이벤트",
+    "이벤트 패스와 한정 보상"
    ],
    "en": [
-    "Upgrade and grow",
-    "Basket, production and income"
+    "A new event every month",
+    "Event pass and limited rewards"
    ],
    "ja": [
-    "強化でぐんぐん育つ",
-    "かご・生産力・収益"
+    "毎月新しいイベント",
+    "イベントパスと限定報酬"
    ],
    "es": [
-    "Mejora y crece",
-    "Cesta, producción e ingresos"
+    "Un evento nuevo cada mes",
+    "Pase de evento y premios únicos"
    ]
   },
   {
    "n": 5,
+   "ko": [
+    "장식 디자인을 골라요",
+    "기본, 고급, 특별, 계절 한정"
+   ],
+   "en": [
+    "Pick a design for each decor",
+    "Basic, deluxe, special, seasonal"
+   ],
+   "ja": [
+    "飾りのデザインを選ぼう",
+    "ベーシック・デラックス・季節限定"
+   ],
+   "es": [
+    "Elige el diseño de cada adorno",
+    "Básico, de lujo, especial y de temporada"
+   ]
+  },
+  {
+   "n": 6,
    "ko": [
     "정원 재단장",
     "황금 씨앗으로 영원히 더 크게"
@@ -183,60 +202,41 @@
    ]
   },
   {
-   "n": 6,
-   "ko": [
-    "친구와 선물을 주고받아요",
-    "친구 코드로 간편하게"
-   ],
-   "en": [
-    "Send gifts to friends",
-    "Connect with a friend code"
-   ],
-   "ja": [
-    "フレンドとプレゼント交換",
-    "フレンドコードでかんたん"
-   ],
-   "es": [
-    "Regalos para tus amigos",
-    "Conéctate con un código"
-   ]
-  },
-  {
    "n": 7,
    "ko": [
-    "친구의 정원에 놀러 가요",
-    "구경하고 답례도 받아요"
+    "친구와 정원을 오가요",
+    "선물 주고받고 구경도 해요"
    ],
    "en": [
     "Visit friends' gardens",
-    "Look around, get a thank-you gift"
+    "Swap gifts and look around"
    ],
    "ja": [
     "フレンドのお庭へ遊びに",
-    "見に行くとお礼がもらえます"
+    "プレゼント交換もできます"
    ],
    "es": [
     "Visita jardines de amigos",
-    "Pasea y recibe un regalo"
+    "Intercambia regalos y pasea"
    ]
   },
   {
    "n": 8,
    "ko": [
-    "동물 친구들을 모아요",
-    "10명의 친구와 도감"
+    "친구들이 편지를 보내요",
+    "동물 친구 10명의 이야기"
    ],
    "en": [
-    "Collect animal friends",
-    "Ten friends and a growing album"
+    "Letters from your friends",
+    "Ten animal friends, ten stories"
    ],
    "ja": [
-    "動物の仲間を集めよう",
-    "10人の仲間と図鑑"
+    "仲間から手紙が届く",
+    "10人の動物たちの物語"
    ],
    "es": [
-    "Reúne amigos animales",
-    "Diez amigos y un álbum"
+    "Cartas de tus amigos",
+    "Diez amigos, diez historias"
    ]
   }
  ],
