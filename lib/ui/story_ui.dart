@@ -89,7 +89,8 @@ Future<void> showDiaryPage(
           if (found) ...[
             const SizedBox(height: 10),
             IconText(
-              '${tr('diary.reward')}  [[diamond]] +${GameState.diaryGems(page)}',
+              '${tr('diary.reward')}  [[energy]] +${GameState.diaryReward(page).energy}'
+              '${GameState.diaryReward(page).gems > 0 ? '  [[diamond]] +${GameState.diaryReward(page).gems}' : ''}',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 16, color: Color(0xFF5A3A22)),
             ),

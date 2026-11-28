@@ -13,13 +13,16 @@ void main() {
     final g = make()
       ..level = 60
       ..stars = 1 << 30;
-    final gems0 = g.gems;
+    final e0 = g.energy;
     for (var i = 0; i < Garden.slotsPerArea; i++) {
       expect(g.placeDecor(i), isTrue, reason: 'slot $i');
     }
     expect(g.currentArea, 1);
     expect(g.diaryFound, {0});
-    expect(g.gems, greaterThanOrEqualTo(gems0 + GameState.diaryGems(0)));
+    expect(
+      g.energy,
+      greaterThanOrEqualTo(e0 + GameState.diaryReward(0).energy),
+    );
   });
 
   test('이야기 전에 이미 끝낸 구역은 불러올 때 일기장에 채워 둔다', () {

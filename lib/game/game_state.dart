@@ -2512,18 +2512,21 @@ class GameState extends ChangeNotifier {
   /// 일기 페이지 수 (구역 수만큼).
   static const int diaryPages = 6;
 
-  /// 페이지마다 다이아, 마지막 장은 더.
-  static int diaryGems(int page) => page == diaryPages - 1 ? 50 : 10;
+  /// 페이지 선물 (D-120): 에너지 30, 마지막 장만 다이아 30. 다이아로 주면 시뮬에서 D30 무료 다이아가
+  /// +43%(10/50) · +25%(5/30) 늘어 첫 결제 동기를 깎았다 → 이야기 선물은 에너지로.
+  static Reward diaryReward(int page) => page == diaryPages - 1
+      ? const Reward(gems: 30, energy: 30)
+      : const Reward(energy: 30);
 
   void _findDiary(int area) {
     if (area < 0 || area >= diaryPages || !diaryFound.add(area)) return;
-    gems += diaryGems(area);
+    _applyReward(diaryReward(area));
     _trace('diary', '$area');
     _events.add(DiaryEvent(area));
   }
 
-  /// 친구 레벨 3 · 5 · 10 에 그 친구의 사연 편지 (다이아 3 · 5 · 10).
-  static const Map<int, int> letterLevels = {3: 3, 5: 5, 10: 10};
+  /// 친구 레벨 3 · 5 · 10 에 그 친구의 사연 편지 (에너지 20 · 30 · 50, D-120).
+  static const Map<int, int> letterLevels = {3: 20, 5: 30, 10: 50};
 
   void _friendLetter(String id, int lv) {
     final g = letterLevels[lv];
@@ -2535,7 +2538,7 @@ class GameState extends ChangeNotifier {
         from: id,
         titleKey: 'story.letterTitle',
         bodyKey: 'story.$id.$lv',
-        reward: Reward(gems: g),
+        reward: Reward(energy: g),
         at: now,
       ),
     );
