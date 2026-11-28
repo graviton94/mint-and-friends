@@ -1,0 +1,26 @@
+name: Store products
+
+# docs/store/store.json 의 관리형 제품 중 Play 에 없는 것을 만든다 (D-116).
+# 수동: Actions → Store products (apply=false 면 무엇을 만들지 확인만).
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "true 면 실제로 만든다 (false = 확인만)"
+        required: true
+        default: "false"
+
+permissions:
+  contents: read
+
+jobs:
+  products:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - run: pip install -q google-auth requests
+      - run: python3 tool/play_api.py products $([ "${{ inputs.apply }}" = "true" ] && echo --apply)

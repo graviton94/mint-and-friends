@@ -303,6 +303,30 @@
    "type": "정기 결제 (월)",
    "price": "₩5,900",
    "name": "정원 패스"
+  },
+  {
+   "id": "piggy_5900",
+   "type": "관리형 (소모성)",
+   "price": "₩5,900",
+   "name": "다이아 저금통"
+  },
+  {
+   "id": "energy_3900",
+   "type": "관리형 (소모성)",
+   "price": "₩3,900",
+   "name": "에너지 충전 묶음"
+  },
+  {
+   "id": "milestone_4900",
+   "type": "관리형 (소모성)",
+   "price": "₩4,900",
+   "name": "성장 기념 묶음"
+  },
+  {
+   "id": "event_pass_5900",
+   "type": "관리형 (소모성)",
+   "price": "₩5,900",
+   "name": "이달의 이벤트 패스"
   }
  ],
  "appContent": [
@@ -515,6 +539,78 @@
     "es": [
      "Paquete Jardín Brote",
      "Uno por cuenta: Pase del Jardín por 7 días, 100 diamantes, 100 de energía, potenciadores, el efecto de temporada y el traje Hada Estelar de Menta."
+    ]
+   },
+   "piggy_5900": {
+    "en": [
+     "Diamond Piggy Bank",
+     "Break your piggy bank and get every diamond saved from your requests (up to 900)."
+    ],
+    "ko": [
+     "다이아 저금통",
+     "부탁을 끝낼 때마다 모인 다이아(최대 900개)를 한 번에 받아요."
+    ],
+    "ja": [
+     "ダイヤ貯金箱",
+     "お願いを終えるたびに貯まったダイヤ（最大900個）をまとめて受け取れます。"
+    ],
+    "es": [
+     "Hucha de diamantes",
+     "Rompe la hucha y recibe todos los diamantes ahorrados con tus pedidos (hasta 900)."
+    ]
+   },
+   "energy_3900": {
+    "en": [
+     "Energy Refill Bundle",
+     "300 energy, 100 diamonds and a 60-minute energy saver boost. Once a day."
+    ],
+    "ko": [
+     "에너지 충전 묶음",
+     "에너지 300 · 다이아 100 · 에너지 절약 부스트 60분. 하루 한 번."
+    ],
+    "ja": [
+     "エネルギー補給セット",
+     "エネルギー300・ダイヤ100・エネルギー節約ブースト60分。1日1回。"
+    ],
+    "es": [
+     "Pack de energía",
+     "300 de energía, 100 diamantes y 60 minutos de ahorro de energía. Una vez al día."
+    ]
+   },
+   "milestone_4900": {
+    "en": [
+     "Milestone Bundle",
+     "250 diamonds, 200 energy, 8 hours of coins and a 2-hour coin boost."
+    ],
+    "ko": [
+     "성장 기념 묶음",
+     "다이아 250 · 에너지 200 · 코인 8시간치 · 코인 2배 2시간."
+    ],
+    "ja": [
+     "成長記念セット",
+     "ダイヤ250・エネルギー200・コイン8時間分・コイン2倍2時間。"
+    ],
+    "es": [
+     "Pack de logro",
+     "250 diamantes, 200 de energía, 8 horas de monedas y 2 horas de monedas ×2."
+    ]
+   },
+   "event_pass_5900": {
+    "en": [
+     "Monthly Event Pass",
+     "Unlocks this month's pass rewards: an exclusive friend outfit, 110 diamonds, energy and boosts."
+    ],
+    "ko": [
+     "이달의 이벤트 패스",
+     "이달 이벤트의 패스 보상: 친구 한정 의상 · 다이아 110 · 에너지 · 부스트."
+    ],
+    "ja": [
+     "今月のイベントパス",
+     "今月のパス報酬：友だちの限定衣装・ダイヤ110・エネルギー・ブースト。"
+    ],
+    "es": [
+     "Pase del evento del mes",
+     "Premios del pase de este mes: traje exclusivo, 110 diamantes, energía y potenciadores."
     ]
    }
   },

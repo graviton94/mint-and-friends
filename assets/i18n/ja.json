@@ -1332,8 +1332,7 @@
   "event.allDone": "[[check]] 20マス完走！すごい",
   "event.quest.basket": "かごを{n}回タップ",
   "event.quest.merge": "{n}回合成",
-  "event.quest.pat": "庭の友だちを{n}回なでる",
-  "event.quest.ad": "広告を{n}回見る（庭パスは自動）",
+  "event.quest.ad": "広告を{n}回見る",
   "event.passTitle": "今月のパス",
   "event.passNote": "{name}の限定衣装「{outfit}」+ [[diamond]] {gems} + エネルギー・ブースト。過去のマスもすぐ！",
   "event.claimAll": "報酬{n}個をまとめて受け取る",
@@ -1349,5 +1348,7 @@
   "settings.haptic": "バイブレーション",
   "event.passTag": "過去のマスも",
   "event.passOutfit": "限定衣装",
-  "event.passMore": "報酬20個"
+  "event.passMore": "報酬20個",
+  "event.quest.visit": "お庭に{n}回来る（2時間おき）",
+  "event.watch": "見る"
 }

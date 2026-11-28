@@ -1333,8 +1333,7 @@
   "event.allDone": "[[check]] 20칸 완주! 최고예요",
   "event.quest.basket": "바구니 {n}번 누르기",
   "event.quest.merge": "아이템 {n}번 합치기",
-  "event.quest.pat": "정원 친구 {n}번 쓰다듬기",
-  "event.quest.ad": "광고 {n}번 보기 (정원 패스는 저절로)",
+  "event.quest.ad": "광고 {n}번 보기",
   "event.passTitle": "이달의 패스",
   "event.passNote": "{name} 한정 의상 「{outfit}」 + [[diamond]] {gems} + 에너지 · 부스트. 지난 칸 보상도 바로!",
   "event.claimAll": "받을 보상 {n}개 모두 받기",
@@ -1350,5 +1349,7 @@
   "settings.haptic": "진동",
   "event.passTag": "지난 칸 포함",
   "event.passOutfit": "한정 의상",
-  "event.passMore": "보상 20개"
+  "event.passMore": "보상 20개",
+  "event.quest.visit": "정원에 {n}번 들르기 (2시간 간격)",
+  "event.watch": "보기"
 }

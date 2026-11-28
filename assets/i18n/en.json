@@ -1332,8 +1332,7 @@
   "event.allDone": "[[check]] All 20 steps done! Amazing",
   "event.quest.basket": "Tap the basket {n} times",
   "event.quest.merge": "Merge {n} times",
-  "event.quest.pat": "Pat garden friends {n} times",
-  "event.quest.ad": "Watch {n} ad (free with Garden Pass)",
+  "event.quest.ad": "Watch {n} ad",
   "event.passTitle": "Monthly Pass",
   "event.passNote": "{name} exclusive outfit \"{outfit}\" + [[diamond]] {gems} + energy & boosts. Past steps included!",
   "event.claimAll": "Claim all {n} rewards",
@@ -1349,5 +1348,7 @@
   "settings.haptic": "Vibration",
   "event.passTag": "Past steps too",
   "event.passOutfit": "Outfit",
-  "event.passMore": "20 rewards"
+  "event.passMore": "20 rewards",
+  "event.quest.visit": "Visit the garden {n} times (2h apart)",
+  "event.watch": "Watch"
 }

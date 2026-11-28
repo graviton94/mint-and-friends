@@ -18,8 +18,9 @@ import 'widgets/reward_popup.dart';
 Future<void> showEventSheet(
   BuildContext context,
   BillingService billing,
-  GameState game,
-) {
+  GameState game, {
+  Future<bool> Function(AdKind kind)? watchAd,
+}) {
   final def = game.currentEvent;
   if (def == null) return Future.value();
   return showGameSheet(
@@ -32,7 +33,7 @@ Future<void> showEventSheet(
         children: [
           _Banner(def: def, game: game),
           const SizedBox(height: 12),
-          _Quests(game: game),
+          _Quests(game: game, watchAd: watchAd),
           const SizedBox(height: 12),
           if (!game.hasEventPass) ...[
             _PassBuy(billing: billing, game: game, def: def),
@@ -151,13 +152,16 @@ class _Banner extends StatelessWidget {
 
 /// 오늘의 퀘스트 4개 (3개를 끝내면 한 칸).
 class _Quests extends StatelessWidget {
-  const _Quests({required this.game});
+  const _Quests({required this.game, this.watchAd});
   final GameState game;
+
+  /// 광고 퀘스트 옆 '보기' 버튼 (D-116).
+  final Future<bool> Function(AdKind kind)? watchAd;
 
   static const icons = {
     QuestKind.basket: 'basket',
     QuestKind.merge: 'sparkle',
-    QuestKind.pat: 'heart',
+    QuestKind.visit: 'alarm',
     QuestKind.ad: 'ad',
   };
 
@@ -210,6 +214,26 @@ class _Quests extends StatelessWidget {
                 ),
                 game.questDone(k)
                     ? ArtImage(Art.icon('check'), size: 22)
+                    : k == QuestKind.ad && watchAd != null
+                    ? SizedBox(
+                        height: 34,
+                        child: FilledButton(
+                          style: framedButton(
+                            FilledButton.styleFrom(
+                              backgroundColor: Palette.ad,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                            ),
+                            'button_purple',
+                          ),
+                          onPressed: () => watchAd!(AdKind.event),
+                          child: IconText(
+                            '[[ad]] ${tr('event.watch')}',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ),
+                      )
                     : Text(
                         '${game.questCount(k)}/${EventPass.target[k]}',
                         style: const TextStyle(

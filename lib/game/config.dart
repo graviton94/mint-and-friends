@@ -150,6 +150,7 @@ class GameConfig {
     AdKind.quota: 6,
     AdKind.gems: 3,
     AdKind.market: 1,
+    AdKind.event: 1, // 월간 이벤트 광고 퀘스트 (D-116)
   };
 
   /// 광고 보고 다이아: 하루 3번 × 3개 (한 달 최대 270 ≈ ₩5,100어치, D-036).
@@ -168,7 +169,7 @@ class GameConfig {
 }
 
 /// 하루 횟수 제한이 있는 보상형 광고 종류 (오프라인 2배·손님·비눗방울은 제한 없음).
-enum AdKind { energy, boost, coinBag, refresh, quota, gems, market }
+enum AdKind { energy, boost, coinBag, refresh, quota, gems, market, event }
 
 /// 시간제 부스트. coins = 코인 2배 (예전 '부스트'), energy = 바구니 에너지 무료, lucky = 행운 바구니.
 enum BoostKind { coins, energy, lucky }

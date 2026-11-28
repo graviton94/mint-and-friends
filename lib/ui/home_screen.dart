@@ -103,7 +103,7 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
         game.currentEvent;
         game.eventStep = 6;
         game.claimEventStep(0, premium: false);
-        showEventSheet(context, widget.billing, game);
+        showEventSheet(context, widget.billing, game, watchAd: _rewardedCapped);
       },
       'msOffer': () {
         game.milestoneKey = 'lv:20';
@@ -2527,7 +2527,12 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
           MenuEntry(
             Art.icon('event_calendar').available ? 'event_calendar' : 'party',
             tr('menu.event'),
-            () => showEventSheet(context, widget.billing, game),
+            () => showEventSheet(
+              context,
+              widget.billing,
+              game,
+              watchAd: _rewardedCapped,
+            ),
             badge: game.eventClaimable,
           ),
         MenuEntry(

@@ -167,11 +167,56 @@ def listing(apply=False):
         print('nothing committed' if apply else 'dry run: nothing changed')
 
 
+LISTING_LANG = {'en': 'en-US', 'ko': 'ko-KR', 'ja': 'ja-JP', 'es': 'es-419'}
+
+
+def products(apply=False):
+    """docs/store/store.json 의 관리형 제품(productText.oneTime) 중 Play 에 없는 것을 만든다 (D-116).
+    이미 있는 제품은 건드리지 않는다. --apply 없으면 무엇을 만들지 보여 주기만."""
+    store = json.load(open('docs/store/store.json'))
+    price = {p['id']: int(p['price'].replace('₩', '').replace(',', '')) for p in store['products']}
+    have = set()
+    token = None
+    while True:
+        r = s.get(f'{API}/inappproducts', params={'maxResults': 100, **({'token': token} if token else {})})
+        if r.status_code >= 300:
+            print('list failed', r.status_code, r.text[:600])
+            sys.exit(1)
+        j = r.json()
+        for p in j.get('inappproduct', []):
+            have.add(p['sku'])
+            print('have', p['sku'], p.get('status'), p.get('defaultPrice'))
+        token = (j.get('tokenPagination') or {}).get('nextPageToken')
+        if not token:
+            break
+    for sku, text in store['productText']['oneTime'].items():
+        if sku in have:
+            continue
+        body = {
+            'packageName': PKG,
+            'sku': sku,
+            'status': 'active',
+            'purchaseType': 'managedUser',
+            'defaultLanguage': 'en-US',
+            'defaultPrice': {'priceMicros': str(price[sku] * 1000000), 'currency': 'KRW'},
+            'listings': {LISTING_LANG[l]: {'title': t[0][:55], 'description': t[1][:200]} for l, t in text.items()},
+        }
+        print('create', sku, price[sku])
+        if apply:
+            r = s.post(f'{API}/inappproducts', params={'autoConvertMissingPrices': 'true'}, json=body)
+            print('  ->', r.status_code, r.text[:400])
+            if r.status_code >= 300:
+                sys.exit(1)
+    print('done' if apply else 'dry run: nothing changed')
+
+
 if __name__ == '__main__':
     if sys.argv[1] == 'check':
         check()
     elif sys.argv[1] == 'listing':
         listing('--apply' in sys.argv)
+    elif sys.argv[1] == 'products':
+        products('--apply' in sys.argv)
     elif sys.argv[1] == 'feature':
         feature(sys.argv[2], '--apply' in sys.argv)
     else:

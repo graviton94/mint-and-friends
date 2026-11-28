@@ -33,7 +33,7 @@ void main() {
     expect(g.currentEvent?.id, 'onsen');
     doQuests(g, [QuestKind.basket, QuestKind.merge]);
     expect(g.eventStep, 0);
-    doQuests(g, [QuestKind.pat]);
+    doQuests(g, [QuestKind.visit]);
     expect(g.eventStep, 1);
     doQuests(g, [QuestKind.ad]);
     expect(g.eventStep, 1, reason: '하루 한 칸');
@@ -102,5 +102,20 @@ void main() {
     final g0 = g.gems;
     g.grantEventPass();
     expect(g.gems, g0 + 430);
+  });
+
+  test('들르기: 2시간 이상 떨어져야 한 번, 날이 바뀌면 다시', () {
+    final g = make();
+    g.noteVisit();
+    expect(g.questCount(QuestKind.visit), 1);
+    now = now.add(const Duration(minutes: 90));
+    g.noteVisit();
+    expect(g.questCount(QuestKind.visit), 1, reason: '2시간 안');
+    now = now.add(const Duration(minutes: 40));
+    g.noteVisit();
+    expect(g.questCount(QuestKind.visit), 2);
+    now = now.add(const Duration(hours: 3));
+    g.noteVisit();
+    expect(g.questDone(QuestKind.visit), isTrue);
   });
 }

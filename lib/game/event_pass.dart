@@ -27,7 +27,7 @@ class EventDef {
   String get badge => 'assets/art/badges/$id.webp';
 }
 
-enum QuestKind { basket, merge, pat, ad }
+enum QuestKind { basket, merge, visit, ad }
 
 enum RewardKind {
   energy,
@@ -59,7 +59,8 @@ class EventPass {
   static const Map<QuestKind, int> target = {
     QuestKind.basket: 30, // 바구니 30번
     QuestKind.merge: 30, // 합치기 30번
-    QuestKind.pat: 5, // 정원 친구 쓰다듬기 5번 (친구 선물은 친구 기능이 없으면 못 해서 대신)
+    // 하루 세 번 들르기 (2시간 이상 떨어져서, D-116): 귀찮으면 광고 퀘스트로 대신 (4개 중 3개면 되므로)
+    QuestKind.visit: 3,
     QuestKind.ad: 1, // 광고 1번 (광고 없이 보상 받는 사람은 저절로)
   };
 
@@ -128,6 +129,9 @@ class EventPass {
 
   /// 미리보기 · 테스트용: 날짜와 상관없이 이 이벤트를 연다.
   static EventDef? debugEvent;
+
+  /// 들르기 퀘스트: 앞 방문과 이만큼 떨어져야 한 번으로 센다.
+  static const Duration visitGap = Duration(hours: 2);
 
   /// 기념품 하나마다 정원 매력.
   static const double souvenirCharm = 0.005;

@@ -176,12 +176,10 @@ class _PiggyBar extends StatelessWidget {
     required this.value,
     required this.mark,
     required this.label,
-    required this.markLabel,
   });
   final double value;
   final double mark;
   final String label;
-  final String markLabel;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -192,7 +190,7 @@ class _PiggyBar extends StatelessWidget {
       final mx = inset + inner * mark;
       final ready = value >= mark;
       return SizedBox(
-        height: h + 18,
+        height: h,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
@@ -244,54 +242,64 @@ class _PiggyBar extends StatelessWidget {
                 ),
               ),
             ),
-            // 깰 수 있는 자리 눈금
-            Positioned(
-              left: mx - 1.5,
-              top: 2,
-              height: h - 4,
-              width: 3,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: ready
-                      ? Colors.white.withValues(alpha: 0.9)
-                      : const Color(0xFF5A3A22),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
             Positioned(
               left: 0,
               right: 0,
               top: 0,
               height: h,
-              child: Center(
-                child: IconText(
-                  label,
-                  maxLines: 1,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(color: Color(0xFF2F4F6B), blurRadius: 3),
-                      Shadow(color: Color(0xFF2F4F6B), offset: Offset(0, 1)),
-                    ],
+              // 모은 수는 오른쪽 끝 (가운데 메달과 겹치지 않게)
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 14),
+                  child: IconText(
+                    label,
+                    maxLines: 1,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(color: Color(0xFF2F4F6B), blurRadius: 3),
+                        Shadow(color: Color(0xFF2F4F6B), offset: Offset(0, 1)),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
+            // 깰 수 있는 자리 (D-116): 막대 위에 걸친 작은 메달. 모이기 전엔 자물쇠, 모이면 체크
             Positioned(
-              left: mx - 60,
-              width: 120,
-              top: h + 1,
-              child: Text(
-                markLabel,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                style: TextStyle(
-                  fontSize: 11.5,
-                  color: ready
-                      ? const Color(0xFF3F9AD6)
-                      : const Color(0xFF8A7660),
+              left: mx - 15,
+              top: (h - 30) / 2,
+              width: 30,
+              height: 30,
+              child: Container(
+                alignment: Alignment.center,
+                decoration:
+                    Art.frame(ready ? 'event_step_gold' : 'event_step')
+                        .available
+                    ? BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage(
+                            Art.frame(ready ? 'event_step_gold' : 'event_step')
+                                .path,
+                          ),
+                          fit: BoxFit.contain,
+                        ),
+                      )
+                    : BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: ready
+                            ? const Color(0xFFFFC83D)
+                            : const Color(0xFFFFF6E2),
+                        border: Border.all(
+                          color: const Color(0xFF5A3A22),
+                          width: 2,
+                        ),
+                      ),
+                child: ArtImage(
+                  ready ? Art.icon('check') : Art.icon('event_gold_lock'),
+                  size: 16,
                 ),
               ),
             ),
@@ -314,7 +322,6 @@ Widget piggyCard(BillingService billing, GameState game) => OfferCard(
     value: game.piggyGems / Piggy.cap,
     mark: Piggy.minBreak / Piggy.cap,
     label: '[[diamond]] ${fmtInt(game.piggyGems)} / ${fmtInt(Piggy.cap)}',
-    markLabel: tr('piggy.breakAt', {'n': fmtInt(Piggy.minBreak)}),
   ),
   enabled: game.piggyBreakable,
   disabledLabel: tr('piggy.locked', {'n': fmtInt(Piggy.minBreak)}),

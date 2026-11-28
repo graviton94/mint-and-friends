@@ -2526,6 +2526,22 @@ class GameState extends ChangeNotifier {
   @visibleForTesting
   void debugQuest(QuestKind k) => _quest(k);
 
+  /// 마지막으로 센 방문 (들르기 퀘스트).
+  DateTime? lastVisitAt;
+
+  /// 앱을 열거나 다시 돌아올 때 (main 이 부른다). 앞 방문과 2시간 이상 떨어졌거나 날이 바뀌었으면 한 번.
+  void noteVisit() {
+    final last = lastVisitAt;
+    if (last != null &&
+        _dayKey(last) == _dayKey(now) &&
+        now.difference(last) < EventPass.visitGap) {
+      return;
+    }
+    lastVisitAt = now;
+    _quest(QuestKind.visit);
+    notifyListeners();
+  }
+
   void _quest(QuestKind k) {
     if (currentEvent == null) return;
     final today = _dayKey(now);
@@ -2751,7 +2767,6 @@ class GameState extends ChangeNotifier {
     final v = GameConfig.friendTapCoins;
     _earn(v);
     _bump(Stat.friendTaps);
-    _quest(QuestKind.pat);
     notifyListeners();
     return v;
   }
@@ -3835,6 +3850,7 @@ class GameState extends ChangeNotifier {
       if (eventStep > 0) 'evStep': eventStep,
       if (eventDay.isNotEmpty) 'evDay': eventDay,
       if (questDay.isNotEmpty) 'qDay': questDay,
+      'lastVisit': lastVisitAt?.millisecondsSinceEpoch,
       if (questCounts.isNotEmpty)
         'qCounts': {for (final e in questCounts.entries) e.key.name: e.value},
       if (eventClaimedFree.isNotEmpty) 'evFree': eventClaimedFree.toList(),
@@ -4180,6 +4196,7 @@ class GameState extends ChangeNotifier {
     eventStep = (j['evStep'] as num?)?.toInt() ?? 0;
     eventDay = j['evDay'] as String? ?? '';
     questDay = j['qDay'] as String? ?? '';
+    lastVisitAt = ts('lastVisit');
     questCounts.clear();
     final qc = j['qCounts'];
     if (qc is Map) {

@@ -1332,8 +1332,7 @@
   "event.allDone": "[[check]] ¡20 pasos completados!",
   "event.quest.basket": "Toca la cesta {n} veces",
   "event.quest.merge": "Fusiona {n} veces",
-  "event.quest.pat": "Acaricia amigos {n} veces",
-  "event.quest.ad": "Mira {n} anuncio (gratis con el Pase)",
+  "event.quest.ad": "Mira {n} anuncio",
   "event.passTitle": "Pase del mes",
   "event.passNote": "Traje exclusivo de {name} «{outfit}» + [[diamond]] {gems} + energía y potenciadores. ¡Incluye pasos anteriores!",
   "event.claimAll": "Recoger los {n} premios",
@@ -1349,5 +1348,7 @@
   "settings.haptic": "Vibración",
   "event.passTag": "Incluye pasados",
   "event.passOutfit": "Traje",
-  "event.passMore": "20 premios"
+  "event.passMore": "20 premios",
+  "event.quest.visit": "Visita el jardín {n} veces (cada 2 h)",
+  "event.watch": "Ver"
 }
