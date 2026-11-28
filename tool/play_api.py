@@ -197,8 +197,24 @@ def products(apply=False):
               'state', po.get('state'), 'buy', po.get('buyOption'), 'regions', len(cfgs),
               'new', po.get('newRegionsConfig'), 'tax', sample.get('taxAndComplianceSettings'),
               'first', cfgs[:2])
+    def activate(sku):
+        body = {'requests': [{'activatePurchaseOptionRequest': {
+            'packageName': PKG, 'productId': sku, 'purchaseOptionId': 'buy'}}]}
+        for path in (f'{API}/oneTimeProducts/{sku}/purchaseOptions:batchUpdateStates',
+                     f'{API}/onetimeproducts/{sku}/purchaseOptions:batchUpdateStates'):
+            r = s.post(path, json=body)
+            print('  activate', r.status_code, r.text[:300])
+            if r.status_code < 300:
+                return
+        sys.exit(1)
+
     for sku, text in store['productText']['oneTime'].items():
         if sku in have:
+            states = [o.get('state') for o in have[sku].get('purchaseOptions', [])]
+            if 'ACTIVE' not in states:
+                print('activate only', sku, states)
+                if apply:
+                    activate(sku)
             continue
         print('create', sku, price[sku])
         if not apply:
@@ -235,12 +251,7 @@ def products(apply=False):
         print('  patch', r.status_code, r.text[:500])
         if r.status_code >= 300:
             sys.exit(1)
-        r = s.post(f'{API}/onetimeproducts/{sku}/purchaseOptions:batchUpdateStates', json={'requests': [{
-            'activatePurchaseOptionRequest': {'packageName': PKG, 'productId': sku, 'purchaseOptionId': 'buy'},
-        }]})
-        print('  activate', r.status_code, r.text[:300])
-        if r.status_code >= 300:
-            sys.exit(1)
+        activate(sku)
     print('done' if apply else 'dry run: nothing changed')
 
 
