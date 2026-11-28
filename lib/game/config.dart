@@ -1356,17 +1356,33 @@ class Gems {
 
 /// 7일 출석: 빠진 날이 있어도 처음으로 돌아가지 않고 이어서 받는다 (힐링 장르 관례).
 /// 한 주 무료 다이아 35개 = 하루 5개 (바이블 §6.1 목표 5~10).
+/// 코인은 정원 수입을 따라간다 (D-126): 2일차 = 시간당 수입 1시간치, 5일차 = 3시간치.
+/// 수입이 아주 적은 초반에는 예전 레벨식(40 + 20·레벨)이 바닥.
 class CheckIn {
   static const int days = 7;
-  static Reward reward(int day, int level) => switch (day) {
-    0 => const Reward(energy: 20),
-    1 => Reward(coins: 40 + 20 * level),
-    2 => const Reward(gems: 5),
-    3 => const Reward(energy: 40),
-    4 => Reward(coins: 2 * (40 + 20 * level)),
-    5 => const Reward(gems: 10),
-    _ => const Reward(gems: 20, energy: 50),
-  };
+  static int coins(int level, double incomePerHour, double hours) =>
+      _nice(max((40 + 20 * level) * hours / 2, incomePerHour * hours));
+
+  /// 위에서 두 자리만 남겨 읽기 쉬운 수로 (1,234 → 1,200).
+  static int _nice(double v) {
+    if (v < 100) return (v / 10).round() * 10;
+    var unit = 1;
+    while (v / unit >= 100) {
+      unit *= 10;
+    }
+    return (v / unit).round() * unit;
+  }
+
+  static Reward reward(int day, int level, [double incomePerHour = 0]) =>
+      switch (day) {
+        0 => const Reward(energy: 20),
+        1 => Reward(coins: coins(level, incomePerHour, 1)),
+        2 => const Reward(gems: 5),
+        3 => const Reward(energy: 40),
+        4 => Reward(coins: coins(level, incomePerHour, 3)),
+        5 => const Reward(gems: 10),
+        _ => const Reward(gems: 20, energy: 50),
+      };
 }
 
 /// 오늘의 시장: 하루 4칸, 낮은 단계 아이템을 코인으로 (후반 코인 소모처 · 외부 보고서 채택).

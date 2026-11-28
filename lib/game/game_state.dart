@@ -3130,7 +3130,8 @@ class GameState extends ChangeNotifier {
 
   bool get checkInReady => _checkInDay != _dayKey(now);
   int get checkInToday => checkInCount % CheckIn.days;
-  Reward checkInReward(int day) => CheckIn.reward(day, level);
+  Reward checkInReward(int day) =>
+      CheckIn.reward(day, level, baseIncomePerSec * 3600);
 
   Reward? claimCheckIn() {
     if (!checkInReady) return null;
