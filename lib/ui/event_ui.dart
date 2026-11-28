@@ -6,6 +6,7 @@ import '../game/event_pass.dart';
 import '../game/format.dart';
 import '../game/game_state.dart';
 import '../i18n/l10n.dart';
+import '../services/analytics_service.dart';
 import '../services/audio_service.dart';
 import '../services/billing_service.dart';
 import 'sheets.dart';
@@ -23,6 +24,14 @@ Future<void> showEventSheet(
 }) {
   final def = game.currentEvent;
   if (def == null) return Future.value();
+  Analytics.instance.log('event_open', {
+    'event': def.id,
+    'step': game.eventStep,
+    'quests': game.questsDone,
+    'pass': game.hasEventPass ? 1 : 0,
+  });
+  if (!game.hasEventPass)
+    Analytics.instance.offerView(Offers.eventPass, 'event');
   return showGameSheet(
     context,
     Listenable.merge([billing, game]),

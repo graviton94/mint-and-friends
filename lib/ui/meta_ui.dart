@@ -8,6 +8,7 @@ import '../game/format.dart';
 import '../game/game_state.dart';
 import '../i18n/l10n.dart';
 import '../i18n/names.dart';
+import '../services/analytics_service.dart';
 import '../services/audio_service.dart';
 import 'sheets.dart';
 import 'theme.dart';
@@ -678,6 +679,7 @@ Future<void> showMenuSheet(
             onTap: () {
               sfx(Sfx.tap);
               Navigator.of(context).pop();
+              Analytics.instance.menuTap(e.icon);
               e.onTap();
             },
             child: Stack(

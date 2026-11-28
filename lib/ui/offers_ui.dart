@@ -7,6 +7,7 @@ import '../game/config.dart';
 import '../game/format.dart';
 import '../game/game_state.dart';
 import '../i18n/l10n.dart';
+import '../services/analytics_service.dart';
 import '../services/billing_service.dart';
 import '../i18n/names.dart';
 import 'sheets.dart' show boostIcon;
@@ -387,6 +388,7 @@ Future<void> showMilestoneOffer(
   GameState game,
 ) {
   if (!game.milestoneActive) return Future.value();
+  Analytics.instance.offerView(Offers.milestone, 'popup');
   return showDialog<void>(
     context: context,
     builder: (ctx) => ListenableBuilder(

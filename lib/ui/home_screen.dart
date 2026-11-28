@@ -386,6 +386,7 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
           AdRewardEvent() ||
           GemsSpentEvent() ||
           OrdersDoneEvent() ||
+          TrackEvent() ||
           TutorialStepEvent():
         break; // 지표용 (Analytics)
     }
@@ -888,6 +889,10 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
 
   Future<void> _energyDialog() async {
     final canAd = game.energyAdAvailable;
+    if (game.energyBundleAvailable &&
+        game.energy < GameConfig.energyPerTap * 10) {
+      Analytics.instance.offerView(Offers.energy, 'energy_dialog');
+    }
     final watch = await showDialog<Object>(
       context: context,
       builder: (ctx) => ListenableBuilder(

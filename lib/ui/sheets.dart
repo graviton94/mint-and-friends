@@ -1927,6 +1927,14 @@ Future<void> showShopSheet(
   bool adFree = false,
 }) {
   Analytics.instance.shopOpen(game, starter: game.starterVisible);
+  // 상점에 보이는 결제 묶음 (노출 → 결제 전환, D-118)
+  if (game.milestoneActive)
+    Analytics.instance.offerView(Offers.milestone, 'shop');
+  if (game.piggyOpen) Analytics.instance.offerView(Offers.piggy, 'shop');
+  if (game.energyBundleAvailable &&
+      game.energy < GameConfig.energyPerTap * 10) {
+    Analytics.instance.offerView(Offers.energy, 'shop');
+  }
   if (game.starterVisible) Analytics.instance.starterView(game, 'shop');
   return _shopSheet(context, billing, game, watchAd: watchAd, adFree: adFree);
 }

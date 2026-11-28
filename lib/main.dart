@@ -516,7 +516,11 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
 
   void _start() {
     // 월간 이벤트 '하루 세 번 들르기' (D-116)
-    if (auth.signedIn) game.noteVisit();
+    if (auth.signedIn) {
+      game.noteVisit();
+      // 하루 한 번 상태 기록 · 사용자 속성 (D-118)
+      unawaited(Analytics.instance.dailySnapshot(game));
+    }
     _lastTick = DateTime.now();
     _loop?.cancel();
     _loop = Timer.periodic(const Duration(milliseconds: 100), (_) {

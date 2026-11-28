@@ -5,6 +5,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 import '../game/config.dart';
 import 'ad_ids.dart';
+import 'analytics_service.dart';
 
 /// 광고 로딩/표시 담당. adFree 이면 전면·배너는 띄우지 않고 보상형은 즉시 보상.
 class AdsService extends ChangeNotifier {
@@ -53,7 +54,11 @@ class AdsService extends ChangeNotifier {
       adUnitId: AdIds.interstitial,
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
-        onAdLoaded: (ad) => _interstitial = ad,
+        onAdLoaded: (ad) {
+          ad.onPaidEvent = (_, value, _, currency) =>
+              Analytics.instance.adRevenue('interstitial', value, currency);
+          _interstitial = ad;
+        },
         onAdFailedToLoad: (_) {
           _interstitial = null;
           Future.delayed(const Duration(seconds: 30), _loadInterstitial);
@@ -71,6 +76,9 @@ class AdsService extends ChangeNotifier {
       rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) {
           _loadingRewarded = false;
+          // 광고 수익 (D-118): 노출마다 AdMob 이 알려 주는 추정 수익을 ad_impression 으로
+          ad.onPaidEvent = (_, value, _, currency) =>
+              Analytics.instance.adRevenue('rewarded', value, currency);
           _rewarded = ad;
           notifyListeners();
         },

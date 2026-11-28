@@ -1,0 +1,30 @@
+name: Analytics setup
+
+# GA 속성 준비 (D-118): 맞춤 측정기준 등록 · 보관 14개월 · BigQuery 일일 내보내기. apply=false 면 확인만.
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "true 면 실제로 바꾼다 (false = 확인만)"
+        required: true
+        default: "false"
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Enable APIs
+        run: |
+          P=$(gcloud config get-value project); echo "PROJECT=$P" >> "$GITHUB_ENV"
+          gcloud services enable analyticsadmin.googleapis.com bigquery.googleapis.com firebase.googleapis.com --project "$P" || echo "::warning::could not enable APIs"
+      - run: pip install -q google-auth requests
+      - run: python3 tool/ga_setup.py $([ "${{ inputs.apply }}" = "true" ] && echo --apply)

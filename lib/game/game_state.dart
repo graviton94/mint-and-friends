@@ -219,6 +219,13 @@ class MaxGiftEvent extends GameEvent {
   MaxGiftEvent(this.friendId, this.coins, this.stars, this.chain, this.level);
 }
 
+/// 지표용 (D-118): 기능 사용 기록 (강화 · 부스트 · 퀘스트 · 이벤트 보상 · 세트 …). 화면은 쓰지 않는다.
+class TrackEvent extends GameEvent {
+  final String name;
+  final Map<String, Object> params;
+  TrackEvent(this.name, [this.params = const {}]);
+}
+
 /// 이벤트 사다리 한 칸 올랐다.
 class EventStepEvent extends GameEvent {
   final int step;
@@ -2507,6 +2514,17 @@ class GameState extends ChangeNotifier {
   /// 이벤트가 끝나는 때 (다음 달 1일 0시).
   DateTime get eventEnds => DateTime(now.year, now.month + 1);
 
+  /// 결제한 적이 있는지 (지표 구분용, D-118).
+  bool get isPayer =>
+      starterBought ||
+      boughtPacks.isNotEmpty ||
+      eventPasses.isNotEmpty ||
+      revokedOrders.isNotEmpty ||
+      purchaseCount > 0;
+
+  /// 결제 묶음 · 패스까지 센 결제 횟수 (지표용).
+  int purchaseCount = 0;
+
   bool get hasEventPass => eventId != null && eventPasses.contains(eventId);
 
   int questCount(QuestKind k) {
@@ -2550,6 +2568,11 @@ class GameState extends ChangeNotifier {
       questCounts.clear();
     }
     questCounts[k] = (questCounts[k] ?? 0) + 1;
+    if (questCounts[k] == EventPass.target[k]) {
+      _events.add(
+        TrackEvent('event_quest', {'kind': k.name, 'step': eventStep}),
+      );
+    }
     _checkEventStep();
   }
 
@@ -2637,6 +2660,7 @@ class GameState extends ChangeNotifier {
 
   /// 결제 완료 → 이달 패스. 이벤트가 이미 끝났으면 같은 값의 다이아로.
   void grantEventPass() {
+    purchaseCount++;
     final def = currentEvent;
     if (def == null || eventPasses.contains(def.id)) {
       gems += 430;
@@ -2804,7 +2828,44 @@ class GameState extends ChangeNotifier {
   /// 개발자 성장 로그로 보내는 행동 기록 (꺼져 있으면 아무것도 안 함).
   /// [type] 이 행 종류, [data] 는 쉼표로 구분한 값.
   static void Function(String type, String data)? tracer;
-  void _trace(String type, String data) => tracer?.call(type, data);
+  void _trace(String type, String data) {
+    tracer?.call(type, data);
+    // 지표로도 남길 행동 (D-118): 결제 · 기능 사용. 잦은 것(합치기 · 생성)은 빼고
+    final n = _tracked[type];
+    if (n != null) {
+      _events.add(
+        TrackEvent(n, {
+          'd': data.length > 90 ? data.substring(0, 90) : data,
+          'level': level,
+          'area': currentArea + 1,
+        }),
+      );
+    }
+  }
+
+  static const _tracked = {
+    'boost': 'boost_on',
+    'buy': 'market_buy',
+    'featured': 'featured_buy',
+    'gift': 'max_gift',
+    'quota': 'quota_ad',
+    'vault': 'vault_buy',
+    'upgrade': 'upgrade_buy',
+    'upgradeMax': 'upgrade_max',
+    'coinPack': 'coin_pack',
+    'piggy': 'piggy_break',
+    'energyBundle': 'energy_bundle',
+    'milestone': 'milestone_bundle',
+    'eventClaim': 'event_claim',
+    'eventPass': 'event_pass',
+    'specialSet': 'special_set',
+    'outfitSet': 'outfit_set',
+    'seasonSet': 'season_set',
+    'landmark': 'landmark_up',
+    'revoke': 'refund_revoke',
+    'starter': 'starter_grant',
+    'gemPack': 'gem_pack_grant',
+  };
 
   /// 따로 자세히 남기거나(합치기 · 생성 · 부탁) 너무 잦은(코인 생산) 기록은 'act' 에서 뺀다.
   static const _detailed = {
@@ -3097,6 +3158,7 @@ class GameState extends ChangeNotifier {
   }
 
   int grantGemPack(GemPack p) {
+    purchaseCount++;
     final n = p.gems * (firstPackBonus(p) ? Gems.firstBuyMultiplier : 1);
     lastPurchaseGems = n;
     boughtPacks.add(p.id);
@@ -3373,6 +3435,7 @@ class GameState extends ChangeNotifier {
 
   bool buyUpgrade(UpgradeType t) {
     if (!_buyUpgradeOnce(t)) return false;
+    _trace('upgrade', '${t.name},${lv(t)}');
     notifyListeners();
     return true;
   }
@@ -3517,6 +3580,7 @@ class GameState extends ChangeNotifier {
 
   /// 결제 완료 → 저금통을 깬다. 받은 다이아 수 (깰 수 없으면 0).
   int grantPiggy() {
+    purchaseCount++;
     final got = piggyGems;
     if (got <= 0) return 0;
     gems += got;
@@ -3533,6 +3597,7 @@ class GameState extends ChangeNotifier {
       piggyOpen && energyBundleDay != _dayKey(now);
 
   void grantEnergyBundle() {
+    purchaseCount++;
     energyBundleDay = _dayKey(now);
     energy += EnergyBundle.energy;
     gems += EnergyBundle.gems;
@@ -3568,6 +3633,7 @@ class GameState extends ChangeNotifier {
 
   /// 결제 완료 → 지급. 결제 뒤에 시간이 끝났어도 준다 (돈은 이미 받았다).
   void grantMilestone() {
+    purchaseCount++;
     final c = milestoneCoins;
     gems += MilestoneBundle.gems;
     lastPurchaseGems = MilestoneBundle.gems;
@@ -3583,6 +3649,7 @@ class GameState extends ChangeNotifier {
   /// 결제 완료 → 지급 (한 번만).
   bool grantStarter() {
     if (starterBought) return false;
+    purchaseCount++;
     starterBought = true;
     lastPurchaseGems = Starter.gems;
     gems += Starter.gems;
@@ -3841,6 +3908,7 @@ class GameState extends ChangeNotifier {
       'passUntil': passUntil?.millisecondsSinceEpoch,
       'starter': starterBought,
       if (piggyGems > 0) 'piggy': piggyGems,
+      if (purchaseCount > 0) 'buys': purchaseCount,
       if (piggyNotified > 0) 'piggyN': piggyNotified,
       if (energyBundleDay.isNotEmpty) 'eBundleDay': energyBundleDay,
       if (milestoneKey != null) 'msKey': milestoneKey,
@@ -4185,6 +4253,7 @@ class GameState extends ChangeNotifier {
     passUntil = ts('passUntil');
     starterBought = j['starter'] as bool? ?? false;
     piggyGems = (j['piggy'] as num?)?.toInt() ?? 0;
+    purchaseCount = (j['buys'] as num?)?.toInt() ?? 0;
     piggyNotified = (j['piggyN'] as num?)?.toInt() ?? 0;
     energyBundleDay = j['eBundleDay'] as String? ?? '';
     milestoneKey = j['msKey'] as String?;

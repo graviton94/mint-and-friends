@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -6,7 +7,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../game/config.dart';
 import '../game/game_state.dart';
+import '../i18n/l10n.dart';
+import 'ad_ids.dart' show kRemoveAdsProductId;
 
 /// 출시 판단 지표(바이블 §10: D1 · D7 · 1구역 완료율 · 에너지 소진 · 광고)를 Firebase Analytics 로 보낸다.
 /// D1 · D7 리텐션은 Firebase 가 자동으로 잰다(first_open · user_engagement).
@@ -131,6 +135,28 @@ class Analytics {
           if (e.level == 1 || e.newStage) {
             log('landmark', {'area': e.area + 1, 'lv': e.level});
           }
+        case TrackEvent(:final name, :final params):
+          log(name, params);
+        case EventStepEvent(:final step):
+          log('event_step', {
+            'step': step,
+            'pass': game.hasEventPass ? 1 : 0,
+            'event': game.eventId ?? '',
+          });
+        case PiggyEvent(:final full):
+          log(full ? 'piggy_full' : 'piggy_ready', {'level': game.level});
+        case MilestoneOfferEvent(:final key):
+          log('milestone_open', {'key': key, 'level': game.level});
+        case DecorPlacedEvent(:final area, :final slot):
+          log('decor_place', {
+            'area': area + 1,
+            'slot': slot,
+            'level': game.level,
+          });
+        case DiscoveryEvent(:final chain, :final level):
+          log('discover', {'chain': chain.name, 'lv': level});
+        case SeasonSetEvent(:final area):
+          log('season_set_done', {'area': area + 1});
         case AdRewardEvent():
           log('ad_reward', {'kind': e.kind, 'level': game.level});
         default:
@@ -147,8 +173,87 @@ class Analytics {
     if (_on) unawaited(_fa.logTutorialComplete().catchError((Object _) {}));
   }
 
-  void purchase(String productId) =>
-      log('iap_purchase', {'product': productId});
+  /// 결제 성공: 우리 이름 + Firebase 표준 purchase(원화 값) → 매출 · ARPU · LTV 를 GA 에서 바로 본다 (D-118).
+  void purchase(String productId) {
+    final krw = priceKrw(productId);
+    log('iap_purchase', {'product': productId, 'krw': krw});
+    _prop('payer', 'yes');
+    if (_on && krw > 0) {
+      unawaited(
+        _fa
+            .logPurchase(
+              currency: 'KRW',
+              value: krw.toDouble(),
+              items: [AnalyticsEventItem(itemId: productId, price: krw)],
+            )
+            .catchError((Object _) {}),
+      );
+    }
+  }
+
+  /// 상품 정가 (원). 스토어 현지 가격이 아니라 우리 기준 값.
+  static int priceKrw(String id) =>
+      Gems.pack(id)?.krw ??
+      (id == Starter.productId
+          ? Starter.krw
+          : Offers.krw[id] ?? (id == kRemoveAdsProductId ? 5900 : 0));
+
+  /// 광고 수익 (AdMob onPaidEvent → Firebase 표준 ad_impression).
+  void adRevenue(String format, double valueMicros, String currency) {
+    if (!_on) return;
+    unawaited(
+      _fa
+          .logAdImpression(
+            adPlatform: 'admob',
+            adFormat: format,
+            currency: currency,
+            value: valueMicros / 1000000,
+          )
+          .catchError((Object _) {}),
+    );
+  }
+
+  /// 묶음 상품 · 패스를 보여 준 순간 (노출 → 결제 전환율).
+  void offerView(String id, String from) =>
+      log('offer_view', {'id': id, 'from': from});
+
+  /// 메뉴 · 선물함에서 누른 것 (기능 사용 빈도).
+  void menuTap(String id) => log('menu_tap', {'id': id});
+
+  /// 하루 한 번 상태 기록 (D-118): 진행 · 재화 · 결제 여부. 이탈 지점 · 경제 흐름 · 고래 구분에 쓴다.
+  Future<void> dailySnapshot(GameState g) async {
+    final p = await SharedPreferences.getInstance();
+    final now = DateTime.now();
+    final day = '${now.year}-${now.month}-${now.day}';
+    if (p.getString('snap_day') == day) return;
+    await p.setString('snap_day', day);
+    _prop('payer', g.isPayer ? 'yes' : 'no');
+    _prop('pass', g.passActive ? (g.adFree ? 'sub' : 'timed') : 'none');
+    _prop('lang', L10n.instance.lang);
+    _prop('renew', '${g.renewCount}');
+    _prop('area', '${g.currentArea + 1}');
+    _prop('player_level', '${g.level}');
+    _prop('event_pass', g.hasEventPass ? 'yes' : 'no');
+    log('daily_snapshot', {
+      'level': g.level,
+      'area': g.currentArea + 1,
+      'renew': g.renewCount,
+      'gems': g.gems,
+      'stars': g.stars,
+      'energy': g.energy,
+      'coins_e': g.coins <= 1 ? 0 : (math.log(g.coins) / math.ln10).floor(),
+      'piggy': g.piggyGems,
+      'event_step': g.eventStep,
+      'orders': g.stat(Stat.orders),
+      'merges': g.stat(Stat.merges),
+      'spawns': g.stat(Stat.spawns),
+      'payer': g.isPayer ? 1 : 0,
+      'buys': g.purchaseCount,
+      'pass': g.passActive ? 1 : 0,
+      'decor': g.decorCount,
+      'friends': g.friends.length,
+    });
+  }
 
   // ---- 상점 · 결제 퍼널 (D-044): 상점 열기 → 상품 누르기 → 결제 성공 · 취소 · 오류
   void shopOpen(GameState g, {required bool starter}) => log('shop_open', {
