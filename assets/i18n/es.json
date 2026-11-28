@@ -1462,5 +1462,6 @@
   "event.story.bloom.0": "¡Salieron los primeros brotes! ¡Vamos de picnic!",
   "event.story.bloom.1": "Llené la cesta de sándwiches.",
   "event.story.bloom.2": "¡Picnic terminado bajo una lluvia de pétalos! Llegó la primavera.",
-  "event.storyTitle": "Historia del evento"
+  "event.storyTitle": "Historia del evento",
+  "patch.1.0.25": "• El secreto de la jardinera: la historia empieza con una página rota del diario\n• Episodios de amigos: 10 historias cortas en tres pedidos\n• Los eventos mensuales ahora tienen una historia en tres actos\n\n¡Te enviamos energía como regalo de actualización!"
 }
