@@ -172,41 +172,77 @@ LISTING_LANG = {'en': 'en-US', 'ko': 'ko-KR', 'ja': 'ja-JP', 'es': 'es-419'}
 
 def products(apply=False):
     """docs/store/store.json 의 관리형 제품(productText.oneTime) 중 Play 에 없는 것을 만든다 (D-116).
-    이미 있는 제품은 건드리지 않는다. --apply 없으면 무엇을 만들지 보여 주기만."""
+    새 게시 API (oneTimeProducts). 이미 있는 제품은 건드리지 않는다. --apply 없으면 확인만."""
     store = json.load(open('docs/store/store.json'))
     price = {p['id']: int(p['price'].replace('₩', '').replace(',', '')) for p in store['products']}
-    have = set()
+    have = {}
     token = None
     while True:
-        r = s.get(f'{API}/inappproducts', params={'maxResults': 100, **({'token': token} if token else {})})
+        r = s.get(f'{API}/oneTimeProducts', params={'pageSize': 100, **({'pageToken': token} if token else {})})
         if r.status_code >= 300:
-            print('list failed', r.status_code, r.text[:600])
+            print('list failed', r.status_code, r.text[:800])
             sys.exit(1)
         j = r.json()
-        for p in j.get('inappproduct', []):
-            have.add(p['sku'])
-            print('have', p['sku'], p.get('status'), p.get('defaultPrice'))
-        token = (j.get('tokenPagination') or {}).get('nextPageToken')
+        for p in j.get('oneTimeProducts', []):
+            have[p['productId']] = p
+        token = j.get('nextPageToken')
         if not token:
             break
+    print('have', sorted(have))
+    if have:
+        sample = have.get('gems_430') or next(iter(have.values()))
+        po = (sample.get('purchaseOptions') or [{}])[0]
+        cfgs = po.get('regionalPricingAndAvailabilityConfigs', [])
+        print('sample', sample['productId'], 'options', [o.get('purchaseOptionId') for o in sample.get('purchaseOptions', [])],
+              'state', po.get('state'), 'buy', po.get('buyOption'), 'regions', len(cfgs),
+              'new', po.get('newRegionsConfig'), 'tax', sample.get('taxAndComplianceSettings'),
+              'first', cfgs[:2])
     for sku, text in store['productText']['oneTime'].items():
         if sku in have:
             continue
+        print('create', sku, price[sku])
+        if not apply:
+            continue
+        conv = ok(s.post(f'{API}/pricing:convertRegionPrices',
+                         json={'price': {'currencyCode': 'KRW', 'units': str(price[sku])}}))
+        regions = [
+            {'regionCode': rc, 'price': v['price'], 'availability': 'AVAILABLE'}
+            for rc, v in conv.get('convertedRegionPrices', {}).items()
+        ]
+        other = conv.get('convertedOtherRegionsPrice', {})
         body = {
             'packageName': PKG,
-            'sku': sku,
-            'status': 'active',
-            'purchaseType': 'managedUser',
-            'defaultLanguage': 'en-US',
-            'defaultPrice': {'priceMicros': str(price[sku] * 1000000), 'currency': 'KRW'},
-            'listings': {LISTING_LANG[l]: {'title': t[0][:55], 'description': t[1][:200]} for l, t in text.items()},
+            'productId': sku,
+            'listings': [
+                {'languageCode': LISTING_LANG[l], 'title': t[0][:55], 'description': t[1][:200]}
+                for l, t in text.items()
+            ],
+            'purchaseOptions': [{
+                'purchaseOptionId': 'default',
+                'buyOption': {'legacyCompatible': True, 'multiQuantityEnabled': False},
+                'regionalPricingAndAvailabilityConfigs': regions,
+                **({'newRegionsConfig': {
+                    'usdPrice': other['usdPrice'], 'eurPrice': other['eurPrice'], 'availability': 'AVAILABLE',
+                }} if other.get('usdPrice') else {}),
+            }],
         }
-        print('create', sku, price[sku])
-        if apply:
-            r = s.post(f'{API}/inappproducts', params={'autoConvertMissingPrices': 'true'}, json=body)
-            print('  ->', r.status_code, r.text[:400])
-            if r.status_code >= 300:
-                sys.exit(1)
+        if have:
+            tax = next(iter(have.values())).get('taxAndComplianceSettings')
+            if tax:
+                body['taxAndComplianceSettings'] = tax
+        r = s.patch(f'{API}/oneTimeProducts/{sku}', params={
+            'allowMissing': 'true', 'regionsVersion.version': '2022/02',
+            'updateMask': 'listings,purchaseOptions,taxAndComplianceSettings',
+        }, json=body)
+        print('  patch', r.status_code, r.text[:500])
+        if r.status_code >= 300:
+            sys.exit(1)
+        r = s.post(f'{API}/oneTimeProducts/{sku}/purchaseOptions:batchUpdateStates', json={'requests': [{
+            'activatePurchaseOptionRequest': {'packageName': PKG, 'productId': sku, 'purchaseOptionId': 'default'},
+        }]})
+        print('  activate', r.status_code, r.text[:300])
+        if r.status_code >= 300:
+            sys.exit(1)
     print('done' if apply else 'dry run: nothing changed')
 
 
