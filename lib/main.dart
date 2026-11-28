@@ -10,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'art/art.dart';
 import 'ui/widgets/reward_popup.dart';
-import 'game/config.dart' show Starter;
+import 'game/config.dart' show Starter, Offers, EnergyBundle, MilestoneBundle;
 import 'game/format.dart';
 import 'game/game_state.dart';
 import 'i18n/l10n.dart';
@@ -254,6 +254,27 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
       save.saveLocal(game);
       save.upload(game);
       _celebrate(Reward(gems: n), tr('reward.purchase'));
+    };
+    // 결제 묶음 (D-110): 저금통 · 에너지 묶음 · 단계 묶음
+    widget.billing.onOffer = (id) {
+      final Reward r;
+      if (id == Offers.piggy) {
+        r = Reward(gems: game.grantPiggy());
+      } else if (id == Offers.energy) {
+        game.grantEnergyBundle();
+        r = const Reward(gems: EnergyBundle.gems, energy: EnergyBundle.energy);
+      } else {
+        final c = game.milestoneCoins;
+        game.grantMilestone();
+        r = Reward(
+          gems: MilestoneBundle.gems,
+          energy: MilestoneBundle.energy,
+          coins: c.round(),
+        );
+      }
+      save.saveLocal(game);
+      save.upload(game);
+      _celebrate(r, tr('reward.purchase'));
     };
     widget.billing.onAdFree = () => _celebrate(
       const Reward(),

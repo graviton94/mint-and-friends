@@ -1293,5 +1293,21 @@
   "shop.bonusChip": "+{n} ボーナス",
   "shop.timesShort": "{n}倍",
   "pass.slimSub": "購読中 · 広告なしで受け取り",
-  "pass.slimLeft": "あと{d}日 · 広告なしで受け取り"
+  "pass.slimLeft": "あと{d}日 · 広告なしで受け取り",
+  "piggy.title": "ダイヤ貯金箱",
+  "piggy.note": "お願いを終えるたびに[[diamond]] +{n}",
+  "piggy.full": "満タン！割るとまた貯まる",
+  "piggy.tag": "2倍お得",
+  "piggy.locked": "[[diamond]] {n}個から割れる",
+  "piggy.readyToast": "ダイヤ貯金箱を割れるよ！",
+  "piggy.fullToast": "ダイヤ貯金箱が満タン！",
+  "energyBundle.title": "エネルギー補給セット",
+  "energyBundle.note": "エネルギー切れに1日1回！",
+  "offer.daily": "今日だけ",
+  "offer.limited": "限定",
+  "msOffer.title": "成長記念セット",
+  "msOffer.popTitle": "成長記念の特別セット！",
+  "msOffer.left": "あと{time}で終了",
+  "msOffer.level": "レベル{n}達成記念",
+  "msOffer.area": "新エリアオープン記念"
 }

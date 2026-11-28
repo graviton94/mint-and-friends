@@ -19,6 +19,7 @@ import 'board/board_view.dart';
 import 'garden/garden_scene.dart';
 import 'garden/garden_screen.dart';
 import 'meta_ui.dart';
+import 'offers_ui.dart';
 import 'renew_ui.dart';
 import 'share_card.dart';
 import 'share_flow.dart';
@@ -91,6 +92,15 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
       },
       'unlock': () => _showUnlock(Feature.values.last),
       'energy': _energyDialog,
+      'energyLow': () {
+        game.energy = 0;
+        _energyDialog();
+      },
+      'msOffer': () {
+        game.milestoneKey = 'lv:20';
+        game.milestoneUntil = game.now.add(const Duration(hours: 5));
+        showMilestoneOffer(context, widget.billing, game);
+      },
       'gift': () => _giftDialog(itemCell),
       'xp': _xpInfo,
       'income': _incomeInfo,
@@ -262,6 +272,22 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
           title: tr('milestone.title', {'n': count}),
           sub: '[[diamond]] +$gems',
         );
+      case PiggyEvent(:final full):
+        sfx(Sfx.unlock);
+        TopToast.celebrate(
+          context,
+          art: ArtImage(
+            Art.icon('piggy').available
+                ? Art.icon('piggy')
+                : Art.icon('dia_basket'),
+            size: 52,
+          ),
+          title: tr(full ? 'piggy.fullToast' : 'piggy.readyToast'),
+          sub: '[[diamond]] ${fmtInt(game.piggyGems)}',
+        );
+      case MilestoneOfferEvent():
+        // 레벨업 · 새 구역 창이 다 닫힌 뒤에 (창이 겹치지 않게)
+        _whenIdle(() => showMilestoneOffer(context, widget.billing, game));
       case RenewEvent():
         sfx(Sfx.levelup);
       case SeasonSetEvent(:final area, :final style):
@@ -338,6 +364,20 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
           TutorialStepEvent():
         break; // 지표용 (Analytics)
     }
+  }
+
+  /// 다른 창(레벨업 · 새 구역 흐름)이 없을 때 한 번 실행 (최대 1분 기다림).
+  void _whenIdle(VoidCallback f, [int tries = 0]) {
+    Future.delayed(const Duration(milliseconds: 2500), () {
+      if (!mounted) return;
+      final busy =
+          _areaFlow ||
+          _levelDialogOpen ||
+          _levelUps.isNotEmpty ||
+          (ModalRoute.of(context)?.isCurrent == false);
+      if (busy && tries < 24) return _whenIdle(f, tries + 1);
+      if (!busy) f();
+    });
   }
 
   void _toast(String msg) {
@@ -829,32 +869,49 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
         listenable: game,
         builder: (ctx, _) {
           final full = game.energy >= game.energyCap;
+          // 에너지가 거의 없을 때 하루 한 번 묶음 (D-110)
+          final bundle =
+              game.energyBundleAvailable &&
+              game.energy < GameConfig.energyPerTap * 10;
+          final hero = PopupHero(
+            art: ArtImage(
+              Art.icon('energy_jar').available
+                  ? Art.icon('energy_jar')
+                  : Art.icon('energy'),
+              size: 84,
+            ),
+            big: '${game.energy} / ${game.energyCap}',
+            note: full
+                ? tr('energy.fullNow')
+                : tr('energy.next', {'time': fmtDuration(game.energyNextIn)}),
+            extra: full
+                ? null
+                : ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: (game.energyProgress / game.energyRegenSeconds)
+                          .clamp(0.0, 1.0),
+                      minHeight: 10,
+                      backgroundColor: const Color(0xFFEDE3CC),
+                      color: const Color(0xFFF2B33D),
+                    ),
+                  ),
+          );
           return GameDialog(
             title: IconText(tr('energy.title'), textAlign: TextAlign.center),
-            content: PopupHero(
-              art: ArtImage(
-                Art.icon('energy_jar').available
-                    ? Art.icon('energy_jar')
-                    : Art.icon('energy'),
-                size: 84,
-              ),
-              big: '${game.energy} / ${game.energyCap}',
-              note: full
-                  ? tr('energy.fullNow')
-                  : tr('energy.next', {'time': fmtDuration(game.energyNextIn)}),
-              extra: full
-                  ? null
-                  : ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: LinearProgressIndicator(
-                        value: (game.energyProgress / game.energyRegenSeconds)
-                            .clamp(0.0, 1.0),
-                        minHeight: 10,
-                        backgroundColor: const Color(0xFFEDE3CC),
-                        color: const Color(0xFFF2B33D),
+            content: bundle
+                ? Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      hero,
+                      const SizedBox(height: 10),
+                      ListenableBuilder(
+                        listenable: widget.billing,
+                        builder: (_, _) => energyBundleCard(widget.billing),
                       ),
-                    ),
-            ),
+                    ],
+                  )
+                : hero,
             actionsAlignment: MainAxisAlignment.center,
             onClose: () => Navigator.pop(ctx, false),
             actions: [

@@ -1294,5 +1294,21 @@
   "shop.bonusChip": "+{n} 보너스",
   "shop.timesShort": "{n}배",
   "pass.slimSub": "구독 중 · 광고 없이 바로 받기",
-  "pass.slimLeft": "{d}일 남음 · 광고 없이 바로 받기"
+  "pass.slimLeft": "{d}일 남음 · 광고 없이 바로 받기",
+  "piggy.title": "다이아 저금통",
+  "piggy.note": "부탁을 끝낼 때마다 [[diamond]] +{n}씩 쌓여요",
+  "piggy.full": "가득 찼어요! 깨야 다시 쌓여요",
+  "piggy.tag": "2배 가치",
+  "piggy.locked": "[[diamond]] {n}개부터 깰 수 있어요",
+  "piggy.readyToast": "다이아 저금통을 깰 수 있어요!",
+  "piggy.fullToast": "다이아 저금통이 가득 찼어요!",
+  "energyBundle.title": "에너지 충전 묶음",
+  "energyBundle.note": "에너지가 떨어졌을 때 하루 한 번!",
+  "offer.daily": "오늘만",
+  "offer.limited": "한정",
+  "msOffer.title": "성장 기념 묶음",
+  "msOffer.popTitle": "성장 기념 특별 묶음!",
+  "msOffer.left": "{time} 뒤 사라져요",
+  "msOffer.level": "레벨 {n} 달성 기념",
+  "msOffer.area": "새 구역 오픈 기념"
 }

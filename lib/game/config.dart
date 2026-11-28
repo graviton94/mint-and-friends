@@ -1410,6 +1410,54 @@ class Outfits {
 
 /// ₩2,900 계정당 1회. 체감 가치 ₩20,000 이상: 패스 30일 · 다이아 100 · 에너지 100 · 부스트 묶음 ·
 /// 한정 정원 효과(계절마다 꽃잎 · 반딧불 · 낙엽 · 눈) · 민트 한정 의상(별빛 요정).
+/// 결제 묶음 상품 (D-110). 모두 소모형 (여러 번 살 수 있고, 언제 살 수 있는지는 게임이 정한다).
+class Offers {
+  /// 다이아 저금통 깨기.
+  static const String piggy = 'piggy_5900';
+
+  /// 에너지가 떨어졌을 때 묶음 (하루 한 번).
+  static const String energy = 'energy_3900';
+
+  /// 새 구역 · 레벨 단계 묶음 (24시간 한정).
+  static const String milestone = 'milestone_4900';
+
+  static const List<String> ids = [piggy, energy, milestone];
+  static const Map<String, int> krw = {
+    piggy: 5900,
+    energy: 3900,
+    milestone: 4900,
+  };
+}
+
+/// 다이아 저금통 (D-110): 부탁을 끝낼 때마다 다이아가 쌓이고, 결제로 깨서 한 번에 받는다.
+/// 같은 값(₩5,900) 다이아 팩 430개보다 가득 찼을 때 2배 넘게 (900).
+class Piggy {
+  static const int perOrder = 3;
+  static const int cap = 900;
+
+  /// 이만큼 모여야 깰 수 있다.
+  static const int minBreak = 450;
+}
+
+/// 에너지 묶음 (D-110): 에너지가 떨어진 순간 하루 한 번.
+class EnergyBundle {
+  static const int energy = 300;
+  static const int gems = 100;
+  static const Duration boost = Duration(minutes: 60); // 에너지 절약 (보관)
+}
+
+/// 단계 묶음 (D-110): 새 구역에 들어설 때 · 레벨 10 · 20 · 30 · 40 · 50 에 24시간.
+class MilestoneBundle {
+  static const List<int> levels = [10, 20, 30, 40, 50];
+  static const Duration window = Duration(hours: 24);
+  static const int gems = 250;
+  static const int energy = 200;
+
+  /// 코인: 그때 시간당 수입의 이만큼 (진행도 비례).
+  static const int coinHours = 8;
+  static const Duration boost = Duration(minutes: 120); // 코인 2배 (보관)
+}
+
 class Starter {
   static const String productId = 'starter_2900';
   static const int krw = 2900;

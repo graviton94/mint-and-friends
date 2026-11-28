@@ -1293,5 +1293,21 @@
   "shop.bonusChip": "+{n} extra",
   "shop.timesShort": "×{n}",
   "pass.slimSub": "Suscrito · Premios sin anuncios",
-  "pass.slimLeft": "Quedan {d} días · Premios sin anuncios"
+  "pass.slimLeft": "Quedan {d} días · Premios sin anuncios",
+  "piggy.title": "Hucha de diamantes",
+  "piggy.note": "Cada pedido terminado suma [[diamond]] +{n}",
+  "piggy.full": "¡Llena! Rómpela para seguir ahorrando",
+  "piggy.tag": "Valor ×2",
+  "piggy.locked": "Se rompe con [[diamond]] {n}",
+  "piggy.readyToast": "¡Ya puedes romper la hucha!",
+  "piggy.fullToast": "¡La hucha está llena!",
+  "energyBundle.title": "Pack de energía",
+  "energyBundle.note": "¿Sin energía? ¡Una vez al día!",
+  "offer.daily": "Hoy",
+  "offer.limited": "Limitado",
+  "msOffer.title": "Pack de logro",
+  "msOffer.popTitle": "¡Pack especial de logro!",
+  "msOffer.left": "Termina en {time}",
+  "msOffer.level": "Por llegar al Nv.{n}",
+  "msOffer.area": "Por abrir una zona nueva"
 }

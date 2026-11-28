@@ -16,6 +16,7 @@ import '../services/analytics_service.dart';
 import '../services/billing_service.dart';
 import '../services/feedback_service.dart';
 import '../services/notify_service.dart';
+import 'offers_ui.dart';
 import 'renew_ui.dart';
 import 'theme.dart';
 import 'widgets/frame_box.dart';
@@ -1965,6 +1966,20 @@ Future<void> _shopSheet(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(key: keys[0], height: 0),
+          // 결제 묶음 (D-110): 한정 단계 묶음 · 저금통 · (에너지가 적을 때) 에너지 묶음
+          if (game.milestoneActive) ...[
+            milestoneCard(billing, game),
+            const SizedBox(height: 12),
+          ],
+          if (game.piggyOpen) ...[
+            piggyCard(billing, game),
+            const SizedBox(height: 12),
+          ],
+          if (game.energyBundleAvailable &&
+              game.energy < GameConfig.energyPerTap * 10) ...[
+            energyBundleCard(billing),
+            const SizedBox(height: 12),
+          ],
           if (game.starterVisible) ...[
             StarterCard(billing: billing, game: game),
             const SizedBox(height: 14),

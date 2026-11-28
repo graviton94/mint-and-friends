@@ -1293,5 +1293,21 @@
   "shop.bonusChip": "+{n} bonus",
   "shop.timesShort": "×{n}",
   "pass.slimSub": "Subscribed · Rewards with no ads",
-  "pass.slimLeft": "{d} days left · Rewards with no ads"
+  "pass.slimLeft": "{d} days left · Rewards with no ads",
+  "piggy.title": "Diamond Piggy Bank",
+  "piggy.note": "Every finished request adds [[diamond]] +{n}",
+  "piggy.full": "Full! Break it to keep saving",
+  "piggy.tag": "2× value",
+  "piggy.locked": "Break at [[diamond]] {n}",
+  "piggy.readyToast": "Your piggy bank is ready to break!",
+  "piggy.fullToast": "Your piggy bank is full!",
+  "energyBundle.title": "Energy Refill Bundle",
+  "energyBundle.note": "Out of energy? Once a day!",
+  "offer.daily": "Today",
+  "offer.limited": "Limited",
+  "msOffer.title": "Milestone Bundle",
+  "msOffer.popTitle": "Special Milestone Bundle!",
+  "msOffer.left": "Gone in {time}",
+  "msOffer.level": "For reaching Lv.{n}",
+  "msOffer.area": "For opening a new area"
 }

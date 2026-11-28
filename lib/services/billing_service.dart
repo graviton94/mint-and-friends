@@ -84,6 +84,25 @@ class BillingService extends ChangeNotifier {
 
   void Function()? _onStarter;
 
+  /// 결제 묶음 상품 (저금통 · 에너지 묶음 · 단계 묶음, D-110).
+  final Map<String, ProductDetails> offerProducts = {};
+  void Function(String productId)? get onOffer => _onOffer;
+  set onOffer(void Function(String productId)? f) {
+    _onOffer = f;
+    _flushWaiting();
+  }
+
+  void Function(String productId)? _onOffer;
+
+  static bool _isOffer(String id) => Offers.ids.contains(id);
+
+  /// 이 소모형 결제를 지급할 곳.
+  bool _hasSink(String id) => id == Starter.productId
+      ? _onStarter != null
+      : _isOffer(id)
+      ? _onOffer != null
+      : _onGems != null;
+
   /// 결제가 막힌 계정인지 (반복 환불, D-068) · 막혔을 때 안내.
   bool Function()? blocked;
   VoidCallback? onBlocked;
@@ -117,11 +136,14 @@ class BillingService extends ChangeNotifier {
     final resp = await _iap.queryProductDetails({
       kRemoveAdsProductId,
       Starter.productId,
+      ...Offers.ids,
       for (final p in Gems.packs) p.id,
     });
     for (final d in resp.productDetails) {
       if (d.id == Starter.productId) {
         starter = d;
+      } else if (_isOffer(d.id)) {
+        offerProducts[d.id] = d;
       } else if (d.id == kRemoveAdsProductId) {
         product = d;
       } else {
@@ -156,7 +178,9 @@ class BillingService extends ChangeNotifier {
       } else if (p.status == PurchaseStatus.error) {
         Analytics.instance.iapError(p.productID, p.error?.code ?? 'unknown');
       }
-      if (p.productID == Starter.productId || Gems.pack(p.productID) != null) {
+      if (p.productID == Starter.productId ||
+          _isOffer(p.productID) ||
+          Gems.pack(p.productID) != null) {
         await _onConsumable(p);
         continue;
       }
@@ -200,7 +224,7 @@ class BillingService extends ChangeNotifier {
     }
     final isStarter = p.productID == Starter.productId;
     final pack = Gems.pack(p.productID);
-    if ((isStarter ? _onStarter : _onGems) == null) {
+    if (!_hasSink(p.productID)) {
       // 게임이 아직 연결되지 않았다: 소비하지 않고 기다린다
       if (!_waiting.any((w) => _sameId(w, p))) _waiting.add(p);
       return;
@@ -213,6 +237,8 @@ class BillingService extends ChangeNotifier {
       Analytics.instance.purchase(p.productID);
       if (isStarter) {
         _onStarter?.call();
+      } else if (_isOffer(p.productID)) {
+        _onOffer?.call(p.productID);
       } else {
         _onGems?.call(pack!);
       }
@@ -233,8 +259,7 @@ class BillingService extends ChangeNotifier {
     if (_waiting.isEmpty) return;
     final ready = [
       for (final p in _waiting)
-        if ((p.productID == Starter.productId ? _onStarter : _onGems) != null)
-          p,
+        if (_hasSink(p.productID)) p,
     ];
     if (ready.isEmpty) return;
     _waiting.removeWhere(ready.contains);
@@ -320,6 +345,25 @@ class BillingService extends ChangeNotifier {
     Analytics.instance.iapBegin(d.id);
     try {
       // 소비는 지급한 뒤에 직접 한다 (자동 소비는 지급 전에 소비해 버린다)
+      await _iap.buyConsumable(
+        purchaseParam: PurchaseParam(productDetails: d),
+        autoConsume: false,
+      );
+    } catch (_) {
+      purchasing = false;
+      notifyListeners();
+    }
+  }
+
+  /// 결제 묶음 사기 (저금통 · 에너지 묶음 · 단계 묶음). 살 수 있는지는 게임이 먼저 본다.
+  Future<void> buyOffer(String id) async {
+    final d = offerProducts[id];
+    if (d == null || purchasing) return;
+    if (_deny()) return;
+    purchasing = true;
+    notifyListeners();
+    Analytics.instance.iapBegin(d.id);
+    try {
       await _iap.buyConsumable(
         purchaseParam: PurchaseParam(productDetails: d),
         autoConsume: false,

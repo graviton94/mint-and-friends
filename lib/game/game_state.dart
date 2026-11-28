@@ -218,6 +218,18 @@ class MaxGiftEvent extends GameEvent {
   MaxGiftEvent(this.friendId, this.coins, this.stars, this.chain, this.level);
 }
 
+/// 저금통: 깰 수 있게 됨(full=false) · 가득 참(full=true).
+class PiggyEvent extends GameEvent {
+  final bool full;
+  PiggyEvent(this.full);
+}
+
+/// 단계 묶음이 새로 열렸다 (24시간).
+class MilestoneOfferEvent extends GameEvent {
+  final String key;
+  MilestoneOfferEvent(this.key);
+}
+
 class OrderMilestoneEvent extends GameEvent {
   final int count;
   final int gems;
@@ -538,6 +550,22 @@ class GameState extends ChangeNotifier {
 
   /// 새싹 정원 패키지: 샀는지 · 한정 타이머 끝 · 몇 번 보여 줬는지.
   bool starterBought = false;
+
+  // ---------------------------------------------------------------- 결제 묶음 (D-110)
+
+  /// 다이아 저금통에 쌓인 다이아.
+  int piggyGems = 0;
+
+  /// 저금통 알림을 보낸 단계 (0 없음 · 1 깰 수 있음 · 2 가득).
+  int piggyNotified = 0;
+
+  /// 에너지 묶음을 산 날 (하루 한 번).
+  String energyBundleDay = '';
+
+  /// 지금 열린 단계 묶음 (이유 'area:3' · 'lv:20', 끝나는 때). 이미 띄운 이유는 다시 띄우지 않는다.
+  String? milestoneKey;
+  DateTime? milestoneUntil;
+  final Set<String> milestoneSeen = {};
 
   /// 친구 초대 (D-045): 나를 초대한 사람 · 그때, 보상을 받은 초대 친구, 마지막으로 공유 보상을 받은 날.
   String? invitedBy;
@@ -1318,6 +1346,7 @@ class GameState extends ChangeNotifier {
       final gotEnergy = Leveling.levelUpEnergy(level, energy);
       energy += gotEnergy;
       final opened = Leveling.unlockedAt(level);
+      if (MilestoneBundle.levels.contains(level)) _openMilestone('lv:$level');
       _events.add(
         LevelUpEvent(level, opened, c, Leveling.levelUpStars, gotEnergy),
       );
@@ -2269,6 +2298,7 @@ class GameState extends ChangeNotifier {
       starOrdersUsed[o.friendId] = (starOrdersUsed[o.friendId] ?? 0) + 1;
     }
     stars += gained;
+    _fillPiggy();
     _bump(Stat.orders);
     _bump(Stat.orderStars, gained);
     final c = orderCoins(o);
@@ -2352,6 +2382,7 @@ class GameState extends ChangeNotifier {
     if (placed.length >= Garden.slotsPerArea) {
       currentArea++;
       placed = {};
+      _openMilestone('area:$currentArea');
       _bump(Stat.areas);
       _events.add(AreaCompletedEvent(area));
     }
@@ -3196,6 +3227,90 @@ class GameState extends ChangeNotifier {
     return true;
   }
 
+  // ---------------------------------------------------------------- 결제 묶음 (D-110)
+
+  /// 저금통이 보이는지: 첫 구역을 끝낸 뒤부터 (다이아를 쓸 줄 알게 된 다음).
+  bool get piggyOpen => currentArea >= 1;
+  bool get piggyBreakable => piggyGems >= Piggy.minBreak;
+  bool get piggyFull => piggyGems >= Piggy.cap;
+
+  void _fillPiggy() {
+    if (!piggyOpen || piggyFull) return;
+    piggyGems = min(Piggy.cap, piggyGems + Piggy.perOrder);
+    if (piggyFull && piggyNotified < 2) {
+      piggyNotified = 2;
+      _events.add(PiggyEvent(true));
+    } else if (piggyBreakable && piggyNotified < 1) {
+      piggyNotified = 1;
+      _events.add(PiggyEvent(false));
+    }
+  }
+
+  /// 결제 완료 → 저금통을 깬다. 받은 다이아 수 (깰 수 없으면 0).
+  int grantPiggy() {
+    final got = piggyGems;
+    if (got <= 0) return 0;
+    gems += got;
+    lastPurchaseGems = got;
+    piggyGems = 0;
+    piggyNotified = 0;
+    _trace('piggy', '$got');
+    notifyListeners();
+    return got;
+  }
+
+  /// 에너지 묶음: 오늘 아직 안 샀으면 살 수 있다.
+  bool get energyBundleAvailable =>
+      piggyOpen && energyBundleDay != _dayKey(now);
+
+  void grantEnergyBundle() {
+    energyBundleDay = _dayKey(now);
+    energy += EnergyBundle.energy;
+    gems += EnergyBundle.gems;
+    lastPurchaseGems = EnergyBundle.gems;
+    boostTokens[BoostKind.energy] =
+        (boostTokens[BoostKind.energy] ?? 0) + EnergyBundle.boost.inMinutes;
+    _trace('energyBundle', '${Offers.krw[Offers.energy]}');
+    notifyListeners();
+  }
+
+  void _openMilestone(String key) {
+    if (milestoneSeen.contains(key)) return;
+    milestoneSeen.add(key);
+    milestoneKey = key;
+    milestoneUntil = now.add(MilestoneBundle.window);
+    _events.add(MilestoneOfferEvent(key));
+  }
+
+  /// 지금 살 수 있는 단계 묶음 (없으면 null).
+  bool get milestoneActive =>
+      milestoneKey != null &&
+      milestoneUntil != null &&
+      now.isBefore(milestoneUntil!);
+
+  Duration get milestoneLeft =>
+      milestoneActive ? milestoneUntil!.difference(now) : Duration.zero;
+
+  /// 단계 묶음의 코인 (그때 시간당 수입 기준).
+  double get milestoneCoins => max(
+    1000 * inflation * Tuning.coinScale,
+    baseIncomePerSec * 3600 * MilestoneBundle.coinHours,
+  ).roundToDouble();
+
+  /// 결제 완료 → 지급. 결제 뒤에 시간이 끝났어도 준다 (돈은 이미 받았다).
+  void grantMilestone() {
+    final c = milestoneCoins;
+    gems += MilestoneBundle.gems;
+    lastPurchaseGems = MilestoneBundle.gems;
+    energy += MilestoneBundle.energy;
+    _earn(c, live: false);
+    boostTokens[BoostKind.coins] =
+        (boostTokens[BoostKind.coins] ?? 0) + MilestoneBundle.boost.inMinutes;
+    milestoneUntil = null;
+    _trace('milestone', milestoneKey ?? '');
+    notifyListeners();
+  }
+
   /// 결제 완료 → 지급 (한 번만).
   bool grantStarter() {
     if (starterBought) return false;
@@ -3456,6 +3571,12 @@ class GameState extends ChangeNotifier {
       'friendLv': friendLevels,
       'passUntil': passUntil?.millisecondsSinceEpoch,
       'starter': starterBought,
+      if (piggyGems > 0) 'piggy': piggyGems,
+      if (piggyNotified > 0) 'piggyN': piggyNotified,
+      if (energyBundleDay.isNotEmpty) 'eBundleDay': energyBundleDay,
+      if (milestoneKey != null) 'msKey': milestoneKey,
+      'msUntil': milestoneUntil?.millisecondsSinceEpoch,
+      if (milestoneSeen.isNotEmpty) 'msSeen': milestoneSeen.toList(),
       'packs': boughtPacks.toList(),
       if (invitedBy != null) 'invitedBy': invitedBy,
       if (invitedAt != null) 'invitedAt': invitedAt!.millisecondsSinceEpoch,
@@ -3782,6 +3903,14 @@ class GameState extends ChangeNotifier {
     if (econ < 3) coins = min(coins, coinCapFor(level));
     passUntil = ts('passUntil');
     starterBought = j['starter'] as bool? ?? false;
+    piggyGems = (j['piggy'] as num?)?.toInt() ?? 0;
+    piggyNotified = (j['piggyN'] as num?)?.toInt() ?? 0;
+    energyBundleDay = j['eBundleDay'] as String? ?? '';
+    milestoneKey = j['msKey'] as String?;
+    milestoneUntil = ts('msUntil');
+    milestoneSeen
+      ..clear()
+      ..addAll([for (final x in (j['msSeen'] as List? ?? const [])) '$x']);
     boughtPacks
       ..clear()
       ..addAll([for (final x in (j['packs'] as List? ?? const [])) '$x']);
