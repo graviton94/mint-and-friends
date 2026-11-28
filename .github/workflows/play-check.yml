@@ -23,3 +23,8 @@ jobs:
           gcloud services enable androidpublisher.googleapis.com --project "$P" || echo "::warning::could not enable API"
       - run: pip install google-auth requests
       - run: python3 tool/play_api.py check
+      - name: Vitals (crash · ANR · error issues)
+        run: |
+          P=$(gcloud config get-value project)
+          gcloud services enable playdeveloperreporting.googleapis.com --project "$P" || echo "::warning::could not enable reporting API"
+          python3 tool/play_vitals.py 21 || echo "::warning::vitals failed"
