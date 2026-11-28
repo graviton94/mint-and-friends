@@ -208,6 +208,8 @@ String mailFrom(Mail m) => Friends.all.any((f) => f.id == m.from)
     ? friendName(m.from)
     : m.from == 'team'
     ? tr('mail.from.team')
+    : m.from == 'gardener'
+    ? tr('mail.from.gardener')
     : m.from;
 String mailTitle(Mail m) =>
     m.text ?? tr(m.titleKey, {...m.args, 'name': mailFrom(m)});
@@ -221,6 +223,9 @@ String? mailBody(Mail m) {
 ArtRef _mailIcon(Mail m) {
   if (Friends.all.any((f) => f.id == m.from)) {
     return Art.friend(Friends.byId(m.from));
+  }
+  if (m.from == 'gardener') {
+    return Art.icon('diary').available ? Art.icon('diary') : Art.icon('letter');
   }
   return Art.icon(switch (m.kind) {
     MailKind.social => 'gift',

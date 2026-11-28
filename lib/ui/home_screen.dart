@@ -107,6 +107,11 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
         showEventSheet(context, widget.billing, game, watchAd: _rewardedCapped);
       },
       'diary': () => showDiaryPage(context, 5, found: true),
+      'storyIntro': () => showStoryIntro(context, game),
+      'episodeStart': () => showEpisodeScene(context, 'kwak', 0),
+      'episodeDone': () => showEpisodeScene(context, 'pposong', 3, done: true),
+      'eventStory': () =>
+          showEventStory(context, game, EventPass.events.first, 2),
       'diarySheet': () {
         game.diaryFound.addAll([0, 1, 2]);
         showDiarySheet(context, game);
@@ -302,6 +307,13 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
         );
       case EventStepEvent(:final step):
         sfx(Sfx.unlock);
+        final def = game.currentEvent;
+        if (def != null && (step == 10 || step == 20)) {
+          final act = step == 10 ? 1 : 2;
+          if (!game.eventStorySeen.contains('${def.id}:$act')) {
+            _whenIdle(() => showEventStory(context, game, def, act));
+          }
+        }
         TopToast.celebrate(
           context,
           art: ArtImage(
@@ -313,6 +325,20 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
           title: tr('event.stepUp', {'n': step}),
           sub: tr('event.stepSub'),
         );
+      case EpisodeEvent(:final friendId, :final step, :final done):
+        if (step == 0 || done) {
+          _whenIdle(
+            () => showEpisodeScene(context, friendId, step, done: done),
+          );
+        } else {
+          sfx(Sfx.unlock);
+          TopToast.celebrate(
+            context,
+            art: ArtImage(Art.friend(Friends.byId(friendId)), size: 52),
+            title: tr('ep.progress', {'name': friendName(friendId), 'n': step}),
+            sub: tr('ep.$friendId.$step'),
+          );
+        }
       case DiaryEvent(:final page):
         // 새 구역 축하 흐름이 끝난 뒤 (창이 겹치지 않게)
         _whenIdle(() => showDiaryPage(context, page, found: true));
@@ -1783,6 +1809,12 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
     _tipsReady = true;
     _quietUntil = DateTime.now().add(const Duration(seconds: 3));
     _checkNewTips();
+    // 이야기가 생기기 전부터 하던 플레이어도 첫 만남 장면을 한 번 (출석판 뒤에)
+    if (step == _tutDone && !game.storyIntroSeen) {
+      _whenIdle(() {
+        if (!game.storyIntroSeen) showStoryIntro(context, game);
+      });
+    }
     // 하루 첫 접속: 튜토리얼이 끝난 플레이어에게 출석판을 띄운다
     if (step == _tutDone && game.level >= 2 && game.checkInReady) {
       Future.delayed(const Duration(milliseconds: 1200), () {
@@ -1880,6 +1912,10 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
     if (step == 1) Analytics.instance.tutorialBegin();
     if (step == _tutDone && _tut != _tutDone) {
       Analytics.instance.tutorialComplete();
+      // 첫 만남: 찢어진 일기 조각 (D-122)
+      if (!game.storyIntroSeen) {
+        _whenIdle(() => showStoryIntro(context, game));
+      }
     }
     setState(() => _tut = step);
     game.setTutorial(step);
@@ -2597,7 +2633,7 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
             tr('menu.wardrobe'),
             () => showWardrobePicker(context, game),
           ),
-        if (game.diaryFound.isNotEmpty)
+        if (game.diaryFound.isNotEmpty || game.storyIntroSeen)
           MenuEntry(
             Art.icon('diary').available ? 'diary' : 'letter',
             tr('menu.diary'),

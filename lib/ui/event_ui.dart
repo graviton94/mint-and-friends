@@ -10,6 +10,7 @@ import '../services/analytics_service.dart';
 import '../services/audio_service.dart';
 import '../services/billing_service.dart';
 import 'sheets.dart';
+import 'story_ui.dart';
 import 'theme.dart';
 import 'widgets/frame_box.dart';
 import 'widgets/icon_text.dart';
@@ -30,8 +31,17 @@ Future<void> showEventSheet(
     'quests': game.questsDone,
     'pass': game.hasEventPass ? 1 : 0,
   });
-  if (!game.hasEventPass)
+  if (!game.hasEventPass) {
     Analytics.instance.offerView(Offers.eventPass, 'event');
+  }
+  // 이벤트 첫 열기: 1막 이야기 먼저 (D-122)
+  if (!game.eventStorySeen.contains('${def.id}:0')) {
+    return showEventStory(context, game, def, 0).then((_) {
+      if (context.mounted) {
+        return showEventSheet(context, billing, game, watchAd: watchAd);
+      }
+    });
+  }
   return showGameSheet(
     context,
     Listenable.merge([billing, game]),

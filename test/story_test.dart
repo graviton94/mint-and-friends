@@ -46,4 +46,40 @@ void main() {
     expect(ids, containsAll(['story-dubu-3', 'story-dubu-5', 'story-dubu-10']));
     expect(ids.where((x) => x.startsWith('story-')).length, 3);
   });
+
+  test('에피소드: 같은 친구 부탁 3번이면 완성 + 에너지, 친구마다 한 번', () {
+    final g = make();
+    g.episodeFriend = 'kwak';
+    final e0 = g.energy;
+    void deliverFrom(String f) {
+      // 그 친구의 부탁을 하나 만들어 바로 전한다
+      final o = g.orders.first;
+      g.orders[0] = Order(o.id, f, o.chain, o.level, o.stars);
+      final cell = g.board.indexWhere((x) => x == null);
+      g.board[cell] = Item(90000 + cell, o.chain, o.level);
+      expect(g.deliver(0), isTrue);
+    }
+
+    deliverFrom('nabi');
+    expect(g.episodeStep, 0, reason: '다른 친구 부탁은 세지 않는다');
+    deliverFrom('kwak');
+    deliverFrom('kwak');
+    expect(g.episodeStep, 2);
+    deliverFrom('kwak');
+    expect(g.episodeFriend, isNull);
+    expect(g.episodesDone, contains('kwak'));
+    expect(g.energy, greaterThanOrEqualTo(e0 + GameState.episodeReward.energy));
+  });
+
+  test('일기 마지막 장을 찾으면 정원사의 예고 편지', () {
+    final g = make()..currentArea = 5;
+    g.diaryFound.addAll([0, 1, 2, 3, 4]);
+    g.level = 99;
+    g.stars = 1 << 30;
+    for (var i = 0; i < Garden.slotsPerArea; i++) {
+      g.placeDecor(i);
+    }
+    expect(g.diaryFound, contains(5));
+    expect(g.mail.any((m) => m.id == 'story-teaser'), isTrue);
+  });
 }

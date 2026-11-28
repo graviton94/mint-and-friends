@@ -226,6 +226,14 @@ class TrackEvent extends GameEvent {
   TrackEvent(this.name, [this.params = const {}]);
 }
 
+/// 친구 에피소드: 시작(step 0) · 진행(1 · 2) · 완성(done).
+class EpisodeEvent extends GameEvent {
+  final String friendId;
+  final int step;
+  final bool done;
+  EpisodeEvent(this.friendId, this.step, {this.done = false});
+}
+
 /// 정원사 일기 한 장을 찾았다 (구역 완성).
 class DiaryEvent extends GameEvent {
   final int page;
@@ -607,6 +615,17 @@ class GameState extends ChangeNotifier {
 
   /// 찾은 정원사 일기 페이지 (구역 번호). 구역을 완성할 때마다 한 장.
   final Set<int> diaryFound = {};
+
+  /// 첫 만남 장면(찢어진 일기 조각)을 봤는지.
+  bool storyIntroSeen = false;
+
+  /// 친구 에피소드 (D-122): 진행 중인 친구 · 단계(0~2), 끝낸 친구.
+  String? episodeFriend;
+  int episodeStep = 0;
+  final Set<String> episodesDone = {};
+
+  /// 본 이벤트 이야기 ('onsen:0' · 'onsen:1' · 'onsen:2').
+  final Set<String> eventStorySeen = {};
 
   /// 모은 기념품 · 배지 (이벤트 id).
   final Set<String> souvenirs = {};
@@ -2350,6 +2369,7 @@ class GameState extends ChangeNotifier {
     stars += gained;
     _fillPiggy();
     _bump(Stat.orders);
+    _episodeAfterOrder(o.friendId);
     _bump(Stat.orderStars, gained);
     final c = orderCoins(o);
     _earn(c);
@@ -2523,6 +2543,55 @@ class GameState extends ChangeNotifier {
     _applyReward(diaryReward(area));
     _trace('diary', '$area');
     _events.add(DiaryEvent(area));
+    // 마지막 장: 정원사 캐모마일의 예고 편지 (7구역 과수원 업데이트로 이어진다)
+    if (area == diaryPages - 1) {
+      addMail(
+        Mail(
+          id: 'story-teaser',
+          kind: MailKind.notice,
+          from: 'gardener',
+          titleKey: 'story.teaserTitle',
+          bodyKey: 'story.teaser',
+          reward: const Reward(energy: 50),
+          at: now,
+        ),
+      );
+    }
+  }
+
+  // ---- 친구 에피소드 (D-122): 친구 부탁 3번에 걸친 짧은 이야기, 완성하면 에너지 40.
+  static const int episodeMinOrders = 20;
+  static const double episodeChance = 0.15;
+  static const Reward episodeReward = Reward(energy: 40);
+
+  /// 부탁을 전한 뒤 (deliver 에서): 진행 중이면 한 단계, 아니면 가끔 새 이야기 시작.
+  void _episodeAfterOrder(String friendId) {
+    final cur = episodeFriend;
+    if (cur != null) {
+      if (cur != friendId) return;
+      episodeStep++;
+      if (episodeStep >= 3) {
+        episodesDone.add(cur);
+        episodeFriend = null;
+        episodeStep = 0;
+        _applyReward(episodeReward);
+        _trace('episode', '$cur,done');
+        _events.add(EpisodeEvent(cur, 3, done: true));
+      } else {
+        _events.add(EpisodeEvent(cur, episodeStep));
+      }
+      return;
+    }
+    if (stat(Stat.orders) < episodeMinOrders ||
+        episodesDone.contains(friendId) ||
+        friendLevel(friendId) < 2 ||
+        _rng.nextDouble() >= episodeChance) {
+      return;
+    }
+    episodeFriend = friendId;
+    episodeStep = 0;
+    _trace('episode', '$friendId,start');
+    _events.add(EpisodeEvent(friendId, 0));
   }
 
   /// 친구 레벨 3 · 5 · 10 에 그 친구의 사연 편지 (에너지 20 · 30 · 50, D-120).
@@ -2918,6 +2987,7 @@ class GameState extends ChangeNotifier {
     'gemPack': 'gem_pack_grant',
     'diary': 'diary_page',
     'letter': 'friend_letter',
+    'episode': 'friend_episode',
   };
 
   /// 따로 자세히 남기거나(합치기 · 생성 · 부탁) 너무 잦은(코인 생산) 기록은 'act' 에서 뺀다.
@@ -3980,6 +4050,11 @@ class GameState extends ChangeNotifier {
       if (souvenirs.isNotEmpty) 'souvenirs': souvenirs.toList(),
       if (badges.isNotEmpty) 'badges': badges.toList(),
       if (diaryFound.isNotEmpty) 'diary': diaryFound.toList()..sort(),
+      if (storyIntroSeen) 'storyIntro': true,
+      if (episodeFriend != null) 'epF': episodeFriend,
+      if (episodeStep > 0) 'epS': episodeStep,
+      if (episodesDone.isNotEmpty) 'epDone': episodesDone.toList(),
+      if (eventStorySeen.isNotEmpty) 'evStory': eventStorySeen.toList(),
       'packs': boughtPacks.toList(),
       if (invitedBy != null) 'invitedBy': invitedBy,
       if (invitedAt != null) 'invitedAt': invitedAt!.millisecondsSinceEpoch,
@@ -4353,6 +4428,15 @@ class GameState extends ChangeNotifier {
     diaryFound
       ..clear()
       ..addAll(evInts('diary'));
+    storyIntroSeen = j['storyIntro'] as bool? ?? false;
+    episodeFriend = j['epF'] as String?;
+    episodeStep = (j['epS'] as num?)?.toInt() ?? 0;
+    episodesDone
+      ..clear()
+      ..addAll(strs('epDone'));
+    eventStorySeen
+      ..clear()
+      ..addAll(strs('evStory'));
     // 이야기가 생기기 전에 이미 끝낸 구역의 페이지는 조용히 채워 둔다 (선물 없이, 일기장에서 읽을 수 있게)
     for (
       var a = 0;
