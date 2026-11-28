@@ -63,3 +63,30 @@ if r.ok:
     print('  ' + '  '.join(f'D{d}:{v}' for d, v in rows))
 else:
     print('  error', r.status_code, r.text[:300])
+
+# ---------------------------------------------------------------- 매출 · 결제 (D-118 이후 수집)
+report('매출 · 결제 (원화, 광고는 AdMob 추정)', [], ['activeUsers', 'totalPurchasers', 'firstTimePurchasers',
+                                         'purchaseRevenue', 'totalAdRevenue', 'totalRevenue'])
+report('결제 상품별', ['customEvent:product'], ['eventCount', 'totalUsers'],
+       filt={'filter': {'fieldName': 'eventName', 'stringFilter': {'value': 'iap_purchase'}}})
+report('결제 깔때기 (상점 → 노출 → 시도 → 성공)', ['eventName'], ['eventCount', 'totalUsers'],
+       filt={'filter': {'fieldName': 'eventName', 'inListFilter': {'values': [
+           'shop_open', 'offer_view', 'starter_view', 'iap_begin', 'iap_cancel', 'iap_error', 'iap_purchase']}}})
+report('묶음 노출 (어디서 · 무엇)', ['customEvent:id', 'customEvent:from'], ['eventCount', 'totalUsers'],
+       filt={'filter': {'fieldName': 'eventName', 'stringFilter': {'value': 'offer_view'}}})
+report('광고 자리별 시청', ['customEvent:kind'], ['eventCount', 'totalUsers'],
+       filt={'filter': {'fieldName': 'eventName', 'stringFilter': {'value': 'ad_reward'}}},
+       order={'metric': {'metricName': 'eventCount'}, 'desc': True})
+report('월간 이벤트', ['eventName'], ['eventCount', 'totalUsers'],
+       filt={'filter': {'fieldName': 'eventName', 'inListFilter': {'values': [
+           'event_open', 'event_quest', 'event_step', 'event_claim', 'event_pass']}}})
+report('이야기 · 저금통 · 묶음', ['eventName'], ['eventCount', 'totalUsers'],
+       filt={'filter': {'fieldName': 'eventName', 'inListFilter': {'values': [
+           'diary_page', 'friend_letter', 'piggy_ready', 'piggy_full', 'piggy_break', 'energy_bundle',
+           'milestone_open', 'milestone_bundle', 'special_set', 'outfit_set']}}})
+report('막히는 순간', ['eventName'], ['eventCount', 'totalUsers'],
+       filt={'filter': {'fieldName': 'eventName', 'inListFilter': {'values': [
+           'energy_empty', 'orders_done', 'ad_unavailable']}}})
+report('사용자 레벨 분포 (마지막 상태)', ['customUser:player_level'], ['activeUsers'], limit=60,
+       order={'dimension': {'dimensionName': 'customUser:player_level', 'orderType': 'NUMERIC'}})
+report('결제자 · 패스 구분', ['customUser:payer', 'customUser:pass'], ['activeUsers'])

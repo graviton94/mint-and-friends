@@ -1,0 +1,40 @@
+name: Weekly report
+
+# 매주 월요일 10:07 (KST) 지난 7일 GA 지표를 docs/reports/ 에 남긴다 (D-121). 수동 실행도 된다.
+on:
+  schedule:
+    - cron: "7 1 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ccr-dfef2a86-bm7r83
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Project
+        run: echo "PROJECT=$(gcloud config get-value project)" >> "$GITHUB_ENV"
+      - run: pip install -q google-auth requests
+      - name: Report
+        run: |
+          mkdir -p docs/reports
+          F="docs/reports/$(TZ=Asia/Seoul date +%Y-%m-%d).md"
+          { echo "# 주간 지표 $(TZ=Asia/Seoul date +%Y-%m-%d)"; echo; echo '```'; python3 tool/ga_report.py 7; echo '```'; } > "$F"
+          cp "$F" docs/reports/latest.md
+          { echo "## Weekly report"; cat "$F"; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Commit
+        run: |
+          git config user.name "weekly-report"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/reports
+          git commit -m "Weekly report $(TZ=Asia/Seoul date +%Y-%m-%d) [skip ci]" || exit 0
+          for i in 1 2 3; do git pull --rebase -q origin ccr-dfef2a86-bm7r83 && git push -q origin HEAD:ccr-dfef2a86-bm7r83 && break; sleep 5; done
