@@ -210,6 +210,8 @@ def products(apply=False):
             for rc, v in conv.get('convertedRegionPrices', {}).items()
         ]
         other = conv.get('convertedOtherRegionsPrice', {})
+        rv = (conv.get('regionVersion') or {}).get('version')
+        print('  regions', len(regions), 'version', rv, 'keys', list(conv.keys()))
         body = {
             'packageName': PKG,
             'productId': sku,
@@ -227,7 +229,7 @@ def products(apply=False):
             }],
         }
         r = s.patch(f'{API}/onetimeproducts/{sku}', params={
-            'allowMissing': 'true', 'regionsVersion.version': '2022/02',
+            'allowMissing': 'true', 'regionsVersion.version': rv or '2025/03',
             'updateMask': 'listings,purchaseOptions',
         }, json=body)
         print('  patch', r.status_code, r.text[:500])
