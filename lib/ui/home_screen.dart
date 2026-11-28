@@ -22,6 +22,7 @@ import 'garden/garden_screen.dart';
 import 'meta_ui.dart';
 import 'offers_ui.dart';
 import 'event_ui.dart';
+import 'story_ui.dart';
 import 'renew_ui.dart';
 import 'share_card.dart';
 import 'share_flow.dart';
@@ -104,6 +105,11 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
         game.eventStep = 6;
         game.claimEventStep(0, premium: false);
         showEventSheet(context, widget.billing, game, watchAd: _rewardedCapped);
+      },
+      'diary': () => showDiaryPage(context, 5, found: true),
+      'diarySheet': () {
+        game.diaryFound.addAll([0, 1, 2]);
+        showDiarySheet(context, game);
       },
       'msOffer': () {
         game.milestoneKey = 'lv:20';
@@ -307,6 +313,9 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
           title: tr('event.stepUp', {'n': step}),
           sub: tr('event.stepSub'),
         );
+      case DiaryEvent(:final page):
+        // 새 구역 축하 흐름이 끝난 뒤 (창이 겹치지 않게)
+        _whenIdle(() => showDiaryPage(context, page, found: true));
       case MilestoneOfferEvent():
         // 레벨업 · 새 구역 창이 다 닫힌 뒤에 (창이 겹치지 않게)
         _whenIdle(() => showMilestoneOffer(context, widget.billing, game));
@@ -2587,6 +2596,12 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
             'outfit',
             tr('menu.wardrobe'),
             () => showWardrobePicker(context, game),
+          ),
+        if (game.diaryFound.isNotEmpty)
+          MenuEntry(
+            Art.icon('diary').available ? 'diary' : 'letter',
+            tr('menu.diary'),
+            () => showDiarySheet(context, game),
           ),
         MenuEntry('book', tr('menu.book'), () {
           // 열기 전에 본 단계를 기억해 두고 '새로 발견'을 보여 준다 (D-095)

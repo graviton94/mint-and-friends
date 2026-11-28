@@ -226,6 +226,12 @@ class TrackEvent extends GameEvent {
   TrackEvent(this.name, [this.params = const {}]);
 }
 
+/// 정원사 일기 한 장을 찾았다 (구역 완성).
+class DiaryEvent extends GameEvent {
+  final int page;
+  DiaryEvent(this.page);
+}
+
 /// 이벤트 사다리 한 칸 올랐다.
 class EventStepEvent extends GameEvent {
   final int step;
@@ -597,6 +603,11 @@ class GameState extends ChangeNotifier {
   /// 패스를 산 이벤트 id.
   final Set<String> eventPasses = {};
 
+  // ---------------------------------------------------------------- 이야기 (D-119)
+
+  /// 찾은 정원사 일기 페이지 (구역 번호). 구역을 완성할 때마다 한 장.
+  final Set<int> diaryFound = {};
+
   /// 모은 기념품 · 배지 (이벤트 id).
   final Set<String> souvenirs = {};
   final Set<String> badges = {};
@@ -880,6 +891,7 @@ class GameState extends ChangeNotifier {
     if (!canLevelFriend(id)) return false;
     coins -= friendLevelCost(id);
     friendLevels[id] = friendLevel(id) + 1;
+    _friendLetter(id, friendLevel(id));
     _bump(Stat.upgradesBought);
     notifyListeners();
     return true;
@@ -2421,6 +2433,7 @@ class GameState extends ChangeNotifier {
       currentArea++;
       placed = {};
       _openMilestone('area:$currentArea');
+      _findDiary(area);
       _bump(Stat.areas);
       _events.add(AreaCompletedEvent(area));
     }
@@ -2492,6 +2505,41 @@ class GameState extends ChangeNotifier {
     _events.add(SeasonSetEvent(area, s));
     notifyListeners();
     return StyleResult.ok;
+  }
+
+  // ---------------------------------------------------------------- 이야기 (D-119)
+
+  /// 일기 페이지 수 (구역 수만큼).
+  static const int diaryPages = 6;
+
+  /// 페이지마다 다이아, 마지막 장은 더.
+  static int diaryGems(int page) => page == diaryPages - 1 ? 50 : 10;
+
+  void _findDiary(int area) {
+    if (area < 0 || area >= diaryPages || !diaryFound.add(area)) return;
+    gems += diaryGems(area);
+    _trace('diary', '$area');
+    _events.add(DiaryEvent(area));
+  }
+
+  /// 친구 레벨 3 · 5 · 10 에 그 친구의 사연 편지 (다이아 3 · 5 · 10).
+  static const Map<int, int> letterLevels = {3: 3, 5: 5, 10: 10};
+
+  void _friendLetter(String id, int lv) {
+    final g = letterLevels[lv];
+    if (g == null) return;
+    addMail(
+      Mail(
+        id: 'story-$id-$lv',
+        kind: MailKind.notice,
+        from: id,
+        titleKey: 'story.letterTitle',
+        bodyKey: 'story.$id.$lv',
+        reward: Reward(gems: g),
+        at: now,
+      ),
+    );
+    _trace('letter', '$id,$lv');
   }
 
   // ---------------------------------------------------------------- 월간 이벤트 (D-112)
@@ -2865,6 +2913,8 @@ class GameState extends ChangeNotifier {
     'revoke': 'refund_revoke',
     'starter': 'starter_grant',
     'gemPack': 'gem_pack_grant',
+    'diary': 'diary_page',
+    'letter': 'friend_letter',
   };
 
   /// 따로 자세히 남기거나(합치기 · 생성 · 부탁) 너무 잦은(코인 생산) 기록은 'act' 에서 뺀다.
@@ -3926,6 +3976,7 @@ class GameState extends ChangeNotifier {
       if (eventPasses.isNotEmpty) 'evPass': eventPasses.toList(),
       if (souvenirs.isNotEmpty) 'souvenirs': souvenirs.toList(),
       if (badges.isNotEmpty) 'badges': badges.toList(),
+      if (diaryFound.isNotEmpty) 'diary': diaryFound.toList()..sort(),
       'packs': boughtPacks.toList(),
       if (invitedBy != null) 'invitedBy': invitedBy,
       if (invitedAt != null) 'invitedAt': invitedAt!.millisecondsSinceEpoch,
@@ -4296,6 +4347,17 @@ class GameState extends ChangeNotifier {
     badges
       ..clear()
       ..addAll(strs('badges'));
+    diaryFound
+      ..clear()
+      ..addAll(evInts('diary'));
+    // 이야기가 생기기 전에 이미 끝낸 구역의 페이지는 조용히 채워 둔다 (선물 없이, 일기장에서 읽을 수 있게)
+    for (
+      var a = 0;
+      a < (renewCount > 1 ? diaryPages : min(currentArea, diaryPages));
+      a++
+    ) {
+      diaryFound.add(a);
+    }
     boughtPacks
       ..clear()
       ..addAll([for (final x in (j['packs'] as List? ?? const [])) '$x']);
