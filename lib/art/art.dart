@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../game/config.dart';
+import '../game/event_pass.dart';
 import '../ui/garden/garden_scene.dart' show FxSprites;
 
 /// 아트 리소스 등록부.
@@ -45,6 +46,8 @@ class Art {
       _available = {};
     }
     Garden.styleReady = (d, st) => decorStyle(d, st).available;
+    // 월간 이벤트는 배너 그림이 들어온 달만 연다 (D-112)
+    EventPass.ready = (e) => has(e.banner);
     // 새 구역은 배경 · 장식 · 데려오는 친구 그림이 모두 들어와야 연다
     Garden.ready = (a) =>
         Garden.areas.indexOf(a) < Garden.coreAreas ||

@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 
 import 'config.dart';
+import 'event_pass.dart';
 import 'tuning.dart';
 import 'meta.dart';
 
@@ -216,6 +217,12 @@ class MaxGiftEvent extends GameEvent {
   final Chain chain;
   final int level;
   MaxGiftEvent(this.friendId, this.coins, this.stars, this.chain, this.level);
+}
+
+/// 이벤트 사다리 한 칸 올랐다.
+class EventStepEvent extends GameEvent {
+  final int step;
+  EventStepEvent(this.step);
 }
 
 /// 저금통: 깰 수 있게 됨(full=false) · 가득 참(full=true).
@@ -566,6 +573,26 @@ class GameState extends ChangeNotifier {
   String? milestoneKey;
   DateTime? milestoneUntil;
   final Set<String> milestoneSeen = {};
+
+  // ---------------------------------------------------------------- 월간 이벤트 (D-112)
+
+  /// 진행 중인 이벤트 id (달이 바뀌면 새 이벤트로 처음부터).
+  String? eventId;
+  int eventStep = 0;
+
+  /// 마지막으로 칸을 오른 날 (하루 한 칸).
+  String eventDay = '';
+  String questDay = '';
+  final Map<QuestKind, int> questCounts = {};
+  final Set<int> eventClaimedFree = {};
+  final Set<int> eventClaimedPrem = {};
+
+  /// 패스를 산 이벤트 id.
+  final Set<String> eventPasses = {};
+
+  /// 모은 기념품 · 배지 (이벤트 id).
+  final Set<String> souvenirs = {};
+  final Set<String> badges = {};
 
   /// 친구 초대 (D-045): 나를 초대한 사람 · 그때, 보상을 받은 초대 친구, 마지막으로 공유 보상을 받은 날.
   String? invitedBy;
@@ -940,7 +967,8 @@ class GameState extends ChangeNotifier {
       seasonPiecesOwned * Garden.seasonPieceBonus +
       completedSeasonSets * Garden.seasonCompleteBonus +
       decorScore * DecorSets.incomePerPoint +
-      landmarkCharm;
+      landmarkCharm +
+      souvenirs.length * EventPass.souvenirCharm;
 
   // ---------------------------------------------------------------- 랜드마크 (D-048)
 
@@ -1609,6 +1637,7 @@ class GameState extends ChangeNotifier {
     }
     _emptyReported = false;
     _bump(Stat.spawns);
+    _quest(QuestKind.basket);
     if (!free) {
       energy -= GameConfig.energyPerTap;
       _bump(Stat.energySpent, GameConfig.energyPerTap);
@@ -1655,6 +1684,7 @@ class GameState extends ChangeNotifier {
   bool _emptyReported = false;
 
   void recordAd(AdKind kind) {
+    _quest(QuestKind.ad);
     _events.add(AdRewardEvent(kind.name));
     _rollAdDay();
     adsToday[kind] = (adsToday[kind] ?? 0) + 1;
@@ -1730,6 +1760,7 @@ class GameState extends ChangeNotifier {
     final b = board[to]!;
     totalMerges++;
     _bump(Stat.merges);
+    _quest(QuestKind.merge);
     board[from] = null;
     if (b.level >= Chains.maxLevel(b.chain)) {
       final payout = GameConfig.maxMergePayoutOf(b.chain, b.level) * _coinMult;
@@ -2456,6 +2487,152 @@ class GameState extends ChangeNotifier {
     return StyleResult.ok;
   }
 
+  // ---------------------------------------------------------------- 월간 이벤트 (D-112)
+
+  /// 지금 열린 이벤트 (없으면 null). 달이 바뀌었으면 진행을 새로 시작한다.
+  EventDef? get currentEvent {
+    final dbg = EventPass.debugEvent;
+    final def = dbg ?? EventPass.at(now.year, now.month);
+    if (def == null || (dbg == null && !EventPass.ready(def))) return null;
+    if (eventId != def.id) {
+      eventId = def.id;
+      eventStep = 0;
+      eventDay = '';
+      eventClaimedFree.clear();
+      eventClaimedPrem.clear();
+    }
+    return def;
+  }
+
+  /// 이벤트가 끝나는 때 (다음 달 1일 0시).
+  DateTime get eventEnds => DateTime(now.year, now.month + 1);
+
+  bool get hasEventPass => eventId != null && eventPasses.contains(eventId);
+
+  int questCount(QuestKind k) {
+    if (k == QuestKind.ad && (adFree || passActive)) {
+      return EventPass.target[k]!;
+    }
+    if (questDay != _dayKey(now)) return 0;
+    return min(questCounts[k] ?? 0, EventPass.target[k]!);
+  }
+
+  bool questDone(QuestKind k) => questCount(k) >= EventPass.target[k]!;
+  int get questsDone => QuestKind.values.where(questDone).length;
+
+  /// 오늘 이미 한 칸 올랐는지.
+  bool get eventSteppedToday => eventDay == _dayKey(now);
+
+  @visibleForTesting
+  void debugQuest(QuestKind k) => _quest(k);
+
+  void _quest(QuestKind k) {
+    if (currentEvent == null) return;
+    final today = _dayKey(now);
+    if (questDay != today) {
+      questDay = today;
+      questCounts.clear();
+    }
+    questCounts[k] = (questCounts[k] ?? 0) + 1;
+    _checkEventStep();
+  }
+
+  void _checkEventStep() {
+    if (currentEvent == null || eventSteppedToday) return;
+    if (eventStep >= EventPass.steps) return;
+    if (questsDone < EventPass.questsNeeded) return;
+    eventStep++;
+    eventDay = _dayKey(now);
+    _events.add(EventStepEvent(eventStep));
+  }
+
+  /// 받을 수 있는 칸 보상 수 (빨간 점).
+  int get eventClaimable {
+    if (currentEvent == null) return 0;
+    var n = 0;
+    for (var i = 0; i < eventStep; i++) {
+      if (!eventClaimedFree.contains(i)) n++;
+      if (hasEventPass && !eventClaimedPrem.contains(i)) n++;
+    }
+    return n;
+  }
+
+  /// 보상 양 (그때 진행도 기준): 코인 = 시간당 수입 n시간, 별 = 다음 장식 값의 n%.
+  int rewardAmount(StepReward r) => switch (r.kind) {
+    RewardKind.coins => max(
+      500 * inflation * Tuning.coinScale,
+      baseIncomePerSec * 3600 * r.amount,
+    ).round(),
+    RewardKind.stars => max(5, (_nextDecorStars * r.amount / 100).round()),
+    _ => r.amount,
+  };
+
+  int get _nextDecorStars {
+    final area = min(currentArea, Garden.areas.length - 1);
+    var best = 0;
+    for (var i = 0; i < Garden.slotsPerArea; i++) {
+      if (placed.contains(i)) continue;
+      final c = Garden.decorCost(area, i);
+      if (best == 0 || c < best) best = c;
+    }
+    return best == 0 ? Garden.decorCost(area, Garden.slotsPerArea - 1) : best;
+  }
+
+  /// 칸 보상 받기. 받았으면 그 보상.
+  StepReward? claimEventStep(int i, {required bool premium}) {
+    final def = currentEvent;
+    if (def == null || i < 0 || i >= eventStep) return null;
+    if (premium && !hasEventPass) return null;
+    final claimed = premium ? eventClaimedPrem : eventClaimedFree;
+    if (!claimed.add(i)) return null;
+    final r = (premium ? EventPass.premium : EventPass.free)[i];
+    final n = rewardAmount(r);
+    switch (r.kind) {
+      case RewardKind.energy:
+        energy += n;
+      case RewardKind.coins:
+        _earn(n.toDouble(), live: false);
+      case RewardKind.stars:
+        stars += n;
+      case RewardKind.gems:
+        gems += n;
+      case RewardKind.boostCoins:
+        boostTokens[BoostKind.coins] = (boostTokens[BoostKind.coins] ?? 0) + n;
+      case RewardKind.boostEnergy:
+        boostTokens[BoostKind.energy] =
+            (boostTokens[BoostKind.energy] ?? 0) + n;
+      case RewardKind.boostLucky:
+        boostTokens[BoostKind.lucky] = (boostTokens[BoostKind.lucky] ?? 0) + n;
+      case RewardKind.badge:
+        badges.add(def.id);
+      case RewardKind.finale:
+        if (premium) {
+          ownedOutfits.add('${def.friend}:${def.outfit}');
+        } else if (def.souvenir != null) {
+          souvenirs.add(def.souvenir!);
+        } else if (def.effect != null) {
+          effects.add(def.effect!);
+        }
+    }
+    _trace('eventClaim', '${def.id} $i ${premium ? 'P' : 'F'}');
+    notifyListeners();
+    return r;
+  }
+
+  /// 결제 완료 → 이달 패스. 이벤트가 이미 끝났으면 같은 값의 다이아로.
+  void grantEventPass() {
+    final def = currentEvent;
+    if (def == null || eventPasses.contains(def.id)) {
+      gems += 430;
+      lastPurchaseGems = 430;
+    } else {
+      eventPasses.add(def.id);
+      lastPurchaseGems = 0;
+    }
+    _trace('eventPass', def?.id ?? '-');
+    notifyListeners();
+  }
+
   // ---------------------------------------------------------------- 큰 세트 (D-111)
 
   /// 이 구역에서 특별 디자인(그림이 있는 자리) 중 아직 안 산 자리.
@@ -2574,6 +2751,7 @@ class GameState extends ChangeNotifier {
     final v = GameConfig.friendTapCoins;
     _earn(v);
     _bump(Stat.friendTaps);
+    _quest(QuestKind.pat);
     notifyListeners();
     return v;
   }
@@ -3653,6 +3831,17 @@ class GameState extends ChangeNotifier {
       if (milestoneKey != null) 'msKey': milestoneKey,
       'msUntil': milestoneUntil?.millisecondsSinceEpoch,
       if (milestoneSeen.isNotEmpty) 'msSeen': milestoneSeen.toList(),
+      if (eventId != null) 'evId': eventId,
+      if (eventStep > 0) 'evStep': eventStep,
+      if (eventDay.isNotEmpty) 'evDay': eventDay,
+      if (questDay.isNotEmpty) 'qDay': questDay,
+      if (questCounts.isNotEmpty)
+        'qCounts': {for (final e in questCounts.entries) e.key.name: e.value},
+      if (eventClaimedFree.isNotEmpty) 'evFree': eventClaimedFree.toList(),
+      if (eventClaimedPrem.isNotEmpty) 'evPrem': eventClaimedPrem.toList(),
+      if (eventPasses.isNotEmpty) 'evPass': eventPasses.toList(),
+      if (souvenirs.isNotEmpty) 'souvenirs': souvenirs.toList(),
+      if (badges.isNotEmpty) 'badges': badges.toList(),
       'packs': boughtPacks.toList(),
       if (invitedBy != null) 'invitedBy': invitedBy,
       if (invitedAt != null) 'invitedAt': invitedAt!.millisecondsSinceEpoch,
@@ -3987,6 +4176,40 @@ class GameState extends ChangeNotifier {
     milestoneSeen
       ..clear()
       ..addAll([for (final x in (j['msSeen'] as List? ?? const [])) '$x']);
+    eventId = j['evId'] as String?;
+    eventStep = (j['evStep'] as num?)?.toInt() ?? 0;
+    eventDay = j['evDay'] as String? ?? '';
+    questDay = j['qDay'] as String? ?? '';
+    questCounts.clear();
+    final qc = j['qCounts'];
+    if (qc is Map) {
+      for (final k in QuestKind.values) {
+        final v = qc[k.name];
+        if (v is num) questCounts[k] = v.toInt();
+      }
+    }
+    List<int> evInts(String k) => [
+      for (final x in (j[k] as List? ?? const []))
+        if (x is num) x.toInt(),
+    ];
+    List<String> strs(String k) => [
+      for (final x in (j[k] as List? ?? const [])) '$x',
+    ];
+    eventClaimedFree
+      ..clear()
+      ..addAll(evInts('evFree'));
+    eventClaimedPrem
+      ..clear()
+      ..addAll(evInts('evPrem'));
+    eventPasses
+      ..clear()
+      ..addAll(strs('evPass'));
+    souvenirs
+      ..clear()
+      ..addAll(strs('souvenirs'));
+    badges
+      ..clear()
+      ..addAll(strs('badges'));
     boughtPacks
       ..clear()
       ..addAll([for (final x in (j['packs'] as List? ?? const [])) '$x']);

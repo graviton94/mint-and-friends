@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../art/art.dart';
 import '../game/config.dart';
+import '../game/event_pass.dart';
 import '../game/format.dart';
 import '../game/game_state.dart';
 import '../game/reward_hold.dart';
@@ -20,6 +21,7 @@ import 'garden/garden_scene.dart';
 import 'garden/garden_screen.dart';
 import 'meta_ui.dart';
 import 'offers_ui.dart';
+import 'event_ui.dart';
 import 'renew_ui.dart';
 import 'share_card.dart';
 import 'share_flow.dart';
@@ -95,6 +97,13 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
       'energyLow': () {
         game.energy = 0;
         _energyDialog();
+      },
+      'event': () {
+        EventPass.debugEvent ??= EventPass.events.first;
+        game.currentEvent;
+        game.eventStep = 6;
+        game.claimEventStep(0, premium: false);
+        showEventSheet(context, widget.billing, game);
       },
       'msOffer': () {
         game.milestoneKey = 'lv:20';
@@ -284,6 +293,19 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
           ),
           title: tr(full ? 'piggy.fullToast' : 'piggy.readyToast'),
           sub: '[[diamond]] ${fmtInt(game.piggyGems)}',
+        );
+      case EventStepEvent(:final step):
+        sfx(Sfx.unlock);
+        TopToast.celebrate(
+          context,
+          art: ArtImage(
+            Art.icon('event_flag').available
+                ? Art.icon('event_flag')
+                : Art.icon('calendar'),
+            size: 52,
+          ),
+          title: tr('event.stepUp', {'n': step}),
+          sub: tr('event.stepSub'),
         );
       case MilestoneOfferEvent():
         // 레벨업 · 새 구역 창이 다 닫힌 뒤에 (창이 겹치지 않게)
@@ -2484,6 +2506,7 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
   }
 
   int get _giftCount =>
+      game.eventClaimable +
       game.unreadMail +
       game.claimableAchievements +
       (game.checkInReady ? 1 : 0);
@@ -2496,6 +2519,14 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
       game,
       title: tr('menu.gifts'),
       () => [
+        // 이달의 이벤트 (D-112): 그림이 들어온 달만
+        if (game.currentEvent != null)
+          MenuEntry(
+            Art.icon('event_calendar').available ? 'event_calendar' : 'party',
+            tr('menu.event'),
+            () => showEventSheet(context, widget.billing, game),
+            badge: game.eventClaimable,
+          ),
         MenuEntry(
           'letter',
           tr('menu.mail'),

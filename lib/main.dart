@@ -260,6 +260,9 @@ class _GameAppState extends State<GameApp> with WidgetsBindingObserver {
       final Reward r;
       if (id == Offers.piggy) {
         r = Reward(gems: game.grantPiggy());
+      } else if (id == Offers.eventPass) {
+        game.grantEventPass();
+        r = Reward(gems: game.lastPurchaseGems);
       } else if (id == Offers.energy) {
         game.grantEnergyBundle();
         r = const Reward(gems: EnergyBundle.gems, energy: EnergyBundle.energy);

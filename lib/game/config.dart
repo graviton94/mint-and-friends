@@ -1424,11 +1424,15 @@ class Offers {
   /// 새 구역 · 레벨 단계 묶음 (24시간 한정).
   static const String milestone = 'milestone_4900';
 
-  static const List<String> ids = [piggy, energy, milestone];
+  /// 이달의 이벤트 패스 (D-112, 그달 이벤트에만).
+  static const String eventPass = 'event_pass_5900';
+
+  static const List<String> ids = [piggy, energy, milestone, eventPass];
   static const Map<String, int> krw = {
     piggy: 5900,
     energy: 3900,
     milestone: 4900,
+    eventPass: 5900,
   };
 }
 
