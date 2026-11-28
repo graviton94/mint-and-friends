@@ -2456,6 +2456,82 @@ class GameState extends ChangeNotifier {
     return StyleResult.ok;
   }
 
+  // ---------------------------------------------------------------- 큰 세트 (D-111)
+
+  /// 이 구역에서 특별 디자인(그림이 있는 자리) 중 아직 안 산 자리.
+  List<int> specialSetMissing(int area) {
+    final def = Garden.areaAt(area);
+    return [
+      for (var i = 0; i < def.decor.length; i++)
+        if (Garden.styleReady(def.decor[i], 2) &&
+            !ownedStyles.contains('$area:$i:2'))
+          i,
+    ];
+  }
+
+  /// 특별 디자인 구역 세트 값 (안 산 자리만, 25% 할인). 0 이면 이미 다 가짐.
+  int specialSetGems(int area) =>
+      (Garden.styleGems(area) *
+              specialSetMissing(area).length *
+              Garden.setDiscount)
+          .round();
+
+  /// 이 구역 특별 디자인을 한 번에 산다. 놓은 장식에는 바로 입힌다 (안 놓은 자리는 놓은 뒤 무료로 고른다).
+  StyleResult buySpecialSet(int area) {
+    if (area > currentArea) return StyleResult.notPlaced;
+    final missing = specialSetMissing(area);
+    if (missing.isEmpty) return StyleResult.ok;
+    if (!_spendGems(specialSetGems(area), 'special_set')) {
+      return StyleResult.noGems;
+    }
+    for (final i in missing) {
+      ownedStyles.add('$area:$i:2');
+      if (isPlaced(area, i)) decorStyle['$area:$i'] = 2;
+    }
+    _bump(Stat.stylesBought, missing.length);
+    _trace('specialSet', '$area ${missing.length}');
+    notifyListeners();
+    return StyleResult.ok;
+  }
+
+  /// 지금 계절 의상 중 아직 안 산 친구 ([canWear] = 그 친구 의상 그림이 있는지).
+  List<String> outfitSetMissing(
+    String outfit,
+    bool Function(String friendId) canWear,
+  ) => [
+    for (final f in friends)
+      if (canWear(f) && !ownsOutfit(f, outfit)) f,
+  ];
+
+  int outfitSetGems(String outfit, bool Function(String) canWear) {
+    final o = Outfits.byId(outfit);
+    if (o == null || o.limited) return 0;
+    return (o.gems *
+            outfitSetMissing(outfit, canWear).length *
+            Garden.setDiscount)
+        .round();
+  }
+
+  /// 모든 친구의 이 계절 의상을 한 번에 (25% 할인). 입히지는 않는다 (옷장에서 고른다).
+  StyleResult buyOutfitSet(String outfit, bool Function(String) canWear) {
+    final o = Outfits.byId(outfit);
+    if (o == null || o.limited || !o.onSaleIn(Season.month)) {
+      return StyleResult.notPlaced;
+    }
+    final missing = outfitSetMissing(outfit, canWear);
+    if (missing.length < 2) return StyleResult.notPlaced; // 세트는 둘 이상일 때만
+    if (!_spendGems(outfitSetGems(outfit, canWear), 'outfit_set')) {
+      return StyleResult.noGems;
+    }
+    for (final f in missing) {
+      ownedOutfits.add('$f:$outfit');
+    }
+    _bump(Stat.stylesBought, missing.length);
+    _trace('outfitSet', '$outfit ${missing.length}');
+    notifyListeners();
+    return StyleResult.ok;
+  }
+
   // ---------------------------------------------------------------- 친구 의상
 
   String? outfitOf(String friendId) => outfits[friendId];

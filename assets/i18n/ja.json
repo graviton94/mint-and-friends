@@ -1309,5 +1309,10 @@
   "msOffer.popTitle": "成長記念の特別セット！",
   "msOffer.left": "あと{time}で終了",
   "msOffer.level": "レベル{n}達成記念",
-  "msOffer.area": "新エリアオープン記念"
+  "msOffer.area": "新エリアオープン記念",
+  "shop.specialSet": "{area} 特別デザインセット",
+  "shop.setNote": "残り{n}か所をまとめて",
+  "shop.setOff": "25%オフ",
+  "shop.outfitSet": "{name} 衣装セット",
+  "shop.outfitSetNote": "友だち{n}人ぶん"
 }

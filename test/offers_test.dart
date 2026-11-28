@@ -121,4 +121,42 @@ void main() {
     expect(got, [Offers.piggy, Offers.energy]);
     expect(consumed.toSet(), {'p1', 'p2'});
   });
+
+  test('특별 디자인 구역 세트: 안 산 자리만 25% 할인, 놓은 장식에 바로 입힌다', () {
+    final g = make()
+      ..currentArea = 1
+      ..gems = 100000;
+    g.placed = {0, 1};
+    g.ownedStyles.add('1:3:2');
+    final missing = g.specialSetMissing(1);
+    expect(missing, isNot(contains(3)));
+    final cost = g.specialSetGems(1);
+    expect(
+      cost,
+      (Garden.styleGems(1) * missing.length * Garden.setDiscount).round(),
+    );
+    expect(g.buySpecialSet(1), StyleResult.ok);
+    expect(g.gems, 100000 - cost);
+    expect(g.specialSetMissing(1), isEmpty);
+    expect(g.styleOf(1, 0), 2);
+    expect(g.specialSetGems(1), 0);
+    expect(g.buySpecialSet(2), StyleResult.notPlaced, reason: '아직 안 연 구역');
+  });
+
+  test('의상 세트: 계절에만, 둘 이상일 때만, 산 친구는 빼고 할인', () {
+    final g = make()..gems = 100000;
+    g.friends.addAll(['dubu', 'kwak', 'nabi']);
+    final o = Outfits.all.firstWhere(
+      (x) => !x.limited && x.onSaleIn(Season.month),
+    );
+    g.ownedOutfits.add('dubu:${o.id}');
+    bool all(String _) => true;
+    final missing = g.outfitSetMissing(o.id, all);
+    expect(missing, isNot(contains('dubu')));
+    final cost = g.outfitSetGems(o.id, all);
+    expect(cost, (o.gems * missing.length * Garden.setDiscount).round());
+    expect(g.buyOutfitSet(o.id, all), StyleResult.ok);
+    expect(g.gems, 100000 - cost);
+    expect(g.outfitSetMissing(o.id, all), isEmpty);
+  });
 }

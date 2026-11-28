@@ -1309,5 +1309,10 @@
   "msOffer.popTitle": "¡Pack especial de logro!",
   "msOffer.left": "Termina en {time}",
   "msOffer.level": "Por llegar al Nv.{n}",
-  "msOffer.area": "Por abrir una zona nueva"
+  "msOffer.area": "Por abrir una zona nueva",
+  "shop.specialSet": "Set especial de {area}",
+  "shop.setNote": "Los {n} lugares restantes",
+  "shop.setOff": "25% menos",
+  "shop.outfitSet": "Set de trajes {name}",
+  "shop.outfitSetNote": "Para tus {n} amigos"
 }

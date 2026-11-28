@@ -1179,6 +1179,9 @@ class Garden {
   static int styleCoins(int area, int slot) =>
       (decorCost(area, slot) * 120 * Tuning.coinScale).round();
 
+  /// 큰 세트는 낱개 합보다 25% 싸게 (D-111: 큰 다이아 팩을 쓸 곳).
+  static const double setDiscount = 0.75;
+
   /// 특별 디자인 한 자리 (D-046): 80 + 40 × 구역 (앞마당 80 ~ 눈꽃 마을 280, 6구역 전부 8,640).
   static int styleGems(int area) => 80 + 40 * min(area, DecorSets.areas - 1);
 

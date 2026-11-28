@@ -2052,6 +2052,8 @@ Future<void> _shopSheet(
           const SizedBox(height: 16),
           // 다이아로 사기 3×3: 코인 꾸러미 3 · 부스트 3 · 에너지 · 깜짝 상자 · 계절 효과
           _ShopHeader(tr('shop.withGems'), icon: 'coinbag', key: keys[3]),
+          // 큰 세트 (D-111): 구역 특별 디자인 전부 · 계절 의상 전부, 25% 할인
+          ..._bigSets(context, game),
           _CardGrid([
             for (var i = 0; i < Gems.coinPacks.length; i++)
               _ShopCard(
@@ -2151,6 +2153,77 @@ Future<void> _shopSheet(
       ),
     );
   });
+}
+
+/// 큰 세트 줄들: 특별 디자인 구역 세트(아직 다 안 산 가장 최근 구역) · 이번 계절 의상 세트.
+List<Widget> _bigSets(BuildContext context, GameState game) {
+  final out = <Widget>[];
+  // 특별 디자인: 지금 구역부터 거꾸로, 아직 안 산 자리가 있는 첫 구역
+  for (var a = min(game.currentArea, Garden.areas.length - 1); a >= 0; a--) {
+    final missing = game.specialSetMissing(a);
+    if (missing.length < 2) continue;
+    final cost = game.specialSetGems(a);
+    final def = Garden.areaAt(a);
+    out.add(
+      _ShopRow(
+        icon: Art.icon('decorate'),
+        title: tr('shop.specialSet', {'area': areaName(def)}),
+        note: tr('shop.setNote', {'n': missing.length}),
+        tag: tr('shop.setOff'),
+        button: '[[diamond]] ${fmtInt(cost)}',
+        enabled: game.gems >= cost,
+        onTap: () async {
+          if (!await confirmPurchase(
+            context,
+            art: Art.icon('decorate'),
+            title: tr('shop.specialSet', {'area': areaName(def)}),
+            price: '[[diamond]] ${fmtInt(cost)}',
+          )) {
+            return;
+          }
+          if (game.buySpecialSet(a) == StyleResult.ok) sfx(Sfx.unlock);
+        },
+      ),
+    );
+    out.add(const SizedBox(height: 8));
+    break;
+  }
+  // 이번 계절 의상 (파는 계절 의상 하나)
+  final o = Outfits.all
+      .where((x) => !x.limited && x.onSaleIn(Season.month))
+      .firstOrNull;
+  if (o != null) {
+    bool canWear(String id) => Art.outfitArt(Friends.byId(id), o.id).available;
+    final missing = game.outfitSetMissing(o.id, canWear);
+    if (missing.length >= 2) {
+      final cost = game.outfitSetGems(o.id, canWear);
+      out.add(
+        _ShopRow(
+          icon: Art.icon('outfit'),
+          title: tr('shop.outfitSet', {'name': tr(o.key)}),
+          note: tr('shop.outfitSetNote', {'n': missing.length}),
+          tag: tr('shop.setOff'),
+          button: '[[diamond]] ${fmtInt(cost)}',
+          enabled: game.gems >= cost,
+          onTap: () async {
+            if (!await confirmPurchase(
+              context,
+              art: Art.icon('outfit'),
+              title: tr('shop.outfitSet', {'name': tr(o.key)}),
+              price: '[[diamond]] ${fmtInt(cost)}',
+            )) {
+              return;
+            }
+            if (game.buyOutfitSet(o.id, canWear) == StyleResult.ok) {
+              sfx(Sfx.unlock);
+            }
+          },
+        ),
+      );
+      out.add(const SizedBox(height: 8));
+    }
+  }
+  return out;
 }
 
 /// 오늘의 시장 카드 하나.

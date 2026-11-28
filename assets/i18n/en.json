@@ -1309,5 +1309,10 @@
   "msOffer.popTitle": "Special Milestone Bundle!",
   "msOffer.left": "Gone in {time}",
   "msOffer.level": "For reaching Lv.{n}",
-  "msOffer.area": "For opening a new area"
+  "msOffer.area": "For opening a new area",
+  "shop.specialSet": "{area} special design set",
+  "shop.setNote": "All {n} remaining spots",
+  "shop.setOff": "25% off",
+  "shop.outfitSet": "{name} outfit set",
+  "shop.outfitSetNote": "For all {n} friends"
 }

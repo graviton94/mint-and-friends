@@ -1310,5 +1310,10 @@
   "msOffer.popTitle": "성장 기념 특별 묶음!",
   "msOffer.left": "{time} 뒤 사라져요",
   "msOffer.level": "레벨 {n} 달성 기념",
-  "msOffer.area": "새 구역 오픈 기념"
+  "msOffer.area": "새 구역 오픈 기념",
+  "shop.specialSet": "{area} 특별 디자인 세트",
+  "shop.setNote": "남은 {n}자리 한 번에",
+  "shop.setOff": "25% 할인",
+  "shop.outfitSet": "{name} 의상 세트",
+  "shop.outfitSetNote": "친구 {n}명 모두"
 }
