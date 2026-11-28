@@ -941,9 +941,8 @@ class CostButton extends StatelessWidget {
 /// 딱지 색 (D-115): 할인 · 한정 = 빨강, 무료 = 초록, 부탁용 = 파랑, 희귀 = 보라, 추천 = 주황, 가치 = 금.
 enum TagTone { red, green, blue, purple, orange, gold }
 
-/// 리본 모양 딱지 (D-115): 할인 · 한정 · 오늘만 · 2배 가치 · 무료 · 추천 … 모두 같은 모양, 색만 다르다.
-/// 리본 그림(tag_<색>)을 가로로 늘려 쓰고, 글자는 흰색 + 갈색 테두리.
-class TagRibbon extends StatelessWidget {
+/// 딱지 (D-116): 둥근 알약 + 흰 테두리 (리본 모양은 되돌림), 빨간 점처럼 같은 박자로 콩닥 + 색이 살짝 밝아진다.
+class TagRibbon extends StatefulWidget {
   const TagRibbon(
     this.text, {
     super.key,
@@ -954,44 +953,68 @@ class TagRibbon extends StatelessWidget {
   final TagTone tone;
   final double size;
 
-  static const _fallback = {
-    TagTone.red: Color(0xFFEC5A48),
-    TagTone.green: Color(0xFF4FB35C),
-    TagTone.blue: Color(0xFF4A9BE0),
-    TagTone.purple: Color(0xFF9B6FE0),
-    TagTone.orange: Color(0xFFF5963A),
-    TagTone.gold: Color(0xFFF2B21C),
+  static const colors = {
+    TagTone.red: Color(0xFFE84A3C),
+    TagTone.green: Color(0xFF3FA65A),
+    TagTone.blue: Color(0xFF3D8FD8),
+    TagTone.purple: Color(0xFF9B5FD6),
+    TagTone.orange: Color(0xFFF08A24),
+    TagTone.gold: Color(0xFFE5A31A),
   };
 
   @override
+  State<TagRibbon> createState() => _TagRibbonState();
+}
+
+class _TagRibbonState extends State<TagRibbon>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = Pulse.controller(this);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final h = size + 11;
-    return Container(
-      height: h,
-      padding: EdgeInsets.symmetric(horizontal: size * 1.05),
-      decoration: FrameBox.decorationFor(
-        'tag_${tone.name}',
-        BoxDecoration(
-          color: _fallback[tone],
-          borderRadius: BorderRadius.circular(h / 2),
-          border: Border.all(color: const Color(0xFF5A3A22), width: 1.5),
-        ),
-        corner: h / 2,
-      ),
+    final base = TagRibbon.colors[widget.tone]!;
+    final h = widget.size + 9;
+    return AnimatedBuilder(
+      animation: _c,
+      builder: (_, child) {
+        final t = Pulse.beat(_c.value);
+        return Transform.scale(
+          scale: 1 + 0.07 * t,
+          child: Container(
+            height: h,
+            padding: EdgeInsets.symmetric(horizontal: widget.size * 0.7),
+            decoration: BoxDecoration(
+              color: Color.lerp(base, Colors.white, 0.18 * t),
+              borderRadius: BorderRadius.circular(h / 2),
+              border: Border.all(color: Colors.white, width: 1.5),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33000000),
+                  blurRadius: 2,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+            child: child,
+          ),
+        );
+      },
       // 글자 폭만큼만 (Wrap · Row 안에서 줄 전체로 늘어나지 않게)
       child: Center(
         widthFactor: 1,
         child: Text(
-          text,
+          widget.text,
           maxLines: 1,
           style: TextStyle(
-            fontSize: size,
+            fontSize: widget.size,
             height: 1,
             color: Colors.white,
-            shadows: const [
-              Shadow(color: Color(0xFF5A3A22), offset: Offset(0, 1)),
-              Shadow(color: Color(0xFF5A3A22), blurRadius: 1.5),
-            ],
           ),
         ),
       ),

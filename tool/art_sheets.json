@@ -1472,5 +1472,76 @@
   "files": [
    "assets/art/events/onsen_banner.webp"
   ]
+ },
+ "event_badges_q1": {
+  "cols": 2,
+  "rows": 2,
+  "size": 256,
+  "files": [
+   "assets/art/badges/onsen.webp",
+   "assets/art/badges/cocoa.webp",
+   "assets/art/badges/bloom.webp",
+   "assets/art/icons/fx_cocoa.webp"
+  ]
+ },
+ "offer_icons": {
+  "cols": 3,
+  "rows": 1,
+  "size": 192,
+  "files": [
+   "assets/art/icons/piggy.webp",
+   "assets/art/icons/milestone_gift.webp",
+   "assets/art/icons/energy_bundle.webp"
+  ]
+ },
+ "banner_bloom": {
+  "bg": true,
+  "bgSize": [
+   1200,
+   600
+  ],
+  "files": [
+   "assets/art/events/bloom_banner.webp"
+  ]
+ },
+ "banner_cocoa": {
+  "bg": true,
+  "bgSize": [
+   1200,
+   600
+  ],
+  "files": [
+   "assets/art/events/cocoa_banner.webp"
+  ]
+ },
+ "outfit_cocoa_dubu": {
+  "cols": 4,
+  "rows": 1,
+  "size": 512,
+  "files": [
+   "assets/art/friends/dubu_cocoa_idle.webp",
+   "assets/art/friends/dubu_cocoa_happy.webp",
+   "assets/art/friends/dubu_cocoa_sleep.webp",
+   "assets/art/friends/dubu_cocoa_wave.webp"
+  ]
+ },
+ "outfit_bloom_kongtteok": {
+  "cols": 4,
+  "rows": 1,
+  "size": 512,
+  "files": [
+   "assets/art/friends/kongtteok_bloom_idle.webp",
+   "assets/art/friends/kongtteok_bloom_happy.webp",
+   "assets/art/friends/kongtteok_bloom_sleep.webp",
+   "assets/art/friends/kongtteok_bloom_wave.webp"
+  ]
+ },
+ "souvenir_bloom": {
+  "cols": 1,
+  "rows": 1,
+  "size": 384,
+  "files": [
+   "assets/art/souvenirs/bloom.webp"
+  ]
  }
 }

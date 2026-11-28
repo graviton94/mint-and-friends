@@ -66,7 +66,7 @@ class EventPass {
 
   static const List<EventDef> events = [
     EventDef('onsen', 2027, 1, 'bori', 'onsen', souvenir: 'onsen'),
-    EventDef('cocoa', 2027, 2, 'dubu', 'cocoa', effect: 'cocoa'),
+    EventDef('cocoa', 2027, 2, 'dubu', 'cocoa', souvenir: 'cocoa'),
     EventDef('bloom', 2027, 3, 'kongtteok', 'bloom', souvenir: 'bloom'),
   ];
 
