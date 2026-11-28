@@ -1954,11 +1954,12 @@ Future<void> _shopSheet(
         '[[diamond]]${fmt(game.gems.toDouble())}',
       ],
       pinned: _ShopTabs(
-        labels: [
-          tr('shop.tab.top'),
-          if (game.dailyShopOpen) tr('shop.tab.market'),
-          tr('shop.tab.gems'),
-          tr('shop.tab.withGems'),
+        tabs: [
+          (tr('shop.tab.top'), 'sparkle', 'button_gold'),
+          if (game.dailyShopOpen)
+            (tr('shop.tab.market'), 'shop', 'button_green'),
+          (tr('shop.tab.gems'), 'diamond', 'button_purple'),
+          (tr('shop.tab.withGems'), 'coinbag', 'button_white'),
         ],
         keys: [keys[0], if (game.dailyShopOpen) keys[1], keys[2], keys[3]],
       ),
@@ -3488,52 +3489,57 @@ class _ShopHeader extends StatelessWidget {
   );
 }
 
-/// 상점 바로가기 탭: 누르면 그 구역으로 부드럽게 스크롤 (D-109).
+/// 상점 바로가기 탭: 색 있는 버튼 + 아이콘 (D-113: 눈에 띄게). 누르면 그 구역으로 부드럽게 스크롤.
 class _ShopTabs extends StatelessWidget {
-  const _ShopTabs({required this.labels, required this.keys});
-  final List<String> labels;
+  const _ShopTabs({required this.tabs, required this.keys});
+
+  /// (글자, 아이콘, 버튼 그림)
+  final List<(String, String, String)> tabs;
   final List<GlobalKey> keys;
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 10),
+    padding: const EdgeInsets.symmetric(horizontal: 8),
     child: Row(
       children: [
-        for (var i = 0; i < labels.length; i++) ...[
-          if (i > 0) const SizedBox(width: 6),
+        for (var i = 0; i < tabs.length; i++) ...[
+          if (i > 0) const SizedBox(width: 5),
           Expanded(
-            child: GestureDetector(
-              onTap: () {
-                final c = keys[i].currentContext;
-                if (c == null) return;
-                sfx(Sfx.tap);
-                Scrollable.ensureVisible(
-                  c,
-                  duration: const Duration(milliseconds: 380),
-                  curve: Curves.easeOutCubic,
-                );
-              },
-              child: Container(
-                height: 34,
-                alignment: Alignment.center,
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF6E2),
-                  borderRadius: BorderRadius.circular(17),
-                  border: Border.all(
-                    color: const Color(0xFFD9C29A),
-                    width: 1.5,
+            child: SizedBox(
+              height: 44,
+              child: FilledButton(
+                style: framedButton(
+                  FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    foregroundColor: tabs[i].$3 == 'button_white'
+                        ? Palette.text
+                        : Colors.white,
                   ),
+                  tabs[i].$3,
                 ),
+                onPressed: () {
+                  final c = keys[i].currentContext;
+                  if (c == null) return;
+                  sfx(Sfx.tap);
+                  Scrollable.ensureVisible(
+                    c,
+                    duration: const Duration(milliseconds: 380),
+                    curve: Curves.easeOutCubic,
+                  );
+                },
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text(
-                    labels[i],
-                    maxLines: 1,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF5A3A22),
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ArtImage(Art.icon(tabs[i].$2), size: 20),
+                      const SizedBox(width: 3),
+                      Text(
+                        tabs[i].$1,
+                        maxLines: 1,
+                        style: const TextStyle(fontSize: 15),
+                      ),
+                    ],
                   ),
                 ),
               ),

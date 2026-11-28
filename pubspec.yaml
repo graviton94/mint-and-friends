@@ -89,6 +89,9 @@ flutter:
     - assets/art/title/
     - assets/art/fx/
     - assets/art/landmarks/
+    - assets/art/souvenirs/
+    - assets/art/events/
+    - assets/art/badges/
     - assets/audio/
   fonts:
     - family: Jua

@@ -1311,10 +1311,10 @@
   "msOffer.left": "{time} 뒤 사라져요",
   "msOffer.level": "레벨 {n} 달성 기념",
   "msOffer.area": "새 구역 오픈 기념",
-  "shop.specialSet": "{area} 특별 디자인 세트",
+  "shop.specialSet": "{area} 특별세트!",
   "shop.setNote": "남은 {n}자리 한 번에",
   "shop.setOff": "25% 할인",
-  "shop.outfitSet": "{name} 의상 세트",
+  "shop.outfitSet": "{name} 의상세트!",
   "shop.outfitSetNote": "친구 {n}명 모두",
   "menu.event": "이달의 이벤트",
   "event.name.onsen": "눈꽃 온천 다과회",
@@ -1342,5 +1342,9 @@
   "event.passTrack": "패스",
   "event.badge": "완주 배지",
   "event.stepUp": "이벤트 {n}칸 달성!",
-  "event.stepSub": "선물함 → 이달의 이벤트에서 보상을 받아요"
+  "event.stepSub": "선물함 → 이달의 이벤트에서 보상을 받아요",
+  "outfit.onsen": "폭신 온천 가운",
+  "outfit.cocoa": "쇼콜라티에 앞치마",
+  "outfit.bloom": "봄꽃 보닛 드레스",
+  "piggy.breakAt": "{n}부터 깨기"
 }

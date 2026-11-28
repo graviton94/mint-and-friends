@@ -118,5 +118,37 @@
  "cell_locked": [
   192,
   179
+ ],
+ "event_step": [
+  156,
+  160
+ ],
+ "event_step_on": [
+  156,
+  160
+ ],
+ "event_step_gold": [
+  156,
+  160
+ ],
+ "event_slot": [
+  181,
+  192
+ ],
+ "event_slot_gold": [
+  181,
+  192
+ ],
+ "event_track": [
+  608,
+  96
+ ],
+ "event_badge_base": [
+  250,
+  256
+ ],
+ "event_ribbon_tag": [
+  467,
+  128
  ]
 }

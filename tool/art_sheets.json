@@ -1,1431 +1,1476 @@
 {
-  "_comment": "시트 이미지 → 게임 파일 매핑. tool/import_art.py 가 사용. size = 잘라낸 정사각 PNG 한 변(px).",
-  "items_flower": {
-    "cols": 5,
-    "rows": 3,
-    "size": 384,
-    "files": [
-      "assets/art/items/flower_01.webp",
-      "assets/art/items/flower_02.webp",
-      "assets/art/items/flower_03.webp",
-      "assets/art/items/flower_04.webp",
-      "assets/art/items/flower_05.webp",
-      "assets/art/items/flower_06.webp",
-      "assets/art/items/flower_07.webp",
-      "assets/art/items/flower_08.webp",
-      "assets/art/items/flower_09.webp",
-      "assets/art/items/flower_10.webp",
-      "assets/art/items/flower_11.webp",
-      "assets/art/items/flower_12.webp",
-      "assets/art/items/flower_13.webp",
-      "assets/art/items/flower_14.webp",
-      "assets/art/items/flower_15.webp"
-    ]
-  },
-  "items_snack": {
-    "cols": 5,
-    "rows": 3,
-    "size": 384,
-    "files": [
-      "assets/art/items/snack_01.webp",
-      "assets/art/items/snack_02.webp",
-      "assets/art/items/snack_03.webp",
-      "assets/art/items/snack_04.webp",
-      "assets/art/items/snack_05.webp",
-      "assets/art/items/snack_06.webp",
-      "assets/art/items/snack_07.webp",
-      "assets/art/items/snack_08.webp",
-      "assets/art/items/snack_09.webp",
-      "assets/art/items/snack_10.webp",
-      "assets/art/items/snack_11.webp",
-      "assets/art/items/snack_12.webp",
-      "assets/art/items/snack_13.webp",
-      "assets/art/items/snack_14.webp",
-      "assets/art/items/snack_15.webp"
-    ]
-  },
-  "friends_idle": {
-    "cols": 3,
-    "rows": 3,
-    "size": 512,
-    "files": [
-      "assets/art/friends/bori_idle.webp",
-      "assets/art/friends/dubu_idle.webp",
-      "assets/art/friends/kwak_idle.webp",
-      "assets/art/friends/nabi_idle.webp",
-      "assets/art/friends/dotori_idle.webp",
-      "assets/art/friends/mochi_idle.webp",
-      "assets/art/friends/danpung_idle.webp",
-      "assets/art/friends/kongtteok_idle.webp",
-      "assets/art/friends/visitor_idle.webp"
-    ]
-  },
-  "friends_happy": {
-    "cols": 3,
-    "rows": 3,
-    "size": 512,
-    "files": [
-      "assets/art/friends/bori_happy.webp",
-      "assets/art/friends/dubu_happy.webp",
-      "assets/art/friends/kwak_happy.webp",
-      "assets/art/friends/nabi_happy.webp",
-      "assets/art/friends/dotori_happy.webp",
-      "assets/art/friends/mochi_happy.webp",
-      "assets/art/friends/danpung_happy.webp",
-      "assets/art/friends/kongtteok_happy.webp",
-      "assets/art/friends/visitor_happy.webp"
-    ]
-  },
-  "decor_yard": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/big_tree.webp",
-      "assets/art/decor/bench.webp",
-      "assets/art/decor/mailbox.webp",
-      "assets/art/decor/veggie_patch.webp",
-      "assets/art/decor/lantern.webp",
-      "assets/art/decor/bird_feeder.webp",
-      "assets/art/decor/hut.webp",
-      "assets/art/decor/fountain.webp"
-    ]
-  },
-  "decor_pond": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/stepping_stones.webp",
-      "assets/art/decor/water_lily.webp",
-      "assets/art/decor/fishing_spot.webp",
-      "assets/art/decor/rowboat.webp",
-      "assets/art/decor/reeds.webp",
-      "assets/art/decor/log_chair.webp",
-      "assets/art/decor/tent.webp",
-      "assets/art/decor/wooden_bridge.webp"
-    ]
-  },
-  "decor_greenhouse": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/glasshouse.webp",
-      "assets/art/decor/cactus.webp",
-      "assets/art/decor/mushroom_bed.webp",
-      "assets/art/decor/watering_can.webp",
-      "assets/art/decor/sunflower_field.webp",
-      "assets/art/decor/tea_table.webp",
-      "assets/art/decor/bamboo.webp",
-      "assets/art/decor/wind_chime.webp"
-    ]
-  },
-  "decor_starry": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/telescope.webp",
-      "assets/art/decor/camp_tent.webp",
-      "assets/art/decor/campfire.webp",
-      "assets/art/decor/ferris_wheel.webp",
-      "assets/art/decor/carousel.webp",
-      "assets/art/decor/moon_statue.webp",
-      "assets/art/decor/little_castle.webp",
-      "assets/art/decor/fireworks.webp"
-    ]
-  },
-  "ui_icons": {
-    "cols": 3,
-    "rows": 2,
-    "size": 256,
-    "files": [
-      "assets/art/ui/coin.webp",
-      "assets/art/ui/star.webp",
-      "assets/art/ui/basket.webp",
-      "assets/art/ui/lock.webp",
-      "assets/art/ui/bubble.webp",
-      "assets/art/ui/gift.webp"
-    ]
-  },
-  "bg_yard": {
-    "bg": true,
-    "files": [
-      "assets/art/areas/yard_bg.webp"
-    ]
-  },
-  "bg_pond": {
-    "bg": true,
-    "files": [
-      "assets/art/areas/pond_bg.webp"
-    ]
-  },
-  "bg_greenhouse": {
-    "bg": true,
-    "files": [
-      "assets/art/areas/greenhouse_bg.webp"
-    ]
-  },
-  "bg_starry_hill": {
-    "bg": true,
-    "files": [
-      "assets/art/areas/starry_hill_bg.webp"
-    ]
-  },
-  "app_icon": {
-    "icon": true,
-    "files": [
-      "assets/art/icon/app_icon.png"
-    ]
-  },
-  "ui_icons2": {
-    "cols": 5,
-    "rows": 4,
-    "size": 192,
-    "files": [
-      "assets/art/icons/energy.webp",
-      "assets/art/icons/ad.webp",
-      "assets/art/icons/settings.webp",
-      "assets/art/icons/no_ads.webp",
-      "assets/art/icons/book.webp",
-      "assets/art/icons/upgrade.webp",
-      "assets/art/icons/decorate.webp",
-      "assets/art/icons/heart.webp",
-      "assets/art/icons/refresh.webp",
-      "assets/art/icons/sparkle.webp",
-      "assets/art/icons/letter.webp",
-      "assets/art/icons/unknown.webp",
-      "assets/art/icons/arrow_left.webp",
-      "assets/art/icons/arrow_right.webp",
-      "assets/art/icons/check.webp",
-      "assets/art/icons/trophy.webp",
-      "assets/art/icons/party.webp",
-      "assets/art/icons/moon.webp",
-      "assets/art/icons/auto.webp",
-      "assets/art/icons/timer.webp"
-    ]
-  },
-  "ui_icons3": {
-    "cols": 3,
-    "rows": 2,
-    "size": 192,
-    "files": [
-      "assets/art/icons/coinbag.webp",
-      "assets/art/icons/quality.webp",
-      "assets/art/icons/area_yard.webp",
-      "assets/art/icons/area_pond.webp",
-      "assets/art/icons/area_greenhouse.webp",
-      "assets/art/icons/area_starry_hill.webp"
-    ]
-  },
-  "ui_frames": {
-    "cols": 4,
-    "rows": 3,
-    "frame": true,
-    "files": [
-      "assets/art/frames/panel.webp",
-      "assets/art/frames/ribbon.webp",
-      "assets/art/frames/button_green.webp",
-      "assets/art/frames/button_purple.webp",
-      "assets/art/frames/button_white.webp",
-      "assets/art/frames/card.webp",
-      "assets/art/frames/card_ready.webp",
-      "assets/art/frames/capsule.webp",
-      "assets/art/frames/tile.webp",
-      "assets/art/frames/toast.webp",
-      "assets/art/frames/speech.webp",
-      "assets/art/frames/slot.webp"
-    ]
-  },
-  "ui_icons4": {
-    "cols": 1,
-    "rows": 1,
-    "size": 192,
-    "files": [
-      "assets/art/icons/storage.webp"
-    ]
-  },
-  "ui_popup": {
-    "cols": 2,
-    "rows": 2,
-    "frame": true,
-    "files": [
-      "assets/art/frames/banner_green.webp",
-      "assets/art/frames/banner_gold.webp",
-      "assets/art/frames/levelup_burst.webp",
-      "assets/art/frames/confetti.webp"
-    ]
-  },
-  "ui_onboard": {
-    "cols": 2,
-    "rows": 2,
-    "size": 256,
-    "files": [
-      "assets/art/icons/hand_point.webp",
-      "assets/art/icons/hand_press.webp",
-      "assets/art/icons/boost.webp",
-      "assets/art/icons/energy_jar.webp"
-    ]
-  },
-  "friends_sleep": {
-    "cols": 3,
-    "rows": 3,
-    "size": 512,
-    "files": [
-      "assets/art/friends/bori_sleep.webp",
-      "assets/art/friends/dubu_sleep.webp",
-      "assets/art/friends/kwak_sleep.webp",
-      "assets/art/friends/nabi_sleep.webp",
-      "assets/art/friends/dotori_sleep.webp",
-      "assets/art/friends/mochi_sleep.webp",
-      "assets/art/friends/danpung_sleep.webp",
-      "assets/art/friends/kongtteok_sleep.webp",
-      "assets/art/friends/visitor_sleep.webp"
-    ]
-  },
-  "friends_wave": {
-    "cols": 3,
-    "rows": 3,
-    "size": 512,
-    "files": [
-      "assets/art/friends/bori_wave.webp",
-      "assets/art/friends/dubu_wave.webp",
-      "assets/art/friends/kwak_wave.webp",
-      "assets/art/friends/nabi_wave.webp",
-      "assets/art/friends/dotori_wave.webp",
-      "assets/art/friends/mochi_wave.webp",
-      "assets/art/friends/danpung_wave.webp",
-      "assets/art/friends/kongtteok_wave.webp",
-      "assets/art/friends/visitor_wave.webp"
-    ]
-  },
-  "ui_icons5": {
-    "cols": 2,
-    "rows": 2,
-    "size": 192,
-    "files": [
-      "assets/art/icons/menu.webp",
-      "assets/art/icons/friends.webp",
-      "assets/art/icons/visit.webp",
-      "assets/art/icons/notice.webp"
-    ]
-  },
-  "bg_seaside": {
-    "bg": true,
-    "files": [
-      "assets/art/areas/seaside_bg.webp"
-    ]
-  },
-  "bg_snow_village": {
-    "bg": true,
-    "files": [
-      "assets/art/areas/snow_village_bg.webp"
-    ]
-  },
-  "decor_greenhouse_b": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/glasshouse_b.webp",
-      "assets/art/decor/cactus_b.webp",
-      "assets/art/decor/mushroom_bed_b.webp",
-      "assets/art/decor/watering_can_b.webp",
-      "assets/art/decor/sunflower_field_b.webp",
-      "assets/art/decor/tea_table_b.webp",
-      "assets/art/decor/bamboo_b.webp",
-      "assets/art/decor/wind_chime_b.webp"
-    ]
-  },
-  "decor_greenhouse_c": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/glasshouse_c.webp",
-      "assets/art/decor/cactus_c.webp",
-      "assets/art/decor/mushroom_bed_c.webp",
-      "assets/art/decor/watering_can_c.webp",
-      "assets/art/decor/sunflower_field_c.webp",
-      "assets/art/decor/tea_table_c.webp",
-      "assets/art/decor/bamboo_c.webp",
-      "assets/art/decor/wind_chime_c.webp"
-    ]
-  },
-  "decor_pond_b": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/stepping_stones_b.webp",
-      "assets/art/decor/water_lily_b.webp",
-      "assets/art/decor/fishing_spot_b.webp",
-      "assets/art/decor/rowboat_b.webp",
-      "assets/art/decor/reeds_b.webp",
-      "assets/art/decor/log_chair_b.webp",
-      "assets/art/decor/tent_b.webp",
-      "assets/art/decor/wooden_bridge_b.webp"
-    ]
-  },
-  "decor_pond_c": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/stepping_stones_c.webp",
-      "assets/art/decor/water_lily_c.webp",
-      "assets/art/decor/fishing_spot_c.webp",
-      "assets/art/decor/rowboat_c.webp",
-      "assets/art/decor/reeds_c.webp",
-      "assets/art/decor/log_chair_c.webp",
-      "assets/art/decor/tent_c.webp",
-      "assets/art/decor/wooden_bridge_c.webp"
-    ]
-  },
-  "decor_seaside": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/beach_hut.webp",
-      "assets/art/decor/parasol.webp",
-      "assets/art/decor/sandcastle.webp",
-      "assets/art/decor/lighthouse.webp",
-      "assets/art/decor/deck_chair.webp",
-      "assets/art/decor/shell_fountain.webp",
-      "assets/art/decor/surf_rack.webp",
-      "assets/art/decor/seagull_post.webp"
-    ]
-  },
-  "decor_snow_village": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/snowman.webp",
-      "assets/art/decor/igloo.webp",
-      "assets/art/decor/sled.webp",
-      "assets/art/decor/winter_tree.webp",
-      "assets/art/decor/cocoa_stand.webp",
-      "assets/art/decor/ice_rink.webp",
-      "assets/art/decor/snow_lantern.webp",
-      "assets/art/decor/chimney_cottage.webp"
-    ]
-  },
-  "decor_starry_b": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/telescope_b.webp",
-      "assets/art/decor/camp_tent_b.webp",
-      "assets/art/decor/campfire_b.webp",
-      "assets/art/decor/ferris_wheel_b.webp",
-      "assets/art/decor/carousel_b.webp",
-      "assets/art/decor/moon_statue_b.webp",
-      "assets/art/decor/little_castle_b.webp",
-      "assets/art/decor/fireworks_b.webp"
-    ]
-  },
-  "decor_starry_c": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/telescope_c.webp",
-      "assets/art/decor/camp_tent_c.webp",
-      "assets/art/decor/campfire_c.webp",
-      "assets/art/decor/ferris_wheel_c.webp",
-      "assets/art/decor/carousel_c.webp",
-      "assets/art/decor/moon_statue_c.webp",
-      "assets/art/decor/little_castle_c.webp",
-      "assets/art/decor/fireworks_c.webp"
-    ]
-  },
-  "decor_yard_b": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/big_tree_b.webp",
-      "assets/art/decor/bench_b.webp",
-      "assets/art/decor/mailbox_b.webp",
-      "assets/art/decor/veggie_patch_b.webp",
-      "assets/art/decor/lantern_b.webp",
-      "assets/art/decor/bird_feeder_b.webp",
-      "assets/art/decor/hut_b.webp",
-      "assets/art/decor/fountain_b.webp"
-    ]
-  },
-  "decor_yard_c": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/big_tree_c.webp",
-      "assets/art/decor/bench_c.webp",
-      "assets/art/decor/mailbox_c.webp",
-      "assets/art/decor/veggie_patch_c.webp",
-      "assets/art/decor/lantern_c.webp",
-      "assets/art/decor/bird_feeder_c.webp",
-      "assets/art/decor/hut_c.webp",
-      "assets/art/decor/fountain_c.webp"
-    ]
-  },
-  "friends_new": {
-    "cols": 4,
-    "rows": 2,
-    "size": 512,
-    "files": [
-      "assets/art/friends/bogeul_idle.webp",
-      "assets/art/friends/bogeul_happy.webp",
-      "assets/art/friends/bogeul_sleep.webp",
-      "assets/art/friends/bogeul_wave.webp",
-      "assets/art/friends/pposong_idle.webp",
-      "assets/art/friends/pposong_happy.webp",
-      "assets/art/friends/pposong_sleep.webp",
-      "assets/art/friends/pposong_wave.webp"
-    ]
-  },
-  "items_stardust": {
-    "cols": 5,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/items/stardust_01.webp",
-      "assets/art/items/stardust_02.webp",
-      "assets/art/items/stardust_03.webp",
-      "assets/art/items/stardust_04.webp",
-      "assets/art/items/stardust_05.webp",
-      "assets/art/items/stardust_06.webp",
-      "assets/art/items/stardust_07.webp",
-      "assets/art/items/stardust_08.webp",
-      "assets/art/items/stardust_09.webp",
-      "assets/art/items/stardust_10.webp"
-    ]
-  },
-  "items_tea": {
-    "cols": 5,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/items/tea_01.webp",
-      "assets/art/items/tea_02.webp",
-      "assets/art/items/tea_03.webp",
-      "assets/art/items/tea_04.webp",
-      "assets/art/items/tea_05.webp",
-      "assets/art/items/tea_06.webp",
-      "assets/art/items/tea_07.webp",
-      "assets/art/items/tea_08.webp",
-      "assets/art/items/tea_09.webp",
-      "assets/art/items/tea_10.webp"
-    ]
-  },
-  "ui_shop": {
-    "cols": 4,
-    "rows": 3,
-    "size": 192,
-    "files": [
-      "assets/art/icons/diamond.webp",
-      "assets/art/icons/dia_1.webp",
-      "assets/art/icons/dia_2.webp",
-      "assets/art/icons/dia_3.webp",
-      "assets/art/icons/dia_4.webp",
-      "assets/art/icons/dia_5.webp",
-      "assets/art/icons/shop.webp",
-      "assets/art/icons/calendar.webp",
-      "assets/art/icons/swap.webp",
-      "assets/art/icons/tea_basket.webp",
-      "assets/art/icons/star_jar.webp",
-      "assets/art/icons/outfit.webp"
-    ]
-  },
-  "decor_seaside_b": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/beach_hut_b.webp",
-      "assets/art/decor/parasol_b.webp",
-      "assets/art/decor/sandcastle_b.webp",
-      "assets/art/decor/lighthouse_b.webp",
-      "assets/art/decor/deck_chair_b.webp",
-      "assets/art/decor/shell_fountain_b.webp",
-      "assets/art/decor/surf_rack_b.webp",
-      "assets/art/decor/seagull_post_b.webp"
-    ]
-  },
-  "decor_seaside_c": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/beach_hut_c.webp",
-      "assets/art/decor/parasol_c.webp",
-      "assets/art/decor/sandcastle_c.webp",
-      "assets/art/decor/lighthouse_c.webp",
-      "assets/art/decor/deck_chair_c.webp",
-      "assets/art/decor/shell_fountain_c.webp",
-      "assets/art/decor/surf_rack_c.webp",
-      "assets/art/decor/seagull_post_c.webp"
-    ]
-  },
-  "decor_snow_village_b": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/snowman_b.webp",
-      "assets/art/decor/igloo_b.webp",
-      "assets/art/decor/sled_b.webp",
-      "assets/art/decor/winter_tree_b.webp",
-      "assets/art/decor/cocoa_stand_b.webp",
-      "assets/art/decor/ice_rink_b.webp",
-      "assets/art/decor/snow_lantern_b.webp",
-      "assets/art/decor/chimney_cottage_b.webp"
-    ]
-  },
-  "decor_snow_village_c": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/snowman_c.webp",
-      "assets/art/decor/igloo_c.webp",
-      "assets/art/decor/sled_c.webp",
-      "assets/art/decor/winter_tree_c.webp",
-      "assets/art/decor/cocoa_stand_c.webp",
-      "assets/art/decor/ice_rink_c.webp",
-      "assets/art/decor/snow_lantern_c.webp",
-      "assets/art/decor/chimney_cottage_c.webp"
-    ]
-  },
-  "ui_icons6": {
-    "cols": 2,
-    "rows": 1,
-    "size": 192,
-    "files": [
-      "assets/art/icons/area_seaside.webp",
-      "assets/art/icons/area_snow_village.webp"
-    ]
-  },
-  "outfit_picnic_bori": {
-    "cols": 4,
-    "rows": 1,
-    "size": 512,
-    "files": [
-      "assets/art/friends/bori_picnic_idle.webp",
-      "assets/art/friends/bori_picnic_happy.webp",
-      "assets/art/friends/bori_picnic_sleep.webp",
-      "assets/art/friends/bori_picnic_wave.webp"
-    ]
-  },
-  "outfit_picnic_dubu": {
-    "cols": 4,
-    "rows": 1,
-    "size": 512,
-    "files": [
-      "assets/art/friends/dubu_picnic_idle.webp",
-      "assets/art/friends/dubu_picnic_happy.webp",
-      "assets/art/friends/dubu_picnic_sleep.webp",
-      "assets/art/friends/dubu_picnic_wave.webp"
-    ]
-  },
-  "outfit_picnic_kwak": {
-    "cols": 4,
-    "rows": 1,
-    "size": 512,
-    "files": [
-      "assets/art/friends/kwak_picnic_idle.webp",
-      "assets/art/friends/kwak_picnic_happy.webp",
-      "assets/art/friends/kwak_picnic_sleep.webp",
-      "assets/art/friends/kwak_picnic_wave.webp"
-    ]
-  },
-  "outfit_picnic_nabi": {
-    "cols": 4,
-    "rows": 1,
-    "size": 512,
-    "files": [
-      "assets/art/friends/nabi_picnic_idle.webp",
-      "assets/art/friends/nabi_picnic_happy.webp",
-      "assets/art/friends/nabi_picnic_sleep.webp",
-      "assets/art/friends/nabi_picnic_wave.webp"
-    ]
-  },
-  "outfit_picnic_dotori": {
-    "cols": 4,
-    "rows": 1,
-    "size": 512,
-    "files": [
-      "assets/art/friends/dotori_picnic_idle.webp",
-      "assets/art/friends/dotori_picnic_happy.webp",
-      "assets/art/friends/dotori_picnic_sleep.webp",
-      "assets/art/friends/dotori_picnic_wave.webp"
-    ]
-  },
-  "outfit_picnic_mochi": {
-    "cols": 4,
-    "rows": 1,
-    "size": 512,
-    "files": [
-      "assets/art/friends/mochi_picnic_idle.webp",
-      "assets/art/friends/mochi_picnic_happy.webp",
-      "assets/art/friends/mochi_picnic_sleep.webp",
-      "assets/art/friends/mochi_picnic_wave.webp"
-    ]
-  },
-  "outfit_picnic_danpung": {
-    "cols": 4,
-    "rows": 1,
-    "size": 512,
-    "files": [
-      "assets/art/friends/danpung_picnic_idle.webp",
-      "assets/art/friends/danpung_picnic_happy.webp",
-      "assets/art/friends/danpung_picnic_sleep.webp",
-      "assets/art/friends/danpung_picnic_wave.webp"
-    ]
-  },
-  "outfit_picnic_kongtteok": {
-    "cols": 4,
-    "rows": 1,
-    "size": 512,
-    "files": [
-      "assets/art/friends/kongtteok_picnic_idle.webp",
-      "assets/art/friends/kongtteok_picnic_happy.webp",
-      "assets/art/friends/kongtteok_picnic_sleep.webp",
-      "assets/art/friends/kongtteok_picnic_wave.webp"
-    ]
-  },
-  "outfit_picnic_bogeul": {
-    "cols": 4,
-    "rows": 1,
-    "size": 512,
-    "files": [
-      "assets/art/friends/bogeul_picnic_idle.webp",
-      "assets/art/friends/bogeul_picnic_happy.webp",
-      "assets/art/friends/bogeul_picnic_sleep.webp",
-      "assets/art/friends/bogeul_picnic_wave.webp"
-    ]
-  },
-  "outfit_picnic_pposong": {
-    "cols": 4,
-    "rows": 1,
-    "size": 512,
-    "files": [
-      "assets/art/friends/pposong_picnic_idle.webp",
-      "assets/art/friends/pposong_picnic_happy.webp",
-      "assets/art/friends/pposong_picnic_sleep.webp",
-      "assets/art/friends/pposong_picnic_wave.webp"
-    ]
-  },
-  "title_logo_ko": {
-    "cutout": true,
-    "size": 1200,
-    "files": [
-      "assets/art/title/logo_ko.webp"
-    ]
-  },
-  "title_logo_en": {
-    "cutout": true,
-    "size": 1200,
-    "files": [
-      "assets/art/title/logo_en.webp"
-    ]
-  },
-  "title_logo_ja": {
-    "cutout": true,
-    "size": 1200,
-    "files": [
-      "assets/art/title/logo_ja.webp"
-    ]
-  },
-  "title_bg": {
-    "bg": true,
-    "bgSize": [
-      1080,
-      1920
-    ],
-    "files": [
-      "assets/art/title/bg.webp"
-    ]
-  },
-  "title_fg": {
-    "cutout": true,
-    "size": 1080,
-    "files": [
-      "assets/art/title/fg.webp"
-    ]
-  },
-  "outfit_starlight_bori": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/bori_starlight_idle.webp",
-      "assets/art/friends/bori_starlight_happy.webp",
-      "assets/art/friends/bori_starlight_sleep.webp",
-      "assets/art/friends/bori_starlight_wave.webp"
-    ]
-  },
-  "outfit_winter_bori": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/bori_winter_idle.webp",
-      "assets/art/friends/bori_winter_happy.webp",
-      "assets/art/friends/bori_winter_sleep.webp",
-      "assets/art/friends/bori_winter_wave.webp"
-    ]
-  },
-  "outfit_winter_dubu": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/dubu_winter_idle.webp",
-      "assets/art/friends/dubu_winter_happy.webp",
-      "assets/art/friends/dubu_winter_sleep.webp",
-      "assets/art/friends/dubu_winter_wave.webp"
-    ]
-  },
-  "outfit_winter_kwak": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/kwak_winter_idle.webp",
-      "assets/art/friends/kwak_winter_happy.webp",
-      "assets/art/friends/kwak_winter_sleep.webp",
-      "assets/art/friends/kwak_winter_wave.webp"
-    ]
-  },
-  "outfit_winter_nabi": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/nabi_winter_idle.webp",
-      "assets/art/friends/nabi_winter_happy.webp",
-      "assets/art/friends/nabi_winter_sleep.webp",
-      "assets/art/friends/nabi_winter_wave.webp"
-    ]
-  },
-  "outfit_winter_dotori": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/dotori_winter_idle.webp",
-      "assets/art/friends/dotori_winter_happy.webp",
-      "assets/art/friends/dotori_winter_sleep.webp",
-      "assets/art/friends/dotori_winter_wave.webp"
-    ]
-  },
-  "outfit_winter_mochi": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/mochi_winter_idle.webp",
-      "assets/art/friends/mochi_winter_happy.webp",
-      "assets/art/friends/mochi_winter_sleep.webp",
-      "assets/art/friends/mochi_winter_wave.webp"
-    ]
-  },
-  "outfit_winter_danpung": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/danpung_winter_idle.webp",
-      "assets/art/friends/danpung_winter_happy.webp",
-      "assets/art/friends/danpung_winter_sleep.webp",
-      "assets/art/friends/danpung_winter_wave.webp"
-    ]
-  },
-  "outfit_winter_kongtteok": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/kongtteok_winter_idle.webp",
-      "assets/art/friends/kongtteok_winter_happy.webp",
-      "assets/art/friends/kongtteok_winter_sleep.webp",
-      "assets/art/friends/kongtteok_winter_wave.webp"
-    ]
-  },
-  "outfit_winter_bogeul": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/bogeul_winter_idle.webp",
-      "assets/art/friends/bogeul_winter_happy.webp",
-      "assets/art/friends/bogeul_winter_sleep.webp",
-      "assets/art/friends/bogeul_winter_wave.webp"
-    ]
-  },
-  "outfit_winter_pposong": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/pposong_winter_idle.webp",
-      "assets/art/friends/pposong_winter_happy.webp",
-      "assets/art/friends/pposong_winter_sleep.webp",
-      "assets/art/friends/pposong_winter_wave.webp"
-    ]
-  },
-  "outfit_summer_bori": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/bori_summer_idle.webp",
-      "assets/art/friends/bori_summer_happy.webp",
-      "assets/art/friends/bori_summer_sleep.webp",
-      "assets/art/friends/bori_summer_wave.webp"
-    ]
-  },
-  "outfit_summer_dubu": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/dubu_summer_idle.webp",
-      "assets/art/friends/dubu_summer_happy.webp",
-      "assets/art/friends/dubu_summer_sleep.webp",
-      "assets/art/friends/dubu_summer_wave.webp"
-    ]
-  },
-  "outfit_summer_kwak": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/kwak_summer_idle.webp",
-      "assets/art/friends/kwak_summer_happy.webp",
-      "assets/art/friends/kwak_summer_sleep.webp",
-      "assets/art/friends/kwak_summer_wave.webp"
-    ]
-  },
-  "outfit_summer_nabi": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/nabi_summer_idle.webp",
-      "assets/art/friends/nabi_summer_happy.webp",
-      "assets/art/friends/nabi_summer_sleep.webp",
-      "assets/art/friends/nabi_summer_wave.webp"
-    ]
-  },
-  "outfit_summer_dotori": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/dotori_summer_idle.webp",
-      "assets/art/friends/dotori_summer_happy.webp",
-      "assets/art/friends/dotori_summer_sleep.webp",
-      "assets/art/friends/dotori_summer_wave.webp"
-    ]
-  },
-  "outfit_summer_mochi": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/mochi_summer_idle.webp",
-      "assets/art/friends/mochi_summer_happy.webp",
-      "assets/art/friends/mochi_summer_sleep.webp",
-      "assets/art/friends/mochi_summer_wave.webp"
-    ]
-  },
-  "outfit_summer_danpung": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/danpung_summer_idle.webp",
-      "assets/art/friends/danpung_summer_happy.webp",
-      "assets/art/friends/danpung_summer_sleep.webp",
-      "assets/art/friends/danpung_summer_wave.webp"
-    ]
-  },
-  "outfit_summer_kongtteok": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/kongtteok_summer_idle.webp",
-      "assets/art/friends/kongtteok_summer_happy.webp",
-      "assets/art/friends/kongtteok_summer_sleep.webp",
-      "assets/art/friends/kongtteok_summer_wave.webp"
-    ]
-  },
-  "outfit_summer_bogeul": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/bogeul_summer_idle.webp",
-      "assets/art/friends/bogeul_summer_happy.webp",
-      "assets/art/friends/bogeul_summer_sleep.webp",
-      "assets/art/friends/bogeul_summer_wave.webp"
-    ]
-  },
-  "outfit_summer_pposong": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/pposong_summer_idle.webp",
-      "assets/art/friends/pposong_summer_happy.webp",
-      "assets/art/friends/pposong_summer_sleep.webp",
-      "assets/art/friends/pposong_summer_wave.webp"
-    ]
-  },
-  "outfit_autumn_bori": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/bori_autumn_idle.webp",
-      "assets/art/friends/bori_autumn_happy.webp",
-      "assets/art/friends/bori_autumn_sleep.webp",
-      "assets/art/friends/bori_autumn_wave.webp"
-    ]
-  },
-  "outfit_autumn_dubu": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/dubu_autumn_idle.webp",
-      "assets/art/friends/dubu_autumn_happy.webp",
-      "assets/art/friends/dubu_autumn_sleep.webp",
-      "assets/art/friends/dubu_autumn_wave.webp"
-    ]
-  },
-  "outfit_autumn_kwak": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/kwak_autumn_idle.webp",
-      "assets/art/friends/kwak_autumn_happy.webp",
-      "assets/art/friends/kwak_autumn_sleep.webp",
-      "assets/art/friends/kwak_autumn_wave.webp"
-    ]
-  },
-  "outfit_autumn_nabi": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/nabi_autumn_idle.webp",
-      "assets/art/friends/nabi_autumn_happy.webp",
-      "assets/art/friends/nabi_autumn_sleep.webp",
-      "assets/art/friends/nabi_autumn_wave.webp"
-    ]
-  },
-  "outfit_autumn_dotori": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/dotori_autumn_idle.webp",
-      "assets/art/friends/dotori_autumn_happy.webp",
-      "assets/art/friends/dotori_autumn_sleep.webp",
-      "assets/art/friends/dotori_autumn_wave.webp"
-    ]
-  },
-  "outfit_autumn_mochi": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/mochi_autumn_idle.webp",
-      "assets/art/friends/mochi_autumn_happy.webp",
-      "assets/art/friends/mochi_autumn_sleep.webp",
-      "assets/art/friends/mochi_autumn_wave.webp"
-    ]
-  },
-  "outfit_autumn_danpung": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/danpung_autumn_idle.webp",
-      "assets/art/friends/danpung_autumn_happy.webp",
-      "assets/art/friends/danpung_autumn_sleep.webp",
-      "assets/art/friends/danpung_autumn_wave.webp"
-    ]
-  },
-  "outfit_autumn_kongtteok": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/kongtteok_autumn_idle.webp",
-      "assets/art/friends/kongtteok_autumn_happy.webp",
-      "assets/art/friends/kongtteok_autumn_sleep.webp",
-      "assets/art/friends/kongtteok_autumn_wave.webp"
-    ]
-  },
-  "outfit_autumn_bogeul": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/bogeul_autumn_idle.webp",
-      "assets/art/friends/bogeul_autumn_happy.webp",
-      "assets/art/friends/bogeul_autumn_sleep.webp",
-      "assets/art/friends/bogeul_autumn_wave.webp"
-    ]
-  },
-  "outfit_autumn_pposong": {
-    "cols": 4,
-    "rows": 1,
-    "files": [
-      "assets/art/friends/pposong_autumn_idle.webp",
-      "assets/art/friends/pposong_autumn_happy.webp",
-      "assets/art/friends/pposong_autumn_sleep.webp",
-      "assets/art/friends/pposong_autumn_wave.webp"
-    ]
-  },
-  "decor_yard_winter": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/big_tree_winter.webp",
-      "assets/art/decor/bench_winter.webp",
-      "assets/art/decor/mailbox_winter.webp",
-      "assets/art/decor/veggie_patch_winter.webp",
-      "assets/art/decor/lantern_winter.webp",
-      "assets/art/decor/bird_feeder_winter.webp",
-      "assets/art/decor/hut_winter.webp",
-      "assets/art/decor/fountain_winter.webp"
-    ]
-  },
-  "decor_pond_winter": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/stepping_stones_winter.webp",
-      "assets/art/decor/water_lily_winter.webp",
-      "assets/art/decor/fishing_spot_winter.webp",
-      "assets/art/decor/rowboat_winter.webp",
-      "assets/art/decor/reeds_winter.webp",
-      "assets/art/decor/log_chair_winter.webp",
-      "assets/art/decor/tent_winter.webp",
-      "assets/art/decor/wooden_bridge_winter.webp"
-    ]
-  },
-  "decor_greenhouse_winter": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/glasshouse_winter.webp",
-      "assets/art/decor/cactus_winter.webp",
-      "assets/art/decor/mushroom_bed_winter.webp",
-      "assets/art/decor/watering_can_winter.webp",
-      "assets/art/decor/sunflower_field_winter.webp",
-      "assets/art/decor/tea_table_winter.webp",
-      "assets/art/decor/bamboo_winter.webp",
-      "assets/art/decor/wind_chime_winter.webp"
-    ]
-  },
-  "decor_starry_winter": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/telescope_winter.webp",
-      "assets/art/decor/camp_tent_winter.webp",
-      "assets/art/decor/campfire_winter.webp",
-      "assets/art/decor/ferris_wheel_winter.webp",
-      "assets/art/decor/carousel_winter.webp",
-      "assets/art/decor/moon_statue_winter.webp",
-      "assets/art/decor/little_castle_winter.webp",
-      "assets/art/decor/fireworks_winter.webp"
-    ]
-  },
-  "decor_seaside_winter": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/beach_hut_winter.webp",
-      "assets/art/decor/parasol_winter.webp",
-      "assets/art/decor/sandcastle_winter.webp",
-      "assets/art/decor/lighthouse_winter.webp",
-      "assets/art/decor/deck_chair_winter.webp",
-      "assets/art/decor/shell_fountain_winter.webp",
-      "assets/art/decor/surf_rack_winter.webp",
-      "assets/art/decor/seagull_post_winter.webp"
-    ]
-  },
-  "decor_snow_village_winter": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/snowman_winter.webp",
-      "assets/art/decor/igloo_winter.webp",
-      "assets/art/decor/sled_winter.webp",
-      "assets/art/decor/winter_tree_winter.webp",
-      "assets/art/decor/cocoa_stand_winter.webp",
-      "assets/art/decor/ice_rink_winter.webp",
-      "assets/art/decor/snow_lantern_winter.webp",
-      "assets/art/decor/chimney_cottage_winter.webp"
-    ]
-  },
-  "decor_yard_spring": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/big_tree_spring.webp",
-      "assets/art/decor/bench_spring.webp",
-      "assets/art/decor/mailbox_spring.webp",
-      "assets/art/decor/veggie_patch_spring.webp",
-      "assets/art/decor/lantern_spring.webp",
-      "assets/art/decor/bird_feeder_spring.webp",
-      "assets/art/decor/hut_spring.webp",
-      "assets/art/decor/fountain_spring.webp"
-    ]
-  },
-  "decor_pond_spring": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/stepping_stones_spring.webp",
-      "assets/art/decor/water_lily_spring.webp",
-      "assets/art/decor/fishing_spot_spring.webp",
-      "assets/art/decor/rowboat_spring.webp",
-      "assets/art/decor/reeds_spring.webp",
-      "assets/art/decor/log_chair_spring.webp",
-      "assets/art/decor/tent_spring.webp",
-      "assets/art/decor/wooden_bridge_spring.webp"
-    ]
-  },
-  "decor_greenhouse_spring": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/glasshouse_spring.webp",
-      "assets/art/decor/cactus_spring.webp",
-      "assets/art/decor/mushroom_bed_spring.webp",
-      "assets/art/decor/watering_can_spring.webp",
-      "assets/art/decor/sunflower_field_spring.webp",
-      "assets/art/decor/tea_table_spring.webp",
-      "assets/art/decor/bamboo_spring.webp",
-      "assets/art/decor/wind_chime_spring.webp"
-    ]
-  },
-  "decor_starry_spring": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/telescope_spring.webp",
-      "assets/art/decor/camp_tent_spring.webp",
-      "assets/art/decor/campfire_spring.webp",
-      "assets/art/decor/ferris_wheel_spring.webp",
-      "assets/art/decor/carousel_spring.webp",
-      "assets/art/decor/moon_statue_spring.webp",
-      "assets/art/decor/little_castle_spring.webp",
-      "assets/art/decor/fireworks_spring.webp"
-    ]
-  },
-  "decor_seaside_spring": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/beach_hut_spring.webp",
-      "assets/art/decor/parasol_spring.webp",
-      "assets/art/decor/sandcastle_spring.webp",
-      "assets/art/decor/lighthouse_spring.webp",
-      "assets/art/decor/deck_chair_spring.webp",
-      "assets/art/decor/shell_fountain_spring.webp",
-      "assets/art/decor/surf_rack_spring.webp",
-      "assets/art/decor/seagull_post_spring.webp"
-    ]
-  },
-  "decor_snow_village_spring": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/snowman_spring.webp",
-      "assets/art/decor/igloo_spring.webp",
-      "assets/art/decor/sled_spring.webp",
-      "assets/art/decor/winter_tree_spring.webp",
-      "assets/art/decor/cocoa_stand_spring.webp",
-      "assets/art/decor/ice_rink_spring.webp",
-      "assets/art/decor/snow_lantern_spring.webp",
-      "assets/art/decor/chimney_cottage_spring.webp"
-    ]
-  },
-  "decor_yard_summer": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/big_tree_summer.webp",
-      "assets/art/decor/bench_summer.webp",
-      "assets/art/decor/mailbox_summer.webp",
-      "assets/art/decor/veggie_patch_summer.webp",
-      "assets/art/decor/lantern_summer.webp",
-      "assets/art/decor/bird_feeder_summer.webp",
-      "assets/art/decor/hut_summer.webp",
-      "assets/art/decor/fountain_summer.webp"
-    ]
-  },
-  "decor_pond_summer": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/stepping_stones_summer.webp",
-      "assets/art/decor/water_lily_summer.webp",
-      "assets/art/decor/fishing_spot_summer.webp",
-      "assets/art/decor/rowboat_summer.webp",
-      "assets/art/decor/reeds_summer.webp",
-      "assets/art/decor/log_chair_summer.webp",
-      "assets/art/decor/tent_summer.webp",
-      "assets/art/decor/wooden_bridge_summer.webp"
-    ]
-  },
-  "decor_greenhouse_summer": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/glasshouse_summer.webp",
-      "assets/art/decor/cactus_summer.webp",
-      "assets/art/decor/mushroom_bed_summer.webp",
-      "assets/art/decor/watering_can_summer.webp",
-      "assets/art/decor/sunflower_field_summer.webp",
-      "assets/art/decor/tea_table_summer.webp",
-      "assets/art/decor/bamboo_summer.webp",
-      "assets/art/decor/wind_chime_summer.webp"
-    ]
-  },
-  "decor_starry_summer": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/telescope_summer.webp",
-      "assets/art/decor/camp_tent_summer.webp",
-      "assets/art/decor/campfire_summer.webp",
-      "assets/art/decor/ferris_wheel_summer.webp",
-      "assets/art/decor/carousel_summer.webp",
-      "assets/art/decor/moon_statue_summer.webp",
-      "assets/art/decor/little_castle_summer.webp",
-      "assets/art/decor/fireworks_summer.webp"
-    ]
-  },
-  "decor_seaside_summer": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/beach_hut_summer.webp",
-      "assets/art/decor/parasol_summer.webp",
-      "assets/art/decor/sandcastle_summer.webp",
-      "assets/art/decor/lighthouse_summer.webp",
-      "assets/art/decor/deck_chair_summer.webp",
-      "assets/art/decor/shell_fountain_summer.webp",
-      "assets/art/decor/surf_rack_summer.webp",
-      "assets/art/decor/seagull_post_summer.webp"
-    ]
-  },
-  "decor_snow_village_summer": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/snowman_summer.webp",
-      "assets/art/decor/igloo_summer.webp",
-      "assets/art/decor/sled_summer.webp",
-      "assets/art/decor/winter_tree_summer.webp",
-      "assets/art/decor/cocoa_stand_summer.webp",
-      "assets/art/decor/ice_rink_summer.webp",
-      "assets/art/decor/snow_lantern_summer.webp",
-      "assets/art/decor/chimney_cottage_summer.webp"
-    ]
-  },
-  "decor_yard_autumn": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/big_tree_autumn.webp",
-      "assets/art/decor/bench_autumn.webp",
-      "assets/art/decor/mailbox_autumn.webp",
-      "assets/art/decor/veggie_patch_autumn.webp",
-      "assets/art/decor/lantern_autumn.webp",
-      "assets/art/decor/bird_feeder_autumn.webp",
-      "assets/art/decor/hut_autumn.webp",
-      "assets/art/decor/fountain_autumn.webp"
-    ]
-  },
-  "decor_pond_autumn": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/stepping_stones_autumn.webp",
-      "assets/art/decor/water_lily_autumn.webp",
-      "assets/art/decor/fishing_spot_autumn.webp",
-      "assets/art/decor/rowboat_autumn.webp",
-      "assets/art/decor/reeds_autumn.webp",
-      "assets/art/decor/log_chair_autumn.webp",
-      "assets/art/decor/tent_autumn.webp",
-      "assets/art/decor/wooden_bridge_autumn.webp"
-    ]
-  },
-  "decor_greenhouse_autumn": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/glasshouse_autumn.webp",
-      "assets/art/decor/cactus_autumn.webp",
-      "assets/art/decor/mushroom_bed_autumn.webp",
-      "assets/art/decor/watering_can_autumn.webp",
-      "assets/art/decor/sunflower_field_autumn.webp",
-      "assets/art/decor/tea_table_autumn.webp",
-      "assets/art/decor/bamboo_autumn.webp",
-      "assets/art/decor/wind_chime_autumn.webp"
-    ]
-  },
-  "decor_starry_autumn": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/telescope_autumn.webp",
-      "assets/art/decor/camp_tent_autumn.webp",
-      "assets/art/decor/campfire_autumn.webp",
-      "assets/art/decor/ferris_wheel_autumn.webp",
-      "assets/art/decor/carousel_autumn.webp",
-      "assets/art/decor/moon_statue_autumn.webp",
-      "assets/art/decor/little_castle_autumn.webp",
-      "assets/art/decor/fireworks_autumn.webp"
-    ]
-  },
-  "decor_seaside_autumn": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/beach_hut_autumn.webp",
-      "assets/art/decor/parasol_autumn.webp",
-      "assets/art/decor/sandcastle_autumn.webp",
-      "assets/art/decor/lighthouse_autumn.webp",
-      "assets/art/decor/deck_chair_autumn.webp",
-      "assets/art/decor/shell_fountain_autumn.webp",
-      "assets/art/decor/surf_rack_autumn.webp",
-      "assets/art/decor/seagull_post_autumn.webp"
-    ]
-  },
-  "decor_snow_village_autumn": {
-    "cols": 4,
-    "rows": 2,
-    "size": 384,
-    "files": [
-      "assets/art/decor/snowman_autumn.webp",
-      "assets/art/decor/igloo_autumn.webp",
-      "assets/art/decor/sled_autumn.webp",
-      "assets/art/decor/winter_tree_autumn.webp",
-      "assets/art/decor/cocoa_stand_autumn.webp",
-      "assets/art/decor/ice_rink_autumn.webp",
-      "assets/art/decor/snow_lantern_autumn.webp",
-      "assets/art/decor/chimney_cottage_autumn.webp"
-    ]
-  }
+ "_comment": "시트 이미지 → 게임 파일 매핑. tool/import_art.py 가 사용. size = 잘라낸 정사각 PNG 한 변(px).",
+ "items_flower": {
+  "cols": 5,
+  "rows": 3,
+  "size": 384,
+  "files": [
+   "assets/art/items/flower_01.webp",
+   "assets/art/items/flower_02.webp",
+   "assets/art/items/flower_03.webp",
+   "assets/art/items/flower_04.webp",
+   "assets/art/items/flower_05.webp",
+   "assets/art/items/flower_06.webp",
+   "assets/art/items/flower_07.webp",
+   "assets/art/items/flower_08.webp",
+   "assets/art/items/flower_09.webp",
+   "assets/art/items/flower_10.webp",
+   "assets/art/items/flower_11.webp",
+   "assets/art/items/flower_12.webp",
+   "assets/art/items/flower_13.webp",
+   "assets/art/items/flower_14.webp",
+   "assets/art/items/flower_15.webp"
+  ]
+ },
+ "items_snack": {
+  "cols": 5,
+  "rows": 3,
+  "size": 384,
+  "files": [
+   "assets/art/items/snack_01.webp",
+   "assets/art/items/snack_02.webp",
+   "assets/art/items/snack_03.webp",
+   "assets/art/items/snack_04.webp",
+   "assets/art/items/snack_05.webp",
+   "assets/art/items/snack_06.webp",
+   "assets/art/items/snack_07.webp",
+   "assets/art/items/snack_08.webp",
+   "assets/art/items/snack_09.webp",
+   "assets/art/items/snack_10.webp",
+   "assets/art/items/snack_11.webp",
+   "assets/art/items/snack_12.webp",
+   "assets/art/items/snack_13.webp",
+   "assets/art/items/snack_14.webp",
+   "assets/art/items/snack_15.webp"
+  ]
+ },
+ "friends_idle": {
+  "cols": 3,
+  "rows": 3,
+  "size": 512,
+  "files": [
+   "assets/art/friends/bori_idle.webp",
+   "assets/art/friends/dubu_idle.webp",
+   "assets/art/friends/kwak_idle.webp",
+   "assets/art/friends/nabi_idle.webp",
+   "assets/art/friends/dotori_idle.webp",
+   "assets/art/friends/mochi_idle.webp",
+   "assets/art/friends/danpung_idle.webp",
+   "assets/art/friends/kongtteok_idle.webp",
+   "assets/art/friends/visitor_idle.webp"
+  ]
+ },
+ "friends_happy": {
+  "cols": 3,
+  "rows": 3,
+  "size": 512,
+  "files": [
+   "assets/art/friends/bori_happy.webp",
+   "assets/art/friends/dubu_happy.webp",
+   "assets/art/friends/kwak_happy.webp",
+   "assets/art/friends/nabi_happy.webp",
+   "assets/art/friends/dotori_happy.webp",
+   "assets/art/friends/mochi_happy.webp",
+   "assets/art/friends/danpung_happy.webp",
+   "assets/art/friends/kongtteok_happy.webp",
+   "assets/art/friends/visitor_happy.webp"
+  ]
+ },
+ "decor_yard": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/big_tree.webp",
+   "assets/art/decor/bench.webp",
+   "assets/art/decor/mailbox.webp",
+   "assets/art/decor/veggie_patch.webp",
+   "assets/art/decor/lantern.webp",
+   "assets/art/decor/bird_feeder.webp",
+   "assets/art/decor/hut.webp",
+   "assets/art/decor/fountain.webp"
+  ]
+ },
+ "decor_pond": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/stepping_stones.webp",
+   "assets/art/decor/water_lily.webp",
+   "assets/art/decor/fishing_spot.webp",
+   "assets/art/decor/rowboat.webp",
+   "assets/art/decor/reeds.webp",
+   "assets/art/decor/log_chair.webp",
+   "assets/art/decor/tent.webp",
+   "assets/art/decor/wooden_bridge.webp"
+  ]
+ },
+ "decor_greenhouse": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/glasshouse.webp",
+   "assets/art/decor/cactus.webp",
+   "assets/art/decor/mushroom_bed.webp",
+   "assets/art/decor/watering_can.webp",
+   "assets/art/decor/sunflower_field.webp",
+   "assets/art/decor/tea_table.webp",
+   "assets/art/decor/bamboo.webp",
+   "assets/art/decor/wind_chime.webp"
+  ]
+ },
+ "decor_starry": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/telescope.webp",
+   "assets/art/decor/camp_tent.webp",
+   "assets/art/decor/campfire.webp",
+   "assets/art/decor/ferris_wheel.webp",
+   "assets/art/decor/carousel.webp",
+   "assets/art/decor/moon_statue.webp",
+   "assets/art/decor/little_castle.webp",
+   "assets/art/decor/fireworks.webp"
+  ]
+ },
+ "ui_icons": {
+  "cols": 3,
+  "rows": 2,
+  "size": 256,
+  "files": [
+   "assets/art/ui/coin.webp",
+   "assets/art/ui/star.webp",
+   "assets/art/ui/basket.webp",
+   "assets/art/ui/lock.webp",
+   "assets/art/ui/bubble.webp",
+   "assets/art/ui/gift.webp"
+  ]
+ },
+ "bg_yard": {
+  "bg": true,
+  "files": [
+   "assets/art/areas/yard_bg.webp"
+  ]
+ },
+ "bg_pond": {
+  "bg": true,
+  "files": [
+   "assets/art/areas/pond_bg.webp"
+  ]
+ },
+ "bg_greenhouse": {
+  "bg": true,
+  "files": [
+   "assets/art/areas/greenhouse_bg.webp"
+  ]
+ },
+ "bg_starry_hill": {
+  "bg": true,
+  "files": [
+   "assets/art/areas/starry_hill_bg.webp"
+  ]
+ },
+ "app_icon": {
+  "icon": true,
+  "files": [
+   "assets/art/icon/app_icon.png"
+  ]
+ },
+ "ui_icons2": {
+  "cols": 5,
+  "rows": 4,
+  "size": 192,
+  "files": [
+   "assets/art/icons/energy.webp",
+   "assets/art/icons/ad.webp",
+   "assets/art/icons/settings.webp",
+   "assets/art/icons/no_ads.webp",
+   "assets/art/icons/book.webp",
+   "assets/art/icons/upgrade.webp",
+   "assets/art/icons/decorate.webp",
+   "assets/art/icons/heart.webp",
+   "assets/art/icons/refresh.webp",
+   "assets/art/icons/sparkle.webp",
+   "assets/art/icons/letter.webp",
+   "assets/art/icons/unknown.webp",
+   "assets/art/icons/arrow_left.webp",
+   "assets/art/icons/arrow_right.webp",
+   "assets/art/icons/check.webp",
+   "assets/art/icons/trophy.webp",
+   "assets/art/icons/party.webp",
+   "assets/art/icons/moon.webp",
+   "assets/art/icons/auto.webp",
+   "assets/art/icons/timer.webp"
+  ]
+ },
+ "ui_icons3": {
+  "cols": 3,
+  "rows": 2,
+  "size": 192,
+  "files": [
+   "assets/art/icons/coinbag.webp",
+   "assets/art/icons/quality.webp",
+   "assets/art/icons/area_yard.webp",
+   "assets/art/icons/area_pond.webp",
+   "assets/art/icons/area_greenhouse.webp",
+   "assets/art/icons/area_starry_hill.webp"
+  ]
+ },
+ "ui_frames": {
+  "cols": 4,
+  "rows": 3,
+  "frame": true,
+  "files": [
+   "assets/art/frames/panel.webp",
+   "assets/art/frames/ribbon.webp",
+   "assets/art/frames/button_green.webp",
+   "assets/art/frames/button_purple.webp",
+   "assets/art/frames/button_white.webp",
+   "assets/art/frames/card.webp",
+   "assets/art/frames/card_ready.webp",
+   "assets/art/frames/capsule.webp",
+   "assets/art/frames/tile.webp",
+   "assets/art/frames/toast.webp",
+   "assets/art/frames/speech.webp",
+   "assets/art/frames/slot.webp"
+  ]
+ },
+ "ui_icons4": {
+  "cols": 1,
+  "rows": 1,
+  "size": 192,
+  "files": [
+   "assets/art/icons/storage.webp"
+  ]
+ },
+ "ui_popup": {
+  "cols": 2,
+  "rows": 2,
+  "frame": true,
+  "files": [
+   "assets/art/frames/banner_green.webp",
+   "assets/art/frames/banner_gold.webp",
+   "assets/art/frames/levelup_burst.webp",
+   "assets/art/frames/confetti.webp"
+  ]
+ },
+ "ui_onboard": {
+  "cols": 2,
+  "rows": 2,
+  "size": 256,
+  "files": [
+   "assets/art/icons/hand_point.webp",
+   "assets/art/icons/hand_press.webp",
+   "assets/art/icons/boost.webp",
+   "assets/art/icons/energy_jar.webp"
+  ]
+ },
+ "friends_sleep": {
+  "cols": 3,
+  "rows": 3,
+  "size": 512,
+  "files": [
+   "assets/art/friends/bori_sleep.webp",
+   "assets/art/friends/dubu_sleep.webp",
+   "assets/art/friends/kwak_sleep.webp",
+   "assets/art/friends/nabi_sleep.webp",
+   "assets/art/friends/dotori_sleep.webp",
+   "assets/art/friends/mochi_sleep.webp",
+   "assets/art/friends/danpung_sleep.webp",
+   "assets/art/friends/kongtteok_sleep.webp",
+   "assets/art/friends/visitor_sleep.webp"
+  ]
+ },
+ "friends_wave": {
+  "cols": 3,
+  "rows": 3,
+  "size": 512,
+  "files": [
+   "assets/art/friends/bori_wave.webp",
+   "assets/art/friends/dubu_wave.webp",
+   "assets/art/friends/kwak_wave.webp",
+   "assets/art/friends/nabi_wave.webp",
+   "assets/art/friends/dotori_wave.webp",
+   "assets/art/friends/mochi_wave.webp",
+   "assets/art/friends/danpung_wave.webp",
+   "assets/art/friends/kongtteok_wave.webp",
+   "assets/art/friends/visitor_wave.webp"
+  ]
+ },
+ "ui_icons5": {
+  "cols": 2,
+  "rows": 2,
+  "size": 192,
+  "files": [
+   "assets/art/icons/menu.webp",
+   "assets/art/icons/friends.webp",
+   "assets/art/icons/visit.webp",
+   "assets/art/icons/notice.webp"
+  ]
+ },
+ "bg_seaside": {
+  "bg": true,
+  "files": [
+   "assets/art/areas/seaside_bg.webp"
+  ]
+ },
+ "bg_snow_village": {
+  "bg": true,
+  "files": [
+   "assets/art/areas/snow_village_bg.webp"
+  ]
+ },
+ "decor_greenhouse_b": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/glasshouse_b.webp",
+   "assets/art/decor/cactus_b.webp",
+   "assets/art/decor/mushroom_bed_b.webp",
+   "assets/art/decor/watering_can_b.webp",
+   "assets/art/decor/sunflower_field_b.webp",
+   "assets/art/decor/tea_table_b.webp",
+   "assets/art/decor/bamboo_b.webp",
+   "assets/art/decor/wind_chime_b.webp"
+  ]
+ },
+ "decor_greenhouse_c": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/glasshouse_c.webp",
+   "assets/art/decor/cactus_c.webp",
+   "assets/art/decor/mushroom_bed_c.webp",
+   "assets/art/decor/watering_can_c.webp",
+   "assets/art/decor/sunflower_field_c.webp",
+   "assets/art/decor/tea_table_c.webp",
+   "assets/art/decor/bamboo_c.webp",
+   "assets/art/decor/wind_chime_c.webp"
+  ]
+ },
+ "decor_pond_b": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/stepping_stones_b.webp",
+   "assets/art/decor/water_lily_b.webp",
+   "assets/art/decor/fishing_spot_b.webp",
+   "assets/art/decor/rowboat_b.webp",
+   "assets/art/decor/reeds_b.webp",
+   "assets/art/decor/log_chair_b.webp",
+   "assets/art/decor/tent_b.webp",
+   "assets/art/decor/wooden_bridge_b.webp"
+  ]
+ },
+ "decor_pond_c": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/stepping_stones_c.webp",
+   "assets/art/decor/water_lily_c.webp",
+   "assets/art/decor/fishing_spot_c.webp",
+   "assets/art/decor/rowboat_c.webp",
+   "assets/art/decor/reeds_c.webp",
+   "assets/art/decor/log_chair_c.webp",
+   "assets/art/decor/tent_c.webp",
+   "assets/art/decor/wooden_bridge_c.webp"
+  ]
+ },
+ "decor_seaside": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/beach_hut.webp",
+   "assets/art/decor/parasol.webp",
+   "assets/art/decor/sandcastle.webp",
+   "assets/art/decor/lighthouse.webp",
+   "assets/art/decor/deck_chair.webp",
+   "assets/art/decor/shell_fountain.webp",
+   "assets/art/decor/surf_rack.webp",
+   "assets/art/decor/seagull_post.webp"
+  ]
+ },
+ "decor_snow_village": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/snowman.webp",
+   "assets/art/decor/igloo.webp",
+   "assets/art/decor/sled.webp",
+   "assets/art/decor/winter_tree.webp",
+   "assets/art/decor/cocoa_stand.webp",
+   "assets/art/decor/ice_rink.webp",
+   "assets/art/decor/snow_lantern.webp",
+   "assets/art/decor/chimney_cottage.webp"
+  ]
+ },
+ "decor_starry_b": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/telescope_b.webp",
+   "assets/art/decor/camp_tent_b.webp",
+   "assets/art/decor/campfire_b.webp",
+   "assets/art/decor/ferris_wheel_b.webp",
+   "assets/art/decor/carousel_b.webp",
+   "assets/art/decor/moon_statue_b.webp",
+   "assets/art/decor/little_castle_b.webp",
+   "assets/art/decor/fireworks_b.webp"
+  ]
+ },
+ "decor_starry_c": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/telescope_c.webp",
+   "assets/art/decor/camp_tent_c.webp",
+   "assets/art/decor/campfire_c.webp",
+   "assets/art/decor/ferris_wheel_c.webp",
+   "assets/art/decor/carousel_c.webp",
+   "assets/art/decor/moon_statue_c.webp",
+   "assets/art/decor/little_castle_c.webp",
+   "assets/art/decor/fireworks_c.webp"
+  ]
+ },
+ "decor_yard_b": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/big_tree_b.webp",
+   "assets/art/decor/bench_b.webp",
+   "assets/art/decor/mailbox_b.webp",
+   "assets/art/decor/veggie_patch_b.webp",
+   "assets/art/decor/lantern_b.webp",
+   "assets/art/decor/bird_feeder_b.webp",
+   "assets/art/decor/hut_b.webp",
+   "assets/art/decor/fountain_b.webp"
+  ]
+ },
+ "decor_yard_c": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/big_tree_c.webp",
+   "assets/art/decor/bench_c.webp",
+   "assets/art/decor/mailbox_c.webp",
+   "assets/art/decor/veggie_patch_c.webp",
+   "assets/art/decor/lantern_c.webp",
+   "assets/art/decor/bird_feeder_c.webp",
+   "assets/art/decor/hut_c.webp",
+   "assets/art/decor/fountain_c.webp"
+  ]
+ },
+ "friends_new": {
+  "cols": 4,
+  "rows": 2,
+  "size": 512,
+  "files": [
+   "assets/art/friends/bogeul_idle.webp",
+   "assets/art/friends/bogeul_happy.webp",
+   "assets/art/friends/bogeul_sleep.webp",
+   "assets/art/friends/bogeul_wave.webp",
+   "assets/art/friends/pposong_idle.webp",
+   "assets/art/friends/pposong_happy.webp",
+   "assets/art/friends/pposong_sleep.webp",
+   "assets/art/friends/pposong_wave.webp"
+  ]
+ },
+ "items_stardust": {
+  "cols": 5,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/items/stardust_01.webp",
+   "assets/art/items/stardust_02.webp",
+   "assets/art/items/stardust_03.webp",
+   "assets/art/items/stardust_04.webp",
+   "assets/art/items/stardust_05.webp",
+   "assets/art/items/stardust_06.webp",
+   "assets/art/items/stardust_07.webp",
+   "assets/art/items/stardust_08.webp",
+   "assets/art/items/stardust_09.webp",
+   "assets/art/items/stardust_10.webp"
+  ]
+ },
+ "items_tea": {
+  "cols": 5,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/items/tea_01.webp",
+   "assets/art/items/tea_02.webp",
+   "assets/art/items/tea_03.webp",
+   "assets/art/items/tea_04.webp",
+   "assets/art/items/tea_05.webp",
+   "assets/art/items/tea_06.webp",
+   "assets/art/items/tea_07.webp",
+   "assets/art/items/tea_08.webp",
+   "assets/art/items/tea_09.webp",
+   "assets/art/items/tea_10.webp"
+  ]
+ },
+ "ui_shop": {
+  "cols": 4,
+  "rows": 3,
+  "size": 192,
+  "files": [
+   "assets/art/icons/diamond.webp",
+   "assets/art/icons/dia_1.webp",
+   "assets/art/icons/dia_2.webp",
+   "assets/art/icons/dia_3.webp",
+   "assets/art/icons/dia_4.webp",
+   "assets/art/icons/dia_5.webp",
+   "assets/art/icons/shop.webp",
+   "assets/art/icons/calendar.webp",
+   "assets/art/icons/swap.webp",
+   "assets/art/icons/tea_basket.webp",
+   "assets/art/icons/star_jar.webp",
+   "assets/art/icons/outfit.webp"
+  ]
+ },
+ "decor_seaside_b": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/beach_hut_b.webp",
+   "assets/art/decor/parasol_b.webp",
+   "assets/art/decor/sandcastle_b.webp",
+   "assets/art/decor/lighthouse_b.webp",
+   "assets/art/decor/deck_chair_b.webp",
+   "assets/art/decor/shell_fountain_b.webp",
+   "assets/art/decor/surf_rack_b.webp",
+   "assets/art/decor/seagull_post_b.webp"
+  ]
+ },
+ "decor_seaside_c": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/beach_hut_c.webp",
+   "assets/art/decor/parasol_c.webp",
+   "assets/art/decor/sandcastle_c.webp",
+   "assets/art/decor/lighthouse_c.webp",
+   "assets/art/decor/deck_chair_c.webp",
+   "assets/art/decor/shell_fountain_c.webp",
+   "assets/art/decor/surf_rack_c.webp",
+   "assets/art/decor/seagull_post_c.webp"
+  ]
+ },
+ "decor_snow_village_b": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/snowman_b.webp",
+   "assets/art/decor/igloo_b.webp",
+   "assets/art/decor/sled_b.webp",
+   "assets/art/decor/winter_tree_b.webp",
+   "assets/art/decor/cocoa_stand_b.webp",
+   "assets/art/decor/ice_rink_b.webp",
+   "assets/art/decor/snow_lantern_b.webp",
+   "assets/art/decor/chimney_cottage_b.webp"
+  ]
+ },
+ "decor_snow_village_c": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/snowman_c.webp",
+   "assets/art/decor/igloo_c.webp",
+   "assets/art/decor/sled_c.webp",
+   "assets/art/decor/winter_tree_c.webp",
+   "assets/art/decor/cocoa_stand_c.webp",
+   "assets/art/decor/ice_rink_c.webp",
+   "assets/art/decor/snow_lantern_c.webp",
+   "assets/art/decor/chimney_cottage_c.webp"
+  ]
+ },
+ "ui_icons6": {
+  "cols": 2,
+  "rows": 1,
+  "size": 192,
+  "files": [
+   "assets/art/icons/area_seaside.webp",
+   "assets/art/icons/area_snow_village.webp"
+  ]
+ },
+ "outfit_picnic_bori": {
+  "cols": 4,
+  "rows": 1,
+  "size": 512,
+  "files": [
+   "assets/art/friends/bori_picnic_idle.webp",
+   "assets/art/friends/bori_picnic_happy.webp",
+   "assets/art/friends/bori_picnic_sleep.webp",
+   "assets/art/friends/bori_picnic_wave.webp"
+  ]
+ },
+ "outfit_picnic_dubu": {
+  "cols": 4,
+  "rows": 1,
+  "size": 512,
+  "files": [
+   "assets/art/friends/dubu_picnic_idle.webp",
+   "assets/art/friends/dubu_picnic_happy.webp",
+   "assets/art/friends/dubu_picnic_sleep.webp",
+   "assets/art/friends/dubu_picnic_wave.webp"
+  ]
+ },
+ "outfit_picnic_kwak": {
+  "cols": 4,
+  "rows": 1,
+  "size": 512,
+  "files": [
+   "assets/art/friends/kwak_picnic_idle.webp",
+   "assets/art/friends/kwak_picnic_happy.webp",
+   "assets/art/friends/kwak_picnic_sleep.webp",
+   "assets/art/friends/kwak_picnic_wave.webp"
+  ]
+ },
+ "outfit_picnic_nabi": {
+  "cols": 4,
+  "rows": 1,
+  "size": 512,
+  "files": [
+   "assets/art/friends/nabi_picnic_idle.webp",
+   "assets/art/friends/nabi_picnic_happy.webp",
+   "assets/art/friends/nabi_picnic_sleep.webp",
+   "assets/art/friends/nabi_picnic_wave.webp"
+  ]
+ },
+ "outfit_picnic_dotori": {
+  "cols": 4,
+  "rows": 1,
+  "size": 512,
+  "files": [
+   "assets/art/friends/dotori_picnic_idle.webp",
+   "assets/art/friends/dotori_picnic_happy.webp",
+   "assets/art/friends/dotori_picnic_sleep.webp",
+   "assets/art/friends/dotori_picnic_wave.webp"
+  ]
+ },
+ "outfit_picnic_mochi": {
+  "cols": 4,
+  "rows": 1,
+  "size": 512,
+  "files": [
+   "assets/art/friends/mochi_picnic_idle.webp",
+   "assets/art/friends/mochi_picnic_happy.webp",
+   "assets/art/friends/mochi_picnic_sleep.webp",
+   "assets/art/friends/mochi_picnic_wave.webp"
+  ]
+ },
+ "outfit_picnic_danpung": {
+  "cols": 4,
+  "rows": 1,
+  "size": 512,
+  "files": [
+   "assets/art/friends/danpung_picnic_idle.webp",
+   "assets/art/friends/danpung_picnic_happy.webp",
+   "assets/art/friends/danpung_picnic_sleep.webp",
+   "assets/art/friends/danpung_picnic_wave.webp"
+  ]
+ },
+ "outfit_picnic_kongtteok": {
+  "cols": 4,
+  "rows": 1,
+  "size": 512,
+  "files": [
+   "assets/art/friends/kongtteok_picnic_idle.webp",
+   "assets/art/friends/kongtteok_picnic_happy.webp",
+   "assets/art/friends/kongtteok_picnic_sleep.webp",
+   "assets/art/friends/kongtteok_picnic_wave.webp"
+  ]
+ },
+ "outfit_picnic_bogeul": {
+  "cols": 4,
+  "rows": 1,
+  "size": 512,
+  "files": [
+   "assets/art/friends/bogeul_picnic_idle.webp",
+   "assets/art/friends/bogeul_picnic_happy.webp",
+   "assets/art/friends/bogeul_picnic_sleep.webp",
+   "assets/art/friends/bogeul_picnic_wave.webp"
+  ]
+ },
+ "outfit_picnic_pposong": {
+  "cols": 4,
+  "rows": 1,
+  "size": 512,
+  "files": [
+   "assets/art/friends/pposong_picnic_idle.webp",
+   "assets/art/friends/pposong_picnic_happy.webp",
+   "assets/art/friends/pposong_picnic_sleep.webp",
+   "assets/art/friends/pposong_picnic_wave.webp"
+  ]
+ },
+ "title_logo_ko": {
+  "cutout": true,
+  "size": 1200,
+  "files": [
+   "assets/art/title/logo_ko.webp"
+  ]
+ },
+ "title_logo_en": {
+  "cutout": true,
+  "size": 1200,
+  "files": [
+   "assets/art/title/logo_en.webp"
+  ]
+ },
+ "title_logo_ja": {
+  "cutout": true,
+  "size": 1200,
+  "files": [
+   "assets/art/title/logo_ja.webp"
+  ]
+ },
+ "title_bg": {
+  "bg": true,
+  "bgSize": [
+   1080,
+   1920
+  ],
+  "files": [
+   "assets/art/title/bg.webp"
+  ]
+ },
+ "title_fg": {
+  "cutout": true,
+  "size": 1080,
+  "files": [
+   "assets/art/title/fg.webp"
+  ]
+ },
+ "outfit_starlight_bori": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/bori_starlight_idle.webp",
+   "assets/art/friends/bori_starlight_happy.webp",
+   "assets/art/friends/bori_starlight_sleep.webp",
+   "assets/art/friends/bori_starlight_wave.webp"
+  ]
+ },
+ "outfit_winter_bori": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/bori_winter_idle.webp",
+   "assets/art/friends/bori_winter_happy.webp",
+   "assets/art/friends/bori_winter_sleep.webp",
+   "assets/art/friends/bori_winter_wave.webp"
+  ]
+ },
+ "outfit_winter_dubu": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/dubu_winter_idle.webp",
+   "assets/art/friends/dubu_winter_happy.webp",
+   "assets/art/friends/dubu_winter_sleep.webp",
+   "assets/art/friends/dubu_winter_wave.webp"
+  ]
+ },
+ "outfit_winter_kwak": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/kwak_winter_idle.webp",
+   "assets/art/friends/kwak_winter_happy.webp",
+   "assets/art/friends/kwak_winter_sleep.webp",
+   "assets/art/friends/kwak_winter_wave.webp"
+  ]
+ },
+ "outfit_winter_nabi": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/nabi_winter_idle.webp",
+   "assets/art/friends/nabi_winter_happy.webp",
+   "assets/art/friends/nabi_winter_sleep.webp",
+   "assets/art/friends/nabi_winter_wave.webp"
+  ]
+ },
+ "outfit_winter_dotori": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/dotori_winter_idle.webp",
+   "assets/art/friends/dotori_winter_happy.webp",
+   "assets/art/friends/dotori_winter_sleep.webp",
+   "assets/art/friends/dotori_winter_wave.webp"
+  ]
+ },
+ "outfit_winter_mochi": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/mochi_winter_idle.webp",
+   "assets/art/friends/mochi_winter_happy.webp",
+   "assets/art/friends/mochi_winter_sleep.webp",
+   "assets/art/friends/mochi_winter_wave.webp"
+  ]
+ },
+ "outfit_winter_danpung": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/danpung_winter_idle.webp",
+   "assets/art/friends/danpung_winter_happy.webp",
+   "assets/art/friends/danpung_winter_sleep.webp",
+   "assets/art/friends/danpung_winter_wave.webp"
+  ]
+ },
+ "outfit_winter_kongtteok": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/kongtteok_winter_idle.webp",
+   "assets/art/friends/kongtteok_winter_happy.webp",
+   "assets/art/friends/kongtteok_winter_sleep.webp",
+   "assets/art/friends/kongtteok_winter_wave.webp"
+  ]
+ },
+ "outfit_winter_bogeul": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/bogeul_winter_idle.webp",
+   "assets/art/friends/bogeul_winter_happy.webp",
+   "assets/art/friends/bogeul_winter_sleep.webp",
+   "assets/art/friends/bogeul_winter_wave.webp"
+  ]
+ },
+ "outfit_winter_pposong": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/pposong_winter_idle.webp",
+   "assets/art/friends/pposong_winter_happy.webp",
+   "assets/art/friends/pposong_winter_sleep.webp",
+   "assets/art/friends/pposong_winter_wave.webp"
+  ]
+ },
+ "outfit_summer_bori": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/bori_summer_idle.webp",
+   "assets/art/friends/bori_summer_happy.webp",
+   "assets/art/friends/bori_summer_sleep.webp",
+   "assets/art/friends/bori_summer_wave.webp"
+  ]
+ },
+ "outfit_summer_dubu": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/dubu_summer_idle.webp",
+   "assets/art/friends/dubu_summer_happy.webp",
+   "assets/art/friends/dubu_summer_sleep.webp",
+   "assets/art/friends/dubu_summer_wave.webp"
+  ]
+ },
+ "outfit_summer_kwak": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/kwak_summer_idle.webp",
+   "assets/art/friends/kwak_summer_happy.webp",
+   "assets/art/friends/kwak_summer_sleep.webp",
+   "assets/art/friends/kwak_summer_wave.webp"
+  ]
+ },
+ "outfit_summer_nabi": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/nabi_summer_idle.webp",
+   "assets/art/friends/nabi_summer_happy.webp",
+   "assets/art/friends/nabi_summer_sleep.webp",
+   "assets/art/friends/nabi_summer_wave.webp"
+  ]
+ },
+ "outfit_summer_dotori": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/dotori_summer_idle.webp",
+   "assets/art/friends/dotori_summer_happy.webp",
+   "assets/art/friends/dotori_summer_sleep.webp",
+   "assets/art/friends/dotori_summer_wave.webp"
+  ]
+ },
+ "outfit_summer_mochi": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/mochi_summer_idle.webp",
+   "assets/art/friends/mochi_summer_happy.webp",
+   "assets/art/friends/mochi_summer_sleep.webp",
+   "assets/art/friends/mochi_summer_wave.webp"
+  ]
+ },
+ "outfit_summer_danpung": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/danpung_summer_idle.webp",
+   "assets/art/friends/danpung_summer_happy.webp",
+   "assets/art/friends/danpung_summer_sleep.webp",
+   "assets/art/friends/danpung_summer_wave.webp"
+  ]
+ },
+ "outfit_summer_kongtteok": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/kongtteok_summer_idle.webp",
+   "assets/art/friends/kongtteok_summer_happy.webp",
+   "assets/art/friends/kongtteok_summer_sleep.webp",
+   "assets/art/friends/kongtteok_summer_wave.webp"
+  ]
+ },
+ "outfit_summer_bogeul": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/bogeul_summer_idle.webp",
+   "assets/art/friends/bogeul_summer_happy.webp",
+   "assets/art/friends/bogeul_summer_sleep.webp",
+   "assets/art/friends/bogeul_summer_wave.webp"
+  ]
+ },
+ "outfit_summer_pposong": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/pposong_summer_idle.webp",
+   "assets/art/friends/pposong_summer_happy.webp",
+   "assets/art/friends/pposong_summer_sleep.webp",
+   "assets/art/friends/pposong_summer_wave.webp"
+  ]
+ },
+ "outfit_autumn_bori": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/bori_autumn_idle.webp",
+   "assets/art/friends/bori_autumn_happy.webp",
+   "assets/art/friends/bori_autumn_sleep.webp",
+   "assets/art/friends/bori_autumn_wave.webp"
+  ]
+ },
+ "outfit_autumn_dubu": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/dubu_autumn_idle.webp",
+   "assets/art/friends/dubu_autumn_happy.webp",
+   "assets/art/friends/dubu_autumn_sleep.webp",
+   "assets/art/friends/dubu_autumn_wave.webp"
+  ]
+ },
+ "outfit_autumn_kwak": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/kwak_autumn_idle.webp",
+   "assets/art/friends/kwak_autumn_happy.webp",
+   "assets/art/friends/kwak_autumn_sleep.webp",
+   "assets/art/friends/kwak_autumn_wave.webp"
+  ]
+ },
+ "outfit_autumn_nabi": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/nabi_autumn_idle.webp",
+   "assets/art/friends/nabi_autumn_happy.webp",
+   "assets/art/friends/nabi_autumn_sleep.webp",
+   "assets/art/friends/nabi_autumn_wave.webp"
+  ]
+ },
+ "outfit_autumn_dotori": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/dotori_autumn_idle.webp",
+   "assets/art/friends/dotori_autumn_happy.webp",
+   "assets/art/friends/dotori_autumn_sleep.webp",
+   "assets/art/friends/dotori_autumn_wave.webp"
+  ]
+ },
+ "outfit_autumn_mochi": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/mochi_autumn_idle.webp",
+   "assets/art/friends/mochi_autumn_happy.webp",
+   "assets/art/friends/mochi_autumn_sleep.webp",
+   "assets/art/friends/mochi_autumn_wave.webp"
+  ]
+ },
+ "outfit_autumn_danpung": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/danpung_autumn_idle.webp",
+   "assets/art/friends/danpung_autumn_happy.webp",
+   "assets/art/friends/danpung_autumn_sleep.webp",
+   "assets/art/friends/danpung_autumn_wave.webp"
+  ]
+ },
+ "outfit_autumn_kongtteok": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/kongtteok_autumn_idle.webp",
+   "assets/art/friends/kongtteok_autumn_happy.webp",
+   "assets/art/friends/kongtteok_autumn_sleep.webp",
+   "assets/art/friends/kongtteok_autumn_wave.webp"
+  ]
+ },
+ "outfit_autumn_bogeul": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/bogeul_autumn_idle.webp",
+   "assets/art/friends/bogeul_autumn_happy.webp",
+   "assets/art/friends/bogeul_autumn_sleep.webp",
+   "assets/art/friends/bogeul_autumn_wave.webp"
+  ]
+ },
+ "outfit_autumn_pposong": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/pposong_autumn_idle.webp",
+   "assets/art/friends/pposong_autumn_happy.webp",
+   "assets/art/friends/pposong_autumn_sleep.webp",
+   "assets/art/friends/pposong_autumn_wave.webp"
+  ]
+ },
+ "decor_yard_winter": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/big_tree_winter.webp",
+   "assets/art/decor/bench_winter.webp",
+   "assets/art/decor/mailbox_winter.webp",
+   "assets/art/decor/veggie_patch_winter.webp",
+   "assets/art/decor/lantern_winter.webp",
+   "assets/art/decor/bird_feeder_winter.webp",
+   "assets/art/decor/hut_winter.webp",
+   "assets/art/decor/fountain_winter.webp"
+  ]
+ },
+ "decor_pond_winter": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/stepping_stones_winter.webp",
+   "assets/art/decor/water_lily_winter.webp",
+   "assets/art/decor/fishing_spot_winter.webp",
+   "assets/art/decor/rowboat_winter.webp",
+   "assets/art/decor/reeds_winter.webp",
+   "assets/art/decor/log_chair_winter.webp",
+   "assets/art/decor/tent_winter.webp",
+   "assets/art/decor/wooden_bridge_winter.webp"
+  ]
+ },
+ "decor_greenhouse_winter": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/glasshouse_winter.webp",
+   "assets/art/decor/cactus_winter.webp",
+   "assets/art/decor/mushroom_bed_winter.webp",
+   "assets/art/decor/watering_can_winter.webp",
+   "assets/art/decor/sunflower_field_winter.webp",
+   "assets/art/decor/tea_table_winter.webp",
+   "assets/art/decor/bamboo_winter.webp",
+   "assets/art/decor/wind_chime_winter.webp"
+  ]
+ },
+ "decor_starry_winter": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/telescope_winter.webp",
+   "assets/art/decor/camp_tent_winter.webp",
+   "assets/art/decor/campfire_winter.webp",
+   "assets/art/decor/ferris_wheel_winter.webp",
+   "assets/art/decor/carousel_winter.webp",
+   "assets/art/decor/moon_statue_winter.webp",
+   "assets/art/decor/little_castle_winter.webp",
+   "assets/art/decor/fireworks_winter.webp"
+  ]
+ },
+ "decor_seaside_winter": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/beach_hut_winter.webp",
+   "assets/art/decor/parasol_winter.webp",
+   "assets/art/decor/sandcastle_winter.webp",
+   "assets/art/decor/lighthouse_winter.webp",
+   "assets/art/decor/deck_chair_winter.webp",
+   "assets/art/decor/shell_fountain_winter.webp",
+   "assets/art/decor/surf_rack_winter.webp",
+   "assets/art/decor/seagull_post_winter.webp"
+  ]
+ },
+ "decor_snow_village_winter": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/snowman_winter.webp",
+   "assets/art/decor/igloo_winter.webp",
+   "assets/art/decor/sled_winter.webp",
+   "assets/art/decor/winter_tree_winter.webp",
+   "assets/art/decor/cocoa_stand_winter.webp",
+   "assets/art/decor/ice_rink_winter.webp",
+   "assets/art/decor/snow_lantern_winter.webp",
+   "assets/art/decor/chimney_cottage_winter.webp"
+  ]
+ },
+ "decor_yard_spring": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/big_tree_spring.webp",
+   "assets/art/decor/bench_spring.webp",
+   "assets/art/decor/mailbox_spring.webp",
+   "assets/art/decor/veggie_patch_spring.webp",
+   "assets/art/decor/lantern_spring.webp",
+   "assets/art/decor/bird_feeder_spring.webp",
+   "assets/art/decor/hut_spring.webp",
+   "assets/art/decor/fountain_spring.webp"
+  ]
+ },
+ "decor_pond_spring": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/stepping_stones_spring.webp",
+   "assets/art/decor/water_lily_spring.webp",
+   "assets/art/decor/fishing_spot_spring.webp",
+   "assets/art/decor/rowboat_spring.webp",
+   "assets/art/decor/reeds_spring.webp",
+   "assets/art/decor/log_chair_spring.webp",
+   "assets/art/decor/tent_spring.webp",
+   "assets/art/decor/wooden_bridge_spring.webp"
+  ]
+ },
+ "decor_greenhouse_spring": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/glasshouse_spring.webp",
+   "assets/art/decor/cactus_spring.webp",
+   "assets/art/decor/mushroom_bed_spring.webp",
+   "assets/art/decor/watering_can_spring.webp",
+   "assets/art/decor/sunflower_field_spring.webp",
+   "assets/art/decor/tea_table_spring.webp",
+   "assets/art/decor/bamboo_spring.webp",
+   "assets/art/decor/wind_chime_spring.webp"
+  ]
+ },
+ "decor_starry_spring": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/telescope_spring.webp",
+   "assets/art/decor/camp_tent_spring.webp",
+   "assets/art/decor/campfire_spring.webp",
+   "assets/art/decor/ferris_wheel_spring.webp",
+   "assets/art/decor/carousel_spring.webp",
+   "assets/art/decor/moon_statue_spring.webp",
+   "assets/art/decor/little_castle_spring.webp",
+   "assets/art/decor/fireworks_spring.webp"
+  ]
+ },
+ "decor_seaside_spring": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/beach_hut_spring.webp",
+   "assets/art/decor/parasol_spring.webp",
+   "assets/art/decor/sandcastle_spring.webp",
+   "assets/art/decor/lighthouse_spring.webp",
+   "assets/art/decor/deck_chair_spring.webp",
+   "assets/art/decor/shell_fountain_spring.webp",
+   "assets/art/decor/surf_rack_spring.webp",
+   "assets/art/decor/seagull_post_spring.webp"
+  ]
+ },
+ "decor_snow_village_spring": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/snowman_spring.webp",
+   "assets/art/decor/igloo_spring.webp",
+   "assets/art/decor/sled_spring.webp",
+   "assets/art/decor/winter_tree_spring.webp",
+   "assets/art/decor/cocoa_stand_spring.webp",
+   "assets/art/decor/ice_rink_spring.webp",
+   "assets/art/decor/snow_lantern_spring.webp",
+   "assets/art/decor/chimney_cottage_spring.webp"
+  ]
+ },
+ "decor_yard_summer": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/big_tree_summer.webp",
+   "assets/art/decor/bench_summer.webp",
+   "assets/art/decor/mailbox_summer.webp",
+   "assets/art/decor/veggie_patch_summer.webp",
+   "assets/art/decor/lantern_summer.webp",
+   "assets/art/decor/bird_feeder_summer.webp",
+   "assets/art/decor/hut_summer.webp",
+   "assets/art/decor/fountain_summer.webp"
+  ]
+ },
+ "decor_pond_summer": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/stepping_stones_summer.webp",
+   "assets/art/decor/water_lily_summer.webp",
+   "assets/art/decor/fishing_spot_summer.webp",
+   "assets/art/decor/rowboat_summer.webp",
+   "assets/art/decor/reeds_summer.webp",
+   "assets/art/decor/log_chair_summer.webp",
+   "assets/art/decor/tent_summer.webp",
+   "assets/art/decor/wooden_bridge_summer.webp"
+  ]
+ },
+ "decor_greenhouse_summer": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/glasshouse_summer.webp",
+   "assets/art/decor/cactus_summer.webp",
+   "assets/art/decor/mushroom_bed_summer.webp",
+   "assets/art/decor/watering_can_summer.webp",
+   "assets/art/decor/sunflower_field_summer.webp",
+   "assets/art/decor/tea_table_summer.webp",
+   "assets/art/decor/bamboo_summer.webp",
+   "assets/art/decor/wind_chime_summer.webp"
+  ]
+ },
+ "decor_starry_summer": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/telescope_summer.webp",
+   "assets/art/decor/camp_tent_summer.webp",
+   "assets/art/decor/campfire_summer.webp",
+   "assets/art/decor/ferris_wheel_summer.webp",
+   "assets/art/decor/carousel_summer.webp",
+   "assets/art/decor/moon_statue_summer.webp",
+   "assets/art/decor/little_castle_summer.webp",
+   "assets/art/decor/fireworks_summer.webp"
+  ]
+ },
+ "decor_seaside_summer": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/beach_hut_summer.webp",
+   "assets/art/decor/parasol_summer.webp",
+   "assets/art/decor/sandcastle_summer.webp",
+   "assets/art/decor/lighthouse_summer.webp",
+   "assets/art/decor/deck_chair_summer.webp",
+   "assets/art/decor/shell_fountain_summer.webp",
+   "assets/art/decor/surf_rack_summer.webp",
+   "assets/art/decor/seagull_post_summer.webp"
+  ]
+ },
+ "decor_snow_village_summer": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/snowman_summer.webp",
+   "assets/art/decor/igloo_summer.webp",
+   "assets/art/decor/sled_summer.webp",
+   "assets/art/decor/winter_tree_summer.webp",
+   "assets/art/decor/cocoa_stand_summer.webp",
+   "assets/art/decor/ice_rink_summer.webp",
+   "assets/art/decor/snow_lantern_summer.webp",
+   "assets/art/decor/chimney_cottage_summer.webp"
+  ]
+ },
+ "decor_yard_autumn": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/big_tree_autumn.webp",
+   "assets/art/decor/bench_autumn.webp",
+   "assets/art/decor/mailbox_autumn.webp",
+   "assets/art/decor/veggie_patch_autumn.webp",
+   "assets/art/decor/lantern_autumn.webp",
+   "assets/art/decor/bird_feeder_autumn.webp",
+   "assets/art/decor/hut_autumn.webp",
+   "assets/art/decor/fountain_autumn.webp"
+  ]
+ },
+ "decor_pond_autumn": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/stepping_stones_autumn.webp",
+   "assets/art/decor/water_lily_autumn.webp",
+   "assets/art/decor/fishing_spot_autumn.webp",
+   "assets/art/decor/rowboat_autumn.webp",
+   "assets/art/decor/reeds_autumn.webp",
+   "assets/art/decor/log_chair_autumn.webp",
+   "assets/art/decor/tent_autumn.webp",
+   "assets/art/decor/wooden_bridge_autumn.webp"
+  ]
+ },
+ "decor_greenhouse_autumn": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/glasshouse_autumn.webp",
+   "assets/art/decor/cactus_autumn.webp",
+   "assets/art/decor/mushroom_bed_autumn.webp",
+   "assets/art/decor/watering_can_autumn.webp",
+   "assets/art/decor/sunflower_field_autumn.webp",
+   "assets/art/decor/tea_table_autumn.webp",
+   "assets/art/decor/bamboo_autumn.webp",
+   "assets/art/decor/wind_chime_autumn.webp"
+  ]
+ },
+ "decor_starry_autumn": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/telescope_autumn.webp",
+   "assets/art/decor/camp_tent_autumn.webp",
+   "assets/art/decor/campfire_autumn.webp",
+   "assets/art/decor/ferris_wheel_autumn.webp",
+   "assets/art/decor/carousel_autumn.webp",
+   "assets/art/decor/moon_statue_autumn.webp",
+   "assets/art/decor/little_castle_autumn.webp",
+   "assets/art/decor/fireworks_autumn.webp"
+  ]
+ },
+ "decor_seaside_autumn": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/beach_hut_autumn.webp",
+   "assets/art/decor/parasol_autumn.webp",
+   "assets/art/decor/sandcastle_autumn.webp",
+   "assets/art/decor/lighthouse_autumn.webp",
+   "assets/art/decor/deck_chair_autumn.webp",
+   "assets/art/decor/shell_fountain_autumn.webp",
+   "assets/art/decor/surf_rack_autumn.webp",
+   "assets/art/decor/seagull_post_autumn.webp"
+  ]
+ },
+ "decor_snow_village_autumn": {
+  "cols": 4,
+  "rows": 2,
+  "size": 384,
+  "files": [
+   "assets/art/decor/snowman_autumn.webp",
+   "assets/art/decor/igloo_autumn.webp",
+   "assets/art/decor/sled_autumn.webp",
+   "assets/art/decor/winter_tree_autumn.webp",
+   "assets/art/decor/cocoa_stand_autumn.webp",
+   "assets/art/decor/ice_rink_autumn.webp",
+   "assets/art/decor/snow_lantern_autumn.webp",
+   "assets/art/decor/chimney_cottage_autumn.webp"
+  ]
+ },
+ "outfit_onsen_bori": {
+  "cols": 4,
+  "rows": 1,
+  "files": [
+   "assets/art/friends/bori_onsen_idle.webp",
+   "assets/art/friends/bori_onsen_happy.webp",
+   "assets/art/friends/bori_onsen_sleep.webp",
+   "assets/art/friends/bori_onsen_wave.webp"
+  ],
+  "size": 512
+ },
+ "souvenir_onsen": {
+  "cols": 1,
+  "rows": 1,
+  "size": 384,
+  "files": [
+   "assets/art/souvenirs/onsen.webp"
+  ]
+ },
+ "event_icons": {
+  "cols": 3,
+  "rows": 3,
+  "size": 192,
+  "files": [
+   "assets/art/icons/event_pass.webp",
+   "assets/art/icons/event_quest.webp",
+   "assets/art/icons/event_gold_lock.webp",
+   "assets/art/icons/event_crown.webp",
+   "assets/art/icons/event_sprout.webp",
+   "assets/art/icons/event_claim_all.webp",
+   "assets/art/icons/event_souvenir_shelf.webp",
+   "assets/art/icons/event_flag.webp",
+   "assets/art/icons/event_calendar.webp"
+  ]
+ },
+ "banner_onsen": {
+  "bg": true,
+  "bgSize": [
+   1200,
+   600
+  ],
+  "files": [
+   "assets/art/events/onsen_banner.webp"
+  ]
+ }
 }

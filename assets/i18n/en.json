@@ -1310,10 +1310,10 @@
   "msOffer.left": "Gone in {time}",
   "msOffer.level": "For reaching Lv.{n}",
   "msOffer.area": "For opening a new area",
-  "shop.specialSet": "{area} special design set",
+  "shop.specialSet": "{area} Special Set!",
   "shop.setNote": "All {n} remaining spots",
   "shop.setOff": "25% off",
-  "shop.outfitSet": "{name} outfit set",
+  "shop.outfitSet": "{name} Outfit Set!",
   "shop.outfitSetNote": "For all {n} friends",
   "menu.event": "Monthly Event",
   "event.name.onsen": "Snowy Hot Spring Tea Party",
@@ -1341,5 +1341,9 @@
   "event.passTrack": "Pass",
   "event.badge": "Finisher badge",
   "event.stepUp": "Event step {n} reached!",
-  "event.stepSub": "Claim rewards in Gifts → Monthly Event"
+  "event.stepSub": "Claim rewards in Gifts → Monthly Event",
+  "outfit.onsen": "Fluffy Spa Robe",
+  "outfit.cocoa": "Chocolatier Apron",
+  "outfit.bloom": "Spring Bonnet Dress",
+  "piggy.breakAt": "Break at {n}"
 }

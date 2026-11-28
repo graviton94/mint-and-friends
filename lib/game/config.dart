@@ -1405,6 +1405,10 @@ class Outfits {
     OutfitDef('autumn', 120, months: [9, 10, 11]),
     OutfitDef('winter', 120, months: [12, 1, 2]),
     OutfitDef('starlight', -1),
+    // 월간 이벤트 패스 최종 보상 (D-112, 팔지 않음)
+    OutfitDef('onsen', -1),
+    OutfitDef('cocoa', -1),
+    OutfitDef('bloom', -1),
   ];
   static OutfitDef? byId(String id) => all.where((o) => o.id == id).firstOrNull;
 }

@@ -1310,10 +1310,10 @@
   "msOffer.left": "あと{time}で終了",
   "msOffer.level": "レベル{n}達成記念",
   "msOffer.area": "新エリアオープン記念",
-  "shop.specialSet": "{area} 特別デザインセット",
+  "shop.specialSet": "{area} 特別セット！",
   "shop.setNote": "残り{n}か所をまとめて",
   "shop.setOff": "25%オフ",
-  "shop.outfitSet": "{name} 衣装セット",
+  "shop.outfitSet": "{name} 衣装セット！",
   "shop.outfitSetNote": "友だち{n}人ぶん",
   "menu.event": "今月のイベント",
   "event.name.onsen": "雪の温泉お茶会",
@@ -1341,5 +1341,9 @@
   "event.passTrack": "パス",
   "event.badge": "完走バッジ",
   "event.stepUp": "イベント{n}マス達成！",
-  "event.stepSub": "ギフト → 今月のイベントで受け取ってね"
+  "event.stepSub": "ギフト → 今月のイベントで受け取ってね",
+  "outfit.onsen": "ふわふわ温泉ガウン",
+  "outfit.cocoa": "ショコラティエのエプロン",
+  "outfit.bloom": "春花ボンネットドレス",
+  "piggy.breakAt": "{n}から割れる"
 }

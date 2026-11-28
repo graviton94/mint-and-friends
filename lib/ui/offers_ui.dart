@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:material_ui/material_ui.dart';
 
 import '../art/art.dart';
@@ -43,8 +45,8 @@ class OfferCard extends StatelessWidget {
   /// 오른쪽 위 딱지 (예: '2배 가치').
   final String? tag;
 
-  /// 저금통처럼 차오르는 막대 (값 0~1, 깰 수 있는 자리 0~1).
-  final (double, double)? progress;
+  /// 저금통처럼 차오르는 막대 (받는 것 칸 대신).
+  final Widget? progress;
   final bool enabled;
   final String? disabledLabel;
   final List<Color> colors;
@@ -126,35 +128,33 @@ class OfferCard extends StatelessWidget {
                 style: const TextStyle(fontSize: 14, color: Color(0xFFC0442C)),
               ),
             ),
-          if (progress != null) ...[
-            const SizedBox(height: 8),
-            _PiggyBar(value: progress!.$1, mark: progress!.$2),
-          ],
-          const SizedBox(height: 8),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              for (final t in items)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
+          if (progress != null) ...[const SizedBox(height: 10), progress!],
+          if (items.isNotEmpty) const SizedBox(height: 8),
+          if (items.isNotEmpty)
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final t in items)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE8D2AE)),
+                    ),
+                    child: IconText(
+                      t,
+                      maxLines: 1,
+                      style: const TextStyle(fontSize: 15),
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFE8D2AE)),
-                  ),
-                  child: IconText(
-                    t,
-                    maxLines: 1,
-                    style: const TextStyle(fontSize: 15),
-                  ),
-                ),
-            ],
-          ),
+              ],
+            ),
           const SizedBox(height: 10),
           FilledButton(
             style: framedButton(
@@ -181,52 +181,136 @@ class OfferCard extends StatelessWidget {
   }
 }
 
-/// 저금통 막대: 차오른 만큼 + 깰 수 있는 자리 표시.
+/// 저금통 막대 (D-113): 둥근 홈 막대 그림 안에 파란 다이아 물이 차오르고, 가운데에 모은 수,
+/// 깰 수 있는 자리에 눈금 + 아래 '450부터 깨기'.
 class _PiggyBar extends StatelessWidget {
-  const _PiggyBar({required this.value, required this.mark});
+  const _PiggyBar({
+    required this.value,
+    required this.mark,
+    required this.label,
+    required this.markLabel,
+  });
   final double value;
   final double mark;
+  final String label;
+  final String markLabel;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, c) => SizedBox(
-      height: 16,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFFF3E4C8),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFD9BE8F)),
-              ),
-            ),
-          ),
-          Positioned(
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: c.maxWidth * value.clamp(0.0, 1.0),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF7FD0F2), Color(0xFF4AA3D8)],
+    builder: (context, c) {
+      const h = 30.0, inset = 6.0;
+      final w = c.maxWidth;
+      final inner = w - inset * 2;
+      final mx = inset + inner * mark;
+      final ready = value >= mark;
+      return SizedBox(
+        height: h + 18,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              height: h,
+              child: DecoratedBox(
+                decoration: FrameBox.decorationFor(
+                  'event_track',
+                  BoxDecoration(
+                    color: const Color(0xFFF3E4C8),
+                    borderRadius: BorderRadius.circular(h / 2),
+                    border: Border.all(
+                      color: const Color(0xFF5A3A22),
+                      width: 2,
+                    ),
+                  ),
+                  corner: h / 2,
                 ),
-                borderRadius: BorderRadius.circular(8),
               ),
             ),
-          ),
-          Positioned(
-            left: c.maxWidth * mark - 1,
-            top: -3,
-            bottom: -3,
-            width: 2,
-            child: Container(color: const Color(0xFF5A3A22)),
-          ),
-        ],
-      ),
-    ),
+            Positioned(
+              left: inset,
+              top: inset,
+              height: h - inset * 2,
+              width: max(h - inset * 2, inner * value.clamp(0.0, 1.0)),
+              child: Opacity(
+                opacity: value <= 0 ? 0 : 1,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Color(0xFF9FE2FF), Color(0xFF3F9AD6)],
+                    ),
+                    borderRadius: BorderRadius.circular(h),
+                  ),
+                  alignment: Alignment.topCenter,
+                  padding: const EdgeInsets.fromLTRB(6, 2, 6, 0),
+                  child: Container(
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // 깰 수 있는 자리 눈금
+            Positioned(
+              left: mx - 1.5,
+              top: 2,
+              height: h - 4,
+              width: 3,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: ready
+                      ? Colors.white.withValues(alpha: 0.9)
+                      : const Color(0xFF5A3A22),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              height: h,
+              child: Center(
+                child: IconText(
+                  label,
+                  maxLines: 1,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(color: Color(0xFF2F4F6B), blurRadius: 3),
+                      Shadow(color: Color(0xFF2F4F6B), offset: Offset(0, 1)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: mx - 60,
+              width: 120,
+              top: h + 1,
+              child: Text(
+                markLabel,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: ready
+                      ? const Color(0xFF3F9AD6)
+                      : const Color(0xFF8A7660),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
   );
 }
 
@@ -239,9 +323,14 @@ Widget piggyCard(BillingService billing, GameState game) => OfferCard(
   note: game.piggyFull
       ? tr('piggy.full')
       : tr('piggy.note', {'n': Piggy.perOrder}),
-  items: ['[[diamond]] ${fmtInt(game.piggyGems)} / ${fmtInt(Piggy.cap)}'],
+  items: const [],
   tag: tr('piggy.tag'),
-  progress: (game.piggyGems / Piggy.cap, Piggy.minBreak / Piggy.cap),
+  progress: _PiggyBar(
+    value: game.piggyGems / Piggy.cap,
+    mark: Piggy.minBreak / Piggy.cap,
+    label: '[[diamond]] ${fmtInt(game.piggyGems)} / ${fmtInt(Piggy.cap)}',
+    markLabel: tr('piggy.breakAt', {'n': fmtInt(Piggy.minBreak)}),
+  ),
   enabled: game.piggyBreakable,
   disabledLabel: tr('piggy.locked', {'n': fmtInt(Piggy.minBreak)}),
   colors: const [Color(0xFFE4F4FF), Color(0xFFCDE8F8)],

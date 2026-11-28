@@ -192,6 +192,54 @@
    "line": "#B9AA8A",
    "width": 192,
    "contrast": 0.45
+  },
+  {
+   "name": "event_step",
+   "src": "event_step",
+   "color": "cream",
+   "height": 160
+  },
+  {
+   "name": "event_step_on",
+   "src": "event_step",
+   "color": "green",
+   "height": 160
+  },
+  {
+   "name": "event_step_gold",
+   "src": "event_step",
+   "color": "gold",
+   "height": 160
+  },
+  {
+   "name": "event_slot",
+   "src": "event_reward_slot",
+   "color": "white",
+   "height": 192
+  },
+  {
+   "name": "event_slot_gold",
+   "src": "event_reward_slot",
+   "color": "ready",
+   "height": 192
+  },
+  {
+   "name": "event_track",
+   "src": "event_track",
+   "color": "cream",
+   "height": 96
+  },
+  {
+   "name": "event_badge_base",
+   "src": "event_badge_base",
+   "color": "gold",
+   "height": 256
+  },
+  {
+   "name": "event_ribbon_tag",
+   "src": "event_ribbon_tag",
+   "color": "gold",
+   "height": 128
   }
  ]
 }
