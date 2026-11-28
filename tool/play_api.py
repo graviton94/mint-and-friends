@@ -226,14 +226,14 @@ def products(apply=False):
                 }} if other.get('usdPrice') else {}),
             }],
         }
-        r = s.patch(f'{API}/oneTimeProducts/{sku}', params={
+        r = s.patch(f'{API}/onetimeproducts/{sku}', params={
             'allowMissing': 'true', 'regionsVersion.version': '2022/02',
             'updateMask': 'listings,purchaseOptions',
         }, json=body)
         print('  patch', r.status_code, r.text[:500])
         if r.status_code >= 300:
             sys.exit(1)
-        r = s.post(f'{API}/oneTimeProducts/{sku}/purchaseOptions:batchUpdateStates', json={'requests': [{
+        r = s.post(f'{API}/onetimeproducts/{sku}/purchaseOptions:batchUpdateStates', json={'requests': [{
             'activatePurchaseOptionRequest': {'packageName': PKG, 'productId': sku, 'purchaseOptionId': 'buy'},
         }]})
         print('  activate', r.status_code, r.text[:300])
