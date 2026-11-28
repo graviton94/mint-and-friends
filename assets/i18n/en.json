@@ -1285,5 +1285,13 @@
   "book.new": "Newly discovered! ({n})",
   "patch.1.0.19": "• Auto merge and auto place now show the next cells filling up\n• Board cells have a new inset look\n• Celebration confetti is sharper and pops out\n• The collection shows newly discovered items at the top\n• Achievement rewards now grow with your progress\n• A red dot tells you when an upgrade can be bought\n\nHere's some energy as an update gift!",
   "patch.1.0.20": "• Fixed other items on the board bouncing when you merge\n• Fixed items sometimes appearing in the wrong spots\n\nHere's some energy as an update gift!",
-  "patch.1.0.21": "• Auto place now fills up to the last empty cell\n• Fixed getting stuck at the first merge when starting out\n• The home screen icon now matches the season (autumn)\n\nHere's some energy as an update gift!"
+  "patch.1.0.21": "• Auto place now fills up to the last empty cell\n• Fixed getting stuck at the first merge when starting out\n• The home screen icon now matches the season (autumn)\n\nHere's some energy as an update gift!",
+  "shop.tab.top": "Featured",
+  "shop.tab.market": "Market",
+  "shop.tab.gems": "Diamonds",
+  "shop.tab.withGems": "Spend",
+  "shop.bonusChip": "+{n} bonus",
+  "shop.timesShort": "×{n}",
+  "pass.slimSub": "Subscribed · Rewards with no ads",
+  "pass.slimLeft": "{d} days left · Rewards with no ads"
 }

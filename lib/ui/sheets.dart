@@ -1936,183 +1936,207 @@ Future<void> _shopSheet(
   GameState game, {
   Future<bool> Function(AdKind kind)? watchAd,
   bool adFree = false,
-}) => showGameSheet(context, Listenable.merge([billing, game]), () {
-  final ad = adFree ? '' : '[[ad]] ';
-  // 추천 아이템: 화면에 그린 상품 그대로 산다 (그사이 날이 바뀌면 사지 않고 새 상품을 보여 준다)
-  final feat = game.featuredItem;
-  return SheetFrame(
-    title: tr('shop.title'),
-    wallet: [
-      '[[coin]]${fmt(game.coins)}',
-      '[[diamond]]${fmt(game.gems.toDouble())}',
-    ],
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (game.starterVisible) ...[
-          StarterCard(billing: billing, game: game),
-          const SizedBox(height: 14),
+}) {
+  // 바로가기 탭이 찾아갈 구역 (D-109): 상점이 화면 5장이라 원하는 곳으로 한 번에
+  final keys = [GlobalKey(), GlobalKey(), GlobalKey(), GlobalKey()];
+  return showGameSheet(context, Listenable.merge([billing, game]), () {
+    final ad = adFree ? '' : '[[ad]] ';
+    // 추천 아이템: 화면에 그린 상품 그대로 산다 (그사이 날이 바뀌면 사지 않고 새 상품을 보여 준다)
+    final feat = game.featuredItem;
+    // 정원 패스 이용 중이면 한 줄로 접는다 (끝나기 사흘 전부터는 구독 권유가 보이게 크게)
+    final passSlim =
+        billing.adFree || (game.passActive && game.passLeft.inDays >= 3);
+    return SheetFrame(
+      title: tr('shop.title'),
+      wallet: [
+        '[[coin]]${fmt(game.coins)}',
+        '[[diamond]]${fmt(game.gems.toDouble())}',
+      ],
+      pinned: _ShopTabs(
+        labels: [
+          tr('shop.tab.top'),
+          if (game.dailyShopOpen) tr('shop.tab.market'),
+          tr('shop.tab.gems'),
+          tr('shop.tab.withGems'),
         ],
-        // 정원 패스: 첫 구매처럼 크게, 상시 (D-089) + 바로 아래 가치표
-        PassCard(billing: billing, game: game),
-        if (!billing.adFree) ...[
-          const SizedBox(height: 10),
-          const PassValueTable(),
-        ],
-        const SizedBox(height: 16),
-        // 오늘의 시장: 코인 4칸 + 다이아 1칸 + 광고 1칸 (3열 카드)
-        if (game.dailyShopOpen) ...[
-          // 시장은 날짜가 바뀌는 0시에 새로 들어온다 (game.offers 의 날짜 키)
-          _ShopHeader(tr('market.titleRefresh', {'h': 0})),
-          _CardGrid([
-            for (var i = 0; i < game.offers.length; i++)
-              _offerCard(context, game, i, watchAd, ad),
-          ]),
-          const SizedBox(height: 12),
-        ],
-        // 다이아 충전: 광고 1칸 + 팩 5칸
-        _ShopHeader(tr('shop.gems')),
-        // 광고 다이아는 한 줄로 (팩 6종은 3×2 로 맞춘다)
-        if (watchAd != null)
-          _ShopRow(
-            icon: Art.icon('free_gift'),
-            title: tr('shop.adGemsShort', {'n': GameConfig.adGems}),
-            note: tr('energy.left', {'n': game.adsLeft(AdKind.gems)}),
-            tag: tr('shop.freeTag'),
-            button: game.gemAdAvailable
-                ? '$ad+${GameConfig.adGems}'
-                : tr('shop.adGemsDone'),
-            ad: true,
-            enabled: game.gemAdAvailable,
-            dot: game.gemAdAvailable,
-            onTap: () async {
-              if (await watchAd(AdKind.gems)) {
-                game.grantGemAd();
-                if (context.mounted) {
-                  RewardPopup.show(
-                    context,
-                    const Reward(gems: GameConfig.adGems),
-                    title: tr('reward.ad'),
-                  );
-                }
-              }
-            },
-          ),
-        _CardGrid([
-          for (var i = 0; i < Gems.packs.length; i++)
-            _gemPackCard(billing, game, Gems.packs[i], i),
-        ]),
-        // 청약철회 안내 (전자상거래법 제17조 제6항: 제한 사유를 미리 알린다, D-067)
-        Padding(
-          padding: const EdgeInsets.only(top: 2, bottom: 6),
-          child: IconText(
-            tr('shop.refundNote'),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 11.5, color: Colors.black45),
-          ),
-        ),
-        if (!billing.available || billing.gemProducts.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 4, bottom: 8),
-            child: IconText(
-              tr('shop.storeSoon'),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: Colors.black54),
+        keys: [keys[0], if (game.dailyShopOpen) keys[1], keys[2], keys[3]],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(key: keys[0], height: 0),
+          if (game.starterVisible) ...[
+            StarterCard(billing: billing, game: game),
+            const SizedBox(height: 14),
+          ],
+          // 정원 패스: 첫 구매처럼 크게, 상시 (D-089) + 바로 아래 가치표
+          if (passSlim)
+            _PassSlimRow(game: game, subscribed: billing.adFree)
+          else
+            PassCard(billing: billing, game: game),
+          if (!billing.adFree && !game.passActive) ...[
+            const SizedBox(height: 10),
+            const PassValueTable(),
+          ],
+          const SizedBox(height: 16),
+          // 오늘의 시장: 코인 4칸 + 다이아 1칸 + 광고 1칸 (3열 카드)
+          if (game.dailyShopOpen) ...[
+            // 시장은 날짜가 바뀌는 0시에 새로 들어온다 (game.offers 의 날짜 키)
+            _ShopHeader(
+              tr('market.titleRefresh', {'h': 0}),
+              icon: 'shop',
+              key: keys[1],
             ),
-          ),
-        const SizedBox(height: 12),
-        // 다이아로 사기: 에너지 · 코인 꾸러미 3 · 부스트 3 · 계절 효과
-        // 다이아로 사기 3×3: 코인 꾸러미 3 · 부스트 3 · 에너지 · 깜짝 상자 · 계절 효과
-        _ShopHeader(tr('shop.withGems')),
-        _CardGrid([
-          for (var i = 0; i < Gems.coinPacks.length; i++)
+            _CardGrid([
+              for (var i = 0; i < game.offers.length; i++)
+                _offerCard(context, game, i, watchAd, ad),
+            ]),
+            const SizedBox(height: 12),
+          ],
+          // 다이아 충전: 광고 1칸 + 팩 5칸
+          _ShopHeader(tr('shop.gems'), icon: 'diamond', key: keys[2]),
+          // 광고 다이아는 한 줄로 (팩 6종은 3×2 로 맞춘다)
+          if (watchAd != null)
+            _ShopRow(
+              icon: Art.icon('free_gift'),
+              title: tr('shop.adGemsShort', {'n': GameConfig.adGems}),
+              note: tr('energy.left', {'n': game.adsLeft(AdKind.gems)}),
+              tag: tr('shop.freeTag'),
+              button: game.gemAdAvailable
+                  ? '$ad+${GameConfig.adGems}'
+                  : tr('shop.adGemsDone'),
+              ad: true,
+              enabled: game.gemAdAvailable,
+              dot: game.gemAdAvailable,
+              onTap: () async {
+                if (await watchAd(AdKind.gems)) {
+                  game.grantGemAd();
+                  if (context.mounted) {
+                    RewardPopup.show(
+                      context,
+                      const Reward(gems: GameConfig.adGems),
+                      title: tr('reward.ad'),
+                    );
+                  }
+                }
+              },
+            ),
+          _CardGrid([
+            for (var i = 0; i < Gems.packs.length; i++)
+              _gemPackCard(billing, game, Gems.packs[i], i),
+          ]),
+          if (!billing.available || billing.gemProducts.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: IconText(
+                tr('shop.storeSoon'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 13, color: Colors.black54),
+              ),
+            ),
+          const SizedBox(height: 16),
+          // 다이아로 사기 3×3: 코인 꾸러미 3 · 부스트 3 · 에너지 · 깜짝 상자 · 계절 효과
+          _ShopHeader(tr('shop.withGems'), icon: 'coinbag', key: keys[3]),
+          _CardGrid([
+            for (var i = 0; i < Gems.coinPacks.length; i++)
+              _ShopCard(
+                icon: Art.icon(const ['coins_s', 'coins_m', 'coins_l'][i]),
+                title: '[[coin]] ${fmt(game.coinPackAmount(i))}',
+                note: tr('shop.coinPack.$i'),
+                button: '[[diamond]] ${Gems.coinPacks[i].$1}',
+                enabled: game.gems >= Gems.coinPacks[i].$1,
+                confirm: true,
+                onTap: () {
+                  final c = game.coinPackAmount(i);
+                  if (game.buyCoinPack(i)) {
+                    RewardPopup.show(
+                      context,
+                      Reward(coins: c.round()),
+                      title: tr('reward.bought'),
+                    );
+                  }
+                },
+              ),
+            for (final k in BoostKind.values)
+              _ShopCard(
+                icon: Art.icon(boostIcon(k)),
+                title: tr('boost.${k.name}'),
+                note: tr('shop.boostTime', {'n': Boosts.perGems[k]!.inMinutes}),
+                button: '[[diamond]] ${Boosts.gemCost[k]}',
+                enabled:
+                    game.gems >= Boosts.gemCost[k]! && game.canBuyBoostOf(k),
+                confirm: true,
+                onTap: () {
+                  if (game.buyBoost(k)) _boostBought(context, k, gems: true);
+                },
+              ),
             _ShopCard(
-              icon: Art.icon(const ['coins_s', 'coins_m', 'coins_l'][i]),
-              title: '[[coin]] ${fmt(game.coinPackAmount(i))}',
-              note: tr('shop.coinPack.$i'),
-              button: '[[diamond]] ${Gems.coinPacks[i].$1}',
-              enabled: game.gems >= Gems.coinPacks[i].$1,
+              icon: Art.icon('energy_crate'),
+              title: tr('shop.refillShort', {'n': Gems.refillEnergy}),
+              button: '[[diamond]] ${game.refillCost}',
+              enabled: game.gems >= game.refillCost,
               confirm: true,
               onTap: () {
-                final c = game.coinPackAmount(i);
-                if (game.buyCoinPack(i)) {
+                if (game.buyEnergyRefill()) {
                   RewardPopup.show(
                     context,
-                    Reward(coins: c.round()),
+                    const Reward(energy: Gems.refillEnergy),
                     title: tr('reward.bought'),
                   );
                 }
               },
             ),
-          for (final k in BoostKind.values)
+            // 추천 아이템: 무엇이 들었는지 그림 · 이름 · 단계를 그대로 보여 준다 (무작위 상품 아님)
             _ShopCard(
-              icon: Art.icon(boostIcon(k)),
-              title: tr('boost.${k.name}'),
-              note: tr('shop.boostTime', {'n': Boosts.perGems[k]!.inMinutes}),
-              button: '[[diamond]] ${Boosts.gemCost[k]}',
-              enabled: game.gems >= Boosts.gemCost[k]! && game.canBuyBoostOf(k),
+              icon: Art.item(feat.$1, feat.$2),
+              title: itemName(Chains.item(feat.$1, feat.$2)),
+              note: tr('shop.featuredNote', {'n': feat.$2}),
+              tag: tr('shop.featuredTag'),
+              button: game.boardFull
+                  ? tr('market.boardFull')
+                  : '[[diamond]] ${game.surpriseGems}',
+              enabled: !game.boardFull && game.gems >= game.surpriseGems,
               confirm: true,
               onTap: () {
-                if (game.buyBoost(k)) _boostBought(context, k, gems: true);
+                if (game.buySurprise(shown: feat)) sfx(Sfx.unlock);
               },
             ),
-          _ShopCard(
-            icon: Art.icon('energy_crate'),
-            title: tr('shop.refillShort', {'n': Gems.refillEnergy}),
-            button: '[[diamond]] ${game.refillCost}',
-            enabled: game.gems >= game.refillCost,
-            confirm: true,
-            onTap: () {
-              if (game.buyEnergyRefill()) {
-                RewardPopup.show(
-                  context,
-                  const Reward(energy: Gems.refillEnergy),
-                  title: tr('reward.bought'),
-                );
-              }
-            },
+            // 계절 효과: 사고 나면 '보유 중' 으로 남겨 3×3 을 지킨다
+            _ShopCard(
+              icon: Art.icon('season_fx'),
+              title: tr('shop.effect'),
+              note: tr('shop.effectNote'),
+              button: game.effects.contains(Starter.effect)
+                  ? tr('shop.owned')
+                  : '[[diamond]] ${Gems.effectGems}',
+              enabled:
+                  !game.effects.contains(Starter.effect) &&
+                  game.gems >= Gems.effectGems,
+              confirm: true,
+              onTap: () {
+                if (game.buyEffect(Starter.effect)) sfx(Sfx.unlock);
+              },
+            ),
+          ]),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: billing.restore,
+            child: IconText(tr('shop.restore')),
           ),
-          // 추천 아이템: 무엇이 들었는지 그림 · 이름 · 단계를 그대로 보여 준다 (무작위 상품 아님)
-          _ShopCard(
-            icon: Art.item(feat.$1, feat.$2),
-            title: itemName(Chains.item(feat.$1, feat.$2)),
-            note: tr('shop.featuredNote', {'n': feat.$2}),
-            tag: tr('shop.featuredTag'),
-            button: game.boardFull
-                ? tr('market.boardFull')
-                : '[[diamond]] ${game.surpriseGems}',
-            enabled: !game.boardFull && game.gems >= game.surpriseGems,
-            confirm: true,
-            onTap: () {
-              if (game.buySurprise(shown: feat)) sfx(Sfx.unlock);
-            },
+          // 청약철회 안내 (전자상거래법 제17조 제6항: 제한 사유를 미리 알린다, D-067). 맨 아래로 (D-109)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: IconText(
+              tr('shop.refundNote'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 11.5, color: Colors.black45),
+            ),
           ),
-          // 계절 효과: 사고 나면 '보유 중' 으로 남겨 3×3 을 지킨다
-          _ShopCard(
-            icon: Art.icon('season_fx'),
-            title: tr('shop.effect'),
-            note: tr('shop.effectNote'),
-            button: game.effects.contains(Starter.effect)
-                ? tr('shop.owned')
-                : '[[diamond]] ${Gems.effectGems}',
-            enabled:
-                !game.effects.contains(Starter.effect) &&
-                game.gems >= Gems.effectGems,
-            confirm: true,
-            onTap: () {
-              if (game.buyEffect(Starter.effect)) sfx(Sfx.unlock);
-            },
-          ),
-        ]),
-        const SizedBox(height: 12),
-        TextButton(
-          onPressed: billing.restore,
-          child: IconText(tr('shop.restore')),
-        ),
-      ],
-    ),
-  );
-});
+        ],
+      ),
+    );
+  });
+}
 
 /// 오늘의 시장 카드 하나.
 Widget _offerCard(
@@ -2159,7 +2183,8 @@ Widget _offerCard(
     ad: o.kind == 4,
     button: button,
     enabled: enabled,
-    dot: game.offerDot(o),
+    // 빨간 점은 지금 공짜로 받을 수 있는 것(무료 · 광고)만 (D-109)
+    dot: (o.kind == 1 || o.kind == 4) && game.offerDot(o),
     confirm: o.kind != 1 && o.kind != 4 && o.price > 0,
     onTap: () async {
       var watched = false;
@@ -2205,15 +2230,16 @@ Widget _gemPackCard(
     ),
     title: '[[diamond]] ${fmtInt(pack.gems)}',
     // 첫 구매: 같은 만큼 더 (2배)
+    // 첫 구매: '+100 보너스' 를 눈에 띄는 딱지로, 모서리 딱지는 '2배 · 첫 구매' 로 통일 (D-109)
     note: first
-        ? tr('shop.firstBonus', {
+        ? tr('shop.bonusChip', {
             'n': fmtInt(pack.gems * (Gems.firstBuyMultiplier - 1)),
           })
         : null,
-    // 첫 구매: 기본 팩(100개) 대비 얼마나 이득인지 % 딱지
+    noteChip: first,
     sticker: first
         ? (
-            '+${(pack.valueX * Gems.firstBuyMultiplier * 100 - 100).round()}%',
+            tr('shop.timesShort', {'n': Gems.firstBuyMultiplier}),
             tr('shop.firstShort'),
           )
         : null,
@@ -2302,7 +2328,11 @@ class _ShopCard extends StatelessWidget {
     this.ad = false,
     this.confirm = false,
     this.dot = false,
+    this.noteChip = false,
   });
+
+  /// 설명 줄을 색 딱지로 (다이아 팩 첫 구매 보너스).
+  final bool noteChip;
 
   /// 재화로 사는 칸: 누르면 '구매하시겠어요?' 를 먼저 묻는다 (결제 · 광고 · 무료 칸은 묻지 않음).
   final bool confirm;
@@ -2350,9 +2380,29 @@ class _ShopCard extends StatelessWidget {
                 ),
               ),
               SizedBox(
-                height: 18,
+                height: noteChip ? 22 : 18,
                 child: note == null
                     ? null
+                    : noteChip
+                    ? Container(
+                        margin: const EdgeInsets.only(top: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE0533D),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: IconText(
+                            note!,
+                            maxLines: 1,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      )
                     : FittedBox(
                         fit: BoxFit.scaleDown,
                         child: IconText(
@@ -3310,15 +3360,171 @@ class _BoostRow extends StatelessWidget {
   }
 }
 
+/// 상점 구역 제목: 아이콘 + 큰 글자 + 오른쪽으로 이어지는 선 (D-109, 구역이 또렷이 나뉘게).
 class _ShopHeader extends StatelessWidget {
-  const _ShopHeader(this.text);
+  const _ShopHeader(this.text, {this.icon, super.key});
   final String text;
+  final String? icon;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 6, left: 2),
-    child: IconText(
-      text,
-      style: const TextStyle(fontSize: 15, color: Color(0xFF6B5638)),
+    padding: const EdgeInsets.only(bottom: 8, left: 2, top: 4),
+    child: Row(
+      children: [
+        if (icon != null) ...[
+          ArtImage(Art.icon(icon!), size: 26),
+          const SizedBox(width: 6),
+        ],
+        Flexible(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: IconText(
+              text,
+              maxLines: 1,
+              style: const TextStyle(fontSize: 18, color: Color(0xFF5A3A22)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Container(
+            height: 2,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE2D3B5),
+              borderRadius: BorderRadius.circular(1),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// 상점 바로가기 탭: 누르면 그 구역으로 부드럽게 스크롤 (D-109).
+class _ShopTabs extends StatelessWidget {
+  const _ShopTabs({required this.labels, required this.keys});
+  final List<String> labels;
+  final List<GlobalKey> keys;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 10),
+    child: Row(
+      children: [
+        for (var i = 0; i < labels.length; i++) ...[
+          if (i > 0) const SizedBox(width: 6),
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                final c = keys[i].currentContext;
+                if (c == null) return;
+                sfx(Sfx.tap);
+                Scrollable.ensureVisible(
+                  c,
+                  duration: const Duration(milliseconds: 380),
+                  curve: Curves.easeOutCubic,
+                );
+              },
+              child: Container(
+                height: 34,
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF6E2),
+                  borderRadius: BorderRadius.circular(17),
+                  border: Border.all(
+                    color: const Color(0xFFD9C29A),
+                    width: 1.5,
+                  ),
+                ),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    labels[i],
+                    maxLines: 1,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF5A3A22),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+}
+
+/// 정원 패스 이용 중: 큰 카드 대신 한 줄 (D-109). 남은 기간 + 혜택 보기.
+class _PassSlimRow extends StatelessWidget {
+  const _PassSlimRow({required this.game, required this.subscribed});
+  final GameState game;
+  final bool subscribed;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        colors: [Color(0xFFE6F7C8), Color(0xFFC9EBD9)],
+      ),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: const Color(0xFF5FA83A), width: 2),
+    ),
+    child: Row(
+      children: [
+        ArtImage(Art.icon('garden_pass'), size: 40),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: IconText(
+                  tr('shop.active'),
+                  maxLines: 1,
+                  style: const TextStyle(fontSize: 16, color: Palette.primary),
+                ),
+              ),
+              IconText(
+                subscribed
+                    ? tr('pass.slimSub')
+                    : tr('pass.slimLeft', {
+                        'd': (game.passLeft.inHours + 23) ~/ 24,
+                      }),
+                maxLines: 1,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  color: Color(0xFF6B5638),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 6),
+        FilledButton(
+          style: framedButton(
+            FilledButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Palette.text,
+              minimumSize: const Size(0, 40),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+            ),
+            'button_white',
+          ),
+          onPressed: () => showPassSheet(context, game, subscribed: subscribed),
+          child: IconText(
+            tr('pass.open'),
+            maxLines: 1,
+            style: const TextStyle(fontSize: 15),
+          ),
+        ),
+      ],
     ),
   );
 }
@@ -3580,9 +3786,13 @@ class SheetFrame extends StatelessWidget {
     required this.title,
     required this.child,
     this.wallet = const [],
+    this.pinned,
   });
   final String title;
   final Widget child;
+
+  /// 제목 아래에 고정하는 줄 (상점의 바로가기 탭, D-109). 스크롤해도 보인다.
+  final Widget? pinned;
 
   /// 제목 오른쪽에 고정하는 보유 재화 캡슐 (이 화면에서 쓰는 재화, D-080). 예: '[[star]]1240'
   final List<String> wallet;
@@ -3645,6 +3855,7 @@ class SheetFrame extends StatelessWidget {
                       ),
               ),
               const SizedBox(height: 10),
+              if (pinned != null) ...[pinned!, const SizedBox(height: 8)],
               Flexible(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(14),
