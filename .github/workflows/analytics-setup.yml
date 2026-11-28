@@ -26,5 +26,7 @@ jobs:
         run: |
           P=$(gcloud config get-value project); echo "PROJECT=$P" >> "$GITHUB_ENV"
           gcloud services enable analyticsadmin.googleapis.com bigquery.googleapis.com firebase.googleapis.com --project "$P" || echo "::warning::could not enable APIs"
+      - name: Who
+        run: echo "service account = $(gcloud config get-value account)"
       - run: pip install -q google-auth requests
       - run: python3 tool/ga_setup.py $([ "${{ inputs.apply }}" = "true" ] && echo --apply)
