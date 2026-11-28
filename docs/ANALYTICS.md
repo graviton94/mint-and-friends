@@ -24,9 +24,7 @@ GA 속성 565225845 (Firebase `mintandfriends-3bb24`). 테스트 기기(Play 사
 
 사용자 속성: `payer` · `pass`(none · timed · sub) · `lang` · `renew` · `area` · `player_level` · `event_pass`.
 
-## 남은 준비 (권한 필요)
-서비스 계정 `firebase-adminsdk-fbsvc@mintandfriends-3bb24.iam.gserviceaccount.com` 이 GA 속성 **뷰어**라서 설정을 못 바꾼다.
-GA → 관리 → 속성 액세스 관리 → 이 계정을 **편집자**로 바꾼 뒤 Actions → Analytics setup (apply=true) 한 번이면:
-- 맞춤 측정기준 40여 개 등록 (등록 전 데이터도 BigQuery 에는 다 있지만, GA 보고서에는 등록 뒤부터 보인다)
-- 이벤트 보관 2개월 → 14개월
-- BigQuery 일일 내보내기 (서울 리전)
+## GA 설정 상태 (11-28)
+- 맞춤 측정기준 38개 등록 완료 (이벤트 매개변수 31 + 사용자 속성 7). 새 매개변수를 쓰면 tool/ga_setup.py 목록에 넣고 Actions → Analytics setup.
+- 이벤트 데이터 보관 14개월 완료.
+- BigQuery 일일 내보내기: 서비스 계정에 클라우드 프로젝트 소유자 권한이 없어 API 로는 못 함 → GA 관리 → 제품 링크 → BigQuery 링크에서 직접 연결 (프로젝트 mintandfriends-3bb24, 서울, 매일).
