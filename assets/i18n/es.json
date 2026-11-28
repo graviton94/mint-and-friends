@@ -1345,5 +1345,6 @@
   "outfit.onsen": "Bata termal esponjosa",
   "outfit.cocoa": "Delantal de chocolatero",
   "outfit.bloom": "Vestido con gorro floral",
-  "piggy.breakAt": "Se rompe en {n}"
+  "piggy.breakAt": "Se rompe en {n}",
+  "settings.haptic": "Vibración"
 }

@@ -320,6 +320,7 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
         });
       case AreaCompletedEvent(:final area):
         _areaFlow = true;
+        haptic(Haptic.big);
         _toast(tr('toast.areaDone', {'name': areaName(Garden.areaAt(area))}));
         // 완성한 구역 자랑 카드 (장식 · 친구가 모두 있는 정원) → 첫 구역이면 새싹 정원 패키지 (한 번만)
         Future.delayed(const Duration(milliseconds: 1500), () async {
@@ -340,10 +341,12 @@ class _HomeScreenState extends State<HomeScreen> implements HomeDebug {
         });
       case LevelUpEvent():
         sfx(Sfx.levelup);
+        haptic(Haptic.big);
         _levelUps.add(e);
         _showLevelUps();
       case LuckySpawnEvent():
-        sfx(Sfx.merge2); // 행운 바구니: 종소리 하나 (D-080)
+        sfx(Sfx.merge2);
+        haptic(Haptic.big); // 행운 바구니: 종소리 하나 (D-080)
       case BubbleEvent():
         sfx(Sfx.bubble);
         _toast(tr('toast.bubble'));

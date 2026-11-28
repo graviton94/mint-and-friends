@@ -1345,5 +1345,6 @@
   "outfit.onsen": "ふわふわ温泉ガウン",
   "outfit.cocoa": "ショコラティエのエプロン",
   "outfit.bloom": "春花ボンネットドレス",
-  "piggy.breakAt": "{n}から割れる"
+  "piggy.breakAt": "{n}から割れる",
+  "settings.haptic": "バイブレーション"
 }

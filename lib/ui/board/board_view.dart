@@ -8,6 +8,7 @@ import '../../game/config.dart';
 import '../../game/format.dart';
 import '../../game/game_state.dart';
 import '../../i18n/l10n.dart';
+import '../../services/audio_service.dart';
 import '../theme.dart';
 import '../widgets/frame_box.dart';
 
@@ -527,6 +528,17 @@ class _BoardViewState extends State<BoardView> {
     setState(() => _dragFrom = null);
     if (from == null || target == null) return;
     final r = game.move(from, target);
+    // 손으로 합쳤을 때만 진동 (자동 합치기 · 바구니는 없음, D-114)
+    if (r == MoveResult.merged) {
+      final it = game.board[target];
+      // 최고 단계를 막 만들었으면 조금 세게
+      haptic(
+        it != null && it.level >= Chains.maxLevel(it.chain)
+            ? Haptic.big
+            : Haptic.tap,
+      );
+    }
+    if (r == MoveResult.maxMerged) haptic(Haptic.big);
     if (r == MoveResult.merged ||
         r == MoveResult.moved ||
         r == MoveResult.swapped) {

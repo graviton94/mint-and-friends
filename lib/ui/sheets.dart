@@ -3787,6 +3787,18 @@ Future<void> showSettingsSheet(
                   if (v) sfx(Sfx.tap);
                 },
               ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  tr('settings.haptic'),
+                  style: const TextStyle(fontSize: 18),
+                ),
+                value: AudioService.instance.hapticOn,
+                onChanged: (v) {
+                  AudioService.instance.setHaptic(v);
+                  if (v) haptic(Haptic.tap);
+                },
+              ),
               if (game != null && game.effects.contains(Starter.effect))
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,

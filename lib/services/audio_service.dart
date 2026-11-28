@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// 게임 효과음 종류. 파일은 assets/audio/*.ogg (tool/make_audio.py 로 생성).
@@ -69,6 +70,7 @@ class AudioService extends ChangeNotifier {
 
   static const String _musicKey = 'audio_music_on';
   static const String _sfxKey = 'audio_sfx_on';
+  static const String _hapticKey = 'haptic_on';
   static const String _bgmAsset = 'audio/bgm_garden.ogg';
   static const double musicVolume = 0.45;
   static const double sfxVolume = 0.9;
@@ -78,6 +80,10 @@ class AudioService extends ChangeNotifier {
   bool _sfxOn = true;
   bool get musicOn => _musicOn;
   bool get sfxOn => _sfxOn;
+
+  /// 진동 (D-114): 손으로 합칠 때 아주 약하게, 큰 순간에만 조금 세게. 설정에서 끌 수 있다.
+  bool _hapticOn = true;
+  bool get hapticOn => _hapticOn;
 
   bool _ready = false;
   Future<void>? _initFuture;
@@ -101,6 +107,7 @@ class AudioService extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       _musicOn = prefs.getBool(_musicKey) ?? true;
       _sfxOn = prefs.getBool(_sfxKey) ?? true;
+      _hapticOn = prefs.getBool(_hapticKey) ?? true;
       notifyListeners();
     } catch (_) {}
     // 단계마다 따로 감싼다: 한 단계(저지연 모드 · 오디오 컨텍스트 · 미리 풀기)가 실패해도
@@ -175,6 +182,13 @@ class AudioService extends ChangeNotifier {
     _sfxOn = on;
     notifyListeners();
     await _save(_sfxKey, on);
+  }
+
+  Future<void> setHaptic(bool on) async {
+    if (_hapticOn == on) return;
+    _hapticOn = on;
+    notifyListeners();
+    await _save(_hapticKey, on);
   }
 
   Future<void> _save(String key, bool value) async {
@@ -279,3 +293,16 @@ Sfx mergeSfx(int level) => switch (level) {
 
 /// 짧게 쓰는 효과음 호출: `sfx(Sfx.merge)`.
 void sfx(Sfx s) => AudioService.instance.play(s);
+
+/// 진동 세기: 톡(손으로 합치기) · 쿵(최고 단계 · 행운 · 레벨업 · 새 구역).
+enum Haptic { tap, big }
+
+void haptic(Haptic h) {
+  if (!AudioService.instance.hapticOn) return;
+  switch (h) {
+    case Haptic.tap:
+      HapticFeedback.lightImpact();
+    case Haptic.big:
+      HapticFeedback.mediumImpact();
+  }
+}

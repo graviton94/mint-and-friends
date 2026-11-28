@@ -1345,5 +1345,6 @@
   "outfit.onsen": "Fluffy Spa Robe",
   "outfit.cocoa": "Chocolatier Apron",
   "outfit.bloom": "Spring Bonnet Dress",
-  "piggy.breakAt": "Break at {n}"
+  "piggy.breakAt": "Break at {n}",
+  "settings.haptic": "Vibration"
 }
