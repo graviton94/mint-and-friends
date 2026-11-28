@@ -1347,5 +1347,8 @@
   "outfit.cocoa": "쇼콜라티에 앞치마",
   "outfit.bloom": "봄꽃 보닛 드레스",
   "piggy.breakAt": "{n}부터 깨기",
-  "settings.haptic": "진동"
+  "settings.haptic": "진동",
+  "event.passTag": "지난 칸 포함",
+  "event.passOutfit": "한정 의상",
+  "event.passMore": "보상 20개"
 }

@@ -14,7 +14,13 @@
   "cellA": "#F2E9D4",
   "cellB": "#EBE0C7",
   "vault": "#E9E3F7",
-  "locked": "#DCD2BC"
+  "locked": "#DCD2BC",
+  "tagRed": "#EC5A48",
+  "tagGreen": "#4FB35C",
+  "tagBlue": "#4A9BE0",
+  "tagPurple": "#9B6FE0",
+  "tagOrange": "#F5963A",
+  "tagGold": "#F2B21C"
  },
  "outputs": [
   {
@@ -240,6 +246,42 @@
    "src": "event_ribbon_tag",
    "color": "gold",
    "height": 128
+  },
+  {
+   "name": "tag_red",
+   "src": "event_ribbon_tag",
+   "color": "tagRed",
+   "height": 96
+  },
+  {
+   "name": "tag_green",
+   "src": "event_ribbon_tag",
+   "color": "tagGreen",
+   "height": 96
+  },
+  {
+   "name": "tag_blue",
+   "src": "event_ribbon_tag",
+   "color": "tagBlue",
+   "height": 96
+  },
+  {
+   "name": "tag_purple",
+   "src": "event_ribbon_tag",
+   "color": "tagPurple",
+   "height": 96
+  },
+  {
+   "name": "tag_orange",
+   "src": "event_ribbon_tag",
+   "color": "tagOrange",
+   "height": 96
+  },
+  {
+   "name": "tag_gold",
+   "src": "event_ribbon_tag",
+   "color": "tagGold",
+   "height": 96
   }
  ]
 }

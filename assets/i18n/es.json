@@ -1346,5 +1346,8 @@
   "outfit.cocoa": "Delantal de chocolatero",
   "outfit.bloom": "Vestido con gorro floral",
   "piggy.breakAt": "Se rompe en {n}",
-  "settings.haptic": "Vibración"
+  "settings.haptic": "Vibración",
+  "event.passTag": "Incluye pasados",
+  "event.passOutfit": "Traje",
+  "event.passMore": "20 premios"
 }

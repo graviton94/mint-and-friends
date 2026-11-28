@@ -1346,5 +1346,8 @@
   "outfit.cocoa": "ショコラティエのエプロン",
   "outfit.bloom": "春花ボンネットドレス",
   "piggy.breakAt": "{n}から割れる",
-  "settings.haptic": "バイブレーション"
+  "settings.haptic": "バイブレーション",
+  "event.passTag": "過去のマスも",
+  "event.passOutfit": "限定衣装",
+  "event.passMore": "報酬20個"
 }

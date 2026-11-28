@@ -2596,24 +2596,7 @@ class _ShopCard extends StatelessWidget {
               top: 6,
               left: 6,
               child: Shine(
-                child: Container(
-                  height: RedDot.size,
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 7),
-                  decoration: BoxDecoration(
-                    color: tagColor(tag!),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.white, width: 1.5),
-                  ),
-                  child: Text(
-                    tag!,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      height: 1,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+                child: TagRibbon(tag!, tone: tagTone(tag!), size: 11),
               ),
             ),
           // 살 수 있음 점은 다른 화면처럼 오른쪽 위 (판촉 딱지는 왼쪽 위)
@@ -2642,14 +2625,15 @@ class _WalletPill extends StatelessWidget {
 }
 
 /// 판촉 딱지 색: 성격마다 다르게 (무료 초록 · 부탁용 파랑 · 희귀 보라 · 추천 주황 · 그 밖 빨강).
-Color tagColor(String tag) {
+TagTone tagTone(String tag) {
   if (tag == tr('market.freeTag') || tag == tr('shop.freeTag')) {
-    return const Color(0xFF3FA65A);
+    return TagTone.green;
   }
-  if (tag == tr('market.helperTag')) return const Color(0xFF3D8FD8);
-  if (tag == tr('market.rareTag')) return const Color(0xFF9B5FD6);
-  if (tag == tr('shop.featuredTag')) return const Color(0xFFF08A24);
-  return const Color(0xFFE0533D);
+  if (tag == tr('market.helperTag')) return TagTone.blue;
+  if (tag == tr('market.rareTag')) return TagTone.purple;
+  if (tag == tr('shop.featuredTag')) return TagTone.orange;
+  if (tag == tr('shop.setOff')) return TagTone.red;
+  return TagTone.gold;
 }
 
 /// 새싹 정원 패키지 카드 (상점 맨 위 · 팝업 공용).
@@ -3684,25 +3668,7 @@ class _ShopRow extends StatelessWidget {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     IconText(title, style: const TextStyle(fontSize: 17)),
-                    if (tag != null) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 1,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFE08A),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          tag!,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF7A4B00),
-                          ),
-                        ),
-                      ),
-                    ],
+                    if (tag != null) TagRibbon(tag!, tone: tagTone(tag!)),
                   ],
                 ),
                 if (note != null)

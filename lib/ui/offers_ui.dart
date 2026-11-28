@@ -9,11 +9,11 @@ import '../game/game_state.dart';
 import '../i18n/l10n.dart';
 import '../services/billing_service.dart';
 import '../i18n/names.dart';
+import 'sheets.dart' show boostIcon;
 import 'widgets/frame_box.dart';
 import 'widgets/icon_text.dart';
 
-/// 결제 묶음 카드 (D-110): 저금통 · 에너지 묶음 · 단계 묶음이 같은 모양을 쓴다.
-/// 위: 그림 + 제목 + 한 줄 설명 (+ 남은 시간), 가운데: 받는 것 칸들, 아래: 가격 버튼.
+/// 결제 묶음 카드 (D-110, D-115 단순하게): 그림 + 제목 + 리본 딱지, 받는 것은 큰 아이콘 칸, 아래 가격.
 class OfferCard extends StatelessWidget {
   const OfferCard({
     super.key,
@@ -21,10 +21,10 @@ class OfferCard extends StatelessWidget {
     required this.id,
     required this.art,
     required this.title,
-    required this.items,
-    this.note,
+    this.items = const [],
     this.timer,
     this.tag,
+    this.tagTone = TagTone.red,
     this.progress,
     this.enabled = true,
     this.disabledLabel,
@@ -36,14 +36,12 @@ class OfferCard extends StatelessWidget {
   final String id;
   final ArtRef art;
   final String title;
-  final String? note;
 
-  /// 받는 것: (아이콘 토큰 문구) 예: '[[diamond]] 250'.
-  final List<String> items;
+  /// 받는 것: (그림, 양) 예: (다이아, '250').
+  final List<(ArtRef, String)> items;
   final String? timer;
-
-  /// 오른쪽 위 딱지 (예: '2배 가치').
   final String? tag;
+  final TagTone tagTone;
 
   /// 저금통처럼 차오르는 막대 (받는 것 칸 대신).
   final Widget? progress;
@@ -73,7 +71,7 @@ class OfferCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              ArtImage(art, size: 54),
+              ArtImage(art, size: 46),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -82,7 +80,7 @@ class OfferCard extends StatelessWidget {
                     FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
-                      child: IconText(
+                      child: Text(
                         title,
                         maxLines: 1,
                         style: const TextStyle(
@@ -91,70 +89,60 @@ class OfferCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (note != null)
+                    if (timer != null)
                       IconText(
-                        note!,
+                        '[[timer]] $timer',
+                        maxLines: 1,
                         style: const TextStyle(
-                          fontSize: 12.5,
-                          color: Color(0xFF7A6146),
+                          fontSize: 13,
+                          color: Color(0xFFC0442C),
                         ),
                       ),
                   ],
                 ),
               ),
-              if (tag != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE0533D),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    tag!,
-                    style: const TextStyle(fontSize: 13, color: Colors.white),
-                  ),
-                ),
+              if (tag != null) TagRibbon(tag!, tone: tagTone, size: 13),
             ],
           ),
-          if (timer != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: IconText(
-                '[[timer]] $timer',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: Color(0xFFC0442C)),
-              ),
-            ),
           if (progress != null) ...[const SizedBox(height: 10), progress!],
-          if (items.isNotEmpty) const SizedBox(height: 8),
-          if (items.isNotEmpty)
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 6,
-              runSpacing: 6,
+          if (items.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Row(
               children: [
-                for (final t in items)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFE8D2AE)),
-                    ),
-                    child: IconText(
-                      t,
-                      maxLines: 1,
-                      style: const TextStyle(fontSize: 15),
+                for (var k = 0; k < items.length; k++) ...[
+                  if (k > 0) const SizedBox(width: 6),
+                  Expanded(
+                    child: Container(
+                      height: 66,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE8D2AE)),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ArtImage(items[k].$1, size: 32),
+                          const SizedBox(height: 2),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              items[k].$2,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: Color(0xFF5A3A22),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
+                ],
               ],
             ),
+          ],
           const SizedBox(height: 10),
           FilledButton(
             style: framedButton(
@@ -320,11 +308,8 @@ Widget piggyCard(BillingService billing, GameState game) => OfferCard(
   id: Offers.piggy,
   art: Art.icon('piggy').available ? Art.icon('piggy') : Art.icon('dia_basket'),
   title: tr('piggy.title'),
-  note: game.piggyFull
-      ? tr('piggy.full')
-      : tr('piggy.note', {'n': Piggy.perOrder}),
-  items: const [],
   tag: tr('piggy.tag'),
+  tagTone: TagTone.gold,
   progress: _PiggyBar(
     value: game.piggyGems / Piggy.cap,
     mark: Piggy.minBreak / Piggy.cap,
@@ -345,12 +330,14 @@ Widget energyBundleCard(BillingService billing) => OfferCard(
       ? Art.icon('energy_bundle')
       : Art.icon('energy_crate'),
   title: tr('energyBundle.title'),
-  note: tr('energyBundle.note'),
   tag: tr('offer.daily'),
   items: [
-    '[[energy]] ${EnergyBundle.energy}',
-    '[[diamond]] ${EnergyBundle.gems}',
-    '[[boost]] ${tr('boost.energy')} ${tr('shop.boostTime', {'n': EnergyBundle.boost.inMinutes})}',
+    (Art.icon('energy'), '${EnergyBundle.energy}'),
+    (Art.icon('diamond'), '${EnergyBundle.gems}'),
+    (
+      Art.icon(boostIcon(BoostKind.energy)),
+      tr('shop.boostTime', {'n': EnergyBundle.boost.inMinutes}),
+    ),
   ],
 );
 
@@ -362,14 +349,16 @@ Widget milestoneCard(BillingService billing, GameState game) => OfferCard(
       ? Art.icon('milestone_gift')
       : Art.icon('welcome_gift'),
   title: tr('msOffer.title'),
-  note: milestoneReason(game.milestoneKey),
   timer: tr('msOffer.left', {'time': fmtDuration(game.milestoneLeft)}),
   tag: tr('offer.limited'),
   items: [
-    '[[diamond]] ${MilestoneBundle.gems}',
-    '[[energy]] ${MilestoneBundle.energy}',
-    '[[coin]] ${fmt(game.milestoneCoins)}',
-    '[[boost]] ${tr('boost.coins')} ${tr('unit.hour', {'n': MilestoneBundle.boost.inMinutes ~/ 60})}',
+    (Art.icon('diamond'), '${MilestoneBundle.gems}'),
+    (Art.icon('energy'), '${MilestoneBundle.energy}'),
+    (Art.icon('coins_m'), fmt(game.milestoneCoins)),
+    (
+      Art.icon(boostIcon(BoostKind.coins)),
+      tr('unit.hour', {'n': MilestoneBundle.boost.inMinutes ~/ 60}),
+    ),
   ],
   colors: const [Color(0xFFFFF3C4), Color(0xFFFFE08A)],
   border: const Color(0xFFD9A21E),

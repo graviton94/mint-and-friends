@@ -39,7 +39,10 @@ class FrameBox extends StatelessWidget {
       ref.path,
       center,
       corner / Art.frameInset(frame),
-      pill: frame.startsWith('button_') || frame.startsWith('capsule'),
+      pill:
+          frame.startsWith('button_') ||
+          frame.startsWith('capsule') ||
+          frame.startsWith('tag_'),
       // 버튼은 둥근 끝 + 왼쪽 반짝이까지 끝 조각에 넣는다 (가운데 늘림에 반짝이가 뭉개지지 않게, D-093)
       capK: frame.startsWith('button_') ? 0.85 : 0.5,
     );
@@ -933,4 +936,65 @@ class CostButton extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// 딱지 색 (D-115): 할인 · 한정 = 빨강, 무료 = 초록, 부탁용 = 파랑, 희귀 = 보라, 추천 = 주황, 가치 = 금.
+enum TagTone { red, green, blue, purple, orange, gold }
+
+/// 리본 모양 딱지 (D-115): 할인 · 한정 · 오늘만 · 2배 가치 · 무료 · 추천 … 모두 같은 모양, 색만 다르다.
+/// 리본 그림(tag_<색>)을 가로로 늘려 쓰고, 글자는 흰색 + 갈색 테두리.
+class TagRibbon extends StatelessWidget {
+  const TagRibbon(
+    this.text, {
+    super.key,
+    this.tone = TagTone.red,
+    this.size = 12,
+  });
+  final String text;
+  final TagTone tone;
+  final double size;
+
+  static const _fallback = {
+    TagTone.red: Color(0xFFEC5A48),
+    TagTone.green: Color(0xFF4FB35C),
+    TagTone.blue: Color(0xFF4A9BE0),
+    TagTone.purple: Color(0xFF9B6FE0),
+    TagTone.orange: Color(0xFFF5963A),
+    TagTone.gold: Color(0xFFF2B21C),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final h = size + 11;
+    return Container(
+      height: h,
+      padding: EdgeInsets.symmetric(horizontal: size * 1.05),
+      decoration: FrameBox.decorationFor(
+        'tag_${tone.name}',
+        BoxDecoration(
+          color: _fallback[tone],
+          borderRadius: BorderRadius.circular(h / 2),
+          border: Border.all(color: const Color(0xFF5A3A22), width: 1.5),
+        ),
+        corner: h / 2,
+      ),
+      // 글자 폭만큼만 (Wrap · Row 안에서 줄 전체로 늘어나지 않게)
+      child: Center(
+        widthFactor: 1,
+        child: Text(
+          text,
+          maxLines: 1,
+          style: TextStyle(
+            fontSize: size,
+            height: 1,
+            color: Colors.white,
+            shadows: const [
+              Shadow(color: Color(0xFF5A3A22), offset: Offset(0, 1)),
+              Shadow(color: Color(0xFF5A3A22), blurRadius: 1.5),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

@@ -1346,5 +1346,8 @@
   "outfit.cocoa": "Chocolatier Apron",
   "outfit.bloom": "Spring Bonnet Dress",
   "piggy.breakAt": "Break at {n}",
-  "settings.haptic": "Vibration"
+  "settings.haptic": "Vibration",
+  "event.passTag": "Past steps too",
+  "event.passOutfit": "Outfit",
+  "event.passMore": "20 rewards"
 }

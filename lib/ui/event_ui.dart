@@ -6,7 +6,6 @@ import '../game/event_pass.dart';
 import '../game/format.dart';
 import '../game/game_state.dart';
 import '../i18n/l10n.dart';
-import '../i18n/names.dart';
 import '../services/audio_service.dart';
 import '../services/billing_service.dart';
 import 'sheets.dart';
@@ -226,7 +225,7 @@ class _Quests extends StatelessWidget {
   );
 }
 
-/// 패스 사기 (아직 안 샀을 때): 최종 의상 그림 + 받는 것 + 가격.
+/// 패스 사기 (D-115 단순하게): 최종 의상 그림 + '이달의 패스' + 받는 것 세 칸 + 가격.
 class _PassBuy extends StatelessWidget {
   const _PassBuy({
     required this.billing,
@@ -244,6 +243,30 @@ class _PassBuy extends StatelessWidget {
         .where((r) => r.kind == RewardKind.gems)
         .fold<int>(0, (a, r) => a + r.amount);
     final outfit = Art.outfitArt(Friends.byId(def.friend), def.outfit);
+    Widget tile(ArtRef art, String text) => Expanded(
+      child: Container(
+        height: 62,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE8D2AE)),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ArtImage(art, size: 30),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                text,
+                maxLines: 1,
+                style: const TextStyle(fontSize: 14, color: Color(0xFF5A3A22)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -255,57 +278,55 @@ class _PassBuy extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFD9A21E), width: 2.5),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Row(
         children: [
-          Row(
-            children: [
-              ArtImage(
-                outfit.available ? outfit : Art.icon('outfit'),
-                size: 72,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          ArtImage(outfit.available ? outfit : Art.icon('outfit'), size: 92),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
                   children: [
-                    IconText(
-                      tr('event.passTitle'),
-                      style: const TextStyle(
-                        fontSize: 19,
-                        color: Color(0xFF5A3A22),
+                    Expanded(
+                      child: Text(
+                        tr('event.passTitle'),
+                        style: const TextStyle(
+                          fontSize: 19,
+                          color: Color(0xFF5A3A22),
+                        ),
                       ),
                     ),
-                    IconText(
-                      tr('event.passNote', {
-                        'name': friendName(def.friend),
-                        'outfit': tr('event.outfit.${def.id}'),
-                        'gems': gems,
-                      }),
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        color: Color(0xFF7A6146),
-                      ),
-                    ),
+                    TagRibbon(tr('event.passTag'), tone: TagTone.gold),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          FilledButton(
-            style: framedButton(
-              FilledButton.styleFrom(minimumSize: const Size(0, 46)),
-              'button_green',
-            ),
-            onPressed: d == null || billing.purchasing
-                ? null
-                : () => billing.buyOffer(Offers.eventPass),
-            child: IconText(
-              billing.purchasing
-                  ? tr('shop.connecting')
-                  : d?.price ?? '₩${fmtInt(EventPass.krw)}',
-              style: const TextStyle(fontSize: 17),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    tile(Art.icon('outfit'), tr('event.passOutfit')),
+                    const SizedBox(width: 5),
+                    tile(Art.icon('diamond'), '$gems'),
+                    const SizedBox(width: 5),
+                    tile(Art.icon('boost'), tr('event.passMore')),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                FilledButton(
+                  style: framedButton(
+                    FilledButton.styleFrom(minimumSize: const Size(0, 44)),
+                    'button_green',
+                  ),
+                  onPressed: d == null || billing.purchasing
+                      ? null
+                      : () => billing.buyOffer(Offers.eventPass),
+                  child: IconText(
+                    billing.purchasing
+                        ? tr('shop.connecting')
+                        : d?.price ?? '₩${fmtInt(EventPass.krw)}',
+                    style: const TextStyle(fontSize: 17),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -314,8 +335,8 @@ class _PassBuy extends StatelessWidget {
   }
 }
 
-/// 사다리 (D-113): 가로로 이어지는 진행 막대 + 칸 메달, 위 = 무료 보상, 아래 = 패스 보상.
-/// 열면 지금 칸이 가운데 오게 스크롤한다.
+/// 사다리 (D-115): 세로로 이어지는 진행 막대 + 칸 메달, 왼쪽 = 무료 보상, 오른쪽 = 패스 보상.
+/// 열면 지금 칸이 보이게 스크롤한다.
 class _Ladder extends StatefulWidget {
   const _Ladder({required this.game, required this.def});
   final GameState game;
@@ -326,104 +347,86 @@ class _Ladder extends StatefulWidget {
 }
 
 class _LadderState extends State<_Ladder> {
-  static const col = 84.0;
-  final _c = ScrollController();
+  final _now = GlobalKey();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_c.hasClients) return;
-      final view = _c.position.viewportDimension;
-      final at = (widget.game.eventStep - 0.5) * col - view / 2;
-      _c.jumpTo(at.clamp(0.0, _c.position.maxScrollExtent));
+      final c = _now.currentContext;
+      if (c != null && widget.game.eventStep > 2) {
+        Scrollable.ensureVisible(c, alignment: 0.4);
+      }
     });
-  }
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final g = widget.game;
+    final cur = (g.eventStep - 1).clamp(0, EventPass.steps - 1);
     return Container(
-      padding: const EdgeInsets.fromLTRB(6, 10, 6, 10),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBF0),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE2D3B5), width: 1.5),
       ),
-      child: Row(
+      child: Column(
         children: [
-          // 왼쪽 고정 이름표: 무료(새싹) · 패스(왕관)
-          SizedBox(
-            width: 46,
-            child: Column(
-              children: [
-                _side('event_sprout', tr('event.freeTrack')),
-                const SizedBox(height: 44),
-                _side('event_crown', tr('event.passTrack')),
-              ],
-            ),
+          Row(
+            children: [
+              Expanded(child: _head('event_sprout', tr('event.freeTrack'))),
+              const SizedBox(width: 56),
+              Expanded(child: _head('event_crown', tr('event.passTrack'))),
+            ],
           ),
-          Expanded(
-            child: SingleChildScrollView(
-              controller: _c,
-              scrollDirection: Axis.horizontal,
+          const SizedBox(height: 4),
+          for (var i = 0; i < EventPass.steps; i++)
+            SizedBox(
+              key: i == cur ? _now : null,
+              height: 72,
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  for (var i = 0; i < EventPass.steps; i++)
-                    SizedBox(
-                      width: col,
-                      child: Column(
-                        children: [
-                          _RewardCell(
-                            game: g,
-                            def: widget.def,
-                            i: i,
-                            premium: false,
-                          ),
-                          _TrackNode(i: i, step: g.eventStep),
-                          _RewardCell(
-                            game: g,
-                            def: widget.def,
-                            i: i,
-                            premium: true,
-                          ),
-                        ],
-                      ),
+                  Expanded(
+                    child: _RewardCell(
+                      game: g,
+                      def: widget.def,
+                      i: i,
+                      premium: false,
                     ),
+                  ),
+                  _TrackNode(i: i, step: g.eventStep),
+                  Expanded(
+                    child: _RewardCell(
+                      game: g,
+                      def: widget.def,
+                      i: i,
+                      premium: true,
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _side(String icon, String label) => SizedBox(
-    height: 84,
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        ArtImage(Art.icon(icon), size: 32),
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF5A3A22)),
-          ),
-        ),
-      ],
-    ),
+  Widget _head(String icon, String label) => Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      ArtImage(Art.icon(icon), size: 26),
+      const SizedBox(width: 4),
+      Text(
+        label,
+        style: const TextStyle(fontSize: 15, color: Color(0xFF5A3A22)),
+      ),
+    ],
   );
 }
 
-/// 진행 막대 한 칸: 가로 막대(지난 칸까지 초록으로 참) + 가운데 칸 메달.
+/// 진행 막대 한 칸 (세로): 위아래로 이어지는 막대(지난 칸까지 초록) + 가운데 칸 메달.
 class _TrackNode extends StatelessWidget {
   const _TrackNode({required this.i, required this.step});
   final int i;
@@ -432,26 +435,21 @@ class _TrackNode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reached = i < step;
-    final leftOn = i < step; // 이 칸까지 왔으면 왼쪽 반은 참
-    final rightOn = i + 1 < step;
-    Widget half(bool on, {required bool left}) => Expanded(
+    const line = BorderSide(color: Color(0xFF5A3A22), width: 2);
+    Widget half(bool on, {required bool top}) => Expanded(
       child: Container(
-        height: 14,
+        width: 14,
         decoration: BoxDecoration(
           color: on ? const Color(0xFF7CCB4E) : const Color(0xFFEDE2C8),
           border: Border(
-            top: const BorderSide(color: Color(0xFF5A3A22), width: 2),
-            bottom: const BorderSide(color: Color(0xFF5A3A22), width: 2),
-            left: left && i == 0
-                ? const BorderSide(color: Color(0xFF5A3A22), width: 2)
-                : BorderSide.none,
-            right: !left && i == EventPass.steps - 1
-                ? const BorderSide(color: Color(0xFF5A3A22), width: 2)
-                : BorderSide.none,
+            left: line,
+            right: line,
+            top: top && i == 0 ? line : BorderSide.none,
+            bottom: !top && i == EventPass.steps - 1 ? line : BorderSide.none,
           ),
-          borderRadius: BorderRadius.horizontal(
-            left: left && i == 0 ? const Radius.circular(7) : Radius.zero,
-            right: !left && i == EventPass.steps - 1
+          borderRadius: BorderRadius.vertical(
+            top: top && i == 0 ? const Radius.circular(7) : Radius.zero,
+            bottom: !top && i == EventPass.steps - 1
                 ? const Radius.circular(7)
                 : Radius.zero,
           ),
@@ -460,14 +458,19 @@ class _TrackNode extends StatelessWidget {
     );
     final medal = reached ? 'event_step_on' : 'event_step';
     return SizedBox(
-      height: 44,
+      width: 56,
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Row(children: [half(leftOn, left: true), half(rightOn, left: false)]),
+          Column(
+            children: [
+              half(i < step, top: true),
+              half(i + 1 < step, top: false),
+            ],
+          ),
           Container(
-            width: 38,
-            height: 38,
+            width: 40,
+            height: 40,
             alignment: Alignment.center,
             decoration: Art.frame(medal).available
                 ? BoxDecoration(
@@ -503,7 +506,8 @@ class _TrackNode extends StatelessWidget {
   }
 }
 
-/// 보상 칸 하나 (무료 = 흰 카드, 패스 = 금빛 카드). 받을 수 있으면 반짝 테두리 + 빨간 점, 받았으면 흐리게 + 체크.
+/// 보상 칸 하나 (무료 = 흰 카드, 패스 = 금빛 카드): 그림 + 양을 가로로.
+/// 받을 수 있으면 주황 테두리 + 빨간 점, 받았으면 흐리게 + 체크, 패스가 없으면 금 자물쇠.
 class _RewardCell extends StatelessWidget {
   const _RewardCell({
     required this.game,
@@ -525,7 +529,6 @@ class _RewardCell extends StatelessWidget {
     final locked = premium && !game.hasEventPass;
     final can = reached && !claimed && !locked;
     final (art, label) = rewardShow(game, def, r, premium);
-    final frame = premium ? 'event_slot_gold' : 'event_slot';
     final big = r.kind == RewardKind.finale || r.kind == RewardKind.badge;
     return GestureDetector(
       onTap: can
@@ -548,76 +551,70 @@ class _RewardCell extends StatelessWidget {
             }
           : null,
       child: Container(
-        width: 76,
-        height: 84,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          gradient: premium
+              ? const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFFFF6D2), Color(0xFFFFE59A)],
+                )
+              : null,
+          color: premium ? null : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: can ? const Color(0xFFE0903D) : const Color(0xFF5A3A22),
+            width: can ? 3 : 1.5,
+          ),
+          boxShadow: can
+              ? const [BoxShadow(color: Color(0x88FFB938), blurRadius: 8)]
+              : null,
+        ),
         child: Stack(
+          alignment: AlignmentDirectional.centerStart,
           clipBehavior: Clip.none,
           children: [
-            Positioned.fill(
-              child: Container(
-                decoration: Art.frame(frame).available
-                    ? BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage(Art.frame(frame).path),
-                          fit: BoxFit.fill,
-                        ),
-                        boxShadow: can
-                            ? const [
-                                BoxShadow(
-                                  color: Color(0x99FFB938),
-                                  blurRadius: 10,
-                                ),
-                              ]
-                            : null,
-                      )
-                    : BoxDecoration(
-                        color: premium ? const Color(0xFFFFF0C2) : Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: const Color(0xFF5A3A22),
-                          width: 2,
-                        ),
-                      ),
-              ),
-            ),
-            Positioned.fill(
-              top: 14,
-              child: Opacity(
-                opacity: claimed ? 0.4 : (reached ? 1 : 0.85),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ArtImage(art, size: big ? 40 : 32),
-                    const SizedBox(height: 2),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: IconText(
-                          label,
-                          maxLines: 1,
-                          style: const TextStyle(fontSize: 13),
+            Opacity(
+              opacity: claimed ? 0.4 : 1,
+              child: Row(
+                children: [
+                  ArtImage(art, size: big ? 44 : 34),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: IconText(
+                        label,
+                        maxLines: 1,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF5A3A22),
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             if (claimed)
               Positioned(
-                right: 2,
-                top: 14,
-                child: ArtImage(Art.icon('check'), size: 22),
+                right: -2,
+                top: 0,
+                bottom: 0,
+                child: Center(child: ArtImage(Art.icon('check'), size: 24)),
               ),
             if (locked)
               Positioned(
-                right: 0,
-                top: 10,
-                child: ArtImage(Art.icon('event_gold_lock'), size: 22),
+                right: -2,
+                top: 0,
+                bottom: 0,
+                child: Center(
+                  child: ArtImage(Art.icon('event_gold_lock'), size: 22),
+                ),
               ),
-            if (can) const Positioned(right: -2, top: 6, child: RedDot()),
+            if (can) const Positioned(right: -10, top: -6, child: RedDot()),
           ],
         ),
       ),

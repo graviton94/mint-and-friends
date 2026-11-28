@@ -150,5 +150,29 @@
  "event_ribbon_tag": [
   467,
   128
+ ],
+ "tag_red": [
+  350,
+  96
+ ],
+ "tag_green": [
+  350,
+  96
+ ],
+ "tag_blue": [
+  350,
+  96
+ ],
+ "tag_purple": [
+  350,
+  96
+ ],
+ "tag_orange": [
+  350,
+  96
+ ],
+ "tag_gold": [
+  350,
+  96
  ]
 }
