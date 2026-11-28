@@ -53,8 +53,10 @@ for scope, name, label in todo:
     print('dim', scope, name)
     if APPLY:
         r = s.post(f'{ADMIN}/customDimensions', json={
-            'parameterName': name, 'displayName': f'{label} ({name})'[:82], 'scope': scope,
-            'description': 'D-118'})
+            'parameterName': name,
+            # 표시 이름은 영문 · 숫자 · 밑줄 · 빈칸만 된다 (한국어 설명은 description 에)
+            'displayName': (('user ' if scope == 'USER' else '') + name.replace('_', ' '))[:82],
+            'scope': scope, 'description': f'{label} (D-118)'[:150]})
         print('  ->', r.status_code, '' if r.ok else r.text[:200])
 
 # 2) 보관 기간
